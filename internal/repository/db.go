@@ -14,21 +14,24 @@ import (
 
 // CloseDB safely closes the database connection
 func CloseDB() error {
-	if DB == nil {
+	if activeDB == nil {
 		return nil
 	}
-	sqlDB, err := DB.DB()
+	sqlDB, err := activeDB.DB()
 	if err != nil {
 		return err
 	}
 	err = sqlDB.Close()
-	DB = nil
+	activeDB = nil
 	return err
 }
 
 // ResetDB drops all tables and re-initializes
 func ResetDB() error {
-	err := DB.Migrator().DropTable(
+	if activeDB == nil {
+		return fmt.Errorf("database not initialized")
+	}
+	err := activeDB.Migrator().DropTable(
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Customer{}, &domain.Supplier{},
 		&domain.Expense{}, &domain.Category{}, &domain.StockMovement{}, &domain.AppPreferences{},
 		&domain.Payment{}, &domain.ParkedSale{}, &domain.LoginAttempt{}, &domain.Staff{}, &domain.Shift{},
@@ -38,7 +41,8 @@ func ResetDB() error {
 	if err != nil {
 		return err
 	}
-	return InitDB()
+	_, err = InitDB()
+	return err
 }
 
 // BackupPath renames current DB to backup and returns the backup path
@@ -61,43 +65,49 @@ func RestoreBackup(backupPath string) error {
 	}
 	dbPath := filepath.Join(configDir, "BeidarPOS_V3", "beidar_v3.db")
 	_ = os.Rename(backupPath, dbPath)
-	return InitDB()
+	_, err = InitDB()
+	return err
 }
 
-var DB *gorm.DB
+// SetTestDB sets the active database connection (useful for unit testing)
+func SetTestDB(db *gorm.DB) {
+	activeDB = db
+}
 
-func InitDB() error {
+var activeDB *gorm.DB
+
+func InitDB() (*gorm.DB, error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	appDir := filepath.Join(configDir, "BeidarPOS_V3")
 	if err := os.MkdirAll(appDir, 0755); err != nil {
-		return err
+		return nil, err
 	}
 
 	dbPath := filepath.Join(appDir, "beidar_v3.db")
 
 	// Config for glebarez (pure go)
-	DB, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to connect database: %w", err)
+		return nil, fmt.Errorf("failed to connect database: %w", err)
 	}
 
 	// Enable WAL mode for better concurrent performance
-	sqlDB, err := DB.DB()
+	sqlDB, err := db.DB()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	sqlDB.Exec("PRAGMA journal_mode=WAL;")
 	sqlDB.Exec("PRAGMA busy_timeout=5000;") // 5 seconds wait on lock
 	sqlDB.Exec("PRAGMA foreign_keys=ON;")   // Enable foreign key constraints
 
 	// Auto Migrate Domain Models
-	err = DB.AutoMigrate(
+	err = db.AutoMigrate(
 		&domain.Product{},
 		&domain.Sale{},
 		&domain.SaleItem{},
@@ -120,12 +130,12 @@ func InitDB() error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to auto migrate: %w", err)
+		return nil, fmt.Errorf("failed to auto migrate: %w", err)
 	}
 
 	// Seed default preferences if not exists
 	var prefs domain.AppPreferences
-	if result := DB.First(&prefs); result.Error != nil {
+	if result := db.First(&prefs); result.Error != nil {
 		defaultPrefs := domain.AppPreferences{
 			StoreName:       "متجر بيدر",
 			Currency:        "IQD",
@@ -134,8 +144,9 @@ func InitDB() error {
 			Language:        "ar",
 			LowStockTrigger: 5,
 		}
-		DB.Create(&defaultPrefs)
+		db.Create(&defaultPrefs)
 	}
 
-	return nil
+	activeDB = db
+	return db, nil
 }

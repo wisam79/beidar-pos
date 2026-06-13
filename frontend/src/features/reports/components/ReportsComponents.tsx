@@ -32,8 +32,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({ icon, label, value, subt
     const [textColor, bgColor, ...borderClasses] = colorClasses.split(' ');
 
     return (
-        <div className={`bg-surface border rounded-2xl p-5 flex items-center gap-4 transition-all hover:shadow-lg group ${borderClasses.join(' ')}`}>
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${textColor} ${bgColor}`}>
+        <div className={`bg-surface border rounded-lg p-5 flex items-center gap-4 transition-all hover:shadow-lg group ${borderClasses.join(' ')}`}>
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${textColor} ${bgColor}`}>
                 {icon}
             </div>
             <div className="flex-1">
@@ -65,7 +65,7 @@ export const DateRangeButton: React.FC<DateRangeButtonProps> = ({ active, label,
     <button
         onClick={onClick}
         className={`
-            px-5 py-3 rounded-xl text-sm font-bold transition-all touch-target active:scale-95
+            px-5 py-3 rounded-lg text-sm font-bold transition-all touch-target active:scale-95
             ${active
                 ? 'bg-primary text-white shadow-lg shadow-primary/20'
                 : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
@@ -95,9 +95,9 @@ const rankColors = {
 
 export const CustomerRank: React.FC<CustomerRankProps> = ({ rank, name, total, currency = 'IQD' }) => {
     return (
-        <div className="flex justify-between items-center bg-bg p-3.5 rounded-xl border border-border hover:border-primary/30 transition-colors">
+        <div className="flex justify-between items-center bg-bg p-3.5 rounded-lg border border-border hover:border-primary/30 transition-colors">
             <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${rankColors[rank as keyof typeof rankColors] || 'bg-surface-hover text-text-muted'}`}>
+                <div className={`w-8 h-8 rounded-md flex items-center justify-center font-bold text-sm ${rankColors[rank as keyof typeof rankColors] || 'bg-surface-hover text-text-muted'}`}>
                     {rank}
                 </div>
                 <span className="text-text-main text-sm font-bold">{name}</span>

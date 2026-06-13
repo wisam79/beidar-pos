@@ -52,29 +52,12 @@ var RolePermissions = map[domain.Role][]string{
 	},
 }
 
-type StaffService interface {
-	CreateStaff(s domain.Staff, password string) (*domain.Staff, error)
-	UpdateStaff(s domain.Staff) error
-	UpdateStaffPassword(id string, newPassword string) error
-	DeleteStaff(id string, force bool) error
-	GetStaff(id string) (*domain.Staff, error)
-	GetAllStaff() ([]domain.Staff, error)
-	GetActiveStaff() ([]domain.Staff, error)
-	ToggleStaffStatus(id string) error
-
-	AuthenticateByUsername(username, password string) (*domain.AuthResult, error)
-	AuthenticateByPIN(pin string) (*domain.AuthResult, error)
-	HasPermission(staffID, permission string) (bool, error)
-	SeedDefaultAdmin() error
-	GetStaffCount() (int64, error)
-	IsUsingDefaultPassword(staffID string) (bool, error)
-}
-
 type staffService struct {
 	staffRepo domain.StaffRepository
 }
 
-func NewStaffService(staffRepo domain.StaffRepository) StaffService {
+// NewStaffService creates a new instance of domain.StaffService
+func NewStaffService(staffRepo domain.StaffRepository) domain.StaffService {
 	return &staffService{
 		staffRepo: staffRepo,
 	}

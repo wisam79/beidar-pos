@@ -17,41 +17,12 @@ import (
 	"github.com/google/uuid"
 )
 
-// SettingsService manages preferences, device info, updates, autostart, and crash reports
-type SettingsService interface {
-	GetPreferences() (*domain.AppPreferences, error)
-	UpdatePreferences(prefs domain.AppPreferences) error
-	VerifyAdminPin(pin string) bool
-	GetDeviceID() (string, error)
-
-	// AutoStart
-	IsAutoStartEnabled() bool
-	EnableAutoStart() error
-	DisableAutoStart() error
-
-	// Crash Reports
-	GetCrashReports() ([]string, error)
-	GetCrashReportContent(filename string) (string, error)
-	ClearCrashReports() error
-
-	// Updates
-	CheckForUpdates() (*updater.UpdateInfo, error)
-	GetUpdateStatus() updater.UpdateStatus
-	DownloadUpdate(url, expectedChecksum string) (string, error)
-	InstallUpdate(installerPath string) error
-	SkipVersion(version string) error
-
-	// Supabase global settings
-	FetchGlobalAIKeys() ([]string, error)
-	SaveGlobalAIKeys(keys []string, userToken string) error
-}
-
 type settingsService struct {
 	preferencesRepo domain.PreferencesRepository
 }
 
-// NewSettingsService creates a new instance of SettingsService
-func NewSettingsService(preferencesRepo domain.PreferencesRepository) SettingsService {
+// NewSettingsService creates a new instance of domain.SettingsService
+func NewSettingsService(preferencesRepo domain.PreferencesRepository) domain.SettingsService {
 	return &settingsService{
 		preferencesRepo: preferencesRepo,
 	}

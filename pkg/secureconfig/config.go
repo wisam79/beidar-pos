@@ -73,6 +73,11 @@ func Load() (*Secrets, error) {
 	return s, nil
 }
 
+// ResetCache clears the cached secrets, forcing a reload on the next access.
+func ResetCache() {
+	loadedSecrets = nil
+}
+
 // Save persists secrets to an encrypted file.
 func Save(s *Secrets) error {
 	dir, err := configDir()

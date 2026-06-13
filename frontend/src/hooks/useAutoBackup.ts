@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { NotifyFunction, AppPreferences } from '../core/types';
-import { playBeep } from '../core/utils';
+import { playBeep, getLocalDateString } from '../core/utils';
 
 export function useAutoBackup(
   appState: string,
@@ -13,7 +13,7 @@ export function useAutoBackup(
   useEffect(() => {
     if (appState !== 'app' || !prefs.autoBackup) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     if (prefs.lastBackupDate?.startsWith(today)) return;
 
     if (calledRef.current) return;

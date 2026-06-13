@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Landmark, TrendingDown, TrendingUp, Users, Plus, Search, Trash2, Sparkles, Building2, Wallet, PieChart, Minus, FileText, ShoppingCart, LayoutDashboard } from 'lucide-react';
-import { formatCurrency } from '../../core/utils';
+import { formatCurrency, getLocalDateString } from '../../core/utils';
 import { Badge, Modal, PageHeader, SpotlightCard, EmptyState } from '../../components/ui';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { DonutChart, SalesAreaChart } from '../../components/charts';
@@ -122,7 +122,7 @@ export const FinancePage: React.FC = () => {
                 title: expenseForm.title,
                 amount: Number(expenseForm.amount),
                 category: expenseForm.category || 'other',
-                date: expenseForm.date || new Date().toISOString().split('T')[0],
+                date: expenseForm.date || getLocalDateString(),
                 notes: expenseForm.notes || ''
             } as Expense;
             await api.expenses.save(e);
@@ -400,7 +400,7 @@ export const FinancePage: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-bold text-text-muted mb-1 block">التاريخ</label>
-                                <input type="date" className="w-full bg-input-bg border border-border rounded-xl px-4 py-2.5 text-sm" value={expenseForm.date || new Date().toISOString().split('T')[0]} onChange={e => setExpenseForm({ ...expenseForm, date: e.target.value })} aria-label="تاريخ المصروف" />
+                                <input type="date" className="w-full bg-input-bg border border-border rounded-xl px-4 py-2.5 text-sm" value={expenseForm.date || getLocalDateString()} onChange={e => setExpenseForm({ ...expenseForm, date: e.target.value })} aria-label="تاريخ المصروف" />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-text-muted mb-1 block">الفئة</label>

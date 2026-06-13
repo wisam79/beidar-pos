@@ -75,10 +75,10 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-border/50">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
                 <div>
                     <h2 className="text-2xl font-bold flex items-center gap-3">
-                        <span className="p-2 bg-primary/10 rounded-xl text-primary">
+                        <span className="p-2 bg-primary/10 rounded-lg text-primary">
                             <Smartphone size={24} />
                         </span>
                         الماسح الضوئي بالجوال
@@ -101,7 +101,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
 
                 {/* Right: Instructions & Controls */}
                 <div className="space-y-6">
-                    <div className={`p-6 rounded-2xl border transition-all ${serverStatus.running
+                    <div className={`p-6 rounded-lg border transition-all ${serverStatus.running
                         ? 'bg-green-500/5 border-green-500/20'
                         : 'bg-surface border-border'
                         }`}>
@@ -123,7 +123,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
                                     <button
                                         onClick={startServer}
                                         disabled={isLoading}
-                                        className="bg-primary text-black px-6 py-2.5 rounded-xl font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+                                        className="bg-primary text-black px-6 py-2.5 rounded-lg font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
                                     >
                                         تشغيل الخدمة
                                         {isLoading && <Loader2 size={16} className="animate-spin" />}
@@ -133,7 +133,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
                         </div>
                     </div>
 
-                    <div className="bg-surface/50 rounded-2xl p-6 border border-border/50">
+                    <div className="bg-surface/50 rounded-lg p-6 border border-border">
                         <h4 className="font-bold flex items-center gap-2 mb-4">
                             <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs">1</span>
                             خطوات الربط
@@ -156,7 +156,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
                 </div>
 
                 {/* Left: QR Code */}
-                <div className="flex flex-col items-center justify-center p-8 bg-white rounded-3xl border-4 border-gray-100 shadow-xl relative overflow-hidden group">
+                <div className="flex flex-col items-center justify-center p-8 bg-white rounded-lg border-4 border-gray-100 shadow-xl relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-emerald-400"></div>
 
                     {serverStatus.running && qrData ? (

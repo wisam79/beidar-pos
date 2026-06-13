@@ -2,18 +2,17 @@ package handlers
 
 import (
 	"beidar-desktop/internal/core/domain"
-	"beidar-desktop/internal/service"
 	"context"
 )
 
 // BackupHandler handles Wails database, CSV, and image store management requests
 type BackupHandler struct {
 	ctx           context.Context
-	backupService service.BackupService
+	backupService domain.BackupService
 }
 
 // NewBackupHandler creates a new instance of BackupHandler
-func NewBackupHandler(backupService service.BackupService) *BackupHandler {
+func NewBackupHandler(backupService domain.BackupService) *BackupHandler {
 	return &BackupHandler{
 		backupService: backupService,
 	}

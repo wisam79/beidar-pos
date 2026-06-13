@@ -130,21 +130,6 @@ func roundTo2Decimals(val float64) float64 {
 	return math.Round(val*100) / 100
 }
 
-type SaleService interface {
-	GetSales(page int, pageSize int, search string, statusFilter string, dateFilter string) (*domain.PaginatedSales, error)
-	GetSale(id string) (*domain.Sale, error)
-	ProcessSale(sale *domain.Sale) error
-	ReturnSale(id string) error
-	ReturnSalePartial(saleID string, productID string, qtyToReturn float64) error
-	GetSaleItems(saleID string) ([]domain.SaleItem, error)
-	DeleteSale(id string) error
-	ParkSale(itemsJSON string, customerName string, customerID string, note string, total float64, itemsCount float64) (*domain.ParkedSale, error)
-	GetParkedSales() ([]domain.ParkedSale, error)
-	GetParkedSalesCount() (int, error)
-	RetrieveParkedSale(id uint) (*domain.ParkedSale, error)
-	DeleteParkedSale(id uint) error
-}
-
 type saleService struct {
 	mu              sync.Mutex
 	saleRepo        domain.SaleRepository
@@ -153,9 +138,10 @@ type saleService struct {
 	paymentRepo     domain.PaymentRepository
 	shiftRepo       domain.ShiftRepository
 	preferencesRepo domain.PreferencesRepository
-	productService  ProductService
+	productService  domain.ProductService
 }
 
+// NewSaleService creates a new instance of domain.SaleService
 func NewSaleService(
 	saleRepo domain.SaleRepository,
 	productRepo domain.ProductRepository,
@@ -163,8 +149,8 @@ func NewSaleService(
 	paymentRepo domain.PaymentRepository,
 	shiftRepo domain.ShiftRepository,
 	preferencesRepo domain.PreferencesRepository,
-	productService ProductService,
-) SaleService {
+	productService domain.ProductService,
+) domain.SaleService {
 	return &saleService{
 		saleRepo:        saleRepo,
 		productRepo:     productRepo,

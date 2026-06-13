@@ -14,34 +14,13 @@ import (
 	"time"
 )
 
-// BackupService coordinates backups, CSV operations, and image migration
-type BackupService interface {
-	CreateBackup() (*domain.BackupResult, error)
-	ListBackups() ([]domain.BackupInfo, error)
-	RestoreBackup(backupPath string) error
-	DeleteBackup(backupPath string) error
-	CleanOldBackups(retainDays int) (int, error)
-	ResetDatabase() error
-	ExportDatabase() (*domain.DatabaseExport, error)
-	ImportDatabase(data domain.DatabaseExport) error
-
-	// CSV operations
-	ExportProductsCSV() (*domain.CSVExportResult, error)
-	ImportProductsCSV(csvData string, updateExisting bool) (*domain.CSVImportResult, error)
-	GetCSVTemplate() string
-
-	// Image utilities
-	MigrateImagesToFilesystem() (int, error)
-	GetImageStorageStats() (*domain.ImageStorageStats, error)
-}
-
 type backupService struct {
 	backupRepo  domain.BackupRepository
 	productRepo domain.ProductRepository
 }
 
-// NewBackupService creates a new instance of BackupService
-func NewBackupService(backupRepo domain.BackupRepository, productRepo domain.ProductRepository) BackupService {
+// NewBackupService creates a new instance of domain.BackupService
+func NewBackupService(backupRepo domain.BackupRepository, productRepo domain.ProductRepository) domain.BackupService {
 	return &backupService{
 		backupRepo:  backupRepo,
 		productRepo: productRepo,

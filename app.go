@@ -26,6 +26,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"gorm.io/gorm"
 )
 
 // App struct
@@ -46,84 +47,116 @@ type App struct {
 	DiscountHandler *handlers.DiscountHandler
 }
 
-// NewApp creates a new App application struct
-func NewApp() *App {
-	// 1. Initialize Database
-	err := repository.InitDB()
-	if err != nil {
-		panic("فشل في تهيئة قاعدة البيانات: " + err.Error())
+type appRepositories struct {
+	preferences domain.PreferencesRepository
+	customer    domain.CustomerRepository
+	product     domain.ProductRepository
+	shift       domain.ShiftRepository
+	sale        domain.SaleRepository
+	payment     domain.PaymentRepository
+	expense     domain.ExpenseRepository
+	purchase    domain.PurchaseOrderRepository
+	supplier    domain.SupplierRepository
+	staff       domain.StaffRepository
+	stats       domain.StatsRepository
+	backup      domain.BackupRepository
+	network     domain.NetworkRepository
+	discount    domain.DiscountRepository
+}
+
+type appServices struct {
+	product  domain.ProductService
+	sale     domain.SaleService
+	payment  domain.PaymentService
+	finance  domain.FinanceService
+	crm      domain.CRMService
+	staff    domain.StaffService
+	stats    domain.StatsService
+	print    domain.PrintService
+	backup   domain.BackupService
+	settings domain.SettingsService
+	discount domain.DiscountService
+	lan      network.LanService
+	cloud    integration.CloudService
+}
+
+func initDatabase() (*gorm.DB, error) {
+	return repository.InitDB()
+}
+
+func initRepositories(db *gorm.DB) *appRepositories {
+	return &appRepositories{
+		preferences: repository.NewPreferencesRepository(db),
+		customer:    repository.NewCustomerRepository(db),
+		product:     repository.NewProductRepository(db),
+		shift:       repository.NewShiftRepository(db),
+		sale:        repository.NewSaleRepository(db),
+		payment:     repository.NewPaymentRepository(db),
+		expense:     repository.NewExpenseRepository(db),
+		purchase:    repository.NewPurchaseOrderRepository(db),
+		supplier:    repository.NewSupplierRepository(db),
+		staff:       repository.NewStaffRepository(db),
+		stats:       repository.NewStatsRepository(db),
+		backup:      repository.NewBackupRepository(db),
+		network:     repository.NewNetworkRepository(db),
+		discount:    repository.NewDiscountRepository(db),
 	}
+}
 
-	// 2. Initialize Repositories
-	preferencesRepo := repository.NewPreferencesRepository(repository.DB)
-	customerRepo := repository.NewCustomerRepository(repository.DB)
-	productRepo := repository.NewProductRepository(repository.DB)
-	shiftRepo := repository.NewShiftRepository(repository.DB)
-	saleRepo := repository.NewSaleRepository(repository.DB)
-	paymentRepo := repository.NewPaymentRepository(repository.DB)
-	expenseRepo := repository.NewExpenseRepository(repository.DB)
-	purchaseRepo := repository.NewPurchaseOrderRepository(repository.DB)
-	supplierRepo := repository.NewSupplierRepository(repository.DB)
-	staffRepo := repository.NewStaffRepository(repository.DB)
-	statsRepo := repository.NewStatsRepository(repository.DB)
-	backupRepo := repository.NewBackupRepository(repository.DB)
-	networkRepo := repository.NewNetworkRepository(repository.DB)
-	discountRepo := repository.NewDiscountRepository(repository.DB)
-
-	// 3. Initialize Services
-	productService := service.NewProductService(productRepo)
+func initServices(repos *appRepositories) *appServices {
+	productService := service.NewProductService(repos.product)
 	saleService := service.NewSaleService(
-		saleRepo,
-		productRepo,
-		customerRepo,
-		paymentRepo,
-		shiftRepo,
-		preferencesRepo,
+		repos.sale,
+		repos.product,
+		repos.customer,
+		repos.payment,
+		repos.shift,
+		repos.preferences,
 		productService,
 	)
 	paymentService := service.NewPaymentService(
-		paymentRepo,
-		customerRepo,
-		saleRepo,
-		shiftRepo,
-		preferencesRepo,
+		repos.payment,
+		repos.customer,
+		repos.sale,
+		repos.shift,
+		repos.preferences,
 	)
 	financeService := service.NewFinanceService(
-		expenseRepo,
-		shiftRepo,
-		purchaseRepo,
-		supplierRepo,
-		productRepo,
-		preferencesRepo,
+		repos.expense,
+		repos.shift,
+		repos.purchase,
+		repos.supplier,
+		repos.product,
+		repos.preferences,
 		productService,
 	)
 	crmService := service.NewCRMService(
-		customerRepo,
-		supplierRepo,
-		productRepo,
+		repos.customer,
+		repos.supplier,
+		repos.product,
 	)
 	staffService := service.NewStaffService(
-		staffRepo,
+		repos.staff,
 	)
 	statsService := service.NewStatsService(
-		statsRepo,
+		repos.stats,
 	)
 	printService := service.NewPrintService(
-		saleRepo,
-		preferencesRepo,
+		repos.sale,
+		repos.preferences,
 	)
 	backupService := service.NewBackupService(
-		backupRepo,
-		productRepo,
+		repos.backup,
+		repos.product,
 	)
 	settingsService := service.NewSettingsService(
-		preferencesRepo,
+		repos.preferences,
 	)
 	discountService := service.NewDiscountService(
-		discountRepo,
+		repos.discount,
 	)
 	lanService := network.NewLanService(
-		networkRepo,
+		repos.network,
 		productService,
 		saleService,
 		crmService,
@@ -138,39 +171,53 @@ func NewApp() *App {
 		panic("فشل في تهيئة المسؤول الافتراضي: " + err.Error())
 	}
 
-	// Initialize Cloud & Integrations
-	cloudService := integration.NewCloudService(preferencesRepo, saleRepo, staffRepo)
+	cloudService := integration.NewCloudService(repos.preferences, repos.sale, repos.staff)
 
-	// 4. Initialize Handlers
-	productHandler := handlers.NewProductHandler(productService, lanService)
-	saleHandler := handlers.NewSaleHandler(saleService, lanService)
-	paymentHandler := handlers.NewPaymentHandler(paymentService)
-	financeHandler := handlers.NewFinanceHandler(financeService, lanService)
-	crmHandler := handlers.NewCRMHandler(crmService, lanService)
-	staffHandler := handlers.NewStaffHandler(staffService)
-	statsHandler := handlers.NewStatsHandler(statsService, lanService)
-	printHandler := handlers.NewPrintHandler(printService)
-	backupHandler := handlers.NewBackupHandler(backupService)
-	settingsHandler := handlers.NewSettingsHandler(settingsService)
-	lanHandler := handlers.NewLanHandler(lanService)
-	cloudHandler := handlers.NewCloudHandler(cloudService)
-	discountHandler := handlers.NewDiscountHandler(discountService, lanService)
-
-	return &App{
-		ProductHandler:  productHandler,
-		SaleHandler:     saleHandler,
-		PaymentHandler:  paymentHandler,
-		FinanceHandler:  financeHandler,
-		CRMHandler:      crmHandler,
-		StaffHandler:    staffHandler,
-		StatsHandler:    statsHandler,
-		PrintHandler:    printHandler,
-		BackupHandler:   backupHandler,
-		SettingsHandler: settingsHandler,
-		LanHandler:      lanHandler,
-		CloudHandler:    cloudHandler,
-		DiscountHandler: discountHandler,
+	return &appServices{
+		product:  productService,
+		sale:     saleService,
+		payment:  paymentService,
+		finance:  financeService,
+		crm:      crmService,
+		staff:    staffService,
+		stats:    statsService,
+		print:    printService,
+		backup:   backupService,
+		settings: settingsService,
+		discount: discountService,
+		lan:      lanService,
+		cloud:    cloudService,
 	}
+}
+
+func initHandlers(services *appServices) *App {
+	return &App{
+		ProductHandler:  handlers.NewProductHandler(services.product, services.lan),
+		SaleHandler:     handlers.NewSaleHandler(services.sale, services.lan),
+		PaymentHandler:  handlers.NewPaymentHandler(services.payment),
+		FinanceHandler:  handlers.NewFinanceHandler(services.finance, services.lan),
+		CRMHandler:      handlers.NewCRMHandler(services.crm, services.lan),
+		StaffHandler:    handlers.NewStaffHandler(services.staff),
+		StatsHandler:    handlers.NewStatsHandler(services.stats, services.lan),
+		PrintHandler:    handlers.NewPrintHandler(services.print),
+		BackupHandler:   handlers.NewBackupHandler(services.backup),
+		SettingsHandler: handlers.NewSettingsHandler(services.settings),
+		LanHandler:      handlers.NewLanHandler(services.lan),
+		CloudHandler:    handlers.NewCloudHandler(services.cloud),
+		DiscountHandler: handlers.NewDiscountHandler(services.discount, services.lan),
+	}
+}
+
+// NewApp creates a new App application struct
+func NewApp() *App {
+	db, err := initDatabase()
+	if err != nil {
+		panic("فشل في تهيئة قاعدة البيانات: " + err.Error())
+	}
+
+	repos := initRepositories(db)
+	services := initServices(repos)
+	return initHandlers(services)
 }
 
 // startup is called when the app starts. The context is saved

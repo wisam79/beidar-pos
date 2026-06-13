@@ -10,6 +10,7 @@ vendor/
 # Node
 node_modules/
 frontend/dist/
+!frontend/dist/.gitkeep
 frontend/vite.config.ts.timestamp-*.mjs
 
 # Build

@@ -19,7 +19,7 @@ export const TransactionCard = React.memo(({
 }: TransactionCardProps) => (
     <div
         onClick={onClick}
-        className="flex items-center gap-3 p-3 rounded-xl bg-bg border border-border hover:border-primary/30 hover:bg-surface-hover transition-all cursor-pointer group"
+        className="flex items-center gap-3 p-3 rounded-md border border-border hover:border-primary/40 hover:bg-surface-hover transition-colors duration-100 cursor-pointer group"
     >
         <div
             className={`

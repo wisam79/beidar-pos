@@ -3,17 +3,16 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
-	"beidar-desktop/internal/service"
 	"context"
 )
 
 type SaleHandler struct {
 	ctx        context.Context
-	saleService service.SaleService
+	saleService domain.SaleService
 	lanService  network.LanService
 }
 
-func NewSaleHandler(saleService service.SaleService, lanService network.LanService) *SaleHandler {
+func NewSaleHandler(saleService domain.SaleService, lanService network.LanService) *SaleHandler {
 	return &SaleHandler{
 		saleService: saleService,
 		lanService:  lanService,

@@ -3,17 +3,16 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
-	"beidar-desktop/internal/service"
 	"context"
 )
 
 type CRMHandler struct {
 	ctx        context.Context
-	crmService service.CRMService
+	crmService domain.CRMService
 	lanService network.LanService
 }
 
-func NewCRMHandler(crmService service.CRMService, lanService network.LanService) *CRMHandler {
+func NewCRMHandler(crmService domain.CRMService, lanService network.LanService) *CRMHandler {
 	return &CRMHandler{
 		crmService: crmService,
 		lanService: lanService,

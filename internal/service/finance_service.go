@@ -13,40 +13,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type FinanceService interface {
-	// Expense & Category Management
-	GetExpenses() ([]domain.Expense, error)
-	SaveExpense(e domain.Expense) error
-	DeleteExpense(id string) error
-	GetCategories() ([]domain.Category, error)
-	SaveCategory(c domain.Category) error
-	DeleteCategory(id string, force bool) error
-
-	// Preferences & PIN Management
-	GetPreferences() (*domain.AppPreferences, error)
-	UpdatePreferences(newPrefs domain.AppPreferences) error
-	VerifyAdminPin(pin string) (bool, error)
-
-	// Shift & Cash Register Management
-	OpenShift(staffID, staffName string, openingBalance domain.Amount) (*domain.Shift, error)
-	CloseShift(shiftID string, closingBalance domain.Amount, note string) (*domain.Shift, error)
-	GetActiveShift() (*domain.Shift, error)
-	AddCashMovement(shiftID, moveType, reason, staffID, staffName string, amount domain.Amount) (*domain.CashMovement, error)
-	GetShiftMovements(shiftID string) ([]domain.CashMovement, error)
-	GetShiftHistory(limit int) ([]domain.Shift, error)
-
-	// Purchase Orders (Procurement)
-	CreatePurchaseOrder(order domain.PurchaseOrder) (*domain.PurchaseOrder, error)
-	GetPurchaseOrders(status string, supplierID string) ([]domain.PurchaseOrder, error)
-	GetPurchaseOrder(id string) (*domain.PurchaseOrder, error)
-	UpdatePurchaseOrder(order domain.PurchaseOrder) error
-	DeletePurchaseOrder(id string) error
-	CancelPurchaseOrder(id string) error
-	ReceivePurchaseOrder(orderID string, items []domain.PurchaseOrderItem) error
-	PayPurchaseOrder(orderID string, amount domain.Amount, method string) error
-	GetPurchaseOrderStats() (map[string]interface{}, error)
-}
-
 type financeService struct {
 	expenseRepo     domain.ExpenseRepository
 	shiftRepo       domain.ShiftRepository
@@ -54,9 +20,10 @@ type financeService struct {
 	supplierRepo    domain.SupplierRepository
 	productRepo     domain.ProductRepository
 	preferencesRepo domain.PreferencesRepository
-	productService  ProductService
+	productService  domain.ProductService
 }
 
+// NewFinanceService creates a new instance of domain.FinanceService
 func NewFinanceService(
 	expenseRepo domain.ExpenseRepository,
 	shiftRepo domain.ShiftRepository,
@@ -64,8 +31,8 @@ func NewFinanceService(
 	supplierRepo domain.SupplierRepository,
 	productRepo domain.ProductRepository,
 	preferencesRepo domain.PreferencesRepository,
-	productService ProductService,
-) FinanceService {
+	productService domain.ProductService,
+) domain.FinanceService {
 	return &financeService{
 		expenseRepo:     expenseRepo,
 		shiftRepo:       shiftRepo,

@@ -2,11 +2,12 @@ package network
 
 import (
 	"beidar-desktop/internal/core/domain"
-	"beidar-desktop/internal/service"
 	"context"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // LanService coordinates server, client discovery, client management, and API calls.
@@ -50,13 +51,13 @@ type lanService struct {
 	ctx             context.Context
 	ctxMutex        sync.RWMutex
 	networkRepo     domain.NetworkRepository
-	productService  service.ProductService
-	saleService     service.SaleService
-	crmService      service.CRMService
-	financeService  service.FinanceService
-	statsService    service.StatsService
-	settingsService service.SettingsService
-	backupService   service.BackupService
+	productService  domain.ProductService
+	saleService     domain.SaleService
+	crmService      domain.CRMService
+	financeService  domain.FinanceService
+	statsService    domain.StatsService
+	settingsService domain.SettingsService
+	backupService   domain.BackupService
 
 	// Server state
 	server          *http.Server
@@ -86,13 +87,13 @@ type lanService struct {
 // NewLanService creates a new instance of LanService
 func NewLanService(
 	networkRepo domain.NetworkRepository,
-	productService service.ProductService,
-	saleService service.SaleService,
-	crmService service.CRMService,
-	financeService service.FinanceService,
-	statsService service.StatsService,
-	settingsService service.SettingsService,
-	backupService service.BackupService,
+	productService domain.ProductService,
+	saleService domain.SaleService,
+	crmService domain.CRMService,
+	financeService domain.FinanceService,
+	statsService domain.StatsService,
+	settingsService domain.SettingsService,
+	backupService domain.BackupService,
 ) LanService {
 	return &lanService{
 		networkRepo:      networkRepo,
@@ -113,4 +114,51 @@ func (s *lanService) Startup(ctx context.Context) {
 	s.ctxMutex.Lock()
 	s.ctx = ctx
 	s.ctxMutex.Unlock()
+
+	// Start background network connectivity checking loop
+	go s.startConnectivityBroadcaster(ctx)
+}
+
+func (s *lanService) startConnectivityBroadcaster(ctx context.Context) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	client := &http.Client{Timeout: 3 * time.Second}
+	lastStatus := false
+
+	// Initial check
+	online := checkOnlineStatus(client)
+	runtime.EventsEmit(ctx, "network-status", online)
+	lastStatus = online
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			online := checkOnlineStatus(client)
+			if online != lastStatus {
+				runtime.EventsEmit(ctx, "network-status", online)
+				lastStatus = online
+			}
+		}
+	}
+}
+
+func checkOnlineStatus(client *http.Client) bool {
+	// Simple HTTP HEAD request to check internet access
+	resp, err := client.Head("https://api.supabase.com")
+	if err == nil {
+		resp.Body.Close()
+		return true
+	}
+
+	// Fallback check
+	resp, err = client.Head("https://www.google.com")
+	if err == nil {
+		resp.Body.Close()
+		return true
+	}
+
+	return false
 }

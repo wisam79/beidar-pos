@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"beidar-desktop/internal/core/domain"
-	"beidar-desktop/internal/service"
 	"beidar-desktop/pkg/notification"
 	"beidar-desktop/pkg/updater"
 	"context"
@@ -11,11 +10,11 @@ import (
 // SettingsHandler handles Settings and System management requests for Wails
 type SettingsHandler struct {
 	ctx             context.Context
-	settingsService service.SettingsService
+	settingsService domain.SettingsService
 }
 
 // NewSettingsHandler creates a new instance of SettingsHandler
-func NewSettingsHandler(settingsService service.SettingsService) *SettingsHandler {
+func NewSettingsHandler(settingsService domain.SettingsService) *SettingsHandler {
 	return &SettingsHandler{
 		settingsService: settingsService,
 	}

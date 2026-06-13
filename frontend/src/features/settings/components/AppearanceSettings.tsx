@@ -13,12 +13,12 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             {/* Hero Header - Ultra Compact */}
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 text-text-main shadow-sm">
+            <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 text-text-main shadow-sm">
                 <div className="absolute top-0 right-0 p-1 opacity-10">
                     <Palette size={50} className="text-primary" />
                 </div>
                 <div className="relative z-10 flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 dark:bg-white/5 rounded-lg border border-primary/20 dark:border-white/10 text-primary">
+                    <div className="p-2 bg-primary/10 rounded-lg border border-primary/20 text-primary">
                         <Palette size={18} />
                     </div>
                     <div>
@@ -30,9 +30,9 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Main Appearance Controls */}
-                <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm">
+                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Monitor size={24} />
                         </div>
                         <h3 className="text-xl font-bold">إعدادات العرض</h3>
@@ -43,7 +43,7 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
                             <label className="block text-[11px] text-text-muted font-bold uppercase mb-2">حجم الخط</label>
                             <div className="relative">
                                 <select
-                                    className="w-full bg-surface-active/50 border border-border text-text-main rounded-xl py-3 px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold appearance-none cursor-pointer transition-all"
+                                    className="w-full bg-surface-active/50 border border-border text-text-main rounded-lg py-3 px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold appearance-none cursor-pointer transition-all"
                                     value={prefs.fontSize}
                                     onChange={e => handleChange('fontSize', e.target.value)}
                                     aria-label="حجم الخط"
@@ -62,7 +62,7 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
                             <label className="block text-[11px] text-text-muted font-bold uppercase mb-2">اللغة / Language</label>
                             <div className="relative">
                                 <select
-                                    className="w-full bg-surface-active/50 border border-border text-text-main rounded-xl py-3 px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold appearance-none cursor-pointer transition-all"
+                                    className="w-full bg-surface-active/50 border border-border text-text-main rounded-lg py-3 px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold appearance-none cursor-pointer transition-all"
                                     value={prefs.language || 'ar'}
                                     onChange={e => {
                                         const newLang = e.target.value;
@@ -83,9 +83,9 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
                 </div>
 
                 {/* Toggles Grid */}
-                <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm">
+                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Sparkles size={24} />
                         </div>
                         <h3 className="text-xl font-bold">التأثيرات والتفاعل</h3>

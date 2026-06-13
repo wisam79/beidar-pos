@@ -3,7 +3,6 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
-	"beidar-desktop/internal/service"
 	"context"
 	"fmt"
 )
@@ -11,12 +10,12 @@ import (
 // ProductHandler struct to bind to Wails
 type ProductHandler struct {
 	ctx            context.Context
-	productService service.ProductService
+	productService domain.ProductService
 	lanService     network.LanService
 }
 
 // NewProductHandler creates a new ProductHandler
-func NewProductHandler(productService service.ProductService, lanService network.LanService) *ProductHandler {
+func NewProductHandler(productService domain.ProductService, lanService network.LanService) *ProductHandler {
 	return &ProductHandler{
 		productService: productService,
 		lanService:     lanService,

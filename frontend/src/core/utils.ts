@@ -210,3 +210,14 @@ export const logger = {
     warn: (...args: unknown[]): void => { if (!IS_PRODUCTION) console.warn('[Beidar Warn]', ...args); },
     debug: (...args: unknown[]): void => { if (!IS_PRODUCTION) console.debug('[Beidar Debug]', ...args); },
 };
+
+/**
+ * Returns the current local date in YYYY-MM-DD format.
+ */
+export const getLocalDateString = (d: Date = new Date()): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+

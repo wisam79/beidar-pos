@@ -21,7 +21,7 @@ interface ScannedProductModalProps {
 const resolveImage = (img: string | undefined) => {
     if (!img) return null;
     if (img.startsWith('data') || img.startsWith('http')) return img;
-    if (img.includes('.')) return `http://localhost:48123/${img}`;
+    if (img.includes('.')) return `/local-image/${img}`;
     return null;
 };
 

@@ -11,19 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// ProductService defines the business logic for products
-type ProductService interface {
-	GetAllProducts() ([]domain.Product, error)
-	GetProductByID(id string) (*domain.Product, error)
-	CreateProduct(product *domain.Product) error
-	UpdateProduct(product *domain.Product) error
-	DeleteProduct(id string) error
-	SearchProducts(query string) ([]domain.Product, error)
-	GetStockMovements() ([]domain.StockMovement, error)
-	LogStockMovement(productID string, productName string, movementType string, qty float64, reason string) error
-	ClearCache()
-}
-
 type productService struct {
 	repo       domain.ProductRepository
 	cacheMu    sync.RWMutex
@@ -32,8 +19,8 @@ type productService struct {
 	lastUpdate time.Time
 }
 
-// NewProductService creates a new instance of ProductService
-func NewProductService(repo domain.ProductRepository) ProductService {
+// NewProductService creates a new instance of domain.ProductService
+func NewProductService(repo domain.ProductRepository) domain.ProductService {
 	return &productService{
 		repo:     repo,
 		cacheMap: make(map[string]domain.Product),

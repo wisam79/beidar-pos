@@ -175,7 +175,7 @@ export const AIChatWindow = ({ isOpen, onClose, contextData }: AIChatWindowProps
             {/* Floating Chat Window */}
             <div className="fixed right-6 top-6 bottom-6 w-[440px] z-[150] flex flex-col animate-in slide-in-from-right-5 duration-300">
                 {/* Glass Container */}
-                <div className="flex-1 flex flex-col bg-surface/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl shadow-black/30 overflow-hidden">
+                <div className="flex-1 flex flex-col bg-surface backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl shadow-black/30 overflow-hidden">
 
                     {/* Header with gradient */}
                     <div className="relative p-5 border-b border-white/10">

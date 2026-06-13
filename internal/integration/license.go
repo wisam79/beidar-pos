@@ -1044,7 +1044,7 @@ func restoreFromCompressed(data []byte) error {
 			_, _ = io.Copy(outFile, rc)
 			_ = os.Remove(backupPath)
 
-			if err := repository.InitDB(); err != nil {
+			if _, err := repository.InitDB(); err != nil {
 				return fmt.Errorf("فشل إعادة تهيئة قاعدة البيانات: %v", err)
 			}
 

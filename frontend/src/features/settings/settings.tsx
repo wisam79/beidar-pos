@@ -223,10 +223,10 @@ export const SettingsPage: React.FC = () => {
 
             <div className="flex gap-4 flex-1 min-h-0">
                 {/* Sidebar - Redesigned & Organized */}
-                <div className="w-56 xl:w-60 shrink-0 flex flex-col h-full bg-surface/95 border border-border/60 rounded-2xl p-3 shadow-xl shadow-black/5">
+                <div className="w-56 xl:w-60 shrink-0 flex flex-col h-full bg-surface border border-border rounded-lg p-3 shadow-xl shadow-black/5">
 
                     {/* Sidebar Header */}
-                    <div className="mb-3 pb-3 border-b border-border/50">
+                    <div className="mb-3 pb-3 border-b border-border">
                         <h1 className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-500 flex items-center gap-2">
                             ⚙️ الإعدادات
                         </h1>
@@ -237,9 +237,9 @@ export const SettingsPage: React.FC = () => {
                     <button
                         onClick={handleSave}
                         disabled={!hasChanges}
-                        className={`w-full mb-4 px-3 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 text-xs shadow-md ${hasChanges
+                        className={`w-full mb-4 px-3 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all duration-300 text-xs shadow-md ${hasChanges
                             ? 'bg-gradient-to-r from-primary to-emerald-400 text-black hover:scale-[1.02] active:scale-95 shadow-primary/30'
-                            : 'bg-surface/50 text-text-muted border border-border/50 cursor-not-allowed opacity-70'
+                            : 'bg-surface/50 text-text-muted border border-border cursor-not-allowed opacity-70'
                             }`}
                     >
                         <Save size={16} className={hasChanges ? 'animate-pulse' : ''} />
@@ -269,13 +269,13 @@ export const SettingsPage: React.FC = () => {
                     </div>
 
                     {/* Pro Badge - Bottom Footer */}
-                    <div className="pt-3 mt-auto border-t border-border/50">
+                    <div className="pt-3 mt-auto border-t border-border">
                         <div
                             onClick={(e) => e.detail === 5 && setShowDevDashboard(true)}
-                            className="relative bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/10 rounded-xl p-3 overflow-hidden group hover:border-amber-500/30 transition-all cursor-default"
+                            className="relative bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/10 rounded-lg p-3 overflow-hidden group hover:border-amber-500/30 transition-all cursor-default"
                         >
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center shadow-md shadow-amber-500/20 group-hover:scale-110 transition-transform duration-500">
+                                <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-md flex items-center justify-center shadow-md shadow-amber-500/20 group-hover:scale-110 transition-transform duration-500">
                                     <Sparkles size={14} className="text-black" />
                                 </div>
                                 <div>
@@ -288,7 +288,7 @@ export const SettingsPage: React.FC = () => {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 bg-surface/90 rounded-2xl border border-border shadow-sm overflow-hidden relative">
+                <div className="flex-1 bg-surface border border-border shadow-sm overflow-hidden relative">
                     <div className="absolute inset-0 overflow-y-auto custom-scrollbar p-5">
 
                         {activeTab === 'store' && (

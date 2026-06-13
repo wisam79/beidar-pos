@@ -304,7 +304,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                                         onClick={() => handleQuickCash(amt)}
                                         className={`py-2 rounded-lg text-[11px] font-bold font-mono transition-all active:scale-95 ${idx === 0 && total > 0
                                             ? 'bg-primary text-white'
-                                            : 'bg-bg border border-border text-text-muted hover:text-text-main'
+                                            : 'bg-surface-hover hover:bg-surface-active border border-border text-text-muted hover:text-text-main'
                                             }`}
                                     >
                                         {amt >= 1000 ? `${(amt / 1000).toFixed(amt % 1000 === 0 ? 0 : 1)}k` : amt}

@@ -6,6 +6,7 @@ import (
 	"beidar-desktop/internal/service"
 	"beidar-desktop/pkg/crashreporter"
 	"beidar-desktop/pkg/logger"
+	"beidar-desktop/pkg/secureconfig"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -261,10 +262,12 @@ func TestSettingsService_SupabaseAndUpdater(t *testing.T) {
 		} else {
 			os.Unsetenv("BEIDAR_SUPABASE_KEY")
 		}
+		secureconfig.ResetCache()
 	}()
 
 	os.Setenv("BEIDAR_SUPABASE_URL", mockServer.URL)
 	os.Setenv("BEIDAR_SUPABASE_KEY", "test-sb-key")
+	secureconfig.ResetCache()
 
 	// 4. Test FetchGlobalAIKeys
 	keys, err := s.FetchGlobalAIKeys()
@@ -278,11 +281,13 @@ func TestSettingsService_SupabaseAndUpdater(t *testing.T) {
 	// Test invalid JSON response from Supabase (FetchGlobalAIKeys error case)
 	// Temporarily point URL to an endpoint returning garbage
 	os.Setenv("BEIDAR_SUPABASE_URL", mockServer.URL+"/badpath")
+	secureconfig.ResetCache()
 	_, err = s.FetchGlobalAIKeys()
 	if err == nil {
 		t.Error("Expected FetchGlobalAIKeys to fail with 404 status from supabase")
 	}
 	os.Setenv("BEIDAR_SUPABASE_URL", mockServer.URL)
+	secureconfig.ResetCache()
 
 	// 5. Test SaveGlobalAIKeys
 	err = s.SaveGlobalAIKeys([]string{"key-alpha"}, "")

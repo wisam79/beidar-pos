@@ -11,28 +11,18 @@ import (
 	"github.com/google/uuid"
 )
 
-type CRMService interface {
-	GetCustomers() ([]domain.Customer, error)
-	SaveCustomer(c domain.Customer) error
-	DeleteCustomer(id string, force bool) error
-	SearchCustomers(query string) ([]domain.Customer, error)
-
-	GetSuppliers() ([]domain.Supplier, error)
-	SaveSupplier(s domain.Supplier) error
-	DeleteSupplier(id string, force bool) error
-}
-
 type crmService struct {
 	customerRepo domain.CustomerRepository
 	supplierRepo domain.SupplierRepository
 	productRepo  domain.ProductRepository
 }
 
+// NewCRMService creates a new instance of domain.CRMService
 func NewCRMService(
 	customerRepo domain.CustomerRepository,
 	supplierRepo domain.SupplierRepository,
 	productRepo domain.ProductRepository,
-) CRMService {
+) domain.CRMService {
 	return &crmService{
 		customerRepo: customerRepo,
 		supplierRepo: supplierRepo,

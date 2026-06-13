@@ -3,17 +3,16 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
-	"beidar-desktop/internal/service"
 	"context"
 )
 
 type DiscountHandler struct {
 	ctx             context.Context
-	discountService service.DiscountService
+	discountService domain.DiscountService
 	lanService      network.LanService
 }
 
-func NewDiscountHandler(discountService service.DiscountService, lanService network.LanService) *DiscountHandler {
+func NewDiscountHandler(discountService domain.DiscountService, lanService network.LanService) *DiscountHandler {
 	return &DiscountHandler{
 		discountService: discountService,
 		lanService:      lanService,

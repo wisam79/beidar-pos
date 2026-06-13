@@ -9,24 +9,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type DiscountService interface {
-	GetDiscounts() ([]domain.Discount, error)
-	GetActiveDiscounts() ([]domain.Discount, error)
-	GetDiscount(id string) (*domain.Discount, error)
-	CreateDiscount(d domain.Discount) (*domain.Discount, error)
-	UpdateDiscount(d domain.Discount) error
-	DeleteDiscount(id string) error
-	ToggleDiscountStatus(id string) error
-	ValidateCoupon(code string) (*domain.Discount, error)
-	ApplyDiscount(id string) error
-	CalculateDiscountAmount(discountID string, subtotal domain.Amount, itemsCount int) (domain.Amount, error)
-}
-
 type discountService struct {
 	discountRepo domain.DiscountRepository
 }
 
-func NewDiscountService(discountRepo domain.DiscountRepository) DiscountService {
+// NewDiscountService creates a new instance of domain.DiscountService
+func NewDiscountService(discountRepo domain.DiscountRepository) domain.DiscountService {
 	return &discountService{discountRepo: discountRepo}
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Mail, Key, User, ArrowRight, Loader2, Store, AlertTriangle, Server, Cloud, Sparkles, Shield, Zap } from 'lucide-react';
-import { api } from '../core/api';
+import { api, desktopApi } from '../core/api';
 
 interface CloudLoginScreenProps {
     onSuccess: () => void;
@@ -120,8 +120,8 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
             const res = await api.cloud.recoverPassword(email);
             if (res && res.success) {
                 setError(''); // clear error
-                // Show success message (using error state for now with green color check or just alert)
-                alert(res.message);
+                // Show success message using native system notification
+                desktopApi.notifications.show("استعادة الحساب", res.message, "info");
                 setMode('login'); // Return to login
             } else {
                 setError(res?.message || 'فشل إرسال رابط الاستعادة');

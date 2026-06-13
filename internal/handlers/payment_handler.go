@@ -2,16 +2,15 @@ package handlers
 
 import (
 	"beidar-desktop/internal/core/domain"
-	"beidar-desktop/internal/service"
 	"context"
 )
 
 type PaymentHandler struct {
 	ctx            context.Context
-	paymentService service.PaymentService
+	paymentService domain.PaymentService
 }
 
-func NewPaymentHandler(paymentService service.PaymentService) *PaymentHandler {
+func NewPaymentHandler(paymentService domain.PaymentService) *PaymentHandler {
 	return &PaymentHandler{
 		paymentService: paymentService,
 	}

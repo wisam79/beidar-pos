@@ -6,7 +6,7 @@ import {
     BarChart3, ArrowUpRight, ArrowDownRight, Package, AlertTriangle,
     Calendar, Filter, FileText, UserCheck, Clock, Receipt, LucideIcon
 } from 'lucide-react';
-import { formatCurrency } from '../../core/utils';
+import { formatCurrency, getLocalDateString } from '../../core/utils';
 import { PageHeader, Card, SpotlightCard } from '../../components/ui';
 import { PageShell, LoadingState, TabNav, SegmentedControl } from '../../components/blocks';
 import { SalesAreaChart } from '../../components/charts';
@@ -133,7 +133,7 @@ export const ReportsPage: React.FC = () => {
                     .filter((s) => new Date(s.date).getMonth() === d.getMonth() && new Date(s.date).getFullYear() === d.getFullYear())
                     .reduce((sum, s) => sum + s.total, 0);
             } else {
-                const str = d.toISOString().split('T')[0];
+                const str = getLocalDateString(d);
                 val = completedSales.filter((s) => s.date.startsWith(str)).reduce((sum, s) => sum + s.total, 0);
             }
             return { label, value: val, formattedValue: formatCurrency(val, prefs?.currency) };
@@ -360,7 +360,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
     return (
         <div className="h-full grid grid-cols-1 lg:grid-cols-4 gap-4 overflow-y-auto custom-scrollbar pb-4 animate-in fade-in duration-300">
             {/* KPI Cards - Top Row with enhanced styling */}
-            <div className="bg-surface border border-border/50 rounded-2xl p-5 hover:border-primary/30 transition-all group shadow-sm">
+            <div className="bg-surface border border-border rounded-lg p-5 hover:border-primary/30 transition-all group shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-bg/60 dark:bg-white/5 text-text-muted group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-all duration-200">
                         <Wallet size={20} />
@@ -376,7 +376,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                 </div>
             </div>
 
-            <div className="bg-surface border border-border/50 rounded-2xl p-5 hover:border-emerald-500/30 transition-all group shadow-sm">
+            <div className="bg-surface border border-border rounded-lg p-5 hover:border-emerald-500/30 transition-all group shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Activity size={20} className="text-emerald-500" />
@@ -390,7 +390,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                 </div>
             </div>
 
-            <div className="bg-surface border border-border/50 rounded-2xl p-5 hover:border-red-500/30 transition-all group shadow-sm">
+            <div className="bg-surface border border-border rounded-lg p-5 hover:border-red-500/30 transition-all group shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                         <TrendingDown size={20} className="text-red-500" />
@@ -401,7 +401,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                 <p className="text-xs text-text-muted mt-2">{expenseRatio}% من الدخل</p>
             </div>
 
-            <div className="bg-surface border border-border/50 rounded-2xl p-5 hover:border-primary/30 transition-all group shadow-sm">
+            <div className="bg-surface border border-border rounded-lg p-5 hover:border-primary/30 transition-all group shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-bg/60 dark:bg-white/5 text-text-muted group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-all duration-200">
                         <ShoppingBag size={20} />
@@ -413,10 +413,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
             </div>
 
             {/* Revenue Chart - Enhanced */}
-            <SpotlightCard className="lg:col-span-2 bg-surface p-6 rounded-2xl border border-border flex flex-col min-h-[300px]" spotlightColor="rgba(16, 185, 129, 0.08)">
+            <SpotlightCard className="lg:col-span-2 bg-surface p-6 rounded-lg border border-border flex flex-col min-h-[300px]" spotlightColor="rgba(16, 185, 129, 0.08)">
                 <div className="flex justify-between items-start mb-5 shrink-0">
                     <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center shadow-lg shadow-primary/20">
+                        <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center shadow-lg shadow-primary/20">
                             <TrendingUp size={26} className="text-white" />
                         </div>
                         <div>
@@ -448,7 +448,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                             <RefreshCw size={14} className={isForecasting ? 'animate-spin' : ''} />
                         </button>
                     </div>
-                    <div className="flex-1 flex items-center justify-center bg-bg/50 rounded-xl p-4 border border-border/50">
+                    <div className="flex-1 flex items-center justify-center bg-bg/50 rounded-lg p-4 border border-border">
                         {forecast ? (
                             <p className="text-text-main text-sm leading-relaxed">{forecast}</p>
                         ) : (
@@ -492,15 +492,15 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                     </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-bg/50 border border-border rounded-2xl p-4 text-center hover:bg-bg transition-colors">
+                    <div className="bg-bg/50 border border-border rounded-lg p-4 text-center hover:bg-bg transition-colors">
                         <p className="text-xs text-text-muted font-bold mb-2">إيرادات</p>
                         <p className="text-text-main font-black text-2xl font-mono">{formatCurrency(revenue, currency).replace(currency, '')}</p>
                     </div>
-                    <div className="bg-bg/50 border border-border rounded-2xl p-4 text-center hover:bg-bg transition-colors">
+                    <div className="bg-bg/50 border border-border rounded-lg p-4 text-center hover:bg-bg transition-colors">
                         <p className="text-xs text-text-muted font-bold mb-2">تكاليف</p>
                         <p className="text-text-main font-bold text-xl font-mono">{formatCurrency(cogs + totalExpenses, currency).replace(currency, '')}</p>
                     </div>
-                    <div className="bg-bg/50 border border-border rounded-2xl p-4 text-center hover:bg-bg transition-colors">
+                    <div className="bg-bg/50 border border-border rounded-lg p-4 text-center hover:bg-bg transition-colors">
                         <p className="text-xs text-text-muted font-bold mb-2">صافي الربح</p>
                         <p className={`font-black text-2xl font-mono ${netProfit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>{formatCurrency(netProfit, currency).replace(currency, '')}</p>
                     </div>
@@ -578,8 +578,8 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
         <div className="h-full flex flex-col gap-4 animate-in fade-in duration-300">
             {/* Stats Row - Unified */}
             <div className="grid grid-cols-3 gap-3 shrink-0">
-                <div className="bg-surface border border-border rounded-2xl p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                <div className="bg-surface border border-border rounded-lg p-4 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
                         <Receipt size={22} className="text-blue-500" />
                     </div>
                     <div>
@@ -587,8 +587,8 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
                         <p className="text-blue-500 font-black text-xl font-mono">{formatCurrency(stats.total, currency).replace(currency, '')}</p>
                     </div>
                 </div>
-                <div className="bg-surface border border-border rounded-2xl p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                <div className="bg-surface border border-border rounded-lg p-4 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
                         <FileText size={22} className="text-emerald-500" />
                     </div>
                     <div>
@@ -596,8 +596,8 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
                         <p className="text-emerald-500 font-black text-xl font-mono">{stats.count}</p>
                     </div>
                 </div>
-                <div className="bg-surface border border-border rounded-2xl p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                <div className="bg-surface border border-border rounded-lg p-4 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
                         <Activity size={22} className="text-purple-500" />
                     </div>
                     <div>
@@ -915,9 +915,9 @@ const StaffReportTab: React.FC<StaffReportTabProps> = ({ staffList, sales, curre
                 {staffStats.map((s, i) => {
                     const percentage = totalSalesValue > 0 ? (s.totalSales / totalSalesValue) * 100 : 0;
                     return (
-                        <div key={s.id} className="bg-surface border border-border rounded-2xl p-4 hover:border-primary/30 transition-colors">
+                        <div key={s.id} className="bg-surface border border-border rounded-lg p-4 hover:border-primary/30 transition-colors">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-gray-400' : i === 2 ? 'bg-orange-600' : 'bg-surface-hover text-text-muted'}`}>
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-gray-400' : i === 2 ? 'bg-orange-600' : 'bg-surface-hover text-text-muted'}`}>
                                     {i + 1}
                                 </div>
                                 <div>
@@ -968,7 +968,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
     }
 
     const ChangeIndicator = ({ value, label }: { value: number; label: string }) => (
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-xl ${value >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${value >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
             {value >= 0 ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
             <span className="font-bold">{Math.abs(value).toFixed(1)}%</span>
             <span className="text-xs opacity-70">{label}</span>
@@ -976,9 +976,9 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
     );
 
     const MonthCard = ({ month, isCurrent }: { month: MonthData; isCurrent: boolean }) => (
-        <div className={`bg-surface border rounded-2xl p-6 ${isCurrent ? 'border-primary/50 shadow-lg shadow-primary/10' : 'border-border'}`}>
+        <div className={`bg-surface border rounded-lg p-6 ${isCurrent ? 'border-primary/50 shadow-lg shadow-primary/10' : 'border-border'}`}>
             <div className="flex items-center gap-3 mb-6">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isCurrent ? 'bg-gradient-to-br from-primary to-emerald-400' : 'bg-bg'}`}>
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isCurrent ? 'bg-gradient-to-br from-primary to-emerald-400' : 'bg-bg'}`}>
                     <Calendar size={24} className={isCurrent ? 'text-white' : 'text-text-muted'} />
                 </div>
                 <div>
@@ -988,7 +988,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
             </div>
 
             <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-bg rounded-xl">
+                <div className="flex justify-between items-center p-3 bg-bg rounded-lg">
                     <div className="flex items-center gap-2">
                         <Wallet size={18} className="text-blue-500" />
                         <span className="text-text-muted text-sm">الإيرادات</span>
@@ -996,7 +996,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
                     <span className="text-blue-500 font-black text-lg font-mono">{formatCurrency(month.revenue, currency).replace(currency, '')}</span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-bg rounded-xl">
+                <div className="flex justify-between items-center p-3 bg-bg rounded-lg">
                     <div className="flex items-center gap-2">
                         <Activity size={18} className="text-emerald-500" />
                         <span className="text-text-muted text-sm">صافي الربح</span>
@@ -1006,7 +1006,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
                     </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-bg rounded-xl">
+                <div className="flex justify-between items-center p-3 bg-bg rounded-lg">
                     <div className="flex items-center gap-2">
                         <Receipt size={18} className="text-purple-500" />
                         <span className="text-text-muted text-sm">عدد الطلبات</span>
@@ -1014,7 +1014,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
                     <span className="text-purple-500 font-black text-lg font-mono">{month.orders}</span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-bg rounded-xl">
+                <div className="flex justify-between items-center p-3 bg-bg rounded-lg">
                     <div className="flex items-center gap-2">
                         <ShoppingBag size={18} className="text-amber-500" />
                         <span className="text-text-muted text-sm">متوسط الطلب</span>
@@ -1022,7 +1022,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
                     <span className="text-amber-500 font-black text-lg font-mono">{formatCurrency(month.avgOrder, currency).replace(currency, '')}</span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-bg rounded-xl">
+                <div className="flex justify-between items-center p-3 bg-bg rounded-lg">
                     <div className="flex items-center gap-2">
                         <TrendingDown size={18} className="text-red-500" />
                         <span className="text-text-muted text-sm">المصروفات</span>
@@ -1049,7 +1049,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
             </div>
 
             {/* Visual Comparison Bar */}
-            <div className="mt-6 bg-surface border border-border rounded-2xl p-6">
+            <div className="mt-6 bg-surface border border-border rounded-lg p-6">
                 <h3 className="text-text-main font-black mb-4 flex items-center gap-2">
                     <BarChart3 size={20} className="text-primary" />
                     مقارنة الإيرادات
@@ -1060,9 +1060,9 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
                             <span className="text-text-muted">{data.currentMonth.label}</span>
                             <span className="text-blue-500 font-mono font-bold">{formatCurrency(data.currentMonth.revenue, currency)}</span>
                         </div>
-                        <div className="h-8 bg-bg rounded-xl overflow-hidden">
+                        <div className="h-8 bg-bg rounded-lg overflow-hidden">
                             <div
-                                className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-xl transition-all duration-700"
+                                className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-lg transition-all duration-700"
                                 style={{ width: `${Math.min(100, (data.currentMonth.revenue / Math.max(data.currentMonth.revenue, data.previousMonth.revenue)) * 100)}%` }}
                             />
                         </div>

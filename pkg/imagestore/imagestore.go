@@ -3,11 +3,9 @@ package imagestore
 import (
 	"encoding/base64"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 const (
@@ -20,7 +18,6 @@ const (
 
 var (
 	imageStoreDir string // Computed at runtime
-	imageServer   *http.Server
 )
 
 // GetImageStoreDir returns the path to the image store directory
@@ -42,56 +39,17 @@ func GetImageStoreDir() (string, error) {
 	return imageStoreDir, nil
 }
 
-// StartImageServer starts a local HTTP server to serve images
+// StartImageServer is an empty stub because images are served natively via Wails AssetHandler
 func StartImageServer() error {
-	dir, err := GetImageStoreDir()
-	if err != nil {
-		return fmt.Errorf("failed to get image store dir: %v", err)
-	}
-
-	// Create a file server handler with CORS for Wails
-	fs := http.FileServer(http.Dir(dir))
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		w.Header().Set("Cache-Control", "public, max-age=31536000") // 1 year cache
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		fs.ServeHTTP(w, r)
-	})
-
-	imageServer = &http.Server{
-		Addr:         "127.0.0.1:" + ImageServerPort,
-		Handler:      mux,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-
-	go func() {
-		fmt.Printf("🖼️ Image server started on http://127.0.0.1:%s\n", ImageServerPort)
-		if err := imageServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Printf("Image server error: %v\n", err)
-		}
-	}()
-
+	fmt.Println("🖼️ Images will be served natively via Wails Custom AssetHandler")
 	return nil
 }
 
-// StopImageServer gracefully shuts down the image server
+// StopImageServer is an empty stub because images are served natively via Wails AssetHandler
 func StopImageServer() {
-	if imageServer != nil {
-		_ = imageServer.Close()
-	}
 }
 
-// GetImageURL returns the full URL for an image filename
+// GetImageURL returns the local Wails asset path for an image filename
 func GetImageURL(filename string) string {
 	if filename == "" {
 		return ""
@@ -102,7 +60,7 @@ func GetImageURL(filename string) string {
 	if len(filename) < 10 && !strings.Contains(filename, ".") {
 		return filename
 	}
-	return fmt.Sprintf("http://127.0.0.1:%s/%s", ImageServerPort, filename)
+	return "/local-image/" + filename
 }
 
 // SaveImageFromBase64 decodes a Base64 image and saves it to disk

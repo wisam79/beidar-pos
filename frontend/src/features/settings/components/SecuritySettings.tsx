@@ -26,12 +26,12 @@ export const SecuritySettings = ({
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             {/* Hero Header - Ultra Compact */}
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 text-text-main shadow-sm">
+            <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 text-text-main shadow-sm">
                 <div className="absolute top-0 right-0 p-1 opacity-10">
                     <ShieldCheck size={50} className="text-primary" />
                 </div>
                 <div className="relative z-10 flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 dark:bg-white/5 rounded-lg border border-primary/20 dark:border-white/10 text-primary">
+                    <div className="p-2 bg-primary/10 rounded-lg border border-primary/20 text-primary">
                         <ShieldCheck size={18} />
                     </div>
                     <div>
@@ -44,9 +44,9 @@ export const SecuritySettings = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* Access Control & PIN */}
-                <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm">
+                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Lock size={24} />
                         </div>
                         <h3 className="text-xl font-bold">حماية الوصول</h3>
@@ -76,9 +76,9 @@ export const SecuritySettings = ({
                 </div>
 
                 {/* Automation & Backups */}
-                <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm">
+                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Clock size={24} />
                         </div>
                         <h3 className="text-xl font-bold">النسخ الاحتياطي التلقائي</h3>
@@ -95,9 +95,9 @@ export const SecuritySettings = ({
 
 
                 {/* Staff Management */}
-                <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm flex flex-col justify-between">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Users size={24} />
                         </div>
                         <h3 className="text-xl font-bold">الموظفين والصلاحيات</h3>
@@ -110,10 +110,10 @@ export const SecuritySettings = ({
 
                         <button
                             onClick={openStaffManager}
-                            className="w-full mt-auto flex items-center justify-between p-5 bg-surface/50 border border-border hover:border-primary/30 rounded-2xl hover:shadow-lg hover:shadow-primary/5 transition-all group cursor-pointer hover:bg-surface-hover"
+                            className="w-full mt-auto flex items-center justify-between p-5 bg-surface/50 border border-border hover:border-primary/30 rounded-lg hover:shadow-lg hover:shadow-primary/5 transition-all group cursor-pointer hover:bg-surface-hover"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-primary/10 dark:bg-white/5 flex items-center justify-center text-primary border border-primary/20 dark:border-white/10 group-hover:scale-110 transition-transform">
+                                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:scale-110 transition-transform">
                                     <Users size={24} />
                                 </div>
                                 <div className="text-right">
@@ -136,9 +136,9 @@ export const SecuritySettings = ({
                 {/* Export */}
                 <button
                     onClick={onExportBackup}
-                    className="flex items-center gap-4 p-6 bg-surface border border-border rounded-3xl hover:border-primary/50 hover:bg-primary/5 transition-all group text-right shadow-sm hover:shadow-md"
+                    className="flex items-center gap-4 p-6 bg-surface border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all group text-right shadow-sm hover:shadow-md"
                 >
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                         <Download size={28} />
                     </div>
                     <div className="flex-1">
@@ -150,9 +150,9 @@ export const SecuritySettings = ({
                 {/* Import */}
                 <button
                     onClick={onRestoreBackup}
-                    className="flex items-center gap-4 p-6 bg-surface border border-border rounded-3xl hover:border-primary/50 hover:bg-primary/5 transition-all group text-right shadow-sm hover:shadow-md"
+                    className="flex items-center gap-4 p-6 bg-surface border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all group text-right shadow-sm hover:shadow-md"
                 >
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                         <Upload size={28} />
                     </div>
                     <div className="flex-1">
@@ -163,7 +163,7 @@ export const SecuritySettings = ({
             </div>
 
             {/* Danger Zone */}
-            <div className="mt-8 bg-red-500/5 rounded-3xl border border-red-500/20 p-8 relative overflow-hidden">
+            <div className="mt-8 bg-red-500/5 rounded-lg border border-red-500/20 p-8 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/50 to-transparent opacity-50" />
 
                 <div className="flex flex-col md:flex-row items-center gap-8">
@@ -178,7 +178,7 @@ export const SecuritySettings = ({
 
                     <button
                         onClick={onResetDatabase}
-                        className="flex-shrink-0 flex items-center gap-4 px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl shadow-lg shadow-red-500/20 hover:shadow-red-600/30 transition-all transform hover:scale-[1.02] active:scale-95"
+                        className="flex-shrink-0 flex items-center gap-4 px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg shadow-red-500/20 hover:shadow-red-600/30 transition-all transform hover:scale-[1.02] active:scale-95"
                     >
                         <Trash2 size={24} />
                         <div className="text-right">

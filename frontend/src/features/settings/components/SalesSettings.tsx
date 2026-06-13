@@ -15,12 +15,12 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             {/* Hero Header - Ultra Compact */}
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 text-text-main shadow-sm">
+            <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 text-text-main shadow-sm">
                 <div className="absolute top-0 right-0 p-1 opacity-10">
                     <CreditCard size={50} className="text-primary" />
                 </div>
                 <div className="relative z-10 flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 dark:bg-white/5 rounded-lg border border-primary/20 dark:border-white/10 text-primary">
+                    <div className="p-2 bg-primary/10 rounded-lg border border-primary/20 text-primary">
                         <CreditCard size={18} />
                     </div>
                     <div>
@@ -34,9 +34,9 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* General Sales Behavior */}
-                <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm">
+                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Zap size={24} />
                         </div>
                         <h3 className="text-xl font-bold">سلوك البيع</h3>
@@ -67,9 +67,9 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
                 </div>
 
                 {/* Print Configuration */}
-                <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm md:row-span-2">
+                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm md:row-span-2">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Printer size={24} />
                         </div>
                         <h3 className="text-xl font-bold">إعدادات الطباعة</h3>
@@ -77,13 +77,13 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
 
                     <div className="space-y-4">
                         {/* Auto Print Toggle */}
-                        <div className="flex items-center justify-between p-4 bg-surface rounded-xl border border-border hover:border-primary/30 transition-colors">
+                        <div className="flex items-center justify-between p-4 bg-surface rounded-lg border border-border hover:border-primary/30 transition-colors">
                             <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${prefs.autoPrint ? 'bg-primary text-black' : 'bg-gray-200 dark:bg-gray-700 text-text-muted'} transition-colors`}>
+                                <div className={`p-2 rounded-md ${prefs.autoPrint ? 'bg-primary text-black' : 'bg-gray-200 dark:bg-gray-700 text-text-muted'} transition-colors`}>
                                     <Printer size={18} />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-sm">طباية تلقائية</p>
+                                    <p className="font-bold text-sm">طباعة تلقائية</p>
                                     <p className="text-[10px] text-text-muted">طباعة الفاتورة مباشرة بعد البيع</p>
                                 </div>
                             </div>
@@ -99,14 +99,14 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
                             </label>
                         </div>
 
-                        <div className="p-4 bg-surface rounded-xl border border-border">
+                        <div className="p-4 bg-surface rounded-lg border border-border">
                             <label className="text-[10px] font-bold text-text-muted block mb-3 uppercase tracking-wider">عدد النسخ</label>
                             <div className="flex items-center gap-2">
                                 {[1, 2, 3].map(n => (
                                     <button
                                         key={n}
                                         onClick={() => handleChange('printCopies', n)}
-                                        className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all relative overflow-hidden ${(prefs.printCopies || 1) === n
+                                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all relative overflow-hidden ${(prefs.printCopies || 1) === n
                                             ? 'bg-primary text-black shadow-lg shadow-primary/20'
                                             : 'bg-surface-active text-text-muted hover:text-text-main'}`}
                                     >
@@ -116,18 +116,18 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
                             </div>
                         </div>
 
-                        <div className="p-4 bg-surface rounded-xl border border-border">
+                        <div className="p-4 bg-surface rounded-lg border border-border">
                             <label className="text-[10px] font-bold text-text-muted block mb-3 uppercase tracking-wider">تنسيق الطباعة</label>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => handleChange('autoPrintFormat', 'thermal')}
-                                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${(prefs.autoPrintFormat || 'thermal') === 'thermal' ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'bg-surface-active text-text-muted hover:text-text-main'}`}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${(prefs.autoPrintFormat || 'thermal') === 'thermal' ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'bg-surface-active text-text-muted hover:text-text-main'}`}
                                 >
                                     حراري (Thermal)
                                 </button>
                                 <button
                                     onClick={() => handleChange('autoPrintFormat', 'a4')}
-                                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${prefs.autoPrintFormat === 'a4' ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'bg-surface-active text-text-muted hover:text-text-main'}`}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${prefs.autoPrintFormat === 'a4' ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'bg-surface-active text-text-muted hover:text-text-main'}`}
                                 >
                                     A4 عادي
                                 </button>
@@ -154,16 +154,16 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
                 </div>
 
                 {/* Printer Assignment */}
-                <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm">
+                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Tag size={24} />
                         </div>
                         <h3 className="text-xl font-bold">تعيين الطابعات</h3>
                     </div>
 
                     <div className="space-y-4">
-                        <div className="p-4 bg-surface rounded-xl border border-border">
+                        <div className="p-4 bg-surface rounded-lg border border-border">
                             <label className="text-[10px] font-bold text-text-muted block mb-2">طابعة الفواتير</label>
                             <input
                                  type="text"
@@ -173,7 +173,7 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
                                 className="w-full bg-surface-active/50 border border-border rounded-lg px-3 py-2 text-sm text-text-main outline-none focus:border-primary transition-colors"
                             />
                         </div>
-                        <div className="p-4 bg-surface rounded-xl border border-border">
+                        <div className="p-4 bg-surface rounded-lg border border-border">
                             <label className="text-[10px] font-bold text-text-muted block mb-2">طابعة الملصقات (Barcode)</label>
                             <input
                                 type="text"
@@ -190,14 +190,14 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
             {/* Discounts Banner */}
             <div
                 onClick={() => setShowDiscountManager(true)}
-                className="group relative overflow-hidden bg-surface/50 border border-border hover:border-primary/30 rounded-3xl p-6 text-text-main cursor-pointer shadow-sm transform hover:scale-[1.01] transition-all duration-300 hover:bg-surface-hover"
+                className="group relative overflow-hidden bg-surface/50 border border-border hover:border-primary/30 rounded-lg p-6 text-text-main cursor-pointer shadow-sm transform hover:scale-[1.01] transition-all duration-300 hover:bg-surface-hover"
             >
                 <div className="absolute top-0 left-0 p-4 opacity-10">
                     <Tag size={120} className="text-primary" />
                 </div>
                 <div className="relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-6">
-                        <div className="p-4 bg-primary/10 dark:bg-white/5 rounded-2xl border border-primary/20 dark:border-white/10 text-primary group-hover:rotate-12 transition-transform duration-300">
+                        <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-primary group-hover:rotate-12 transition-transform duration-300">
                             <Tag size={32} />
                         </div>
                         <div>

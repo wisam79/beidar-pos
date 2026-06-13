@@ -204,7 +204,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                     </div>
 
                     {/* Card */}
-                    <div className="bg-surface/80 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+                    <div className="bg-surface backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
 
                         {/* Staff Selection Mode */}
                         {mode === 'select' && (
@@ -218,7 +218,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                             <button
                                                 key={staff.id}
                                                 onClick={() => handleSelectStaff(staff)}
-                                                className="w-full flex items-center gap-4 p-4 bg-bg/50 rounded-2xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                                                className="w-full flex items-center gap-4 p-4 bg-black/10 dark:bg-white/[0.02] rounded-2xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
                                             >
                                                 <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-bold text-lg">
                                                     {staff.name.charAt(0)}
@@ -271,7 +271,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                             key={i}
                                             className={`w-12 h-14 rounded-2xl border-2 flex items-center justify-center text-2xl font-bold transition-all duration-200 ${password.length > i
                                                 ? 'border-primary bg-primary/20 text-primary scale-110'
-                                                : 'border-border bg-bg text-text-muted'
+                                                : 'border-border bg-surface-hover text-text-muted'
                                                 }`}
                                         >
                                             {password[i] ? '●' : ''}
@@ -327,7 +327,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                                 }
                                             }}
                                             disabled={loading}
-                                            className="h-14 rounded-xl bg-bg border border-border hover:border-primary hover:bg-primary/10 text-text-main text-xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                                            className="h-14 rounded-xl bg-surface-hover border border-border hover:border-primary hover:bg-primary/10 text-text-main text-xl font-bold transition-all active:scale-95 disabled:opacity-50"
                                         >
                                             {num}
                                         </button>
@@ -366,7 +366,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                             }
                                         }}
                                         disabled={loading}
-                                        className="h-14 rounded-xl bg-bg border border-border hover:border-primary hover:bg-primary/10 text-text-main text-xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                                        className="h-14 rounded-xl bg-surface-hover border border-border hover:border-primary hover:bg-primary/10 text-text-main text-xl font-bold transition-all active:scale-95 disabled:opacity-50"
                                     >
                                         0
                                     </button>
@@ -414,7 +414,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                             key={i}
                                             className={`w-12 h-14 rounded-2xl border-2 flex items-center justify-center text-2xl font-bold transition-all duration-200 ${pin.length > i
                                                 ? 'border-primary bg-primary/20 text-primary scale-110'
-                                                : 'border-border bg-bg text-text-muted'
+                                                : 'border-border bg-surface-hover text-text-muted'
                                                 }`}
                                         >
                                             {pin[i] ? '●' : ''}
@@ -446,7 +446,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                                 }
                                             }}
                                             disabled={loading}
-                                            className="h-14 rounded-xl bg-bg border border-border hover:border-primary hover:bg-primary/10 text-text-main text-xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                                            className="h-14 rounded-xl bg-surface-hover border border-border hover:border-primary hover:bg-primary/10 text-text-main text-xl font-bold transition-all active:scale-95 disabled:opacity-50"
                                         >
                                             {num}
                                         </button>
@@ -474,7 +474,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                             }
                                         }}
                                         disabled={loading}
-                                        className="h-14 rounded-xl bg-bg border border-border hover:border-primary hover:bg-primary/10 text-text-main text-xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                                        className="h-14 rounded-xl bg-surface-hover border border-border hover:border-primary hover:bg-primary/10 text-text-main text-xl font-bold transition-all active:scale-95 disabled:opacity-50"
                                     >
                                         0
                                     </button>

@@ -6,24 +6,13 @@ import (
 	"fmt"
 )
 
-// PrintService defines business logic for printing operations
-type PrintService interface {
-	GenerateInvoicePDFToPath(saleID string, format string, savePath string) (string, error)
-	GenerateQRCode(data string, size int) (string, error)
-	GetAvailablePrinters() ([]domain.PrinterInfo, error)
-	GetDefaultPrinter() (string, error)
-	PrintReceiptDirect(printerName, storeName string, items []domain.ReceiptItem, total float64, currency string) error
-	TestPrinter(printerName string) error
-	PrintBitmapReceipt(printerName, base64Image string) error
-}
-
 type printService struct {
 	saleRepo        domain.SaleRepository
 	preferencesRepo domain.PreferencesRepository
 }
 
-// NewPrintService creates a new instance of PrintService
-func NewPrintService(saleRepo domain.SaleRepository, preferencesRepo domain.PreferencesRepository) PrintService {
+// NewPrintService creates a new instance of domain.PrintService
+func NewPrintService(saleRepo domain.SaleRepository, preferencesRepo domain.PreferencesRepository) domain.PrintService {
 	return &printService{
 		saleRepo:        saleRepo,
 		preferencesRepo: preferencesRepo,

@@ -1,5 +1,6 @@
 import { desktopApi } from "./api";
 import { Product } from "./types";
+import { getLocalDateString } from "./utils";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🔒 AI USAGE LIMITS - Daily quota per user
@@ -14,7 +15,7 @@ interface AIUsageData {
 }
 
 function getTodayKey(): string {
-  return new Date().toISOString().split('T')[0];
+  return getLocalDateString();
 }
 
 function getUsageData(): AIUsageData {

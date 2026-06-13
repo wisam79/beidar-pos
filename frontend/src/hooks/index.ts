@@ -2,7 +2,6 @@
 // 📚 Hooks Index - Re-export all hooks for easy importing
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { useCart } from './useCart';
 export { useProducts, useInvalidateProducts } from './useProducts';
 export { useCustomers, useInvalidateCustomers } from './useCustomers';
 export { useParkedSales } from './useParkedSales';

@@ -6,9 +6,40 @@ import "errors"
 
 type GitHubRelease struct{}
 type GitHubAsset struct{}
-type UpdateInfo struct{}
-type UpdateStatus struct{}
-type UpdateConfig struct{}
+
+type UpdateInfo struct {
+	Version         string `json:"version"`
+	DownloadURL     string `json:"download_url"`
+	ReleaseNotes    string `json:"release_notes"`
+	Mandatory       bool   `json:"mandatory"`
+	Size            int64  `json:"size"`
+	SizeFormatted   string `json:"size_formatted"`
+	Checksum        string `json:"checksum"`
+	ReleaseDate     string `json:"release_date"`
+	UpdateAvailable bool   `json:"update_available"`
+	IsPrerelease    bool   `json:"is_prerelease"`
+}
+
+type UpdateStatus struct {
+	Checking        bool        `json:"checking"`
+	Downloading     bool        `json:"downloading"`
+	Installing      bool        `json:"installing"`
+	Progress        float64     `json:"progress"`
+	Speed           string      `json:"speed"`
+	ETA             string      `json:"eta"`
+	Error           string      `json:"error"`
+	Stage           string      `json:"stage"`
+	UpdateAvailable bool        `json:"updateAvailable"`
+	Info            *UpdateInfo `json:"info"`
+}
+
+type UpdateConfig struct {
+	AutoCheck       bool   `json:"auto_check"`
+	NotifyOnUpdate  bool   `json:"notify_on_update"`
+	LastCheckTime   int64  `json:"last_check_time"`
+	SkippedVersion  string `json:"skipped_version"`
+	AllowPrerelease bool   `json:"allow_prerelease"`
+}
 
 func GetCurrentVersion() string {
 	return "0.0.0"

@@ -42,7 +42,7 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
     return (
         <div
             dir="ltr"
-            className="title-bar-draggable h-11 bg-sidebar border-b border-border flex items-center justify-between select-none z-[50] shrink-0 w-full relative transition-colors duration-300 shadow-sm"
+            className="title-bar-draggable h-9 bg-sidebar border-b border-border flex items-center justify-between select-none z-[50] shrink-0 w-full relative"
             onDoubleClick={handleMaximize}
         >
             {/* Branding - Left Side with App Icon */}
@@ -54,36 +54,38 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
             </div>
 
             {/* Center Info - Integrated Status */}
-            <div className="flex items-center justify-center gap-4 h-full basis-1/2 opacity-80 hover:opacity-100 transition-opacity">
+            <div className="flex items-center justify-center gap-3 h-full basis-1/2 opacity-90 hover:opacity-100 transition-opacity">
                 {/* User Info */}
                 {currentUser && (
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-text-muted hidden md:flex">
-                        <div className="w-4 h-4 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center text-white text-[9px] shadow-sm">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-text-muted hidden md:flex bg-surface-hover/80 border border-border/40 px-2 py-0.5 rounded-lg backdrop-blur-sm">
+                        <div className="w-5 h-5 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center text-white text-[9px] font-black shadow-sm">
                             {currentUser.name.charAt(0).toUpperCase()}
                         </div>
-                        <span>{currentUser.name}</span>
+                        <span className="text-text-main">{currentUser.name}</span>
                     </div>
                 )}
 
                 {/* Separator */}
-                {currentUser && <div className="w-px h-3 bg-border hidden md:block" />}
+                {currentUser && <div className="w-px h-3 bg-border/60 hidden md:block" />}
 
                 {/* Online Status */}
-                <div className="flex items-center gap-1.5 text-[11px] font-bold">
-                    {onlineStatus !== undefined && (
-                        <>
-                            {onlineStatus ? <Wifi size={12} className="text-emerald-500" /> : <WifiOff size={12} className="text-red-500" />}
-                            <span className={onlineStatus ? 'text-emerald-500' : 'text-red-500'}>{onlineStatus ? 'ONLINE' : 'OFFLINE'}</span>
-                        </>
-                    )}
-                </div>
+                {onlineStatus !== undefined && (
+                    <div className={`flex items-center gap-1.5 text-[9px] font-bold px-2 py-0.5 rounded border ${
+                        onlineStatus 
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+                            : 'bg-red-500/10 border-red-500/20 text-red-500'
+                    }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${onlineStatus ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                        <span>{onlineStatus ? 'ONLINE' : 'OFFLINE'}</span>
+                    </div>
+                )}
 
                 {/* Separator */}
-                {appVersion && <div className="w-px h-3 bg-border hidden md:block" />}
+                {appVersion && <div className="w-px h-3 bg-border/60 hidden md:block" />}
 
                 {/* Version */}
                 {appVersion && (
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-muted hidden md:flex">
+                    <div className="flex items-center gap-1.5 text-[10px] font-black text-text-muted hidden md:flex bg-surface-hover/80 border border-border/40 px-2 py-0.5 rounded-lg backdrop-blur-sm">
                         <span>v{appVersion}</span>
                     </div>
                 )}
@@ -94,11 +96,15 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
                 {/* Theme Toggle */}
                 {onToggleTheme && (
                     <button
-                        className="w-9 h-9 flex items-center justify-center rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-main transition-all duration-200 active:scale-90 outline-none focus:outline-none mr-2 btn-native touch-target"
+                        className="w-7 h-7 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover hover:text-text-main transition-colors duration-100 active:opacity-70 outline-none focus:outline-none mr-1 btn-native"
                         onClick={onToggleTheme}
                         title={theme === 'dark' ? "الوضع الفاتح" : "الوضع الليلي"}
                     >
-                        {theme === 'dark' ? <Sun size={16} strokeWidth={2} /> : <Moon size={16} strokeWidth={2} />}
+                        {theme === 'dark' ? (
+                            <Sun size={14} strokeWidth={2} />
+                        ) : (
+                            <Moon size={14} strokeWidth={2} />
+                        )}
                     </button>
                 )}
 
@@ -107,25 +113,25 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
 
                 {/* Window Buttons */}
                 <button
-                    className="w-9 h-9 flex items-center justify-center rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-main transition-all duration-200 active:scale-90 outline-none focus:outline-none btn-native touch-target"
+                    className="w-7 h-7 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover hover:text-text-main transition-colors duration-100 active:opacity-70 outline-none focus:outline-none btn-native"
                     onClick={handleMinimize}
                     title="تصغير"
                 >
-                    <Minus size={16} strokeWidth={1.5} />
+                    <Minus size={14} strokeWidth={1.5} />
                 </button>
                 <button
-                    className="w-9 h-9 flex items-center justify-center rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-main transition-all duration-200 active:scale-90 outline-none focus:outline-none btn-native touch-target"
+                    className="w-7 h-7 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover hover:text-text-main transition-colors duration-100 active:opacity-70 outline-none focus:outline-none btn-native"
                     onClick={handleMaximize}
                     title={isMaximized ? "استعادة" : "تكبير"}
                 >
-                    {isMaximized ? <Minimize2 size={16} strokeWidth={1.5} /> : <Square size={14} strokeWidth={1.5} />}
+                    {isMaximized ? <Minimize2 size={13} strokeWidth={1.5} /> : <Square size={12} strokeWidth={1.5} />}
                 </button>
                 <button
-                    className="w-9 h-9 flex items-center justify-center rounded-xl text-text-muted hover:bg-red-500/20 hover:text-red-500 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-200 active:scale-90 outline-none focus:outline-none touch-target"
+                    className="w-7 h-7 flex items-center justify-center rounded text-text-muted hover:bg-red-500 hover:text-white transition-colors duration-100 active:opacity-70 outline-none focus:outline-none"
                     onClick={handleClose}
                     title="إغلاق"
                 >
-                    <X size={16} strokeWidth={1.5} />
+                    <X size={14} strokeWidth={1.5} />
                 </button>
             </div>
         </div>

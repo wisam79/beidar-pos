@@ -400,7 +400,7 @@ export const InventoryPage: React.FC = () => {
                                             <div
                                                 key={p.id}
                                                 className={`
-                                                    group relative bg-surface/50 border border-border rounded-2xl p-4 cursor-pointer backdrop-blur-md
+                                                    group relative bg-surface border border-border rounded-2xl p-4 cursor-pointer backdrop-blur-md
                                                     transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1
                                                     grid grid-cols-2 md:grid-cols-12 gap-3 items-center
                                                     ${isOut ? 'opacity-60 grayscale-[0.5]' : ''}
@@ -480,7 +480,7 @@ export const InventoryPage: React.FC = () => {
                                 {movements.map((m, i) => {
                                     const isIncoming = m.type === 'restock' || m.type === 'return';
                                     return (
-                                        <div key={m.id || i} className="flex items-center justify-between p-3 bg-surface/50 border border-border rounded-xl hover:bg-surface transition-colors">
+                                        <div key={m.id || i} className="flex items-center justify-between p-3 bg-surface border border-border rounded-xl hover:bg-surface-hover transition-colors">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIncoming ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
                                                     {isIncoming ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}

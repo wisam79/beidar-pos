@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, X, CreditCard, Banknote, Clock, Receipt, Sparkles } from 'lucide-react';
 import { formatCurrency } from '../core/utils';
@@ -20,6 +20,16 @@ export const PaymentConfirmModal: React.FC<PaymentConfirmModalProps> = ({
 }) => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onClose]);
 
     const handleConfirm = async () => {
         setIsProcessing(true);
@@ -46,7 +56,7 @@ export const PaymentConfirmModal: React.FC<PaymentConfirmModalProps> = ({
     }[paymentMethod];
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
             {isSuccess ? (
                 // Success Animation
                 <div className="flex flex-col items-center justify-center animate-in zoom-in duration-500">
@@ -59,7 +69,7 @@ export const PaymentConfirmModal: React.FC<PaymentConfirmModalProps> = ({
                 </div>
             ) : (
                 // Confirmation Card
-                <div className="w-full max-w-md bg-white dark:bg-surface rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+                <div className="w-full max-w-md bg-surface backdrop-blur-xl border border-border/80 rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
                     {/* Header */}
                     <div className="bg-primary p-6 text-center relative">
                         <button onClick={onClose} title="إغلاق" className="absolute top-4 left-4 text-black/50 hover:text-black p-2 rounded-full hover:bg-black/10 transition-colors">

@@ -23,7 +23,7 @@ func setupBackupTestDB(t *testing.T) (service.BackupService, *gorm.DB, func()) {
 	}
 
 	// Set global DB for ResetDatabase/InitDB to work
-	repository.DB = db
+	repository.SetTestDB(db)
 
 	db.AutoMigrate(
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Customer{}, &domain.Payment{},
@@ -42,7 +42,7 @@ func setupBackupTestDB(t *testing.T) (service.BackupService, *gorm.DB, func()) {
 			sqlDB.Close()
 		}
 		os.Remove(dbFileName)
-		repository.DB = nil
+		repository.SetTestDB(nil)
 	}
 }
 

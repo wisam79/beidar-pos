@@ -59,7 +59,7 @@ export const SidebarItem = memo(({ active, icon: Icon, label, onClick, badge }: 
     <button
         onClick={onClick}
         className={`
-            w-full flex items-center gap-2 px-3 py-2.5 rounded-xl 
+            w-full flex items-center gap-2 px-3 py-2.5 rounded-lg 
             transition-all duration-200 font-bold text-xs group 
             border relative overflow-hidden
             ${active
@@ -82,7 +82,7 @@ export const SidebarItem = memo(({ active, icon: Icon, label, onClick, badge }: 
         {/* Icon */}
         {Icon && (
             <div className={`
-                p-1.5 rounded-lg transition-all shrink-0
+                p-1.5 rounded-md transition-all shrink-0
                 ${active
                     ? 'bg-black/20 text-black'
                     : 'bg-surface-hover text-text-muted group-hover:text-primary group-hover:bg-primary/10'
@@ -118,7 +118,7 @@ export const SettingInput = memo(({ label, value, onChange, type = "text", place
             <input
                 type={type}
                 className={`
-                    w-full bg-input-bg border-2 rounded-xl py-4 px-4 
+                    w-full bg-input-bg border-2 rounded-lg py-4 px-4 
                     outline-none transition-all duration-200
                     font-bold text-sm text-text-main
                     placeholder:text-text-muted/40
@@ -154,7 +154,7 @@ SettingInput.displayName = 'SettingInput';
 export const SettingToggle = memo(({ label, description, value, onChange, icon: Icon }: SettingToggleProps) => (
     <div
         className={`
-            flex justify-between items-center p-5 rounded-2xl border-2 
+            flex justify-between items-center p-5 rounded-lg border-2 
             transition-all duration-300 cursor-pointer group 
             active:scale-[0.98] touch-target
             ${value
@@ -168,7 +168,7 @@ export const SettingToggle = memo(({ label, description, value, onChange, icon: 
             {/* Icon Container */}
             {Icon && (
                 <div className={`
-                    p-3.5 rounded-xl transition-all duration-300
+                    p-3.5 rounded-lg transition-all duration-300
                     ${value
                         ? 'bg-primary text-primary-fg shadow-lg shadow-primary/30'
                         : 'bg-surface-hover text-text-muted group-hover:bg-primary/10 group-hover:text-primary'
@@ -212,7 +212,7 @@ export const SettingToggle = memo(({ label, description, value, onChange, icon: 
 SettingToggle.displayName = 'SettingToggle';
 
 export const FeatureCard = memo(({ icon: Icon, title }: FeatureCardProps) => (
-    <div className="bg-surface/50 border border-border p-5 rounded-2xl text-center hover:scale-105 hover:border-primary/30 transition-all cursor-default group">
+    <div className="bg-surface/50 border border-border p-5 rounded-lg text-center hover:scale-105 hover:border-primary/30 transition-all cursor-default group">
         <Icon size={28} className="text-primary mx-auto mb-2 group-hover:animate-bounce" />
         <h6 className="font-bold text-text-main text-xs">{title}</h6>
     </div>
@@ -220,7 +220,7 @@ export const FeatureCard = memo(({ icon: Icon, title }: FeatureCardProps) => (
 FeatureCard.displayName = 'FeatureCard';
 
 export const InfoRow = memo(({ label, value, last }: InfoRowProps) => (
-    <div className={`flex justify-between items-center py-4 px-2 rounded-xl transition-colors hover:bg-surface-hover ${!last ? 'border-b border-border' : ''}`}>
+    <div className={`flex justify-between items-center py-4 px-2 rounded-lg transition-colors hover:bg-surface-hover ${!last ? 'border-b border-border' : ''}`}>
         <span className="text-text-muted text-sm font-bold">{label}</span>
         <span className="text-text-main font-bold">{value}</span>
     </div>

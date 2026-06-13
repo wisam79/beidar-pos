@@ -27,7 +27,7 @@ export const SectionCard = memo(({
     noPadding,
     className = '',
 }: SectionCardProps) => (
-    <div className={`bg-surface border border-border rounded-2xl shadow-sm flex flex-col overflow-hidden ${className}`}>
+    <div className={`bg-surface border border-border rounded-lg shadow-sm flex flex-col overflow-hidden ${className}`}>
         {/* Optional Header */}
         {(title || headerActions) && (
             <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0 bg-bg/30">

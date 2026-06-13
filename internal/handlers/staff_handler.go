@@ -2,16 +2,15 @@ package handlers
 
 import (
 	"beidar-desktop/internal/core/domain"
-	"beidar-desktop/internal/service"
 	"context"
 )
 
 type StaffHandler struct {
 	ctx          context.Context
-	staffService service.StaffService
+	staffService domain.StaffService
 }
 
-func NewStaffHandler(staffService service.StaffService) *StaffHandler {
+func NewStaffHandler(staffService domain.StaffService) *StaffHandler {
 	return &StaffHandler{
 		staffService: staffService,
 	}

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"beidar-desktop/internal/core/domain"
-	"beidar-desktop/internal/service"
 	"context"
 	"fmt"
 
@@ -12,11 +11,11 @@ import (
 // PrintHandler handles Wails printing and PDF requests
 type PrintHandler struct {
 	ctx          context.Context
-	printService service.PrintService
+	printService domain.PrintService
 }
 
 // NewPrintHandler creates a new instance of PrintHandler
-func NewPrintHandler(printService service.PrintService) *PrintHandler {
+func NewPrintHandler(printService domain.PrintService) *PrintHandler {
 	return &PrintHandler{
 		printService: printService,
 	}

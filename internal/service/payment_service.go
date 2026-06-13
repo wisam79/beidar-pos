@@ -15,17 +15,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type PaymentService interface {
-	CreatePayment(payment domain.Payment) (*domain.Payment, error)
-	GetPaymentsBySale(saleID string) ([]domain.Payment, error)
-	GetPaymentsByCustomer(customerID string) ([]domain.Payment, error)
-	DeletePayment(id uint) error
-	PayInstallment(saleID string, installmentIndex int, amount domain.Amount, method string) error
-	GetCustomerInstallments(customerID string) ([]domain.Sale, error)
-	GetInstallmentSummary(saleID string) (total int, paid int, remaining domain.Amount, err error)
-	CalculateInstallmentPlan(total, downPayment domain.Amount, months int) (*domain.InstallmentPlan, error)
-}
-
 type paymentService struct {
 	paymentRepo     domain.PaymentRepository
 	customerRepo    domain.CustomerRepository
@@ -34,13 +23,14 @@ type paymentService struct {
 	preferencesRepo domain.PreferencesRepository
 }
 
+// NewPaymentService creates a new instance of domain.PaymentService
 func NewPaymentService(
 	paymentRepo domain.PaymentRepository,
 	customerRepo domain.CustomerRepository,
 	saleRepo domain.SaleRepository,
 	shiftRepo domain.ShiftRepository,
 	preferencesRepo domain.PreferencesRepository,
-) PaymentService {
+) domain.PaymentService {
 	return &paymentService{
 		paymentRepo:     paymentRepo,
 		customerRepo:    customerRepo,

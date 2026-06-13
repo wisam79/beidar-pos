@@ -133,14 +133,6 @@ export async function exportToPDF<T extends Record<string, unknown>>(
     columns: ExportColumn[],
     options: ExportOptions
 ): Promise<void> {
-
-    // Create new window
-    const printWindow = window.open('', '_blank', 'width=1100,height=800');
-    if (!printWindow) {
-        alert('Please allow popups to print report');
-        return;
-    }
-
     const date = new Date().toLocaleDateString('ar-IQ');
     const storeName = options.storeName || 'المتجر';
 
@@ -157,27 +149,23 @@ export async function exportToPDF<T extends Record<string, unknown>>(
         return `<tr class="${bgClass}">${rowCells}</tr>`;
     }).join('');
 
-    // HTML Content
-    const htmlContent = `
-    <!DOCTYPE html>
-    <html dir="rtl" lang="ar">
-    <head>
-        <meta charset="UTF-8">
-        <title>${options.title || 'تقرير'}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <script src="/libs/tailwindcss.js"></script>
+    // Create a temporary print container
+    const printContainer = document.createElement('div');
+    printContainer.id = 'print-container';
+    printContainer.dir = 'rtl';
+    printContainer.className = 'bg-white p-8 text-black';
+    printContainer.innerHTML = `
         <style>
-            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-            body { font-family: 'Readex Pro', sans-serif; -webkit-print-color-adjust: exact; }
             @page { size: A4 landscape; margin: 10mm; }
-            @media print {
-                .no-print { display: none !important; }
-                table { page-break-inside: auto; }
-                tr { page-break-inside: avoid; page-break-after: auto; }
+            #print-container {
+                font-family: 'Readex Pro Variable', 'Readex Pro', sans-serif !important;
+                background: white !important;
+                color: black !important;
             }
+            #print-container table { page-break-inside: auto; }
+            #print-container tr { page-break-inside: avoid; page-break-after: auto; }
         </style>
-    </head>
-    <body class="bg-white p-8">
+        
         <!-- Header -->
         <div class="flex justify-between items-start mb-8 border-b-2 border-gray-800 pb-4">
             <div class="text-right">
@@ -188,9 +176,7 @@ export async function exportToPDF<T extends Record<string, unknown>>(
                 <h2 class="text-xl font-bold text-gray-800">${options.title || 'تقرير'}</h2>
                 <p class="text-gray-600 mt-1">${options.subtitle || ''}</p>
             </div>
-            <div class="text-left w-32">
-                <!-- Placeholder for Logo if needed -->
-            </div>
+            <div class="text-left w-32"></div>
         </div>
 
         <!-- Table -->
@@ -210,19 +196,17 @@ export async function exportToPDF<T extends Record<string, unknown>>(
             <span>تم استخراج التقرير بواسطة النظام</span>
             <span>عدد السجلات: ${data.length}</span>
         </div>
-
-        <script>
-            setTimeout(() => {
-                window.print();
-                // Optional: window.close(); after print
-            }, 500);
-        </script>
-    </body>
-    </html>
     `;
 
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    document.body.appendChild(printContainer);
+
+    // Give a tiny timeout for DOM layout, print, then clean up
+    setTimeout(() => {
+        window.print();
+        if (document.body.contains(printContainer)) {
+            document.body.removeChild(printContainer);
+        }
+    }, 100);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

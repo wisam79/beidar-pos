@@ -243,7 +243,7 @@ const PortalTooltip = ({ label, value, x, y }: { label: string, value: string, x
             className="fixed z-[9999] pointer-events-none transform -translate-x-1/2 -translate-y-[120%]"
             style={{ left: x, top: y }}
         >
-            <div className="bg-surface/95 backdrop-blur-xl border border-primary/30 shadow-2xl shadow-primary/20 rounded-xl px-4 py-3 flex flex-col items-center min-w-[130px] animate-in slide-in-from-bottom-2 duration-150">
+            <div className="bg-surface backdrop-blur-xl border border-border shadow-2xl shadow-black/35 rounded-xl px-4 py-3 flex flex-col items-center min-w-[130px] animate-in slide-in-from-bottom-2 duration-150">
                 <span className="text-[10px] text-text-muted font-bold mb-1 uppercase tracking-wider">
                     {label}
                 </span>
@@ -251,7 +251,7 @@ const PortalTooltip = ({ label, value, x, y }: { label: string, value: string, x
                     {value}
                 </span>
                 {/* Triangle Pointer */}
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-surface/95" />
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-border" />
             </div>
         </div>,
         document.body

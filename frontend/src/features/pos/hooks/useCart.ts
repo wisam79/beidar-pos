@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🛒 useCart Hook - Cart State Management
-// Extracted from Sales.tsx for reusability and cleaner code
+// Extracted to feature hooks for modularity
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { CartItem, Product, Customer } from '../core/types';
-import { playBeep } from '../core/utils';
+import { CartItem, Product, Customer } from '../../../core/types';
+import { playBeep } from '../../../core/utils';
 
 const CART_STORAGE_KEY = 'beidar_pos_cart';
 const CUSTOMER_STORAGE_KEY = 'beidar_pos_customer';

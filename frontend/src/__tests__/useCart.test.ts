@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { useCart } from '../hooks/useCart';
+import { useCart } from '../features/pos/hooks/useCart';
 import { Product } from '../core/types';
 
 // Mock playBeep

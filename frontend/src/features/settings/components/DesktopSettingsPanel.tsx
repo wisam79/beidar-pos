@@ -212,12 +212,12 @@ const useDesktopSettings = (notify: (msg: string, type: 'success' | 'error' | 'i
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const AutoStartCard = React.memo(({ enabled, loading, onToggle }: { enabled: boolean, loading: boolean, onToggle: () => void }) => (
-    <div className="group bg-surface/50 border border-border hover:border-primary/30 rounded-3xl p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/5">
+    <div className="group bg-surface/50 border border-border hover:border-primary/30 rounded-lg p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/5">
         <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-primary to-emerald-400 text-black rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
+            <div className="w-12 h-12 bg-gradient-to-r from-primary to-emerald-400 text-black rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
                 <Power size={24} className="text-black" />
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-surface-active rounded-full border border-border/50">
+            <div className="flex items-center gap-2 px-3 py-1 bg-surface-active rounded-full border border-border">
                 <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-primary animate-pulse' : 'bg-red-500'}`} />
                 <span className="text-xs font-bold text-text-muted">{enabled ? 'مفعل' : 'معطل'}</span>
             </div>
@@ -229,7 +229,7 @@ const AutoStartCard = React.memo(({ enabled, loading, onToggle }: { enabled: boo
         <button
             onClick={onToggle}
             disabled={loading}
-            className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all duration-300 ${enabled
+            className={`w-full py-4 rounded-lg font-bold flex items-center justify-center gap-3 transition-all duration-300 ${enabled
                 ? 'bg-primary/10 text-primary hover:bg-primary/25 border border-primary/20'
                 : 'bg-surface-active text-text-muted hover:bg-surface-hover/80 hover:text-text-main border border-border'
                 }`}
@@ -247,7 +247,7 @@ const PrinterCard = React.memo(({
 }) => (
     <button
         onClick={() => onSelect(printer.name)}
-        className={`relative group p-5 rounded-2xl border-2 text-right transition-all duration-300 ${isSelected
+        className={`relative group p-5 rounded-lg border-2 text-right transition-all duration-300 ${isSelected
             ? 'border-primary bg-primary/5 shadow-xl shadow-primary/10'
             : 'border-border bg-surface hover:border-primary/30'
             }`}
@@ -315,9 +315,9 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                 <AutoStartCard enabled={autoStart.enabled} loading={autoStart.loading} onToggle={toggleAutoStart} />
 
                 {/* Updates Section */}
-                <div className="relative overflow-hidden bg-surface/50 border border-border rounded-3xl p-6 shadow-sm flex flex-col justify-between group hover:border-primary/30 transition-all duration-300">
+                <div className="relative overflow-hidden bg-surface/50 border border-border rounded-lg p-6 shadow-sm flex flex-col justify-between group hover:border-primary/30 transition-all duration-300">
                     <div className="flex items-center justify-between">
-                        <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                             <RefreshCw size={24} className={`text-primary ${update.checking ? 'animate-spin' : ''}`} />
                         </div>
                         <div className="text-right">
@@ -339,7 +339,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                                 <button
                                     onClick={downloadUpdate}
                                     disabled={update.downloading}
-                                    className="w-full py-4 bg-gradient-to-r from-primary to-emerald-400 text-black font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+                                    className="w-full py-4 bg-gradient-to-r from-primary to-emerald-400 text-black font-bold rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
                                 >
                                     {update.downloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
                                     {update.downloading
@@ -365,7 +365,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                             <button
                                 onClick={checkForUpdates}
                                 disabled={update.checking}
-                                className="w-full py-4 bg-surface-active hover:bg-primary text-text-main hover:text-black font-bold rounded-xl border border-border hover:border-primary transition-all duration-300 flex items-center justify-center gap-3"
+                                className="w-full py-4 bg-surface-active hover:bg-primary text-text-main hover:text-black font-bold rounded-lg border border-border hover:border-primary transition-all duration-300 flex items-center justify-center gap-3"
                             >
                                 {update.checking ? <Loader2 size={20} className="animate-spin" /> : <RefreshCw size={20} />}
                                 {update.checking ? 'جاري التحقق...' : 'التحقق من التحديثات'}
@@ -376,10 +376,10 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
             </div>
 
             {/* Printers Section */}
-            <div className="bg-surface/50 border border-border rounded-3xl p-8 shadow-sm">
+            <div className="bg-surface/50 border border-border rounded-lg p-8 shadow-sm">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
+                        <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20">
                             <Printer size={28} className="text-primary" />
                         </div>
                         <div>
@@ -389,7 +389,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                     </div>
                     <button
                         onClick={refreshPrinters}
-                        className="p-3 bg-surface-active hover:bg-primary/10 text-text-muted hover:text-primary rounded-xl transition-colors"
+                        className="p-3 bg-surface-active hover:bg-primary/10 text-text-muted hover:text-primary rounded-lg transition-colors"
                         title="تحديث القائمة"
                     >
                         <RefreshCw size={20} className={printers.loading ? 'animate-spin' : ''} />
@@ -414,7 +414,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-12 rounded-3xl bg-surface-active/30 border border-dashed border-border">
+                    <div className="text-center py-12 rounded-lg bg-surface-active/30 border border-dashed border-border">
                         <Printer size={48} className="mx-auto mb-4 text-text-muted opacity-50" />
                         <h4 className="text-lg font-bold text-text-main mb-1">لا توجد طابعات</h4>
                         <p className="text-text-muted">لم يتم العثور على طابعات مثبتة في النظام</p>
@@ -425,7 +425,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                     <button
                         onClick={testPrinter}
                         disabled={testingPrinter || !printers.selected}
-                        className="px-8 py-3 bg-surface-active hover:bg-primary hover:text-black text-text-main font-bold rounded-xl transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-8 py-3 bg-surface-active hover:bg-primary hover:text-black text-text-main font-bold rounded-lg transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {testingPrinter ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} />}
                         طباعة صفحة اختبار
@@ -434,9 +434,9 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
             </div>
 
             {/* Diagnostics Section */}
-            <div className="bg-surface/50 border border-border rounded-3xl p-8 shadow-sm opacity-80 hover:opacity-100 transition-opacity">
+            <div className="bg-surface/50 border border-border rounded-lg p-8 shadow-sm opacity-80 hover:opacity-100 transition-opacity">
                 <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center border border-red-500/20">
+                    <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center border border-red-500/20">
                         <AlertTriangle size={24} className="text-red-500" />
                     </div>
                     <div>
@@ -445,7 +445,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                     </div>
                 </div>
 
-                <div className="bg-black/30 rounded-xl p-4 font-mono text-xs h-32 overflow-y-auto custom-scrollbar border border-white/5 mb-4">
+                <div className="bg-black/30 rounded-lg p-4 font-mono text-xs h-32 overflow-y-auto custom-scrollbar border border-white/5 mb-4">
                     {crashReports.loading ? (
                         <div className="flex items-center justify-center h-full text-text-muted gap-2">
                             <Loader2 size={14} className="animate-spin" /> جاري تحميل السجلات...

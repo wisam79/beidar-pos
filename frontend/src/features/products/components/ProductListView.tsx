@@ -30,6 +30,14 @@ const getABCClass = (val: number, total: number): 'A' | 'B' | 'C' => {
     return share > 1 ? 'A' : share > 0.5 ? 'B' : 'C';
 };
 
+// Helper for resolving image path
+const resolveImage = (img: string | undefined) => {
+    if (!img) return null;
+    if (img.startsWith('data') || img.startsWith('http')) return img;
+    if (img.includes('.')) return `/local-image/${img}`;
+    return null;
+};
+
 export const ProductListView = memo(({
     virtualItems,
     products,
@@ -47,18 +55,18 @@ export const ProductListView = memo(({
     const { t } = useTranslation();
 
     return (
-        <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
-            <table className="w-full text-right text-sm">
+        <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
+            <table className="w-full text-right text-sm border-collapse">
                 <thead>
-                    <tr className="text-right text-text-muted text-sm border-b border-border">
-                        <th className="pb-4 pr-4 font-medium w-[60px]">#</th>
-                        <th className="pb-4 pr-4 font-medium">{t('products.image')}</th>
-                        <th className="pb-4 pr-4 font-medium">{t('products.name')}</th>
-                        <th className="pb-4 pr-4 font-medium">{t('products.category')}</th>
-                        <th className="pb-4 pr-4 font-medium">{t('products.price')}</th>
-                        <th className="pb-4 pr-4 font-medium">{t('products.stock')}</th>
-                        <th className="pb-4 pr-4 font-medium">{t('products.barcode')}</th>
-                        <th className="pb-4 pr-4 font-medium">{t('common.actions')}</th>
+                    <tr className="text-right text-text-muted text-xs bg-surface-hover/30 border-b border-border/80">
+                        <th className="p-4 font-black w-[60px] text-right">#</th>
+                        <th className="p-4 font-black text-right">{t('products.name')}</th>
+                        <th className="p-4 font-black text-right">{t('products.category')}</th>
+                        <th className="p-4 font-black text-center w-[80px]">ABC</th>
+                        <th className="p-4 font-black text-right">{t('products.price')}</th>
+                        <th className="p-4 font-black text-center w-[120px]">{t('products.stock')}</th>
+                        <th className="p-4 font-black text-right w-[100px]">الحالة</th>
+                        <th className="p-4 font-black text-center w-[100px]">{t('common.actions')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -73,7 +81,7 @@ export const ProductListView = memo(({
                                 key={p.id}
                                 data-index={virtualRow.index}
                                 ref={measureElement}
-                                className={`hover:bg-surface-hover transition-colors cursor-pointer group ${p.id && selectedIds.includes(p.id) ? 'bg-primary/5' : ''}`}
+                                className={`border-b border-border/40 hover:bg-surface-hover transition-colors cursor-pointer group ${p.id && selectedIds.includes(p.id) ? 'bg-primary/5' : ''}`}
                                 onClick={() => onEditProduct(p)}
                             >
                                 <td className="p-4" onClick={e => e.stopPropagation()}>
@@ -87,17 +95,21 @@ export const ProductListView = memo(({
                                 </td>
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-bg border border-border flex items-center justify-center overflow-hidden">
-                                            {p.image.startsWith('data') ? <img src={p.image} className="w-full h-full object-cover" alt={p.name} /> : p.image}
+                                        <div className="w-10 h-10 rounded-lg bg-bg border border-border flex items-center justify-center overflow-hidden shrink-0 text-xl">
+                                            {resolveImage(p.image) ? (
+                                                <img src={resolveImage(p.image)!} className="w-full h-full object-cover" alt={p.name} />
+                                            ) : (
+                                                p.image
+                                            )}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-text-main text-xs">{p.name}</p>
+                                            <p className="font-bold text-text-main text-xs group-hover:text-primary transition-colors">{p.name}</p>
                                             <p className="text-[10px] text-text-muted font-mono">{p.barcode}</p>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="p-4 text-xs font-bold text-text-muted">
-                                    {p.category}<br /><span className="text-[9px] opacity-70">{p.supplier}</span>
+                                    {p.category}<br /><span className="text-[9px] opacity-70 font-normal">{p.supplier}</span>
                                 </td>
                                 <td className="p-4 text-center">
                                     <span className={`px-2 py-0.5 rounded text-[9px] font-black font-mono border ${abcClass === 'A' ? 'bg-green-500/10 text-green-500 border-green-500/20' : abcClass === 'B' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-gray-500/10 text-gray-500 border-gray-500/20'}`}>
@@ -109,15 +121,15 @@ export const ProductListView = memo(({
                                         <span className="font-mono font-bold text-text-main">{formatCurrency(p.price, currency).replace(currency, '')}</span>
                                         {p.cost > 0 && (
                                             <span className="text-[9px] text-green-500 font-bold">
-                                                {((p.price - p.cost) / p.cost * 100).toFixed(0)}% margin
+                                                {((p.price - p.cost) / p.cost * 100).toFixed(0)}% هامش
                                             </span>
                                         )}
                                     </div>
                                 </td>
-                                <td className="p-4">
-                                    <div className="flex items-center justify-center gap-1 bg-bg rounded-lg p-1 w-fit mx-auto border border-border opacity-60 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                                <td className="p-4 text-center">
+                                    <div className="flex items-center justify-center gap-1 bg-bg rounded-lg p-1 w-fit mx-auto border border-border opacity-70 group-hover:opacity-100 transition-all" onClick={e => e.stopPropagation()}>
                                         <button aria-label="إنقاص المخزون" onClick={() => onUpdateStock(p, -1)} className="w-6 h-6 flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"><Minus size={12} /></button>
-                                        <span className="font-mono font-bold w-8 text-center">{p.stock}</span>
+                                        <span className="font-mono font-bold w-8 text-center text-xs">{p.stock}</span>
                                         <button aria-label="زيادة المخزون" onClick={() => onUpdateStock(p, 1)} className="w-6 h-6 flex items-center justify-center text-text-muted hover:text-green-500 hover:bg-green-500/10 rounded transition-colors"><Plus size={12} /></button>
                                     </div>
                                 </td>

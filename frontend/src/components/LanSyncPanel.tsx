@@ -539,7 +539,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                 onChange={(e) => { setManualIp(e.target.value); setSelectedServer(null); }}
                                 placeholder="مثال: 192.168.1.100"
                                 dir="ltr"
-                                className="w-full p-3 bg-bg border border-border rounded-xl text-center font-mono text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                                className="w-full p-3 bg-bg border border-border rounded-xl text-center font-mono text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                             />
 
                             <div className="flex gap-3 mt-4">
@@ -552,7 +552,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                 <button
                                     onClick={handleConnectToServer}
                                     disabled={loading || (!selectedServer && !manualIp)}
-                                    className="flex-[2] py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
+                                    className="flex-[2] py-3 bg-primary hover:brightness-110 text-black rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
                                 >
                                     {loading ? <RefreshCw size={18} className="animate-spin" /> : <Wifi size={18} />}
                                     اتصال بالخادم
@@ -566,7 +566,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                             </p>
                             <button
                                 onClick={() => { setShowConnectForm(true); handleScanServers(); }}
-                                className="px-8 py-4 bg-surface hover:bg-blue-500 hover:text-white text-blue-500 border-2 border-dashed border-blue-500/30 hover:border-blue-500 rounded-xl font-bold transition-all flex items-center justify-center gap-3 mx-auto group"
+                                className="px-8 py-4 bg-surface hover:bg-primary hover:text-black text-primary border-2 border-dashed border-primary/30 hover:border-primary rounded-xl font-bold transition-all flex items-center justify-center gap-3 mx-auto group shadow-md"
                             >
                                 <Wifi size={20} className="group-hover:animate-pulse" />
                                 الاتصال بسيرفر رئيسي
@@ -577,10 +577,10 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
             )}
 
             {/* Info Footer */}
-            <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 flex items-start gap-3">
-                <AlertTriangle size={20} className="text-blue-500 shrink-0 mt-0.5" />
+            <div className="p-4 bg-primary-dim rounded-2xl border border-primary/20 flex items-start gap-3">
+                <AlertTriangle size={20} className="text-primary shrink-0 mt-0.5" />
                 <div className="text-xs text-text-muted leading-relaxed">
-                    <strong className="text-blue-500 block mb-1">ملاحظات هامة للشبكة:</strong>
+                    <strong className="text-primary block mb-1">ملاحظات هامة للشبكة:</strong>
                     <ul className="list-disc list-inside space-y-1 opacity-80">
                         <li>يجب أن تكون جميع الأجهزة متصلة بنفس شبكة Wi-Fi أو الكايبل.</li>
                         <li>يفضل تثبيت IP ثابت (Static IP) للجهاز المضيف (الخادم) لمنع انقطاع الاتصال عند إعادة تشغيل الراوتر.</li>

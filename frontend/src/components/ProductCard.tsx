@@ -19,9 +19,9 @@ export const ProductCard = memo(({ product, onClick, isJustAdded, onPrint, curre
     // Determine image logic: base64/url or placeholder emoji or local filename
     let imageUrl = product.image;
     if (product.image && !product.image.startsWith('data') && !product.image.startsWith('http') && product.image.includes('.')) {
-        imageUrl = `http://localhost:48123/${product.image}`;
+        imageUrl = `/local-image/${product.image}`;
     }
-    const hasImage = imageUrl && (imageUrl.startsWith('data') || imageUrl.startsWith('http'));
+    const hasImage = imageUrl && (imageUrl.startsWith('data') || imageUrl.startsWith('http') || imageUrl.startsWith('/local-image/'));
 
     const displayPrice = isWholesale ? (product.wholesalePrice || product.price) : product.price;
 
@@ -30,19 +30,19 @@ export const ProductCard = memo(({ product, onClick, isJustAdded, onPrint, curre
             onClick={() => onClick(product)}
             className={`
                 group relative flex flex-col w-full h-[200px] text-right overflow-hidden
-                bg-gradient-to-b from-surface to-surface-hover border border-border/70 dark:border-white/10 rounded-2xl shadow-[var(--shadow-card)]
-                transition-all duration-200 ease-out
-                hover:border-primary/55 hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-1 hover:brightness-[1.01]
-                active:scale-[0.98] active:brightness-95
+                bg-surface border border-border rounded-lg shadow-[var(--shadow-card)]
+                transition-colors duration-100
+                hover:border-primary/50
+                active:opacity-80
                 touch-action-manipulation outline-none
-                ${isOut ? 'opacity-70 grayscale' : ''}
+                ${isOut ? 'opacity-60 grayscale' : ''}
             `}
         >
             {/* Image Container - Reduced Height */}
-            <div className="relative h-[110px] w-full bg-bg/30 flex items-center justify-center overflow-hidden shrink-0 border-b border-border/40">
+            <div className="relative h-[110px] w-full bg-black/5 dark:bg-white/[0.02] flex items-center justify-center overflow-hidden shrink-0 border-b border-border/40">
                 {/* Background Pattern */}
                 {!hasImage && (
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,var(--color-primary-dim),transparent)] opacity-10"></div>
+                    <div className="absolute inset-0 bg-primary-dim opacity-10"></div>
                 )}
 
                 {hasImage ? (
@@ -100,7 +100,7 @@ export const ProductCard = memo(({ product, onClick, isJustAdded, onPrint, curre
                     </div>
 
                     {/* Smaller Add Button */}
-                    <div className="w-8 h-8 shrink-0 rounded-full bg-bg/50 dark:bg-white/5 border border-border/60 dark:border-white/10 flex items-center justify-center text-text-muted group-hover:bg-primary group-hover:text-black group-hover:border-primary transition-all duration-300 shadow-sm group-active:scale-90">
+                    <div className="w-8 h-8 shrink-0 rounded-full bg-surface-hover border border-border flex items-center justify-center text-text-muted group-hover:bg-primary group-hover:text-black group-hover:border-primary transition-all duration-300 shadow-sm group-active:scale-90">
                         <Plus size={18} strokeWidth={3} />
                     </div>
                 </div>

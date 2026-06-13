@@ -8,16 +8,12 @@ import (
 	"time"
 )
 
-type StatsService interface {
-	GetDashboardStats(timeRange string) (*domain.DashboardStats, error)
-	GetMonthlyComparison() (*domain.MonthlyComparison, error)
-}
-
 type statsService struct {
 	statsRepo domain.StatsRepository
 }
 
-func NewStatsService(statsRepo domain.StatsRepository) StatsService {
+// NewStatsService creates a new instance of domain.StatsService
+func NewStatsService(statsRepo domain.StatsRepository) domain.StatsService {
 	return &statsService{statsRepo: statsRepo}
 }
 

@@ -3,17 +3,16 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
-	"beidar-desktop/internal/service"
 	"context"
 )
 
 type StatsHandler struct {
 	ctx          context.Context
-	statsService service.StatsService
+	statsService domain.StatsService
 	lanService   network.LanService
 }
 
-func NewStatsHandler(statsService service.StatsService, lanService network.LanService) *StatsHandler {
+func NewStatsHandler(statsService domain.StatsService, lanService network.LanService) *StatsHandler {
 	return &StatsHandler{
 		statsService: statsService,
 		lanService:   lanService,

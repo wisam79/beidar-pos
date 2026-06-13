@@ -3,17 +3,16 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
-	"beidar-desktop/internal/service"
 	"context"
 )
 
 type FinanceHandler struct {
 	ctx            context.Context
-	financeService service.FinanceService
+	financeService domain.FinanceService
 	lanService     network.LanService
 }
 
-func NewFinanceHandler(financeService service.FinanceService, lanService network.LanService) *FinanceHandler {
+func NewFinanceHandler(financeService domain.FinanceService, lanService network.LanService) *FinanceHandler {
 	return &FinanceHandler{
 		financeService: financeService,
 		lanService:     lanService,
