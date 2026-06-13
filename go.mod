@@ -8,10 +8,10 @@ require (
 	github.com/johnfercher/maroto v1.0.0
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	github.com/wailsapp/wails/v2 v2.11.0
-	golang.org/x/crypto v0.51.0
+	github.com/wailsapp/wails/v2 v2.12.0
+	golang.org/x/crypto v0.53.0
 	golang.org/x/oauth2 v0.36.0
-	golang.org/x/sys v0.45.0
+	golang.org/x/sys v0.46.0
 	google.golang.org/api v0.284.0
 	gorm.io/gorm v1.31.1
 )
@@ -20,6 +20,7 @@ require (
 	cloud.google.com/go/auth v0.20.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
+	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -62,7 +63,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/grpc v1.81.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
