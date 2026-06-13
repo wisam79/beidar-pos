@@ -27,9 +27,10 @@ export function useAutoBackup(
         await api.db.createBackup();
 
         const now = new Date().toISOString();
-        setPrefs({ ...prefs, lastBackupDate: now });
-        localStorage.setItem('beidar_preferences', JSON.stringify({ ...prefs, lastBackupDate: now }));
-        api.prefs.set({ ...prefs, lastBackupDate: now }).catch(console.error);
+        const updated: AppPreferences = { ...prefs, lastBackupDate: now };
+        setPrefs(updated);
+        localStorage.setItem('beidar_preferences', JSON.stringify(updated));
+        api.prefs.set(updated).catch(console.error);
 
         notify('تم إجراء النسخ الاحتياطي التلقائي بنجاح ✅', 'success');
         playBeep('success');

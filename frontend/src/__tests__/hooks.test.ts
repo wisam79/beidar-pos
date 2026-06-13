@@ -14,10 +14,10 @@ describe('useWindowSize Hook', () => {
         expect(result.current.height).toBe(window.innerHeight);
 
         act(() => {
-            // @ts-expect-error - overriding window dimension for test
-            window.innerWidth = 1024;
-            // @ts-expect-error - overriding window dimension for test
-            window.innerHeight = 768;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window as any).innerWidth = 1024;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window as any).innerHeight = 768;
             window.dispatchEvent(new Event('resize'));
         });
 

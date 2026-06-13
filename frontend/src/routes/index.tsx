@@ -33,7 +33,7 @@ export const AppRoutes: React.FC = () => {
   React.useEffect(() => {
     const trigger = () => {
       if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(() => preloadRoutes(), { timeout: 5000 });
+        window.requestIdleCallback(() => preloadRoutes(), { timeout: 5000 });
       } else {
         setTimeout(preloadRoutes, 2000);
       }
