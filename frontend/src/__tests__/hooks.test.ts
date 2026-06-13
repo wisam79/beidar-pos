@@ -14,7 +14,9 @@ describe('useWindowSize Hook', () => {
         expect(result.current.height).toBe(window.innerHeight);
 
         act(() => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).innerWidth = 1024;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).innerHeight = 768;
             window.dispatchEvent(new Event('resize'));
         });

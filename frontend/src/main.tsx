@@ -88,7 +88,7 @@ const App = () => {
           orders: Number(stats.totalOrders || 0),
           lowStock: Number(stats.lowStockCount || 0),
         });
-      } catch {}
+      } catch { /* preload is best-effort */ }
     };
     load();
   }, [appState]);
