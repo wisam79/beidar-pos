@@ -1,0 +1,143 @@
+/**
+ * ProductListView - Virtualized list/table view for products
+ */
+import React, { memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Plus, Minus, Printer, Trash2 } from 'lucide-react';
+import { Product } from '../../core/types';
+import { formatCurrency } from '../../core/utils';
+import { Badge } from '../ui';
+import { VirtualItem } from '@tanstack/react-virtual';
+
+interface ProductListViewProps {
+    virtualItems: VirtualItem[];
+    products: Product[];
+    selectedIds: string[];
+    stats: { totalValue: number };
+    currency: string;
+    onToggleSelect: (id: string) => void;
+    onEditProduct: (product: Product) => void;
+    onUpdateStock: (product: Product, change: number) => void;
+    onAddToPrintQueue: (product: Product, qty: number) => void;
+    onDeleteProduct: (id: string) => void;
+    measureElement: (node: Element | null) => void;
+    getTotalSize: () => number;
+}
+
+const getABCClass = (val: number, total: number): 'A' | 'B' | 'C' => {
+    if (total === 0) return 'C';
+    const share = (val / total) * 100;
+    return share > 1 ? 'A' : share > 0.5 ? 'B' : 'C';
+};
+
+export const ProductListView = memo(({
+    virtualItems,
+    products,
+    selectedIds,
+    stats,
+    currency,
+    onToggleSelect,
+    onEditProduct,
+    onUpdateStock,
+    onAddToPrintQueue,
+    onDeleteProduct,
+    measureElement,
+    getTotalSize
+}: ProductListViewProps) => {
+    const { t } = useTranslation();
+
+    return (
+        <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
+            <table className="w-full text-right text-sm">
+                <thead>
+                    <tr className="text-right text-text-muted text-sm border-b border-border">
+                        <th className="pb-4 pr-4 font-medium w-[60px]">#</th>
+                        <th className="pb-4 pr-4 font-medium">{t('products.image')}</th>
+                        <th className="pb-4 pr-4 font-medium">{t('products.name')}</th>
+                        <th className="pb-4 pr-4 font-medium">{t('products.category')}</th>
+                        <th className="pb-4 pr-4 font-medium">{t('products.price')}</th>
+                        <th className="pb-4 pr-4 font-medium">{t('products.stock')}</th>
+                        <th className="pb-4 pr-4 font-medium">{t('products.barcode')}</th>
+                        <th className="pb-4 pr-4 font-medium">{t('common.actions')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {virtualItems.length > 0 && <tr style={{ height: `${virtualItems[0].start}px` }}><td colSpan={8} /></tr>}
+                    {virtualItems.map((virtualRow) => {
+                        const p = products[virtualRow.index];
+                        if (!p) return null;
+                        const productVal = p.stock * p.price;
+                        const abcClass = getABCClass(productVal, stats.totalValue);
+                        return (
+                            <tr
+                                key={p.id}
+                                data-index={virtualRow.index}
+                                ref={measureElement}
+                                className={`hover:bg-surface-hover transition-colors cursor-pointer group ${p.id && selectedIds.includes(p.id) ? 'bg-primary/5' : ''}`}
+                                onClick={() => onEditProduct(p)}
+                            >
+                                <td className="p-4" onClick={e => e.stopPropagation()}>
+                                    <input
+                                        type="checkbox"
+                                        checked={p.id ? selectedIds.includes(p.id) : false}
+                                        onChange={() => p.id && onToggleSelect(p.id)}
+                                        className="w-4 h-4 rounded accent-primary cursor-pointer"
+                                        aria-label="تحديد المنتج"
+                                    />
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-bg border border-border flex items-center justify-center overflow-hidden">
+                                            {p.image.startsWith('data') ? <img src={p.image} className="w-full h-full object-cover" alt={p.name} /> : p.image}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-text-main text-xs">{p.name}</p>
+                                            <p className="text-[10px] text-text-muted font-mono">{p.barcode}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-4 text-xs font-bold text-text-muted">
+                                    {p.category}<br /><span className="text-[9px] opacity-70">{p.supplier}</span>
+                                </td>
+                                <td className="p-4 text-center">
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black font-mono border ${abcClass === 'A' ? 'bg-green-500/10 text-green-500 border-green-500/20' : abcClass === 'B' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-gray-500/10 text-gray-500 border-gray-500/20'}`}>
+                                        {abcClass}
+                                    </span>
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex flex-col">
+                                        <span className="font-mono font-bold text-text-main">{formatCurrency(p.price, currency).replace(currency, '')}</span>
+                                        {p.cost > 0 && (
+                                            <span className="text-[9px] text-green-500 font-bold">
+                                                {((p.price - p.cost) / p.cost * 100).toFixed(0)}% margin
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex items-center justify-center gap-1 bg-bg rounded-lg p-1 w-fit mx-auto border border-border opacity-60 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                                        <button aria-label="إنقاص المخزون" onClick={() => onUpdateStock(p, -1)} className="w-6 h-6 flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"><Minus size={12} /></button>
+                                        <span className="font-mono font-bold w-8 text-center">{p.stock}</span>
+                                        <button aria-label="زيادة المخزون" onClick={() => onUpdateStock(p, 1)} className="w-6 h-6 flex items-center justify-center text-text-muted hover:text-green-500 hover:bg-green-500/10 rounded transition-colors"><Plus size={12} /></button>
+                                    </div>
+                                </td>
+                                <td className="p-4">
+                                    <Badge type={p.stock === 0 ? 'error' : p.stock <= (p.minStock || 5) ? 'warning' : 'success'} text={p.stock === 0 ? 'نافذ' : p.stock <= (p.minStock || 5) ? 'منخفض' : 'متوفر'} />
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex justify-center gap-2">
+                                        <button aria-label="طباعة الباركود" onClick={(e) => { e.stopPropagation(); onAddToPrintQueue(p, 1); }} className="p-1.5 hover:bg-surface-active rounded-lg text-text-muted hover:text-text-main transition-colors"><Printer size={14} /></button>
+                                        <button aria-label="حذف المنتج" onClick={(e) => { e.stopPropagation(); if (p.id) onDeleteProduct(p.id); }} className="p-1.5 hover:bg-red-500/10 rounded-lg text-text-muted hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                    {virtualItems.length > 0 && <tr style={{ height: `${getTotalSize() - virtualItems[virtualItems.length - 1].end}px` }}><td colSpan={8} /></tr>}
+                </tbody>
+            </table>
+        </div>
+    );
+});
+
+ProductListView.displayName = 'ProductListView';

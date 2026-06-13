@@ -1,0 +1,151 @@
+package handlers
+
+import (
+	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/internal/network"
+	"beidar-desktop/internal/service"
+	"context"
+)
+
+type FinanceHandler struct {
+	ctx            context.Context
+	financeService service.FinanceService
+	lanService     network.LanService
+}
+
+func NewFinanceHandler(financeService service.FinanceService, lanService network.LanService) *FinanceHandler {
+	return &FinanceHandler{
+		financeService: financeService,
+		lanService:     lanService,
+	}
+}
+
+func (h *FinanceHandler) Startup(ctx context.Context) {
+	h.ctx = ctx
+}
+
+func (h *FinanceHandler) GetExpenses() ([]domain.Expense, error) {
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		var result []domain.Expense
+		err := h.lanService.RemoteGet("/api/expenses", &result)
+		return result, err
+	}
+	return h.financeService.GetExpenses()
+}
+
+func (h *FinanceHandler) SaveExpense(e domain.Expense) error {
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		return h.lanService.RemotePost("/api/expenses", e, nil)
+	}
+	return h.financeService.SaveExpense(e)
+}
+
+func (h *FinanceHandler) DeleteExpense(id string) error {
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		return h.lanService.RemoteDelete("/api/expenses?id=" + id)
+	}
+	return h.financeService.DeleteExpense(id)
+}
+
+func (h *FinanceHandler) GetCategories() ([]domain.Category, error) {
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		var result []domain.Category
+		err := h.lanService.RemoteGet("/api/categories", &result)
+		return result, err
+	}
+	return h.financeService.GetCategories()
+}
+
+func (h *FinanceHandler) SaveCategory(c domain.Category) error {
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		return h.lanService.RemotePost("/api/categories", c, nil)
+	}
+	return h.financeService.SaveCategory(c)
+}
+
+func (h *FinanceHandler) DeleteCategory(id string, force bool) error {
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		return h.lanService.RemoteDelete("/api/categories?id=" + id)
+	}
+	return h.financeService.DeleteCategory(id, force)
+}
+
+func (h *FinanceHandler) GetPreferences() (*domain.AppPreferences, error) {
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		var result domain.AppPreferences
+		err := h.lanService.RemoteGet("/api/preferences", &result)
+		return &result, err
+	}
+	return h.financeService.GetPreferences()
+}
+
+func (h *FinanceHandler) UpdatePreferences(newPrefs domain.AppPreferences) error {
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		return h.lanService.RemotePost("/api/preferences", newPrefs, nil)
+	}
+	return h.financeService.UpdatePreferences(newPrefs)
+}
+
+func (h *FinanceHandler) VerifyAdminPin(pin string) (bool, error) {
+	return h.financeService.VerifyAdminPin(pin)
+}
+
+func (h *FinanceHandler) OpenShift(staffID, staffName string, openingBalance float64) (*domain.Shift, error) {
+	return h.financeService.OpenShift(staffID, staffName, domain.NewAmount(openingBalance))
+}
+
+func (h *FinanceHandler) CloseShift(shiftID string, closingBalance float64, note string) (*domain.Shift, error) {
+	return h.financeService.CloseShift(shiftID, domain.NewAmount(closingBalance), note)
+}
+
+func (h *FinanceHandler) GetActiveShift() (*domain.Shift, error) {
+	return h.financeService.GetActiveShift()
+}
+
+func (h *FinanceHandler) AddCashMovement(shiftID, moveType, reason, staffID, staffName string, amount float64) (*domain.CashMovement, error) {
+	return h.financeService.AddCashMovement(shiftID, moveType, reason, staffID, staffName, domain.NewAmount(amount))
+}
+
+func (h *FinanceHandler) GetShiftMovements(shiftID string) ([]domain.CashMovement, error) {
+	return h.financeService.GetShiftMovements(shiftID)
+}
+
+func (h *FinanceHandler) GetShiftHistory(limit int) ([]domain.Shift, error) {
+	return h.financeService.GetShiftHistory(limit)
+}
+
+func (h *FinanceHandler) CreatePurchaseOrder(order domain.PurchaseOrder) (*domain.PurchaseOrder, error) {
+	return h.financeService.CreatePurchaseOrder(order)
+}
+
+func (h *FinanceHandler) GetPurchaseOrders(status string, supplierID string) ([]domain.PurchaseOrder, error) {
+	return h.financeService.GetPurchaseOrders(status, supplierID)
+}
+
+func (h *FinanceHandler) GetPurchaseOrder(id string) (*domain.PurchaseOrder, error) {
+	return h.financeService.GetPurchaseOrder(id)
+}
+
+func (h *FinanceHandler) UpdatePurchaseOrder(order domain.PurchaseOrder) error {
+	return h.financeService.UpdatePurchaseOrder(order)
+}
+
+func (h *FinanceHandler) DeletePurchaseOrder(id string) error {
+	return h.financeService.DeletePurchaseOrder(id)
+}
+
+func (h *FinanceHandler) CancelPurchaseOrder(id string) error {
+	return h.financeService.CancelPurchaseOrder(id)
+}
+
+func (h *FinanceHandler) ReceivePurchaseOrder(orderID string, items []domain.PurchaseOrderItem) error {
+	return h.financeService.ReceivePurchaseOrder(orderID, items)
+}
+
+func (h *FinanceHandler) PayPurchaseOrder(orderID string, amount float64, method string) error {
+	return h.financeService.PayPurchaseOrder(orderID, domain.NewAmount(amount), method)
+}
+
+func (h *FinanceHandler) GetPurchaseOrderStats() (map[string]interface{}, error) {
+	return h.financeService.GetPurchaseOrderStats()
+}

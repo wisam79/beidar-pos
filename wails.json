@@ -1,0 +1,20 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "beidar-desktop",
+  "outputfilename": "beidar-desktop",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Beidar",
+    "email": "beidar@example.com"
+  },
+  "info": {
+    "productVersion": "2.0.8",
+    "companyName": "Beidar",
+    "productName": "Beidar Desktop",
+    "fileVersion": "2.0.8",
+    "copyright": "Copyright 2026"
+  }
+}

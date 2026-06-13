@@ -1,0 +1,39 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+vendor/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/vite.config.ts.timestamp-*.mjs
+
+# Build
+build/bin/
+build/windows/installer/tmp/
+
+# Coverage
+coverage.out
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Supabase
+supabase/.temp/
+
+# Env
+.env
+.env.local

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>بيدر - نظام المبيعات</title>
+
+  <script>
+    tailwind.config = {
+      darkMode: ['class', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Readex Pro Variable', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+            logo: ['Lemonada', 'cursive'],
+          },
+          colors: {
+            primary: 'var(--color-primary)',
+            'primary-fg': 'var(--color-primary-fg)',
+            'primary-dim': 'var(--color-primary-dim)',
+            bg: 'var(--color-bg)',
+            sidebar: 'var(--color-sidebar)',
+            surface: 'var(--color-surface)',
+            'surface-hover': 'var(--color-surface-hover)',
+            'surface-active': 'var(--color-surface-active)',
+            border: 'var(--color-border)',
+            'text-main': 'var(--color-text-main)',
+            'text-muted': 'var(--color-text-muted)',
+            'input-bg': 'var(--color-input-bg)',
+          },
+          boxShadow: {
+            'card': 'var(--shadow-card)',
+            'card-hover': 'var(--shadow-card-hover)',
+            'glow': '0 0 20px -5px var(--color-primary-dim)',
+          },
+          backgroundImage: {
+            'mesh': 'var(--bg-mesh)',
+          },
+          animation: {
+            'ping-slow': 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- External Libraries (Loaded Locally for Offline Support) -->
+  <!-- Tailwind is handled by Vite build, so no script tag needed here for main app -->
+  <script src="/libs/JsBarcode.all.min.js"></script>
+  <!-- qrcode and html5-qrcode should ideally be imported, but we keep them here if relied upon globally -->
+  <!-- <script src="/libs/qrcode.min.js"></script> -->
+  <!-- <script src="/libs/html5-qrcode.min.js"></script> -->
+
+  <!-- Fonts are now loaded via @fontsource packages in main.tsx for offline support -->
+  <!-- CSS is imported via main.tsx for proper Vite bundling -->
+  <style>
+    /* Critical inline styles for immediate render - prevents FOUC */
+    html,
+    body {
+      background-color: #18191D;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      /* Disable pinch-to-zoom on touch devices */
+      touch-action: pan-x pan-y;
+      -ms-touch-action: pan-x pan-y;
+      overscroll-behavior: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* Prevent all touch zoom gestures */
+    * {
+      touch-action: pan-x pan-y;
+      -webkit-touch-callout: none;
+    }
+
+    /* Drag regions for desktop app */
+    .app-drag {
+      -webkit-app-region: drag;
+    }
+
+    .app-no-drag {
+      -webkit-app-region: no-drag;
+    }
+  </style>
+</head>
+
+<body oncontextmenu="return false;">
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+  <script>
+    // Prevent pinch-to-zoom and Ctrl+wheel zoom
+    document.addEventListener('wheel', function (e) {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // Prevent multi-touch zoom gestures
+    document.addEventListener('touchstart', function (e) {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // Prevent gesture events (Safari/WebKit)
+    document.addEventListener('gesturestart', function (e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('gesturechange', function (e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('gestureend', function (e) {
+      e.preventDefault();
+    }, { passive: false });
+  </script>
+</body>
+
+</html>
