@@ -34,6 +34,9 @@ jobs:
           key: go-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
           restore-keys: go-${{ runner.os }}-
 
+      - name: Create embed directory
+        run: mkdir -p frontend/dist
+
       - name: Install golangci-lint
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 

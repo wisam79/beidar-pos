@@ -111,9 +111,9 @@ const App = () => {
   }, [location.pathname, setActiveView]);
 
   const toggleTheme = () => {
-    setPrefs((prev) => {
-      const theme = prev.theme === 'dark' ? 'light' : 'dark';
-      const next = { ...prev, theme };
+    setPrefs((prev: AppPreferences) => {
+      const theme: AppPreferences['theme'] = prev.theme === 'dark' ? 'light' : 'dark';
+      const next: AppPreferences = { ...prev, theme };
       localStorage.setItem('beidar_preferences', JSON.stringify(next));
       return next;
     });

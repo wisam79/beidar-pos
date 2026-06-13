@@ -14,10 +14,8 @@ describe('useWindowSize Hook', () => {
         expect(result.current.height).toBe(window.innerHeight);
 
         act(() => {
-            // @ts-expect-error - overriding window dimension for test
-            window.innerWidth = 1024;
-            // @ts-expect-error - overriding window dimension for test
-            window.innerHeight = 768;
+            (window as any).innerWidth = 1024;
+            (window as any).innerHeight = 768;
             window.dispatchEvent(new Event('resize'));
         });
 
