@@ -208,7 +208,6 @@ export const SalesPage: React.FC = () => {
         };
 
         try {
-            // 🔧 Type cast required: Frontend Sale type has structural differences from Wails-generated backend.Sale
             await api.sales.process(sale as unknown as ModelSale);
             setCart([]); setDiscount(0); setSelectedCustomer(null); setPaymentMethod('cash'); setShowSplitModal(false); setShowInstallmentModal(false);
             setReceivedAmount(0);

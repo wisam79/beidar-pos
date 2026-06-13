@@ -12,31 +12,20 @@ export default defineConfig({
     // Optimize chunk splitting
     rollupOptions: {
       output: {
-        // Manual chunk splitting for better caching
-        manualChunks: {
-          // Vendor chunks
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'query-vendor': ['@tanstack/react-query', '@tanstack/react-virtual'],
-          'ui-vendor': ['lucide-react'],
-          'utils-vendor': ['i18next', 'react-i18next', 'zustand', 'zod'],
+        manualChunks(id: string) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) return 'react-vendor';
+          if (id.includes('node_modules/@tanstack/react-query') || id.includes('node_modules/@tanstack/react-virtual')) return 'query-vendor';
+          if (id.includes('node_modules/lucide-react')) return 'ui-vendor';
+          if (id.includes('node_modules/i18next') || id.includes('node_modules/zustand') || id.includes('node_modules/zod')) return 'utils-vendor';
         },
 
-        // Asset file naming
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]'
       }
     },
 
-    // Chunk size warnings
     chunkSizeWarningLimit: 500,
-
-    // Minification options
-    // Minification options
-    minify: 'esbuild',
-    esbuild: {
-      drop: ['console', 'debugger']
-    }
   },
 
   // Optimize dependencies

@@ -93,7 +93,7 @@ export function CloudBackupSettings() {
             setIsLoggedIn(loggedIn);
             if (loggedIn) {
                 const user = await CloudHandler.GetCurrentUser();
-                setCurrentUser(user as unknown as UserSession);
+                setCurrentUser(user as UserSession);
                 loadBackups();
             }
         } catch (error) {
@@ -104,7 +104,7 @@ export function CloudBackupSettings() {
     const loadBackups = async () => {
         try {
             const list = await CloudHandler.ListCloudBackupsForUser();
-            setBackups(list as unknown as CloudBackup[] || []);
+            setBackups((list || []) as CloudBackup[]);
             // Load auto-sync setting
             const config = await window.go.main.App.GetBackupConfig();
             setAutoSync(config.cloudAutoSync);
@@ -135,15 +135,15 @@ export function CloudBackupSettings() {
         try {
             let result: SupabaseAuthResult;
             if (isRegisterMode) {
-                result = await CloudHandler.Register(email, password, storeName) as unknown as SupabaseAuthResult;
+                result = await CloudHandler.Register(email, password, storeName) as SupabaseAuthResult;
             } else {
-                result = await CloudHandler.Login(email, password) as unknown as SupabaseAuthResult;
+                result = await CloudHandler.Login(email, password) as SupabaseAuthResult;
             }
 
             if (result.success) {
                 setMessage({ type: 'success', text: result.message });
                 setIsLoggedIn(true);
-                setCurrentUser((result.user || null) as unknown as UserSession);
+                setCurrentUser(result.user as UserSession);
                 loadBackups();
                 // Clear form
                 setEmail('');

@@ -75,11 +75,11 @@ export const ProductsPage: React.FC = () => {
     const { products: allProducts, isLoading: productsLoading, refetch: refetchProducts } = useProducts();
     const { data: categories = [], refetch: refetchCategories } = useQuery({
         queryKey: ['categories'],
-        queryFn: () => api.categories.list() as unknown as CategoryDef[],
+        queryFn: () => api.categories.list(),
     });
     const { data: suppliers = [], refetch: refetchSuppliers } = useQuery({
         queryKey: ['suppliers'],
-        queryFn: () => api.suppliers.list() as unknown as Supplier[],
+        queryFn: () => api.suppliers.list(),
     });
 
     const loading = productsLoading;

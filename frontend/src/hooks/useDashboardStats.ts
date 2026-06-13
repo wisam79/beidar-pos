@@ -39,7 +39,7 @@ export function useDashboardStats(timeRange: string = 'week'): UseDashboardStats
         queryKey: ['dashboard_stats', timeRange],
         queryFn: async () => {
             const data = await api.stats.getDashboard(timeRange);
-            return data as unknown as DashboardStats;
+            return data;
         },
         refetchInterval: isVisible ? 30000 : false, // 30 seconds when visible, disabled when hidden
         staleTime: 20000, // Consider data fresh for 20 seconds

@@ -56,7 +56,7 @@ const DetailsModalContent: React.FC<{
         if (!license.device_id) return;
         setLoadingUser(true);
         try {
-            const details = await CloudHandler.GetLicenseUserDetails(license.device_id) as unknown as UserDetailsData;
+            const details = await CloudHandler.GetLicenseUserDetails(license.device_id) as UserDetailsData;
             setUserDetails(details);
         } catch (e) {
             console.error('Failed to fetch user details:', e);
