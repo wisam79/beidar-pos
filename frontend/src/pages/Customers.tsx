@@ -2,23 +2,20 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Phone, DollarSign, Clock, Plus, Search, Edit, Trash2, FileText, CreditCard, Sparkles, BrainCircuit, History, Wallet, MessageSquare, Users, TrendingUp, Calculator, Check, AlertTriangle, Filter, Calendar } from 'lucide-react';
-import { Customer, Sale, AppPreferences } from '../core/types';
+import { Customer, Sale } from '../core/types';
 import { formatCurrency } from '../core/utils';
 import { Modal, Badge, PageHeader, EmptyState, SpotlightCard } from '../components/ui';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput } from '../components/blocks';
 import { analyzeCustomerProfile } from '../core/ai';
-import { api } from '../core/api'; // NEW API
+import { api } from '../core/api';
 import { useInvalidateCustomers } from '../hooks';
 import { ReceiptTemplate } from '../components/ReceiptTemplate';
 import { Printer, Eye } from 'lucide-react';
+import { usePreferences } from '../components/PreferencesContext';
 
-interface CustomersPageProps {
-    notify: (msg: string, type: 'success' | 'error') => void;
-    prefs?: AppPreferences;
-}
-
-export const CustomersPage: React.FC<CustomersPageProps> = ({ notify, prefs }) => {
+export const CustomersPage: React.FC = () => {
+    const { notify, prefs } = usePreferences();
     // i18n
     const { t } = useTranslation();
 

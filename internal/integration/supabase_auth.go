@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/pkg/secureconfig"
 )
 
 const (
@@ -72,19 +73,18 @@ func getPinnedClient() *http.Client {
 
 func (s *cloudService) InitSecrets() {
 	if supabaseURL == "" {
-		supabaseURL = os.Getenv("BEIDAR_SUPABASE_URL")
-		if supabaseURL == "" {
-			supabaseURL = "https://qiwfbilkcxqqlregduuz.supabase.co"
+		if url, err := secureconfig.GetSupabaseURL(); err == nil {
+			supabaseURL = url
 		}
 	}
 	if supabaseKey == "" {
-		if envKey := os.Getenv("BEIDAR_SUPABASE_KEY"); envKey != "" {
-			supabaseKey = envKey
-		} else {
-			supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpd2ZiaWxrY3hxcWxyZWdkdXV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExOTcwMjEsImV4cCI6MjA5Njc3MzAyMX0.vKhaRj9YSNb7W_fF6Ssbb4fLQCyk3f4wbiKw4eqap1k"
+		if key, err := secureconfig.GetSupabaseKey(); err == nil {
+			supabaseKey = key
 		}
 	}
-	functionsURL = supabaseURL + "/functions/v1"
+	if supabaseURL != "" {
+		functionsURL = supabaseURL + "/functions/v1"
+	}
 	initCertPinning()
 }
 

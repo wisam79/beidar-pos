@@ -2,20 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Clock, Calendar, DollarSign, TrendingUp, AlertTriangle, CheckCircle, X, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { api } from '../core/api';
-import { Shift, CashMovement, AppPreferences, NotifyFunction } from '../core/types';
+import { Shift, CashMovement } from '../core/types';
 import { logger } from '../core/logger';
 import { formatCurrency } from '../core/utils';
 import { ShiftManager } from '../components/ShiftManager';
 import { useAuth } from '../core/AuthContext';
 import { PageHeader } from '../components/ui';
 import { PageShell, StatsGrid, StatCard } from '../components/blocks';
+import { usePreferences } from '../components/PreferencesContext';
 
-interface ShiftsPageProps {
-    prefs: AppPreferences;
-    notify: NotifyFunction;
-}
-
-export const ShiftsPage: React.FC<ShiftsPageProps> = ({ prefs, notify }) => {
+export const ShiftsPage: React.FC = () => {
+    const { prefs, notify } = usePreferences();
     const { t: _t } = useTranslation();
     const { currentUser } = useAuth();
 

@@ -29,13 +29,14 @@ import {
     ChevronLeft,
     Activity
 } from 'lucide-react';
-import { AppPreferences, View } from '../core/types';
+import { View } from '../core/types';
 import { SalesAreaChart } from '../components/charts';
 import { AnimatedNumber } from '../components/ui';
 import { useDashboardStats, useMonthlyComparison } from '../hooks';
 import { TransactionCard } from '../components/dashboard';
 import { formatCurrency } from '../core/utils';
 import { PageShell, StatsGrid, StatCard, SegmentedControl } from '../components/blocks';
+import { usePreferences } from '../components/PreferencesContext';
 
 // ============ Configuration ============
 const timeRangeMap: Record<string, string> = {
@@ -44,12 +45,8 @@ const timeRangeMap: Record<string, string> = {
     'شهر': 'month',
 };
 
-interface DashboardProps {
-    prefs: AppPreferences;
-    setView: (v: View) => void;
-}
-
-export const Dashboard: React.FC<DashboardProps> = ({ prefs, setView }) => {
+export const Dashboard: React.FC = () => {
+    const { prefs, setView } = usePreferences();
     const [chartFilter, setChartFilter] = useState('أسبوع');
     const { stats } = useDashboardStats(timeRangeMap[chartFilter] || 'week');
     const { comparison } = useMonthlyComparison();

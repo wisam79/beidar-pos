@@ -13,8 +13,8 @@ import { SalesAreaChart } from '../components/charts';
 import { MetricCard, DateRangeButton, CustomerRank } from '../components/reports/ReportsComponents';
 import { forecastSales } from '../core/ai';
 import { api, Sale, Expense, Product, Customer, Staff, StockMovement, DashboardStats } from '../core/api';
-import { AppPreferences } from '../core/types';
 import { logger } from '../core/logger';
+import { usePreferences } from '../components/PreferencesContext';
 import { exportSalesReport, exportFinancialSummary, exportProductsReport, exportInventoryReport, exportCustomersReport } from '../core/export';
 import { useDashboardStats, useProducts, useCustomers, useMonthlyComparison, useStockMovements, MonthData } from '../hooks';
 
@@ -52,7 +52,8 @@ const TABS: { id: TabId; label: string; icon: LucideIcon; color: string }[] = [
 // Main Component
 // ─────────────────────────────────────────────────────────────────────────────────
 
-export const ReportsPage = ({ prefs }: { prefs?: AppPreferences }) => {
+export const ReportsPage: React.FC = () => {
+    const { prefs } = usePreferences();
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const [dateRange, setDateRange] = useState<'week' | 'month' | 'year'>('week');
     const [forecast, setForecast] = useState<string | null>(null);

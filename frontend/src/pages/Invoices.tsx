@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PrintPortal } from '../components/PrintPortal';
 import { Search, Printer, FileText, Receipt, RefreshCcw, Trash2, DollarSign, CheckCircle2, Clock, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, CreditCard, ScanLine } from 'lucide-react';
-import { Sale, AppPreferences, NotifyFunction } from '../core/types';
+import { Sale } from '../core/types';
 import { formatCurrency, playBeep } from '../core/utils';
 import { Badge, Modal, PageHeader, EmptyState, useScanDetection } from '../components/ui';
 import { ReceiptTemplate } from '../components/ReceiptTemplate';
@@ -12,8 +12,10 @@ import { BarcodeScannerOverlay, ScanResult } from '../components/BarcodeScannerO
 import { api } from '../core/api';
 import { useInvalidateSales, useInvalidateProducts, useInvalidateCustomers } from '../hooks';
 import { PageShell, StatsGrid, StatCard, LoadingState, FilterBar, SearchInput, SegmentedControl, Pagination } from '../components/blocks';
+import { usePreferences } from '../components/PreferencesContext';
 
-export const InvoicesPage = ({ prefs, notify }: { prefs: AppPreferences, notify: NotifyFunction }) => {
+export const InvoicesPage: React.FC = () => {
+    const { notify, prefs } = usePreferences();
     // i18n
     const { t } = useTranslation();
 

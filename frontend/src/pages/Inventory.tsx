@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Package, AlertTriangle, DollarSign, Printer, RefreshCw, Sparkles, Plus, Minus, ChevronDown, XCircle, Layers, ChevronRight, ChevronLeft, History, Truck, BarChart2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { Product, StockMovement, AppPreferences } from '../core/types';
+import { Product, StockMovement } from '../core/types';
 import { formatCurrency } from '../core/utils';
 import { Badge, PageHeader, EmptyState } from '../components/ui';
 import { analyzeInventoryRisk } from '../core/ai';
 import { api, ProductStats } from '../core/api';
 import { useInvalidateProducts } from '../hooks';
 import { PageShell, StatsGrid, StatCard, LoadingState, FilterBar, SearchInput, SegmentedControl, Pagination } from '../components/blocks';
+import { usePreferences } from '../components/PreferencesContext';
 
 // Internal debounce hook since lodash might not be available
 function useDebounce<T>(value: T, delay: number): T {
@@ -23,14 +24,10 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
-interface InventoryPageProps {
-    notify: (msg: string, type: 'success' | 'error' | 'info') => void;
-    prefs?: AppPreferences;
-}
-
 const CACHE_KEY = 'beidar_inv_analysis_cache';
 
-export const InventoryPage: React.FC<InventoryPageProps> = ({ notify, prefs }) => {
+export const InventoryPage: React.FC = () => {
+    const { notify, prefs } = usePreferences();
     // React Query cache invalidation
     const invalidateProducts = useInvalidateProducts();
 

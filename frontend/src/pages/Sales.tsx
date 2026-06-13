@@ -10,8 +10,9 @@ import { Numpad } from '../components/Numpad';
 import { CartItemRow as Row } from '../components/CartItemRow';
 import { VirtualProductGrid } from '../components/VirtualProductGrid';
 import { api, ParkedSaleDB, type ModelSale } from '../core/api';
-import { Product, Sale, CartItem, AppPreferences, NotifyFunction } from '../core/types';
+import { Product, Sale, CartItem } from '../core/types';
 import { useInvalidateProducts, useProducts, useCustomers, useParkedSales, useUsbScannerDetection, useCart } from '../hooks';
+import { usePreferences } from '../components/PreferencesContext';
 import { SalesModals, CartPanel, SalesHeader, CheckoutExtras } from '../components/sales';
 import { ReceiptTemplate } from '../components/ReceiptTemplate';
 import { toBlob } from 'html-to-image';
@@ -20,13 +21,8 @@ import { Shift } from '../core/types';
 import { useAuth } from '../core/AuthContext';
 
 // Props interface for type safety
-interface SalesPageProps {
-    prefs: AppPreferences;
-    notify: NotifyFunction;
-}
-
-
-export const SalesPage: React.FC<SalesPageProps> = ({ prefs, notify }) => {
+export const SalesPage: React.FC = () => {
+    const { prefs, notify } = usePreferences();
     // i18n translation hook
     const { t } = useTranslation();
 

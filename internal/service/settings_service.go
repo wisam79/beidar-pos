@@ -4,6 +4,7 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/pkg/autostart"
 	"beidar-desktop/pkg/crashreporter"
+	"beidar-desktop/pkg/secureconfig"
 	"beidar-desktop/pkg/updater"
 	"bytes"
 	"encoding/json"
@@ -14,10 +15,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-)
-
-var (
-	defaultSupabaseURL = "https://qiwfbilkcxqqlregduuz.supabase.co"
 )
 
 // SettingsService manages preferences, device info, updates, autostart, and crash reports
@@ -165,17 +162,17 @@ type aiKeysConfig struct {
 }
 
 func getSupabaseURL() string {
-	if url := os.Getenv("BEIDAR_SUPABASE_URL"); url != "" {
+	if url, err := secureconfig.GetSupabaseURL(); err == nil {
 		return url
 	}
-	return defaultSupabaseURL
+	return ""
 }
 
 func getSupabaseKey() string {
-	if key := os.Getenv("BEIDAR_SUPABASE_KEY"); key != "" {
+	if key, err := secureconfig.GetSupabaseKey(); err == nil {
 		return key
 	}
-	return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpd2ZiaWxrY3hxcWxyZWdkdXV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExOTcwMjEsImV4cCI6MjA5Njc3MzAyMX0.vKhaRj9YSNb7W_fF6Ssbb4fLQCyk3f4wbiKw4eqap1k"
+	return ""
 }
 
 func (s *settingsService) FetchGlobalAIKeys() ([]string, error) {

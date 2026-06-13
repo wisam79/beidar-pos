@@ -1,0 +1,40 @@
+name: Greetings
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    name: Welcome New Contributors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            👋 شكراً لك على فتح هذه المشكلة!
+            
+            سنقوم بمراجعتها في أقرب وقت. في هذه الأثناء، تأكد من:
+            - إضافة **خطوات إعادة إنتاج** المشكلة إن كان bug
+            - إضافة **لقطات شاشة** إن أمكن
+            - تحديد **إصدار التطبيق** الذي تستخدمه
+            
+            شكراً لمساهمتك في تحسين **Beidar POS**! 🚀
+            
+          pr-message: |
+            🎉 شكراً جزيلاً على أول Pull Request لك في **Beidar POS**!
+            
+            قبل المراجعة، الرجاء التأكد من:
+            - ✅ الكود يتبع **Clean Architecture** (handlers ← service ← repository ← domain)
+            - ✅ جميع الاختبارات تمر (`go test ./...` + `npm run test`)
+            - ✅ لا توجد ثغرات أمنية (خاصة بالبيانات المالية)
+            - ✅ تمت إضافة اختبارات للميزة الجديدة إن أمكن
+            
+            فريقنا سيراجع الـ PR في أقرب وقت. شكراً لإسهامك! 🌟

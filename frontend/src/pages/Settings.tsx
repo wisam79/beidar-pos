@@ -10,10 +10,11 @@ import { LanSyncPanel } from '../components/LanSyncPanel';
 import { DesktopSettingsPanel } from '../components/DesktopSettingsPanel';
 import { DeveloperDashboard } from './DeveloperDashboard';
 import { api } from '../core/api';
-import { AppPreferences, NotifyFunction } from '../core/types';
+import { AppPreferences } from '../core/types';
 import { compressImage } from '../core/utils';
 import { validateSettings } from '../core/schemas/settings.schema';
 import { PageShell } from '../components/blocks';
+import { usePreferences } from '../components/PreferencesContext';
 
 // Import extracted setting components
 import {
@@ -34,7 +35,8 @@ import { CloudBackupSettings } from '../components/settings/CloudBackupSettings'
 // 📄 MAIN SETTINGS PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const SettingsPage = ({ prefs, setPrefs, notify }: { prefs: AppPreferences, setPrefs: (p: AppPreferences) => void, notify: NotifyFunction }) => {
+export const SettingsPage: React.FC = () => {
+    const { prefs, setPrefs, notify } = usePreferences();
     const [localPrefs, setLocalPrefs] = useState<AppPreferences>(prefs);
     const [hasChanges, setHasChanges] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});

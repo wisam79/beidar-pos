@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Package, Printer, Plus, Layers, FileSpreadsheet, BarChart2 } from 'lucide-react';
-import { Product, AppPreferences, CategoryDef, NotifyFunction } from '../core/types';
+import { Product, CategoryDef } from '../core/types';
 import { compressImage } from '../core/utils';
 import { PageHeader, EmptyState } from '../components/ui';
 import { PageShell, LoadingState } from '../components/blocks';
@@ -13,6 +13,7 @@ import { ImportExportModal } from '../components/ImportExportModal';
 import { api, Supplier } from '../core/api';
 import { generateProductDescription, improveText, suggestProductPrice, suggestProductEmoji } from '../core/ai';
 import { useInvalidateProducts, useWindowSize, useUsbScannerDetection, useProducts } from '../hooks';
+import { usePreferences } from '../components/PreferencesContext';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { validateProductInput } from '../core/schemas/product.schema';
 
@@ -29,7 +30,8 @@ import {
     ScannedProductModal
 } from '../components/products';
 
-export const ProductsPage = ({ notify, prefs }: { notify: NotifyFunction, prefs: AppPreferences }) => {
+export const ProductsPage: React.FC = () => {
+    const { notify, prefs } = usePreferences();
     const { t } = useTranslation();
     const invalidateProducts = useInvalidateProducts();
 

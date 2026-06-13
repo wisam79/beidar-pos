@@ -7,16 +7,12 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { DonutChart, SalesAreaChart } from '../components/charts';
 import { categorizeExpense, writeRestockEmail } from '../core/ai';
 import { api, Expense, Supplier, Sale, PurchaseOrder } from '../core/api';
-import { AppPreferences } from '../core/types';
 import { PurchaseOrdersTab } from '../components/finance/PurchaseOrdersTab';
 import { PageShell, StatsGrid, StatCard, LoadingState, TabNav, SearchInput } from '../components/blocks';
+import { usePreferences } from '../components/PreferencesContext';
 
-interface FinancePageProps {
-    notify: (msg: string, type: 'success' | 'error') => void;
-    prefs?: AppPreferences;
-}
-
-export const FinancePage: React.FC<FinancePageProps> = ({ notify, prefs }) => {
+export const FinancePage: React.FC = () => {
+    const { notify, prefs } = usePreferences();
     const [activeTab, setActiveTab] = useState<'overview' | 'expenses' | 'suppliers' | 'purchases'>('overview');
     const [showStats, setShowStats] = useState(false);
     const [search, setSearch] = useState('');

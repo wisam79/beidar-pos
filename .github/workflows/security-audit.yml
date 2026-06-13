@@ -1,0 +1,81 @@
+name: Security Audit
+
+on:
+  schedule:
+    # كل يوم سبت 3 صباحاً
+    - cron: '0 3 * * 6'
+  workflow_dispatch:
+
+permissions:
+  security-events: write
+  contents: read
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════════
+  # Go Vulnerability Scan
+  # ═══════════════════════════════════════════════════════════════════
+  go-audit:
+    name: Go Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache: true
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run Vulnerability Check
+        run: govulncheck ./...
+        continue-on-error: true
+
+  # ═══════════════════════════════════════════════════════════════════
+  # npm Audit
+  # ═══════════════════════════════════════════════════════════════════
+  npm-audit:
+    name: npm Audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  # ═══════════════════════════════════════════════════════════════════
+  # Trivy Filesystem Scan (ثغرات شامل)
+  # ═══════════════════════════════════════════════════════════════════
+  trivy-scan:
+    name: Trivy Full Filesystem Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aquasecurity/trivy-action@0.29.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          exit-code: 0
+
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy
