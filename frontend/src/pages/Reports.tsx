@@ -127,7 +127,7 @@ export const ReportsPage: React.FC = () => {
                 ? d.toLocaleDateString('ar-IQ', { month: 'short' })
                 : d.toLocaleDateString('ar-IQ', { weekday: 'short', day: dateRange === 'month' ? 'numeric' : undefined });
 
-            let val = 0;
+            let val: number;
             if (dateRange === 'year') {
                 val = completedSales
                     .filter((s) => new Date(s.date).getMonth() === d.getMonth() && new Date(s.date).getFullYear() === d.getFullYear())
