@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Camera, RefreshCw, AlertTriangle, Zap, ZapOff, CheckCircle2, ScanLine, Box, Ban, ShoppingCart, Package } from 'lucide-react';
 import { playBeep } from '../core/utils';
 
-import { Html5Qrcode } from "html5-qrcode";
+import type { Html5Qrcode as Html5QrcodeType } from 'html5-qrcode';
 
 export interface ScanResult {
     success: boolean;
@@ -36,7 +36,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
     const [lastScannedCode, setLastScannedCode] = useState<string | null>(null);
 
     const [isProcessing, setIsProcessing] = useState(false);
-    const scannerRef = useRef<Html5Qrcode | null>(null);
+    const scannerRef = useRef<Html5QrcodeType | null>(null);
     const isScanning = useRef(false);
     const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
 
@@ -52,6 +52,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
 
 
             try {
+                const { Html5Qrcode } = await import('html5-qrcode');
                 const devices = await Html5Qrcode.getCameras();
                 if (devices && devices.length) {
                     setCameras(devices);
@@ -93,6 +94,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
     const startScanner = async (cameraId: string) => {
         if (isScanning.current) await stopScanner();
 
+        const { Html5Qrcode } = await import('html5-qrcode');
         const html5QrCode = new Html5Qrcode("reader");
         scannerRef.current = html5QrCode;
 

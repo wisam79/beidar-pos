@@ -24,20 +24,20 @@ export const TabNav = memo(<T extends string>({
     onChange,
     className = '',
 }: TabNavProps<T>) => (
-    <div className={`border-b border-border p-2.5 flex gap-2 bg-bg/50 flex-wrap ${className}`}>
+    <div className={`p-1.5 flex gap-1.5 bg-surface-active/30 border border-border/80 rounded-full flex-wrap w-fit ${className}`}>
         {tabs.map(tab => {
             const Icon = tab.icon;
             return (
                 <button
                     key={tab.id}
                     onClick={() => onChange(tab.id)}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all touch-target active:scale-95 ${
+                    className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-black transition-all duration-300 ease-[var(--ease-spring)] touch-target active:scale-95 ${
                         active === tab.id
-                            ? 'bg-primary text-primary-fg shadow-lg shadow-primary/20'
-                            : 'bg-surface text-text-muted hover:text-text-main hover:bg-surface-hover border border-border'
+                            ? 'bg-primary text-primary-fg shadow-md shadow-primary/25'
+                            : 'bg-transparent text-text-muted hover:text-text-main hover:bg-surface-hover'
                     }`}
                 >
-                    {Icon && <Icon size={18} />}
+                    {Icon && <Icon size={16} />}
                     {tab.label}
                 </button>
             );

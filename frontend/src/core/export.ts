@@ -158,7 +158,7 @@ export async function exportToPDF<T extends Record<string, unknown>>(
         <style>
             @page { size: A4 landscape; margin: 10mm; }
             #print-container {
-                font-family: 'Readex Pro Variable', 'Readex Pro', sans-serif !important;
+                font-family: 'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif !important;
                 background: white !important;
                 color: black !important;
             }

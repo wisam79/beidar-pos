@@ -22,18 +22,18 @@ interface ActionButtonProps {
 
 const variantClasses: Record<ButtonVariant, string> = {
     primary: `
-        bg-primary text-primary-fg hover:brightness-110
-        shadow-lg shadow-primary/20
-        border border-primary/20
+        bg-primary text-primary-fg hover:brightness-[1.03]
+        shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30
+        border border-primary/10
     `,
     secondary: `
         bg-surface hover:bg-surface-hover text-text-main
         border border-border
-        shadow-sm
+        shadow-sm hover:shadow-md
     `,
     danger: `
         bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white
-        border border-red-500/20
+        border border-red-500/20 shadow-sm
     `,
     ghost: `
         bg-transparent hover:bg-surface-hover text-text-muted hover:text-text-main
@@ -41,7 +41,7 @@ const variantClasses: Record<ButtonVariant, string> = {
     `,
     icon: `
         bg-surface hover:bg-surface-hover text-text-muted hover:text-text-main
-        border border-border
+        border border-border shadow-sm
     `,
 };
 
@@ -66,13 +66,13 @@ export const ActionButton = memo(({
             title={title}
             className={`
                 ${variantClasses[variant]}
-                ${isIconOnly ? 'w-11 h-11 p-0 justify-center' : 'px-4 py-2.5 gap-2'}
-                rounded-xl font-bold text-sm
-                flex items-center
-                transition-all duration-150
+                ${isIconOnly ? 'w-11 h-11 p-0 justify-center' : 'px-5 py-2.5 gap-2'}
+                rounded-full font-black text-sm
+                flex items-center justify-center
+                transition-all duration-300 ease-[var(--ease-spring)]
                 active:scale-95 touch-target
                 disabled:opacity-40 disabled:pointer-events-none
-                ${block ? 'w-full justify-center' : ''}
+                ${block ? 'w-full' : ''}
                 ${className}
             `}
         >

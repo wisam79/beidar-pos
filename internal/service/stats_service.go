@@ -155,21 +155,31 @@ func (s *statsService) GetDashboardStats(timeRange string) (stats *domain.Dashbo
 func (s *statsService) getChartDataPoints(timeRange string) []domain.ChartDataPoint {
 	var days int
 	var dateFormat string
-	var labelFormat string
+
+	// Arabic day names for weekly chart
+	arabicDays := map[string]string{
+		"Sunday": "أحد", "Monday": "إثن", "Tuesday": "ثلا",
+		"Wednesday": "أرب", "Thursday": "خمي", "Friday": "جمع", "Saturday": "سبت",
+	}
+
+	// Arabic month abbreviations for yearly chart
+	arabicMonthAbbr := map[string]string{
+		"January": "يناير", "February": "فبراير", "March": "مارس",
+		"April": "أبريل", "May": "مايو", "June": "يونيو",
+		"July": "يوليو", "August": "أغسطس", "September": "سبتمبر",
+		"October": "أكتوبر", "November": "نوفمبر", "December": "ديسمبر",
+	}
 
 	switch timeRange {
 	case "year":
 		days = 365
 		dateFormat = "%Y-%m"
-		labelFormat = "Jan"
 	case "month":
 		days = 30
 		dateFormat = "%Y-%m-%d"
-		labelFormat = "02"
 	default: // week
 		days = 7
 		dateFormat = "%Y-%m-%d"
-		labelFormat = "Mon"
 	}
 
 	startDate := time.Now().AddDate(0, 0, -days+1).Format("2006-01-02")
@@ -191,7 +201,7 @@ func (s *statsService) getChartDataPoints(timeRange string) []domain.ChartDataPo
 		for i := 0; i < 12; i++ {
 			d := time.Now().AddDate(0, -11+i, 0)
 			key := d.Format("2006-01")
-			label := d.Format(labelFormat)
+			label := arabicMonthAbbr[d.Month().String()]
 			chartData[i] = domain.ChartDataPoint{
 				Label: label,
 				Value: valueMap[key],
@@ -202,7 +212,7 @@ func (s *statsService) getChartDataPoints(timeRange string) []domain.ChartDataPo
 		for i := 0; i < 30; i++ {
 			d := time.Now().AddDate(0, 0, -29+i)
 			key := d.Format("2006-01-02")
-			label := d.Format(labelFormat)
+			label := d.Format("02")
 			chartData[i] = domain.ChartDataPoint{
 				Label: label,
 				Value: valueMap[key],
@@ -213,7 +223,7 @@ func (s *statsService) getChartDataPoints(timeRange string) []domain.ChartDataPo
 		for i := 0; i < 7; i++ {
 			d := time.Now().AddDate(0, 0, -6+i)
 			key := d.Format("2006-01-02")
-			label := d.Format(labelFormat)
+			label := arabicDays[d.Weekday().String()]
 			chartData[i] = domain.ChartDataPoint{
 				Label: label,
 				Value: valueMap[key],

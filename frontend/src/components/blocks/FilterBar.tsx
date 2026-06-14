@@ -19,12 +19,12 @@ interface SearchInputProps {
 export const SearchInput = memo(({ value, onChange, placeholder = 'بحث...', className = '' }: SearchInputProps) => (
     <div className={`relative group flex-1 min-w-[200px] ${className}`}>
         <input
-            className="w-full bg-input-bg text-text-main border border-border rounded-xl pl-11 pr-4 py-3 outline-none focus:border-primary transition-all text-sm font-bold placeholder:text-text-muted focus:shadow-[0_0_15px_var(--color-primary-dim)] touch-target"
+            className="w-full bg-input-bg text-text-main border border-border rounded-full pl-12 pr-5 py-3 outline-none focus:border-primary transition-all text-sm font-black placeholder:text-text-muted focus:shadow-[0_0_0_4px_rgba(var(--color-primary-rgb),0.15)] touch-target"
             placeholder={placeholder}
             value={value}
             onChange={e => onChange(e.target.value)}
         />
-        <Search className="absolute left-4 top-3.5 text-text-muted group-focus-within:text-primary transition-colors" size={18} />
+        <Search className="absolute left-4.5 top-3.5 text-text-muted group-focus-within:text-primary transition-colors" size={18} />
     </div>
 ));
 SearchInput.displayName = 'SearchInput';
@@ -51,15 +51,15 @@ export const SegmentedControl = memo(<T extends string>({
     onChange,
     className = '',
 }: SegmentedControlProps<T>) => (
-    <div className={`flex bg-bg p-1 rounded-xl border border-border shrink-0 ${className}`}>
+    <div className={`flex bg-surface-active/30 p-1 rounded-full border border-border/80 shrink-0 ${className}`}>
         {options.map(opt => (
             <button
                 key={opt.id}
                 onClick={() => onChange(opt.id)}
-                className={`px-5 py-2.5 rounded-lg font-bold text-xs whitespace-nowrap transition-all touch-target active:scale-95 ${
+                className={`px-5 py-2.5 rounded-full font-black text-xs whitespace-nowrap transition-all duration-300 ease-[var(--ease-spring)] touch-target active:scale-95 ${
                     value === opt.id
                         ? 'bg-primary text-primary-fg shadow-sm'
-                        : 'text-text-muted hover:text-text-main hover:bg-surface'
+                        : 'text-text-muted hover:text-text-main hover:bg-surface-hover/80'
                 }`}
             >
                 {opt.label}
@@ -79,7 +79,7 @@ interface FilterBarProps {
 }
 
 export const FilterBar = memo(({ children, className = '' }: FilterBarProps) => (
-    <div className={`bg-surface border border-border p-3 rounded-2xl flex flex-col md:flex-row gap-3 items-center shrink-0 ${className}`}>
+    <div className={`bg-surface border border-border p-3.5 rounded-3xl flex flex-col md:flex-row gap-3 items-center shrink-0 ${className}`}>
         {children}
     </div>
 ));

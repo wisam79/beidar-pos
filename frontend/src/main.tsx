@@ -7,8 +7,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './core/queryClient';
 import './i18n';
 import '@fontsource-variable/readex-pro';
-import '@fontsource/lemonada';
-import '@fontsource/jetbrains-mono';
 import './index.css';
 import { type View, type AppPreferences } from './core/types';
 import { safeJSONParse } from './core/utils';
@@ -218,12 +216,16 @@ const App = () => {
   );
 };
 
+import { TooltipProvider } from '@/components/shadcn/tooltip';
+
 const MainRoot = () => (
   <QueryClientProvider client={queryClient}>
     <ErrorBoundary>
       <HashRouter>
         <AuthProvider>
-          <App />
+          <TooltipProvider>
+            <App />
+          </TooltipProvider>
         </AuthProvider>
       </HashRouter>
     </ErrorBoundary>

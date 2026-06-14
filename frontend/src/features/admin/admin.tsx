@@ -706,7 +706,7 @@ export const DeveloperDashboard: React.FC<{ onClose: () => void }> = ({ onClose 
     }, [licenses]);
 
     const filteredLicenses = useMemo(() => {
-        let result = licenses.filter(l => {
+        const result = licenses.filter(l => {
             const matchesSearch = JSON.stringify(l).toLowerCase().includes(searchTerm.toLowerCase());
             const isExpired = new Date(l.expires_at) < new Date();
             const isPaid = l.is_paid;
@@ -1153,26 +1153,26 @@ export const DeveloperDashboard: React.FC<{ onClose: () => void }> = ({ onClose 
                 {activeView === 'logs' && (
                     <div className="max-w-6xl mx-auto">
                         <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
-                            <table className="w-full text-right">
+                            <table className="w-full text-right text-sm">
                                 <thead>
-                                    <tr className="text-text-muted text-xs border-b border-border bg-surface-active">
-                                        <th className="p-4">الوقت</th>
-                                        <th className="p-4">المشرف</th>
-                                        <th className="p-4">الإجراء</th>
-                                        <th className="p-4">الهدف</th>
-                                        <th className="p-4">التفاصيل</th>
+                                    <tr className="border-b border-border bg-surface-hover text-text-muted text-xs">
+                                        <th className="text-right">الوقت</th>
+                                        <th className="text-right">المشرف</th>
+                                        <th className="text-center">الإجراء</th>
+                                        <th className="text-right">الهدف</th>
+                                        <th className="text-right">التفاصيل</th>
                                     </tr>
                                 </thead>
-                                <tbody className="text-sm">
+                                <tbody>
                                     {logs.map(log => (
-                                        <tr key={log.id} className="border-b border-border hover:bg-surface-hover transition-colors">
-                                            <td className="p-4 text-text-muted font-mono text-xs">{new Date(log.created_at).toLocaleString('ar-IQ')}</td>
-                                            <td className="p-4 font-bold text-emerald-500">{log.admin_username}</td>
-                                            <td className="p-4">
-                                                <span className="bg-surface-active px-2 py-1 rounded text-xs font-mono">{log.action}</span>
+                                        <tr key={log.id} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
+                                            <td className="text-text-muted font-mono text-right">{new Date(log.created_at).toLocaleString('ar-IQ')}</td>
+                                            <td className="font-bold text-success text-right">{log.admin_username}</td>
+                                            <td className="text-center">
+                                                <span className="bg-surface-active px-2 py-0.5 rounded text-[10px] font-mono text-text-muted border border-border">{log.action}</span>
                                             </td>
-                                            <td className="p-4 font-mono text-xs text-text-muted">{log.target_license?.substring(0, 25)}</td>
-                                            <td className="p-4 text-text-muted text-xs max-w-md truncate">{log.details}</td>
+                                            <td className="font-mono text-xs text-text-muted text-right">{log.target_license?.substring(0, 25)}</td>
+                                            <td className="text-text-muted text-xs max-w-md truncate text-right">{log.details}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -1319,20 +1319,20 @@ export const DeveloperDashboard: React.FC<{ onClose: () => void }> = ({ onClose 
                             </div>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full text-right">
-                                    <thead className="bg-black/20 text-text-muted text-xs font-bold uppercase tracking-wider">
+                                <table className="w-full text-right text-sm">
+                                    <thead className="bg-surface-hover border-b border-border text-text-muted text-xs">
                                         <tr>
-                                            <th className="px-6 py-4">التاريخ</th>
-                                            <th className="px-6 py-4">المتجر / الترخيص</th>
-                                            <th className="px-6 py-4">عدد الطلبات</th>
-                                            <th className="px-6 py-4">آخر تحديث</th>
-                                            <th className="px-6 py-4">الحالة</th>
+                                            <th className="text-right">التاريخ</th>
+                                            <th className="text-right">المتجر / الترخيص</th>
+                                            <th className="text-center">عدد الطلبات</th>
+                                            <th className="text-center">آخر تحديث</th>
+                                            <th className="text-center">الحالة</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-border">
+                                    <tbody>
                                         {aiStats.length === 0 ? (
                                             <tr>
-                                                <td colSpan={5} className="px-6 py-12 text-center text-text-muted">
+                                                <td colSpan={5} className="py-12 text-center text-text-muted">
                                                     <Zap size={32} className="mx-auto mb-3 opacity-30" />
                                                     لا توجد بيانات استهلاك مسجلة
                                                 </td>
@@ -1346,11 +1346,11 @@ export const DeveloperDashboard: React.FC<{ onClose: () => void }> = ({ onClose 
                                                 else if (percentage > 50) statusColor = "bg-amber-500";
 
                                                 return (
-                                                    <tr key={stat.id || i} className="hover:bg-surface-hover transition-colors group">
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-main font-mono">
+                                                    <tr key={stat.id || i} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors group">
+                                                        <td className="text-text-main font-mono text-right">
                                                             {stat.usage_date}
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                        <td className="text-right">
                                                             <div className="flex flex-col">
                                                                 <span className="text-text-main font-bold text-sm">{stat.store_name || 'غير معروف'}</span>
                                                                 <span className="text-xs text-text-muted font-mono flex items-center gap-1 group-hover:text-blue-500 cursor-pointer" onClick={() => copyKey(stat.license_key)}>
@@ -1359,23 +1359,23 @@ export const DeveloperDashboard: React.FC<{ onClose: () => void }> = ({ onClose 
                                                                 </span>
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <div className="flex items-center gap-3">
+                                                        <td className="text-center">
+                                                            <div className="flex items-center justify-center gap-3">
                                                                 <span className="text-text-main font-bold font-mono w-8">{stat.request_count}</span>
-                                                                <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+                                                                <div className="w-24 h-2 bg-gray-700/30 rounded-full overflow-hidden">
                                                                     <div className={`h-full ${statusColor} transition-all duration-500 ai-usage-bar`} data-width={percentage} />
                                                                 </div>
-                                                                <span className="text-xs text-text-muted">{percentage.toFixed(0)}%</span>
+                                                                <span className="text-xs text-text-muted font-mono">{percentage.toFixed(0)}%</span>
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-text-muted">
+                                                        <td className="text-center font-mono text-xs text-text-muted">
                                                             {stat.updated_at ? new Date(stat.updated_at).toLocaleTimeString('ar-IQ') : '-'}
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                        <td className="text-center">
                                                             {stat.request_count >= limit ? (
-                                                                <span className="px-2 py-1 bg-red-500/20 text-red-500 rounded text-xs font-bold border border-red-500/30">Maxed</span>
+                                                                <span className="px-2 py-0.5 bg-danger-dim text-danger rounded text-[10px] font-bold border border-danger/25">Maxed</span>
                                                             ) : (
-                                                                <span className="px-2 py-1 bg-emerald-500/20 text-emerald-500 rounded text-xs font-bold border border-emerald-500/30">Active</span>
+                                                                <span className="px-2 py-0.5 bg-success-dim text-success rounded text-[10px] font-bold border border-success/25">Active</span>
                                                             )}
                                                         </td>
                                                     </tr>

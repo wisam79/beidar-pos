@@ -5,7 +5,6 @@
 
 import React, { useRef, useEffect, useCallback } from 'react';
 import { Package, ScanLine, CreditCard, Plus, PlayCircle, History } from 'lucide-react';
-import { toPng } from 'html-to-image';
 import { Modal } from '../../../../components/ui';
 import { SplitPaymentModal } from '../SplitPaymentModal';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
@@ -236,7 +235,7 @@ const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
                         onClick={() => { onSelectCustomer(null); onCloseCustomerModal(); }}
                         className="w-full text-center py-3 text-xs text-text-muted hover:text-text-main font-bold mt-2 border-t border-border"
                     >
-                        عميل عام (Guest)
+                        زبون عام
                     </button>
                 </div>
             )}
@@ -310,6 +309,7 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
             await new Promise(r => setTimeout(r, 200));
 
             // Capture receipt as PNG
+            const { toPng } = await import('html-to-image');
             const dataUrl = await toPng(silentPrintRef.current, {
                 quality: 1.0,
                 pixelRatio: 2, // Higher quality

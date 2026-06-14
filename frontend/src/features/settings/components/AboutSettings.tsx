@@ -48,7 +48,7 @@ export const AboutSettings = () => {
 
                     {/* Title */}
                     <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-500 mb-1">
-                        Baidar POS
+                        Beidar POS
                     </h1>
                     <p className="text-sm text-text-muted mb-4">نظام نقاط البيع الذكي والمتكامل</p>
 

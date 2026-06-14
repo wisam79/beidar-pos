@@ -140,7 +140,7 @@ func InitDB() (*gorm.DB, error) {
 			StoreName:       "متجر بيدر",
 			Currency:        "IQD",
 			Theme:           "dark",
-			AccentColor:     "emerald",
+			AccentColor:     "#306D29",
 			Language:        "ar",
 			LowStockTrigger: 5,
 		}

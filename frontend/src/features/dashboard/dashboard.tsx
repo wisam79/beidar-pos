@@ -37,6 +37,8 @@ import { TransactionCard } from './components';
 import { formatCurrency } from '../../core/utils';
 import { PageShell, StatsGrid, StatCard, SegmentedControl } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
+import { useAuth } from '../../core/AuthContext';
+import { Card, Button } from '../../components/ds';
 
 // ============ Configuration ============
 const timeRangeMap: Record<string, string> = {
@@ -47,6 +49,7 @@ const timeRangeMap: Record<string, string> = {
 
 export const Dashboard: React.FC = () => {
     const { prefs, setView } = usePreferences();
+    const { currentUser } = useAuth();
     const [chartFilter, setChartFilter] = useState('أسبوع');
     const { stats } = useDashboardStats(timeRangeMap[chartFilter] || 'week');
     const { comparison } = useMonthlyComparison();
@@ -65,17 +68,20 @@ export const Dashboard: React.FC = () => {
         <PageShell className="p-3 lg:p-4">
 
             {/* ═══════════════════════════════════════════════════════════════
-                1. HEADER BAR - Compact & Functional
+                1. HEADER BAR - Dribbble Profile & Filter
             ═══════════════════════════════════════════════════════════════ */}
-            <header className="shrink-0 flex items-center justify-between gap-4 bg-surface/80 backdrop-blur-sm border border-border rounded-2xl px-4 py-2.5 shadow-sm">
-                {/* Left: Title */}
+            <Card className="shrink-0 flex items-center justify-between gap-4 rounded-3xl px-6 py-4 bg-surface/90 backdrop-blur-md border border-border/80 shadow-xs">
+                {/* Right: Welcome Profile */}
                 <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                        <LayoutDashboard size={22} />
+                    <div className="relative w-11 h-11 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 text-primary font-black text-sm flex items-center justify-center shadow-inner select-none transition-transform duration-300 hover:scale-105">
+                        {currentUser?.username?.substring(0, 2).toUpperCase() || 'US'}
+                        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-surface shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                     </div>
-                    <div>
-                        <h1 className="text-xl font-bold text-text-main">لوحة القيادة</h1>
-                        <p className="text-xs text-text-muted">مركز التحكم الرئيسي</p>
+                    <div className="text-right">
+                        <h1 className="text-lg font-black text-text-main leading-tight tracking-tight">
+                            مرحباً، {currentUser?.username || 'المستخدم'} 👋
+                        </h1>
+                        <p className="text-xs text-text-muted font-medium mt-0.5">مركز القيادة والتحكم</p>
                     </div>
                 </div>
 
@@ -86,15 +92,15 @@ export const Dashboard: React.FC = () => {
                     onChange={setChartFilter}
                 />
 
-                {/* Right: AI Button */}
+                {/* Left: AI Button */}
                 <button
                     onClick={() => setView('reports')}
-                    className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                    className="flex items-center gap-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-full shadow-lg shadow-indigo-600/20 hover:shadow-xl hover:shadow-indigo-600/35 hover:scale-[1.02] active:scale-[0.98] hover:-translate-y-0.5 transition-all duration-300 font-bold text-xs"
                 >
-                    <Sparkles size={16} className="text-yellow-300" />
-                    <span className="font-bold text-sm">المستشار الذكي</span>
+                    <Sparkles size={14} className="text-yellow-200 animate-pulse shrink-0" />
+                    <span>المستشار الذكي</span>
                 </button>
-            </header>
+            </Card>
 
             {/* ═══════════════════════════════════════════════════════════════
                 2. STATS BAR - Compact Horizontal Pills
@@ -125,7 +131,8 @@ export const Dashboard: React.FC = () => {
                 <div className="col-span-8 flex flex-col gap-3 min-h-0">
 
                     {/* Chart */}
-                    <div className="flex-1 bg-surface border border-border rounded-xl p-4 shadow-sm flex flex-col min-h-0">
+                    {/* Chart */}
+                    <Card className="flex-1 p-4 shadow-sm flex flex-col min-h-0">
                         <div className="flex items-center justify-between mb-3 shrink-0">
                             <h3 className="text-base font-bold text-text-main flex items-center gap-2">
                                 <BarChart3 size={18} className="text-primary" />
@@ -139,47 +146,52 @@ export const Dashboard: React.FC = () => {
                         <div className="flex-1 min-h-0">
                             <SalesAreaChart data={stats.chartData} />
                         </div>
-                    </div>
+                    </Card>
 
                     {/* Quick Actions Toolbar */}
-                    <div className="shrink-0 flex items-center gap-2 bg-surface border border-border rounded-xl p-2 shadow-sm">
+                    <Card className="shrink-0 flex items-center gap-2 p-2 shadow-sm">
                         <span className="text-xs text-text-muted font-medium px-2">إجراءات سريعة:</span>
-                        <button
+                        <Button
                             onClick={() => handleQuickAction('sales')}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-fg font-bold text-sm shadow-sm hover:shadow-md hover:shadow-primary/20 hover:-translate-y-0.5 transition-all duration-150"
+                            variant="primary"
+                            size="sm"
+                            icon={Zap}
                         >
-                            <Zap size={16} />
                             بيع سريع
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={() => handleQuickAction('products', 'openAddModal')}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-bg/80 dark:bg-white/5 text-text-main border border-border/80 dark:border-white/10 font-bold text-sm shadow-sm hover:shadow-md hover:bg-bg dark:hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-150"
+                            variant="secondary"
+                            size="sm"
+                            icon={Plus}
                         >
-                            <Plus size={16} />
                             مادة جديدة
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={() => handleQuickAction('customers', 'openAddModal')}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-bg/80 dark:bg-white/5 text-text-main border border-border/80 dark:border-white/10 font-bold text-sm shadow-sm hover:shadow-md hover:bg-bg dark:hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-150"
+                            variant="secondary"
+                            size="sm"
+                            icon={UserPlus}
                         >
-                            <UserPlus size={16} />
                             عميل جديد
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={() => handleQuickAction('reports')}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-bg/80 dark:bg-white/5 text-text-main border border-border/80 dark:border-white/10 font-bold text-sm shadow-sm hover:shadow-md hover:bg-bg dark:hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-150"
+                            variant="secondary"
+                            size="sm"
+                            icon={FileText}
                         >
-                            <FileText size={16} />
                             التقارير
-                        </button>
-                    </div>
+                        </Button>
+                    </Card>
                 </div>
 
                 {/* RIGHT: Widgets Column */}
                 <div className="col-span-4 flex flex-col gap-3 min-h-0">
 
                     {/* Recent Transactions */}
-                    <div className="flex-1 bg-surface border border-border rounded-xl shadow-sm flex flex-col min-h-0 overflow-hidden">
+                    {/* Recent Transactions */}
+                    <Card className="flex-1 shadow-sm flex flex-col min-h-0 overflow-hidden">
                         <div className="p-3 border-b border-border flex items-center justify-between shrink-0 bg-surface-active/30">
                             <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
                                 <Clock size={16} className="text-primary" />
@@ -201,49 +213,57 @@ export const Dashboard: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </Card>
 
                     {/* Top Selling & Top Customers - Stacked */}
                     <div className="shrink-0 grid grid-cols-2 gap-3">
                         {/* Top Selling */}
-                        <div className="bg-surface border border-border rounded-xl p-3 shadow-sm">
+                        <Card className="p-3 shadow-sm">
                             <h4 className="text-xs font-bold text-text-muted flex items-center gap-1.5 mb-2">
                                 <Trophy size={14} className="text-amber-500" />
                                 الأكثر مبيعاً
                             </h4>
                             <div className="space-y-1.5">
-                                {stats.topSelling?.slice(0, 3).map((item, i) => (
-                                    <div key={i} className="flex items-center justify-between text-xs">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`w-5 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-gray-400' : 'bg-orange-700'
-                                                }`}>{i + 1}</span>
-                                            <span className="text-text-main font-medium truncate max-w-[80px]">{item.label}</span>
+                                {stats.topSelling && stats.topSelling.length > 0 ? (
+                                    stats.topSelling.slice(0, 3).map((item, i) => (
+                                        <div key={i} className="flex items-center justify-between text-xs">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`w-5 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-gray-400' : 'bg-orange-700'
+                                                    }`}>{i + 1}</span>
+                                                <span className="text-text-main font-medium truncate max-w-[80px]">{item.label}</span>
+                                            </div>
+                                            <span className="font-mono font-bold text-primary">{item.value}</span>
                                         </div>
-                                        <span className="font-mono font-bold text-primary">{item.value}</span>
-                                    </div>
-                                )) || <p className="text-xs text-text-muted text-center py-2">لا توجد بيانات</p>}
+                                    ))
+                                ) : (
+                                    <p className="text-xs text-text-muted text-center py-2">لا توجد بيانات</p>
+                                )}
                             </div>
-                        </div>
+                        </Card>
 
                         {/* Top Customers */}
-                        <div className="bg-surface border border-border rounded-xl p-3 shadow-sm">
+                        <Card className="p-3 shadow-sm">
                             <h4 className="text-xs font-bold text-text-muted flex items-center gap-1.5 mb-2">
                                 <Users size={14} className="text-blue-500" />
                                 أفضل العملاء
                             </h4>
                             <div className="space-y-1.5">
-                                {stats.topCustomers?.slice(0, 3).map((customer, i) => (
-                                    <div key={i} className="flex items-center justify-between text-xs">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`w-5 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold ${i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-blue-400' : 'bg-blue-300'
-                                                }`}>{i + 1}</span>
-                                            <span className="text-text-main font-medium truncate max-w-[80px]">{customer.name}</span>
+                                {stats.topCustomers && stats.topCustomers.length > 0 ? (
+                                    stats.topCustomers.slice(0, 3).map((customer, i) => (
+                                        <div key={i} className="flex items-center justify-between text-xs">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`w-5 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold ${i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-blue-400' : 'bg-blue-300'
+                                                    }`}>{i + 1}</span>
+                                                <span className="text-text-main font-medium truncate max-w-[80px]">{customer.name}</span>
+                                            </div>
+                                            <span className="font-mono font-bold text-emerald-500">{formatCurrency(customer.total, currency)}</span>
                                         </div>
-                                        <span className="font-mono font-bold text-emerald-500">{formatCurrency(customer.total, currency)}</span>
-                                    </div>
-                                )) || <p className="text-xs text-text-muted text-center py-2">لا توجد بيانات</p>}
+                                    ))
+                                ) : (
+                                    <p className="text-xs text-text-muted text-center py-2">لا توجد بيانات</p>
+                                )}
                             </div>
-                        </div>
+                        </Card>
                     </div>
                 </div>
             </div>

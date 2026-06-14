@@ -76,30 +76,12 @@ export const Card = memo(({ children, className = "", onClick }: CardProps) => (
 Card.displayName = 'Card';
 
 // Spotlight Card - Premium Hover Effect
-export const SpotlightCard = memo(({ children, className = "", spotlightColor = "rgba(255, 255, 255, 0.05)", onClick }: SpotlightCardProps) => {
-    const divRef = useRef<HTMLDivElement>(null);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [opacity, setOpacity] = useState(0);
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!divRef.current) return;
-        const rect = divRef.current.getBoundingClientRect();
-        setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-        setOpacity(1);
-    };
-
+export const SpotlightCard = memo(({ children, className = "", spotlightColor, onClick }: SpotlightCardProps) => {
     return (
         <div
-            ref={divRef}
             onClick={onClick}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => setOpacity(0)}
-            className={`relative bg-surface border border-border rounded-2xl transition-all duration-500 hover:shadow-2xl ${onClick ? 'cursor-pointer' : ''} ${className}`}
+            className={`relative bg-surface border border-border rounded-xl transition-all duration-120 hover:border-primary/30 hover:shadow-card-hover ${onClick ? 'cursor-pointer' : ''} ${className}`}
         >
-            <div
-                className="pointer-events-none absolute -inset-px opacity-0 transition duration-500 rounded-2xl"
-                style={{ opacity, background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 40%)` }}
-            />
             <div className="relative z-10 h-full">{children}</div>
         </div>
     );
@@ -107,20 +89,20 @@ export const SpotlightCard = memo(({ children, className = "", spotlightColor = 
 SpotlightCard.displayName = 'SpotlightCard';
 
 const badgeStyles: Record<BadgeType, string> = {
-    success: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]',
-    error: 'bg-red-500/10 text-red-500 border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.1)]',
-    warning: 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]',
-    info: 'bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]',
-    default: 'bg-surface text-text-muted border-border',
-    completed: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    returned: 'bg-red-500/10 text-red-500 border-red-500/20',
-    pending: 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+    success: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_2px_8px_rgba(16,185,129,0.08)]',
+    error: 'bg-red-500/10 text-red-500 border-red-500/20 shadow-[0_2px_8px_rgba(239,68,68,0.08)]',
+    warning: 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_2px_8px_rgba(245,158,11,0.08)]',
+    info: 'bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_2px_8px_rgba(59,130,246,0.08)]',
+    default: 'bg-surface text-text-muted border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]',
+    completed: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_2px_8px_rgba(16,185,129,0.08)]',
+    returned: 'bg-red-500/10 text-red-500 border-red-500/20 shadow-[0_2px_8px_rgba(239,68,68,0.08)]',
+    pending: 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_2px_8px_rgba(245,158,11,0.08)]'
 };
 
 export const Badge = memo(({ type, text }: { type: BadgeType | string, text: string }) => {
     const styleClass = badgeStyles[type as BadgeType] || badgeStyles.info;
     return (
-        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border flex items-center gap-1.5 w-fit select-none backdrop-blur-sm ${styleClass}`}>
+        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 w-fit select-none backdrop-blur-sm ${styleClass}`}>
             {type.includes('success') || type === 'completed' ? <CheckCircle2 size={12} /> : type.includes('warn') || type === 'pending' ? <AlertTriangle size={12} /> : type.includes('err') || type === 'returned' ? <XCircle size={12} /> : <Info size={12} />}
             {text}
         </span>
@@ -129,16 +111,16 @@ export const Badge = memo(({ type, text }: { type: BadgeType | string, text: str
 Badge.displayName = 'Badge';
 
 export const PageHeader = memo(({ title, icon: Icon, description, actions, children }: PageHeaderProps) => (
-    <header className="shrink-0 flex flex-col gap-3 bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-3 lg:p-4 shadow-sm mb-4 w-full text-right">
+    <header className="shrink-0 flex flex-col gap-3 bg-surface/85 backdrop-blur-md border border-border rounded-3xl p-4 lg:p-5 shadow-card mb-4 w-full text-right">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full">
             {/* Right-to-Left (Arabic friendly) layout: Icon & Title */}
-            <div className="flex items-center gap-3 w-full md:w-auto">
-                <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+            <div className="flex items-center gap-3.5 w-full md:w-auto">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary border border-primary/10 shadow-sm shrink-0">
                     <Icon size={22} />
                 </div>
                 <div>
-                    <h1 className="text-lg font-bold text-text-main leading-tight">{title}</h1>
-                    {description && <p className="text-xs text-text-muted mt-0.5">{description}</p>}
+                    <h1 className="text-xl font-black text-text-main leading-tight tracking-tight">{title}</h1>
+                    {description && <p className="text-xs text-text-muted mt-1 font-medium">{description}</p>}
                 </div>
             </div>
 
@@ -185,7 +167,7 @@ export const Modal = memo(({ title, onClose, children, size = 'md' }: ModalProps
                 className={`
                     relative w-full ${maxWidth} 
                     bg-surface border border-border
-                    rounded-3xl
+                    rounded-[32px]
                     flex flex-col max-h-[90vh] 
                     animate-scale-in
                     overflow-hidden
@@ -193,11 +175,11 @@ export const Modal = memo(({ title, onClose, children, size = 'md' }: ModalProps
                 style={{ boxShadow: 'var(--shadow-xl)' }}
                 onClick={e => e.stopPropagation()}
             >
-                <div className="px-8 py-6 border-b border-border flex justify-between items-center shrink-0 bg-surface/98">
-                    <h2 className="text-lg font-bold text-text-main tracking-tight">{title}</h2>
+                <div className="px-8 py-6 border-b border-border/80 flex justify-between items-center shrink-0 bg-surface/98">
+                    <h2 className="text-lg font-black text-text-main tracking-tight">{title}</h2>
                     <div className="flex items-center gap-3">
                         <Kbd>ESC</Kbd>
-                        <button onClick={onClose} title="إغلاق" aria-label="إغلاق" className="hover:bg-bg rounded-full p-1.5 text-text-muted hover:text-text-main transition-colors"><X size={20} /></button>
+                        <button onClick={onClose} title="إغلاق" aria-label="إغلاق" className="hover:bg-bg rounded-full p-2 text-text-muted hover:text-text-main transition-colors"><X size={20} /></button>
                     </div>
                 </div>
                 <div className="p-8 overflow-y-auto custom-scrollbar flex-1">{children}</div>

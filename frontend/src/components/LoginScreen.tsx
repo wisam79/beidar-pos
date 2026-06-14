@@ -198,7 +198,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                             <Lock size={40} className="text-black" />
                         </div>
                         <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-emerald-400 to-cyan-400">
-                            Baidar POS
+                            Beidar POS
                         </h1>
                         <p className="text-text-muted mt-2">تسجيل الدخول للمتابعة</p>
                     </div>
@@ -500,7 +500,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
 
                     {/* Footer */}
                     <p className="text-center text-text-muted text-xs mt-6">
-                        Baidar POS v1.3.9 • نظام نقاط البيع
+                        Beidar POS v1.3.9 • نظام نقاط البيع
                     </p>
                 </div>
             </div>

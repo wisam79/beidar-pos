@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Landmark, TrendingDown, TrendingUp, Users, Plus, Search, Trash2, Sparkles, Building2, Wallet, PieChart, Minus, FileText, ShoppingCart, LayoutDashboard } from 'lucide-react';
+import { Landmark, TrendingDown, TrendingUp, Users, Plus, Search, Trash2, Sparkles, Building2, Wallet, PieChart, Minus, FileText, ShoppingCart, LayoutDashboard, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { formatCurrency, getLocalDateString } from '../../core/utils';
 import { Badge, Modal, PageHeader, SpotlightCard, EmptyState } from '../../components/ui';
 import { ConfirmModal } from '../../components/ConfirmModal';
@@ -111,6 +111,66 @@ export const FinancePage: React.FC = () => {
 
         return { expenseBreakdown, trendData };
     }, [expenses, sales]);
+
+    // Revenue Growth Percentage (Current Month vs Previous Month)
+    const revenueGrowthPct = useMemo(() => {
+        const now = new Date();
+        const currentMonthKey = now.toISOString().slice(0, 7); // YYYY-MM
+        
+        const prev = new Date();
+        prev.setMonth(prev.getMonth() - 1);
+        const prevMonthKey = prev.toISOString().slice(0, 7);
+
+        const currentMonthRev = sales
+            .filter(s => s.date.startsWith(currentMonthKey) && s.status === 'completed')
+            .reduce((sum, s) => sum + s.total, 0);
+
+        const prevMonthRev = sales
+            .filter(s => s.date.startsWith(prevMonthKey) && s.status === 'completed')
+            .reduce((sum, s) => sum + s.total, 0);
+
+        if (prevMonthRev === 0) return currentMonthRev > 0 ? 100 : 0;
+        return ((currentMonthRev - prevMonthRev) / prevMonthRev) * 100;
+    }, [sales]);
+
+    // Top 4 Recent Expenses
+    const recentExpenses = useMemo(() => {
+        return [...expenses]
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 4);
+    }, [expenses]);
+
+    // Debt Ratio and Label (Receivables vs Payables)
+    const debtInfo = useMemo(() => {
+        const total = stats.totalReceivables + stats.totalSupplierDebt;
+        if (total === 0) {
+            return { receivablesPct: 50, payablesPct: 50, label: 'متزن' };
+        }
+        const recPct = (stats.totalReceivables / total) * 100;
+        const payPct = (stats.totalSupplierDebt / total) * 100;
+        let label = 'متزن';
+        if (stats.totalReceivables > stats.totalSupplierDebt * 1.5) {
+            label = 'ممتاز (مستحقاتنا أعلى)';
+        } else if (stats.totalSupplierDebt > stats.totalReceivables * 1.5) {
+            label = 'حذر (ديون الموردين أعلى)';
+        }
+        return { receivablesPct: recPct, payablesPct: payPct, label };
+    }, [stats]);
+
+    const getCategoryInfo = (category: string) => {
+        switch (category) {
+            case 'rent':
+                return { label: 'إيجار', icon: Building2, bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-500' };
+            case 'salary':
+                return { label: 'رواتب', icon: Users, bg: 'bg-purple-500/10', border: 'border-purple-500/20', text: 'text-purple-500' };
+            case 'bills':
+                return { label: 'فواتير', icon: FileText, bg: 'bg-orange-500/10', border: 'border-orange-500/20', text: 'text-orange-500' };
+            case 'maintenance':
+                return { label: 'صيانة', icon: Minus, bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-500' };
+            default:
+                return { label: 'أخرى', icon: Landmark, bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-500' };
+        }
+    };
 
     // --- Actions ---
 
@@ -283,37 +343,206 @@ export const FinancePage: React.FC = () => {
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
                     {activeTab === 'overview' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Revenue Growth Chart */}
-                            <div className="lg:col-span-2 bg-surface border border-border rounded-2xl p-6 h-[380px] relative overflow-hidden group hover:border-primary/20 transition-all">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                                            <TrendingUp size={18} className="text-primary" />
+                        <div className="space-y-6 animate-in fade-in duration-200">
+                            {/* Charts Row */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Revenue Growth Chart */}
+                                <div className="lg:col-span-2 bg-gradient-to-b from-surface to-surface-hover/20 border border-border rounded-3xl p-6 h-[400px] relative overflow-hidden group hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                                    {/* Decorative subtle background glows */}
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/8 transition-all duration-500" />
+                                    
+                                    <div className="flex items-center justify-between mb-6 relative z-10">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                                <TrendingUp size={22} className="text-primary" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-text-main font-black text-base">نمو الإيرادات</h3>
+                                                <p className="text-xs text-text-muted">مقارنة وتدفق المبيعات لآخر 6 أشهر</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Dynamic Growth Badge */}
+                                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border backdrop-blur-md select-none ${
+                                            revenueGrowthPct >= 0 
+                                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+                                                : 'bg-red-500/10 text-red-500 border-red-500/20'
+                                        }`}>
+                                            {revenueGrowthPct >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                                            <span>{Math.abs(revenueGrowthPct).toFixed(1)}%</span>
+                                            <span className="text-[10px] opacity-75 font-normal">الشهر الحالي</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-[280px] w-full relative z-10">
+                                        <SalesAreaChart data={charts.trendData} />
+                                    </div>
+                                </div>
+
+                                {/* Expense Breakdown Donut */}
+                                <div className="bg-gradient-to-b from-surface to-surface-hover/20 border border-border rounded-3xl p-6 h-[400px] flex flex-col group hover:border-red-500/30 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-48 h-48 bg-red-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-red-500/8 transition-all duration-500" />
+                                    
+                                    <div className="flex items-center gap-3 mb-6 relative z-10">
+                                        <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                            <PieChart size={22} className="text-red-500" />
                                         </div>
                                         <div>
-                                            <h3 className="text-text-main font-bold text-sm">نمو الإيرادات</h3>
-                                            <p className="text-[10px] text-text-muted">آخر 6 أشهر</p>
+                                            <h3 className="text-text-main font-black text-base">توزيع المصروفات</h3>
+                                            <p className="text-xs text-text-muted">حسب الفئات النشطة في النظام</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 flex items-center justify-center relative z-10">
+                                        <div className="w-full h-full max-h-[280px]">
+                                            <DonutChart data={charts.expenseBreakdown} />
                                         </div>
                                     </div>
                                 </div>
-                                <SalesAreaChart data={charts.trendData} />
                             </div>
-                            {/* Expense Breakdown Donut */}
-                            <div className="bg-surface border border-border rounded-2xl p-6 h-[380px] flex flex-col group hover:border-red-500/20 transition-all">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-                                        <PieChart size={18} className="text-red-500" />
+
+                            {/* Second Row: Recent Transactions & Quick Metrics */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Recent Expenses List */}
+                                <div className="lg:col-span-2 bg-surface border border-border rounded-3xl p-6 hover:shadow-md transition-all duration-300 flex flex-col">
+                                    <div className="flex items-center justify-between mb-5">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-10 h-10 rounded-xl bg-surface-hover border border-border flex items-center justify-center">
+                                                <FileText size={18} className="text-text-muted" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-black text-text-main">أحدث المصروفات المسجلة</h3>
+                                                <p className="text-[10px] text-text-muted">مراقبة سريعة لآخر التدفقات النقدية الخارجة</p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => setActiveTab('expenses')}
+                                            className="text-xs font-bold text-primary hover:underline transition-all"
+                                        >
+                                            عرض السجل بالكامل
+                                        </button>
                                     </div>
-                                    <div>
-                                        <h3 className="text-text-main font-bold text-sm">توزيع المصروفات</h3>
-                                        <p className="text-[10px] text-text-muted">حسب الفئة</p>
+
+                                    <div className="flex-1 space-y-3">
+                                        {recentExpenses.length === 0 ? (
+                                            <div className="h-full flex items-center justify-center text-xs text-text-muted py-8">
+                                                لا توجد مصروفات مسجلة بعد
+                                            </div>
+                                        ) : (
+                                            recentExpenses.map(e => {
+                                                const catInfo = getCategoryInfo(e.category);
+                                                const CatIcon = catInfo.icon;
+                                                return (
+                                                    <div 
+                                                        key={e.id}
+                                                        className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-hover/30 border border-border/30 hover:border-border hover:bg-surface-hover/60 transition-all duration-200"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-10 h-10 rounded-xl ${catInfo.bg} ${catInfo.border} border flex items-center justify-center`}>
+                                                                <CatIcon size={16} className={catInfo.text} />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-xs font-black text-text-main">{e.title}</h4>
+                                                                <p className="text-[10px] text-text-muted font-mono mt-0.5">{e.date}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-surface border border-border text-text-muted">
+                                                                {catInfo.label}
+                                                            </span>
+                                                            <span className="font-mono font-black text-red-500 text-sm">
+                                                                -{formatCurrency(e.amount, prefs?.currency).replace(prefs?.currency || 'IQD', '')}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
                                     </div>
                                 </div>
-                                <div className="flex-1 flex items-center justify-center">
-                                    <div className="w-44 h-44">
-                                        <DonutChart data={charts.expenseBreakdown} />
+
+                                {/* Quick Financial Metrics & Health indicator */}
+                                <div className="bg-surface border border-border rounded-3xl p-6 hover:shadow-md transition-all duration-300 flex flex-col justify-between space-y-6">
+                                    <div>
+                                        <h3 className="text-sm font-black text-text-main mb-1">الوضع المالي العام</h3>
+                                        <p className="text-[10px] text-text-muted mb-4">مؤشرات السيولة والربحية التقديرية</p>
+                                        
+                                        {/* Profit Margin Widget */}
+                                        <div className="bg-surface-hover/40 border border-border/50 rounded-2xl p-4 mb-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-[11px] font-bold text-text-muted">هامش الربح التشغيلي</span>
+                                                <span className={`text-xs font-bold font-mono ${stats.profitMargin >= 20 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                                    {stats.profitMargin.toFixed(1)}%
+                                                </span>
+                                            </div>
+                                            {/* Beautiful custom progress bar */}
+                                            <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full rounded-full transition-all duration-500 ${
+                                                        stats.profitMargin >= 30 
+                                                            ? 'bg-emerald-500' 
+                                                            : stats.profitMargin >= 15 
+                                                            ? 'bg-primary' 
+                                                            : stats.profitMargin > 0 
+                                                            ? 'bg-amber-500' 
+                                                            : 'bg-red-500'
+                                                    }`}
+                                                    style={{ width: `${Math.max(0, Math.min(100, stats.profitMargin))}%` }}
+                                                />
+                                            </div>
+                                            <p className="text-[9px] text-text-muted mt-2">
+                                                {stats.profitMargin >= 20 
+                                                    ? 'معدل ربحية ممتاز ومستقر للنشاط التجاري' 
+                                                    : stats.profitMargin > 0 
+                                                    ? 'معدل ربحية مقبول، يرجى ترشيد المصروفات لزيادة الهامش' 
+                                                    : 'تنبيه: النشاط التجاري يسجل خسائر حالياً!'}
+                                            </p>
+                                        </div>
+
+                                        {/* Receivables vs Payables Ratio */}
+                                        <div className="bg-surface-hover/40 border border-border/50 rounded-2xl p-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-[11px] font-bold text-text-muted">نسبة الديون (لنا / علينا)</span>
+                                                <span className="text-xs font-bold text-text-main font-mono">
+                                                    {debtInfo.label}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-1 text-[10px] font-bold mb-3">
+                                                <div className="flex items-center gap-1 text-blue-500">
+                                                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                                    <span>لنا: {formatCurrency(stats.totalReceivables, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</span>
+                                                </div>
+                                                <span className="text-text-muted mx-1">|</span>
+                                                <div className="flex items-center gap-1 text-orange-500">
+                                                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                                                    <span>علينا: {formatCurrency(stats.totalSupplierDebt, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="w-full h-2 bg-border rounded-full overflow-hidden flex">
+                                                <div 
+                                                    className="h-full bg-blue-500 transition-all duration-500"
+                                                    style={{ width: `${debtInfo.receivablesPct}%` }}
+                                                    title={`المستحقات لنا: ${debtInfo.receivablesPct.toFixed(0)}%`}
+                                                />
+                                                <div 
+                                                    className="h-full bg-orange-500 transition-all duration-500"
+                                                    style={{ width: `${debtInfo.payablesPct}%` }}
+                                                    title={`الديون علينا: ${debtInfo.payablesPct.toFixed(0)}%`}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
+
+                                    {/* Action Quick Button */}
+                                    <button 
+                                        onClick={() => setShowStats(true)} 
+                                        className="w-full py-3 bg-primary/10 text-primary hover:bg-primary hover:text-black border border-primary/20 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                                    >
+                                        <LayoutDashboard size={14} />
+                                        عرض لوحة المؤشرات العلوية بالكامل
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -323,20 +552,30 @@ export const FinancePage: React.FC = () => {
                         <div className="space-y-4">
                             <SearchInput value={search} onChange={setSearch} placeholder="بحث في المصروفات..." className="max-w-md" />
                             {filteredExpenses.length === 0 ? <EmptyState icon={FileText} title="لا توجد مصروفات" /> : (
-                                <table className="w-full text-right text-sm">
-                                    <thead className="text-primary font-bold text-xs bg-gradient-to-r from-primary/10 via-surface/50 to-transparent border-y border-primary/20 backdrop-blur-md"><tr><th className="p-4">العنوان</th><th className="p-4">التاريخ</th><th className="p-4">الفئة</th><th className="p-4">المبلغ</th><th className="p-4">إجراء</th></tr></thead>
-                                    <tbody>
-                                        {filteredExpenses.map(e => (
-                                            <tr key={e.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                                <td className="p-4 font-bold">{e.title}</td>
-                                                <td className="p-4 text-text-muted font-mono">{e.date}</td>
-                                                <td className="p-4"><Badge type="info" text={e.category === 'rent' ? 'إيجار' : e.category === 'salary' ? 'رواتب' : e.category === 'bills' ? 'فواتير' : 'أخرى'} /></td>
-                                                <td className="p-4 font-black text-red-400 font-mono">{formatCurrency(e.amount, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</td>
-                                                <td className="p-4"><button title="حذف المصروف" onClick={() => handleDeleteExpense(e.id)} className="text-text-muted hover:text-red-500"><Trash2 size={16} /></button></td>
+                                <div className="border border-border rounded-xl overflow-hidden bg-surface">
+                                    <table className="w-full text-right text-sm">
+                                        <thead>
+                                            <tr className="border-b border-border bg-surface-hover text-text-muted">
+                                                <th className="text-right">العنوان</th>
+                                                <th className="text-right">التاريخ</th>
+                                                <th className="text-center">الفئة</th>
+                                                <th className="text-left">المبلغ</th>
+                                                <th className="text-center">إجراء</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {filteredExpenses.map(e => (
+                                                <tr key={e.id} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
+                                                    <td className="font-bold text-text-main">{e.title}</td>
+                                                    <td className="text-text-muted font-mono">{e.date}</td>
+                                                    <td className="text-center"><Badge type="info" text={e.category === 'rent' ? 'إيجار' : e.category === 'salary' ? 'رواتب' : e.category === 'bills' ? 'فواتير' : 'أخرى'} /></td>
+                                                    <td className="font-mono font-bold text-danger text-left">{formatCurrency(e.amount, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</td>
+                                                    <td className="text-center"><button title="حذف المصروف" onClick={() => handleDeleteExpense(e.id)} className="text-text-muted hover:text-danger"><Trash2 size={16} /></button></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             )}
                         </div>
                     )}

@@ -8,7 +8,8 @@ import { formatCurrency } from '../../core/utils';
 import { ShiftManager } from '../../components/ShiftManager';
 import { useAuth } from '../../core/AuthContext';
 import { PageHeader } from '../../components/ui';
-import { PageShell, StatsGrid, StatCard } from '../../components/blocks';
+import { PageShell, StatsGrid, StatCard, SectionCard } from '../../components/blocks';
+import { Modal } from '../../components/ds/Modal';
 import { usePreferences } from '../../components/PreferencesContext';
 
 export const ShiftsPage: React.FC = () => {
@@ -135,19 +136,17 @@ export const ShiftsPage: React.FC = () => {
                 </div>
 
                 {/* Shifts History */}
-                <div className="lg:col-span-2 bg-white dark:bg-surface border border-border rounded-3xl overflow-hidden flex flex-col shadow-sm h-full">
-                    <div className="px-6 py-5 border-b border-border flex justify-between items-center bg-white dark:bg-surface sticky top-0 z-20">
-                        <h3 className="font-black text-xl text-text-main flex items-center gap-3">
-                            <div className="p-2 rounded-xl bg-primary/10">
-                                <Clock size={20} className="text-primary" />
-                            </div>
-                            سجل الشفتات
-                        </h3>
+                <SectionCard
+                    title="سجل الشفتات"
+                    icon={Clock}
+                    headerActions={
                         <span className="text-xs font-bold text-text-muted bg-surface-active/50 px-3 py-1.5 rounded-xl border border-border">
                             آخر 50 شفت
                         </span>
-                    </div>
-
+                    }
+                    className="lg:col-span-2 h-full"
+                    noPadding
+                >
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center h-48 gap-3">
@@ -271,28 +270,18 @@ export const ShiftsPage: React.FC = () => {
                             ))
                         )}
                     </div>
-                </div>
+                </SectionCard>
             </div>
 
             {/* Shift Details Modal */}
-            {
-                selectedShift && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-                        <div className="bg-white dark:bg-surface border border-border rounded-3xl p-0 w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 zoom-in-95 relative">
-                            {/* Header */}
-                            <div className="p-5 border-b border-border bg-white dark:bg-surface flex items-center justify-between sticky top-0 z-20">
-                                <h3 className="font-black text-xl flex items-center gap-3 text-text-main">
-                                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                                        <Clock size={20} />
-                                    </div>
-                                    تفاصيل الشفت
-                                </h3>
-                                <button onClick={() => setSelectedShift(null)} aria-label="إغلاق" className="w-9 h-9 rounded-full bg-surface-active/50 hover:bg-red-500/10 hover:text-red-500 flex items-center justify-center transition-colors">
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+            <Modal
+                title="تفاصيل الشفت"
+                open={!!selectedShift}
+                onClose={() => setSelectedShift(null)}
+                size="sm"
+            >
+                {selectedShift && (
+                    <>
                                 {/* Summary Card */}
                                 <div className="bg-gradient-to-br from-primary/5 to-purple-500/5 border border-primary/10 rounded-2xl p-5 mb-6 relative overflow-hidden group">
                                     <div className="absolute top-0 left-0 w-24 h-24 bg-primary/5 rounded-full -translate-x-12 -translate-y-12 blur-2xl" />
@@ -404,11 +393,9 @@ export const ShiftsPage: React.FC = () => {
                                         </div>
                                     </div>
                                 )}
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
+                    </>
+                )}
+            </Modal>
         </PageShell >
     );
 };

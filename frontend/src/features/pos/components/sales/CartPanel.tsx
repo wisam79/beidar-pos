@@ -1,48 +1,28 @@
-/**
- * CartPanel - Shopping cart display component
- * Extracted from Sales.tsx for better maintainability
- */
-
-import React, { useRef } from 'react';
-import { ShoppingCart, PauseCircle, Maximize2, Minimize2, Trash2, Split, Calculator, Check, Loader2, Package } from 'lucide-react';
+import React, { useMemo, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { ShoppingCart, PauseCircle, Maximize2, Minimize2, Trash2, Split, Calculator, Check, Loader2, Package } from 'lucide-react';
 import { formatCurrency } from '../../../../core/utils';
 import { CartItem, Customer, AppPreferences } from '../../../../core/types';
 import { CartItemRow as Row } from '../CartItemRow';
-import { EmptyState } from '../../../../components/ui';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Types
-// ═══════════════════════════════════════════════════════════════════════════════
+import { Button } from '../../../../components/ds/Button';
 
 export interface CartPanelProps {
-    // Cart data
     cart: CartItem[];
     selectedCustomer: Customer | null;
     prefs: AppPreferences;
-
-    // Totals
     subtotal: number;
     total: number;
     discount: number;
     receivedAmount: number;
     change: number;
-
-    // Payment state
     paymentMethod: 'cash' | 'card' | 'credit' | 'split' | 'installment';
     isProcessing: boolean;
-
-    // Zen mode
     isZenMode: boolean;
-
-    // Setters
     setDiscount: (value: number) => void;
     setPaymentMethod: (method: 'cash' | 'card' | 'credit' | 'split' | 'installment') => void;
     setIsZenMode: (value: boolean) => void;
     setCart: (cart: CartItem[]) => void;
     setReceivedAmount: (value: number) => void;
-
-    // Actions
     updateQty: (id: string, qty: number) => void;
     removeFromCart: (id: string) => void;
     handleParkSale: () => void;
@@ -51,19 +31,10 @@ export interface CartPanelProps {
     setShowSplitModal: (show: boolean) => void;
     setShowInstallmentModal: (show: boolean) => void;
     setInstConfig: (config: { downPayment: number; months: number }) => void;
-    onQtyClick?: (item: CartItem) => void; // Added
-
-
-    // Refs
+    onQtyClick?: (item: CartItem) => void;
     cartEndRef: React.RefObject<HTMLDivElement>;
-
-    // Translation
     t: (key: string) => string;
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Virtualized Cart Items List
-// ═══════════════════════════════════════════════════════════════════════════════
 
 interface CartItemsListProps {
     cart: CartItem[];
@@ -76,50 +47,37 @@ interface CartItemsListProps {
 
 const CartItemsList: React.FC<CartItemsListProps> = ({ cart, prefs, updateQty, removeFromCart, cartEndRef, onQtyClick }) => {
     const parentRef = useRef<HTMLDivElement>(null);
-    // Responsive row height - larger on 2xl screens (matches new CartItemRow design)
-    const is2XL = typeof window !== 'undefined' && window.innerWidth >= 1536;
-    const rowHeight = is2XL ? 110 : 96;
-
     const virtualizer = useVirtualizer({
         count: cart.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => rowHeight, // Card height varies by screen size
+        estimateSize: () => 112,
         overscan: 3,
     });
 
     if (cart.length === 0) {
         return (
-            <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-3">
-                <div className="h-full flex items-center justify-center">
-                    <div className="text-center">
-                        <div className="w-20 h-20 bg-surface border border-border rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <Package size={36} className="text-text-muted" />
-                        </div>
-                        <p className="text-base font-bold text-text-muted mb-1">السلة فارغة</p>
-                        <p className="text-sm text-text-muted/60">امسح الباركود أو اختر منتجاً</p>
+            <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-3 custom-scrollbar">
+                <div className="text-center">
+                    <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border bg-surface">
+                        <Package size={36} className="text-text-muted" />
                     </div>
+                    <p className="mb-1 text-base font-bold text-text-muted">السلة فارغة</p>
+                    <p className="text-sm text-text-muted/60">امسح الباركود أو اختر منتجاً</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div ref={parentRef} className="flex-1 overflow-y-auto custom-scrollbar px-4 py-3">
-
-            <div
-                style={{ height: `${virtualizer.getTotalSize()}px` }}
-                className="w-full relative"
-            >
+        <div ref={parentRef} className="flex-1 overflow-y-auto px-4 py-3 custom-scrollbar">
+            <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
                 {virtualizer.getVirtualItems().map((virtualItem) => {
                     const item = cart[virtualItem.index];
                     return (
                         <div
                             key={item.id}
-                            style={{
-                                height: `${virtualItem.size}px`,
-                                transform: `translateY(${virtualItem.start}px)`,
-                            }}
-                            className="absolute top-0 left-0 w-full pb-3"
+                            className="absolute left-0 top-0 w-full pb-3"
+                            style={{ height: `${virtualItem.size}px`, transform: `translateY(${virtualItem.start}px)` }}
                         >
                             <Row
                                 item={item}
@@ -133,20 +91,15 @@ const CartItemsList: React.FC<CartItemsListProps> = ({ cart, prefs, updateQty, r
                     );
                 })}
             </div>
-            <div ref={cartEndRef}></div>
-        </div >
+            <div ref={cartEndRef} />
+        </div>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Component
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export const CartPanel: React.FC<CartPanelProps> = ({
     cart,
     selectedCustomer,
     prefs,
-    subtotal,
     total,
     discount,
     receivedAmount,
@@ -171,53 +124,50 @@ export const CartPanel: React.FC<CartPanelProps> = ({
     cartEndRef,
     t,
 }) => {
+    const smartAmounts = useMemo(() => {
+        if (total <= 0) return [5000, 10000, 25000, 50000];
+        const roundUp = (n: number, to: number) => Math.ceil(n / to) * to;
+        const amounts = [total];
+        [5000, 10000, 25000, 50000].forEach((step) => {
+            const amount = roundUp(total, step);
+            if (amount > total && !amounts.includes(amount) && amounts.length < 4) amounts.push(amount);
+        });
+        return amounts.slice(0, 4);
+    }, [total]);
+
+    const quantity = cart.reduce((sum, item) => sum + item.qty, 0);
+    const formattedTotal = total > 0 ? formatCurrency(total, prefs.currency).replace(prefs.currency, '').trim() : '0';
+
     return (
         <>
-            {/* Cart Header - Enhanced */}
-            <div className="px-4 py-4 border-b border-border bg-surface flex justify-between items-center shrink-0 z-20">
+            <div className="z-20 flex shrink-0 items-center justify-between border-b bg-surface px-4 py-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 bg-gradient-to-br from-primary/20 to-emerald-500/10 rounded-xl flex items-center justify-center text-primary border border-primary/30">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border bg-primary/10 text-primary">
                         <ShoppingCart size={22} />
                     </div>
                     <div>
-                        <h2 className="font-bold text-text-main text-base">سلة المشتريات</h2>
+                        <h2 className="text-base font-bold text-text-main">سلة المشتريات</h2>
                         <p className="text-xs text-text-muted">
-                            <span className="font-mono font-bold text-primary">{cart.reduce((a, b) => a + b.qty, 0)}</span> منتج
-                            {selectedCustomer && <span className="text-text-muted"> • {selectedCustomer.name}</span>}
+                            <span className="font-mono font-bold text-primary">{quantity}</span> منتج
+                            {selectedCustomer && <span> • {selectedCustomer.name}</span>}
                         </p>
                     </div>
                 </div>
                 <div className="flex gap-1.5">
                     {cart.length > 0 && (
-                        <button
-                            onClick={handleParkSale}
-                            className="w-10 h-10 hover:bg-orange-500/10 rounded-xl text-text-muted hover:text-orange-500 transition-all active:scale-95 flex items-center justify-center"
-                            title="تعليق البيع"
-                            aria-label="تعليق البيع"
-                        >
+                        <Button variant="icon" onClick={handleParkSale} title="تعليق البيع" aria-label="تعليق البيع">
                             <PauseCircle size={20} />
-                        </button>
+                        </Button>
                     )}
-                    <button
-                        onClick={() => setIsZenMode(!isZenMode)}
-                        title={isZenMode ? "تصغير" : "تكبير"}
-                        aria-label={isZenMode ? "تصغير" : "تكبير"}
-                        className={`w-10 h-10 rounded-xl transition-all active:scale-95 flex items-center justify-center ${isZenMode ? 'bg-primary text-primary-fg' : 'hover:bg-surface-hover text-text-muted hover:text-text-main'}`}
-                    >
+                    <Button variant={isZenMode ? 'primary' : 'icon'} onClick={() => setIsZenMode(!isZenMode)} title={isZenMode ? 'تصغير' : 'تكبير'} aria-label={isZenMode ? 'تصغير' : 'تكبير'}>
                         {isZenMode ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-                    </button>
-                    <button
-                        onClick={() => { setCart([]); setReceivedAmount(0); }}
-                        title="إفراغ السلة"
-                        aria-label="إفراغ السلة"
-                        className="w-10 h-10 hover:bg-red-500/10 rounded-xl text-text-muted hover:text-red-500 transition-all active:scale-95 flex items-center justify-center"
-                    >
+                    </Button>
+                    <Button variant="icon" onClick={() => { setCart([]); setReceivedAmount(0); }} title="إفراغ السلة" aria-label="إفراغ السلة">
                         <Trash2 size={20} />
-                    </button>
+                    </Button>
                 </div>
             </div>
 
-            {/* Cart Items - Virtualized for performance */}
             <CartItemsList
                 cart={cart}
                 prefs={prefs}
@@ -227,139 +177,86 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                 cartEndRef={cartEndRef}
             />
 
-            {/* Cart Totals & Actions - Optimized Layout */}
-            <div className="bg-surface border-t border-border px-4 py-3 shrink-0 z-30 relative">
+            <div className="z-30 relative shrink-0 border-t bg-surface px-4 py-3">
                 <div className="space-y-3">
-                    {/* Row 1: Payment Method */}
-                    <div className="flex gap-1 h-10 bg-bg rounded-xl p-1 border border-border">
-                        {(['cash', 'card', 'credit'] as const).map(m => (
+                    <div className="grid grid-cols-3 gap-1 rounded-xl border bg-bg p-1">
+                        {(['cash', 'card', 'credit'] as const).map((method) => (
                             <button
-                                key={m}
-                                onClick={() => setPaymentMethod(m)}
-                                className={`flex-1 rounded-lg text-xs font-bold transition-all active:scale-95 ${paymentMethod === m ? 'bg-surface shadow-sm text-text-main border border-border' : 'text-text-muted hover:text-text-main'}`}
+                                key={method}
+                                type="button"
+                                onClick={() => setPaymentMethod(method)}
+                                className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.98] ${paymentMethod === method ? 'border bg-surface text-text-main shadow-xs' : 'text-text-muted hover:text-text-main'}`}
                             >
-                                {t(`sales.${m}`)}
+                                {t(`sales.${method}`)}
                             </button>
                         ))}
                     </div>
 
-                    {/* Row 2: Discount + Received Amount (Logical Flow) */}
                     <div className="flex items-center gap-2">
-                        {/* Discount */}
-                        <div className="w-28 relative shrink-0">
+                        <div className="relative w-28 shrink-0">
                             <input
                                 type="number"
-                                className="w-full h-10 bg-red-500/10 border border-red-500/30 rounded-xl px-3 pr-10 text-center text-sm font-bold text-red-500 outline-none focus:border-red-500 transition-all"
+                                className="h-10 w-full rounded-xl border border-danger/30 bg-danger-dim px-3 pr-10 text-center text-sm font-bold text-danger outline-none transition focus:border-danger"
                                 placeholder="خصم"
                                 value={discount > 0 ? discount : ''}
-                                onChange={e => setDiscount(Number(e.target.value))}
+                                onChange={(e) => setDiscount(Number(e.target.value))}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500/60 text-sm">🏷️</span>
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-danger/60">%</span>
                         </div>
 
-                        {/* Received Amount (for cash) */}
                         {paymentMethod === 'cash' ? (
                             <>
                                 <input
                                     type="number"
-                                    className="flex-1 h-10 bg-input-bg border border-border rounded-xl px-3 text-sm font-bold text-text-main outline-none focus:border-primary transition-colors text-center"
+                                    className="h-10 flex-1 rounded-xl border bg-input-bg px-3 text-center text-sm font-bold text-text-main outline-none transition focus:border-primary"
                                     placeholder="المبلغ المستلم"
                                     value={receivedAmount > 0 ? receivedAmount : ''}
-                                    onChange={e => setReceivedAmount(Number(e.target.value))}
+                                    onChange={(e) => setReceivedAmount(Number(e.target.value))}
                                 />
                                 {receivedAmount > 0 && (
-                                    <div className={`h-10 px-3 rounded-xl flex items-center gap-1 font-bold text-sm shrink-0 ${change >= 0 ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
+                                    <div className={`flex h-10 shrink-0 items-center gap-1 rounded-xl border px-3 text-sm font-bold ${change >= 0 ? 'border-success/30 bg-success-dim text-success' : 'border-danger/30 bg-danger-dim text-danger'}`}>
                                         <span className="text-[10px] opacity-70">الباقي:</span>
                                         <span className="tabular-nums">{formatCurrency(Math.abs(change), '')}</span>
                                     </div>
                                 )}
                             </>
-                        ) : (
-                            <div className="flex-1" />
-                        )}
+                        ) : <div className="flex-1" />}
                     </div>
 
-                    {/* Row 3: Quick Cash Buttons (Cash only) */}
                     {paymentMethod === 'cash' && (
                         <div className="grid grid-cols-4 gap-1.5">
-                            {(() => {
-                                const roundUp = (n: number, to: number) => Math.ceil(n / to) * to;
-                                const smartAmounts: number[] = [];
-
-                                if (total > 0) {
-                                    smartAmounts.push(total);
-                                    [5000, 10000, 25000, 50000].forEach(step => {
-                                        const amt = roundUp(total, step);
-                                        if (amt > total && !smartAmounts.includes(amt) && smartAmounts.length < 4) {
-                                            smartAmounts.push(amt);
-                                        }
-                                    });
-                                }
-
-                                const displayAmounts = smartAmounts.length > 0 ? smartAmounts.slice(0, 4) : [5000, 10000, 25000, 50000];
-
-                                return displayAmounts.map((amt, idx) => (
-                                    <button
-                                        key={amt}
-                                        onClick={() => handleQuickCash(amt)}
-                                        className={`py-2 rounded-lg text-[11px] font-bold font-mono transition-all active:scale-95 ${idx === 0 && total > 0
-                                            ? 'bg-primary text-white'
-                                            : 'bg-surface-hover hover:bg-surface-active border border-border text-text-muted hover:text-text-main'
-                                            }`}
-                                    >
-                                        {amt >= 1000 ? `${(amt / 1000).toFixed(amt % 1000 === 0 ? 0 : 1)}k` : amt}
-                                    </button>
-                                ));
-                            })()}
+                            {smartAmounts.map((amount) => (
+                                <button
+                                    key={amount}
+                                    type="button"
+                                    onClick={() => handleQuickCash(amount)}
+                                    className={`py-2 text-[11px] font-bold font-mono rounded-lg transition active:scale-[0.98] ${amount === total ? 'bg-primary text-white' : 'border border-border bg-surface-hover text-text-muted hover:bg-surface-active hover:text-text-main'}`}
+                                >
+                                    {amount >= 1000 ? `${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}k` : amount}
+                                </button>
+                            ))}
                         </div>
                     )}
 
-                    {/* Row 4: Total + Action Buttons (Side by Side) */}
                     <div className="flex items-center gap-2">
-                        {/* Total Display - Prominent */}
-                        <div className="flex-1 h-12 bg-gradient-to-r from-emerald-500/10 to-primary/10 border-2 border-emerald-500/50 rounded-xl px-4 flex items-center justify-between">
-                            <span className="text-xs font-bold text-primary/70">الإجمالي</span>
+                        <div className="flex h-14 flex-1 items-center justify-between rounded-xl border-2 border-primary/30 bg-primary-dim px-4">
+                            <span className="text-xs font-bold text-primary">الإجمالي</span>
                             <div className="flex items-center gap-2">
-                                <span className="text-3xl font-black text-text-main tabular-nums">
-                                    {total > 0 ? formatCurrency(total, prefs.currency).replace(prefs.currency, '').trim() : '0'}
-                                </span>
-                                <span className="text-sm font-bold text-primary bg-primary/20 px-2 py-1 rounded-lg">
-                                    {prefs.currency}
-                                </span>
+                                <span className="tabular-nums text-3xl font-black text-text-main">{formattedTotal}</span>
+                                <span className="rounded-lg bg-primary/20 px-2 py-1 text-sm font-bold text-primary">{prefs.currency}</span>
                             </div>
                         </div>
-
-                        {/* Action Buttons */}
-                        <button
-                            onClick={() => setShowSplitModal(true)}
-                            className="w-10 h-12 bg-surface hover:bg-surface-hover text-text-muted border border-border rounded-xl flex items-center justify-center transition-all hover:text-text-main active:scale-95 shrink-0"
-                            title="دفع مجزأ"
-                        >
+                        <Button variant="icon" onClick={() => setShowSplitModal(true)} title="دفع مجزأ">
                             <Split size={18} />
-                        </button>
+                        </Button>
                         {selectedCustomer && (
-                            <button
-                                onClick={() => { setInstConfig({ downPayment: 0, months: 3 }); setShowInstallmentModal(true); }}
-                                className="w-10 h-12 bg-surface hover:bg-surface-hover text-text-muted border border-border rounded-xl flex items-center justify-center transition-all hover:text-text-main active:scale-95 shrink-0"
-                                title="أقساط"
-                            >
+                            <Button variant="icon" onClick={() => { setInstConfig({ downPayment: 0, months: 3 }); setShowInstallmentModal(true); }} title="أقساط">
                                 <Calculator size={18} />
-                            </button>
+                            </Button>
                         )}
-                        <button
-                            onClick={handleCheckout}
-                            disabled={cart.length === 0 || isProcessing}
-                            className="w-28 h-12 bg-gradient-to-r from-primary to-emerald-400 text-black font-black rounded-xl text-sm flex items-center justify-center gap-2 hover:brightness-105 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all active:scale-[0.98] shrink-0"
-                        >
-                            {isProcessing ? (
-                                <Loader2 size={18} className="animate-spin" />
-                            ) : (
-                                <>
-                                    <Check size={20} strokeWidth={3} />
-                                    <span className="font-black">{paymentMethod === 'credit' ? 'دين' : 'بيع'}</span>
-                                </>
-                            )}
-                        </button>
+                        <Button variant="primary" onClick={handleCheckout} disabled={cart.length === 0 || isProcessing} className="w-32 h-14 text-sm">
+                            {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Check size={20} strokeWidth={3} /><span>{paymentMethod === 'credit' ? 'دين' : 'بيع'}</span></>}
+                        </Button>
                     </div>
                 </div>
             </div>

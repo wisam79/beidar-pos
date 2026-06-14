@@ -359,26 +359,34 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                             {expandedOrder === order.id && (
                                 <div className="border-t border-border p-4 bg-bg/30">
                                     {/* Items */}
-                                    <table className="w-full text-sm mb-4">
-                                        <thead className="text-text-muted text-xs">
-                                            <tr><th className="text-right p-2">المنتج</th><th className="p-2">الكمية</th><th className="p-2">المستلم</th><th className="p-2">السعر</th><th className="p-2">الإجمالي</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {order.items.map((item, idx) => (
-                                                <tr key={idx} className="border-t border-white/5">
-                                                    <td className="p-2 font-bold">{item.productName}</td>
-                                                    <td className="p-2 text-center">{item.quantity}</td>
-                                                    <td className="p-2 text-center">
-                                                        <span className={item.receivedQty >= item.quantity ? 'text-green-500' : 'text-orange-500'}>
-                                                            {item.receivedQty}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-2 text-center font-mono">{formatCurrency(item.unitCost, currency)}</td>
-                                                    <td className="p-2 text-center font-mono font-bold">{formatCurrency(item.total, currency)}</td>
+                                    <div className="border border-border rounded-xl overflow-hidden bg-surface mb-4">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-border bg-surface-hover text-text-muted text-xs">
+                                                    <th className="text-right">المنتج</th>
+                                                    <th className="text-center">الكمية</th>
+                                                    <th className="text-center">المستلم</th>
+                                                    <th className="text-left">السعر</th>
+                                                    <th className="text-left">الإجمالي</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {order.items.map((item, idx) => (
+                                                    <tr key={idx} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
+                                                        <td className="font-bold text-text-main">{item.productName}</td>
+                                                        <td className="text-center font-mono text-text-muted">{item.quantity}</td>
+                                                        <td className="text-center font-mono font-bold">
+                                                            <span className={item.receivedQty >= item.quantity ? 'text-success' : 'text-warning'}>
+                                                                {item.receivedQty}
+                                                            </span>
+                                                        </td>
+                                                        <td className="text-left font-mono text-text-muted">{formatCurrency(item.unitCost, currency)}</td>
+                                                        <td className="text-left font-mono font-bold text-text-main">{formatCurrency(item.total, currency)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
 
                                     {/* Actions */}
                                     <div className="flex gap-2 flex-wrap">

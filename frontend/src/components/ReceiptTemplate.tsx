@@ -273,7 +273,7 @@ export const ReceiptTemplate: React.FC<ReceiptTemplateProps> = ({ sale, prefs, m
             </div>
 
             {/* ═══ CUSTOMER ═══ */}
-            {sale.customer && sale.customer !== 'Guest' && (
+            {sale.customer && sale.customer !== 'زبون عام' && (
                 <div className="py-2 px-2 border-b border-dashed border-gray-300 bg-gray-50/50">
                     <div className="flex justify-between items-center text-[10px]">
                         <span className="font-bold text-gray-600">العميل:</span>

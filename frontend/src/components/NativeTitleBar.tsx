@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Minus, Square, X, Minimize2, Sun, Moon, Wifi, WifiOff, Server } from 'lucide-react';
+import { Minus, Square, X, Minimize2, Sun, Moon, Wifi, WifiOff, Server, User } from 'lucide-react';
 import { WindowMinimise, WindowMaximise, Quit as WindowClose } from '../../wailsjs/runtime/runtime';
 
 interface NativeTitleBarProps {
@@ -53,15 +53,13 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
                 </div>
             </div>
 
-            {/* Center Info - Integrated Status */}
-            <div className="flex items-center justify-center gap-3 h-full basis-1/2 opacity-90 hover:opacity-100 transition-opacity">
+            {/* Center Info - Integrated Status (Premium Pill Badges) */}
+            <div className="flex items-center justify-center gap-2 h-full basis-1/2">
                 {/* User Info */}
                 {currentUser && (
-                    <div className="flex items-center gap-2 text-[10px] font-black text-text-muted hidden md:flex bg-surface-hover/80 border border-border/40 px-2 py-0.5 rounded-lg backdrop-blur-sm">
-                        <div className="w-5 h-5 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center text-white text-[9px] font-black shadow-sm">
-                            {currentUser.name.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="text-text-main">{currentUser.name}</span>
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-muted hidden md:flex bg-surface-hover/80 border border-border/50 px-2.5 py-0.5 rounded-full shadow-xs">
+                        <User size={12} className="text-primary shrink-0" />
+                        <span className="text-text-main font-semibold">{currentUser.name}</span>
                     </div>
                 )}
 
@@ -70,13 +68,13 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
 
                 {/* Online Status */}
                 {onlineStatus !== undefined && (
-                    <div className={`flex items-center gap-1.5 text-[9px] font-bold px-2 py-0.5 rounded border ${
+                    <div className={`flex items-center gap-1.5 text-[9px] font-bold px-2.5 py-0.5 rounded-full border shadow-xs ${
                         onlineStatus 
-                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
-                            : 'bg-red-500/10 border-red-500/20 text-red-500'
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
+                            : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
                     }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${onlineStatus ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                        <span>{onlineStatus ? 'ONLINE' : 'OFFLINE'}</span>
+                        <span className={`w-1.5 h-1.5 rounded-full ${onlineStatus ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                        <span>{onlineStatus ? 'متصل' : 'غير متصل'}</span>
                     </div>
                 )}
 
@@ -85,7 +83,8 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
 
                 {/* Version */}
                 {appVersion && (
-                    <div className="flex items-center gap-1.5 text-[10px] font-black text-text-muted hidden md:flex bg-surface-hover/80 border border-border/40 px-2 py-0.5 rounded-lg backdrop-blur-sm">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-muted hidden md:flex bg-surface-hover/80 border border-border/50 px-2.5 py-0.5 rounded-full shadow-xs">
+                        <Server size={11} className="text-text-muted/60 shrink-0" />
                         <span>v{appVersion}</span>
                     </div>
                 )}

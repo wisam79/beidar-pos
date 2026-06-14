@@ -13,7 +13,6 @@ import { useCart } from '../hooks/useCart';
 import { usePreferences } from '../../../components/PreferencesContext';
 import { SalesModals, CartPanel, SalesHeader } from '../components/sales';
 import { ReceiptTemplate } from '../../../components/ReceiptTemplate';
-import { toBlob } from 'html-to-image';
 import { ShiftManager } from '../../../components/ShiftManager';
 import { Shift } from '../../../core/types';
 import { useAuth } from '../../../core/AuthContext';
@@ -141,7 +140,7 @@ export const SalesPage: React.FC = () => {
 
         const sale: Sale = {
             id: `INV-${generateId()}`,
-            customer: selectedCustomer?.name || 'Guest',
+            customer: selectedCustomer?.name || 'زبون عام',
             customerId: selectedCustomer?.id,
             staffId: currentUser?.id || '',
             staffName: currentUser?.name || '',
@@ -359,6 +358,7 @@ export const SalesPage: React.FC = () => {
 
         try {
             if (!whatsappReceiptRef.current) throw new Error("Receipt element not found");
+            const { toBlob } = await import('html-to-image');
             const blob = await toBlob(whatsappReceiptRef.current, { backgroundColor: '#fff', quality: 0.95 });
             if (!blob) throw new Error("Failed to generate image");
 
@@ -369,7 +369,7 @@ export const SalesPage: React.FC = () => {
             notify("تم نسخ الفاتورة كصورة! ألصقها في واتساب (Ctrl+V)", "success");
             playBeep('success');
 
-            const phone = sale.customer === 'Guest' ? '' : customers.find(c => c.id === sale.customerId)?.phone || '';
+            const phone = sale.customer === 'زبون عام' ? '' : customers.find(c => c.id === sale.customerId)?.phone || '';
             setTimeout(() => {
                 window.open(`https://api.whatsapp.com/send?phone=${phone}`, '_blank');
             }, 500);
@@ -381,9 +381,9 @@ export const SalesPage: React.FC = () => {
     };
 
     return (
-        <div className={`flex h-full animate-in fade-in page-enter relative overflow-hidden ${isZenMode ? 'p-0' : ''}`}>
+        <div className={`flex h-full gap-2 animate-in fade-in page-enter relative overflow-hidden ${isZenMode ? 'p-0' : 'p-2'}`}>
             {!isZenMode && (
-                <div className="flex-1 flex flex-col min-h-0 p-2">
+                <div className="flex min-w-0 flex-1 flex-col">
                     <SalesHeader
                         searchQuery={searchQuery}
                         setSearchQuery={setSearchQuery}
@@ -466,7 +466,7 @@ export const SalesPage: React.FC = () => {
                         <div className="relative flex-1">
                             <input
                                 ref={searchRef}
-                                className="w-full bg-input-bg text-text-main border border-border rounded-xl pl-12 pr-4 py-3.5 outline-none focus:border-primary transition-all text-base font-bold placeholder:text-text-muted focus:shadow-glow touch-target"
+                                className="w-full bg-input-bg text-text-main border border-border rounded-full pl-12 pr-5 py-3.5 outline-none focus:border-primary transition-all text-base font-black placeholder:text-text-muted focus:shadow-[0_0_0_4px_rgba(var(--color-primary-rgb),0.15)] touch-target shadow-sm"
                                 placeholder="ابحث أو امسح الباركود..."
                                 value={searchQuery}
                                 onChange={e => {
@@ -478,12 +478,12 @@ export const SalesPage: React.FC = () => {
                                     }
                                 }}
                             />
-                            <Search className="absolute left-4 top-3.5 text-text-muted opacity-70" size={20} />
+                            <Search className="absolute left-4.5 top-4 text-text-muted opacity-70" size={20} />
                         </div>
-                        <button onClick={() => setIsScannerOpen(true)} className="p-3.5 bg-purple-500/10 border border-purple-500/20 text-purple-500 rounded-xl hover:bg-purple-500 hover:text-white transition-all btn-press touch-target" title="ماسح الباركود" aria-label="ماسح الباركود">
+                        <button onClick={() => setIsScannerOpen(true)} className="p-3.5 bg-purple-500/10 border border-purple-500/20 text-purple-500 rounded-full hover:bg-purple-500 hover:text-white transition-all btn-press touch-target shadow-sm" title="ماسح الباركود" aria-label="ماسح الباركود">
                             <ScanLine size={22} />
                         </button>
-                        <button onClick={() => setShowCustomerModal(true)} className={`p-3.5 rounded-xl border transition-all btn-press touch-target ${selectedCustomer ? 'bg-primary/10 text-primary border-primary/20' : 'bg-surface text-text-muted border-border hover:text-text-main'}`} title="اختر العميل" aria-label="اختر العميل">
+                        <button onClick={() => setShowCustomerModal(true)} className={`p-3.5 rounded-full border transition-all btn-press touch-target shadow-sm ${selectedCustomer ? 'bg-primary/10 text-primary border-primary/20' : 'bg-surface text-text-muted border-border hover:text-text-main'}`} title="اختر العميل" aria-label="اختر العميل">
                             <User size={22} />
                         </button>
                     </div>

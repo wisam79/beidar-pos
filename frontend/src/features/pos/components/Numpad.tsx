@@ -1,23 +1,24 @@
-
-import React, { useState, useCallback, useEffect } from 'react';
-import { Delete, CornerDownLeft, X, Plus, Minus } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Delete, CornerDownLeft, X, Plus, Minus, Check } from 'lucide-react';
 import { formatCurrency, playBeep } from '../../../core/utils';
+import { Button } from '../../../components/ds/Button';
 
 interface NumpadProps {
     value: number;
     onChange: (value: number) => void;
-    total?: number; // Optional now
+    total?: number;
     onQuickCash?: (amount: number) => void;
     onClear?: () => void;
-    onConfirm?: () => void; // Added onConfirm callback
+    onConfirm?: () => void;
     currency?: string;
-    mode?: 'payment' | 'quantity'; // New mode prop
-    productName?: string; // Show product name in quantity mode
-    maxQty?: number; // Maximum allowed quantity
+    mode?: 'payment' | 'quantity';
+    productName?: string;
+    maxQty?: number;
 }
 
 const QUICK_AMOUNTS = [1000, 5000, 10000, 25000, 50000, 100000];
 const QUICK_QUANTITIES = [0.5, 1, 2, 3, 5, 10];
+const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
 
 export const Numpad: React.FC<NumpadProps> = ({
     value,
@@ -29,49 +30,34 @@ export const Numpad: React.FC<NumpadProps> = ({
     currency = 'IQD',
     mode = 'payment',
     productName,
-    maxQty = 9999
+    maxQty = 9999,
 }) => {
     const [display, setDisplay] = useState(value > 0 ? value.toString() : '');
 
-    // Sync display with external value changes
     useEffect(() => {
         setDisplay(value > 0 ? value.toString() : '');
     }, [value]);
 
     const handleDigit = useCallback((digit: string) => {
         playBeep('click');
-        let newDisplay = display;
-
-        // Handle decimal for quantity mode
+        let next = display;
         if (digit === '.') {
-            if (display.includes('.')) return; // Prevent multiple dots
-            if (display === '' || display === '0') {
-                newDisplay = '0.';
-            } else {
-                newDisplay = display + '.';
-            }
-        } else if (display === '0' && digit !== '.') {
-            newDisplay = digit;
+            if (display.includes('.')) return;
+            next = display === '' || display === '0' ? '0.' : `${display}.`;
         } else {
-            newDisplay += digit;
+            next = display === '0' ? digit : `${display}${digit}`;
         }
-
-        const newValue = parseFloat(newDisplay) || 0;
-
-        // Check max quantity limit
-        if (mode === 'quantity' && newValue > maxQty) {
-            return;
-        }
-
-        setDisplay(newDisplay);
-        onChange(newValue);
-    }, [display, onChange, mode, maxQty]);
+        const nextValue = Number.parseFloat(next) || 0;
+        if (mode === 'quantity' && nextValue > maxQty) return;
+        setDisplay(next);
+        onChange(nextValue);
+    }, [display, maxQty, mode, onChange]);
 
     const handleBackspace = useCallback(() => {
         playBeep('click');
-        const newDisplay = display.slice(0, -1);
-        setDisplay(newDisplay);
-        onChange(parseFloat(newDisplay) || 0);
+        const next = display.slice(0, -1);
+        setDisplay(next);
+        onChange(Number.parseFloat(next) || 0);
     }, [display, onChange]);
 
     const handleClear = useCallback(() => {
@@ -79,191 +65,100 @@ export const Numpad: React.FC<NumpadProps> = ({
         setDisplay('');
         onChange(0);
         onClear?.();
-    }, [onChange, onClear]);
+    }, [onClear, onChange]);
 
     const handleQuickAmount = useCallback((amount: number) => {
         playBeep('click');
         setDisplay(amount.toString());
         onChange(amount);
         onQuickCash?.(amount);
-    }, [onChange, onQuickCash]);
-
-    const handleQuickQuantity = useCallback((qty: number) => {
-        playBeep('click');
-        const newQty = Math.min(qty, maxQty);
-        setDisplay(newQty.toString());
-        onChange(newQty);
-    }, [onChange, maxQty]);
+    }, [onQuickCash, onChange]);
 
     const handleIncrement = useCallback((delta: number) => {
         playBeep('click');
-        const currentValue = parseFloat(display) || 0;
-        const newValue = Math.max(1, Math.min(currentValue + delta, maxQty));
-        const formatted = Number.isInteger(newValue) ? newValue.toString() : newValue.toFixed(2);
+        const current = Number.parseFloat(display) || 0;
+        const next = Math.max(1, Math.min(current + delta, maxQty));
+        const formatted = Number.isInteger(next) ? next.toString() : next.toFixed(2);
         setDisplay(formatted);
-        onChange(newValue);
-    }, [display, onChange, maxQty]);
+        onChange(next);
+    }, [display, maxQty, onChange]);
 
     const handleExact = useCallback(() => {
         playBeep('click');
         setDisplay(total.toString());
         onChange(total);
-    }, [total, onChange]);
+    }, [onChange, total]);
 
+    const quickItems = mode === 'payment' ? QUICK_AMOUNTS : QUICK_QUANTITIES;
     const change = value - total;
-    const currentValue = parseFloat(display) || 0;
+    const currentValue = Number.parseFloat(display) || 0;
 
     return (
-        <div className="bg-gradient-to-b from-surface to-bg border-t border-border p-4 space-y-4">
-            {/* Display */}
-            <div className="bg-bg border border-border rounded-2xl p-4 relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--color-primary-dim),transparent)] opacity-30"></div>
-                <div className="relative">
-                    {/* Product Name in Quantity Mode */}
-                    {mode === 'quantity' && productName && (
-                        <p className="text-sm text-text-muted font-bold mb-2 truncate">{productName}</p>
-                    )}
-                    <div className="flex justify-between items-center">
-                        <div className="text-left w-full">
-                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">{mode === 'payment' ? 'المستلم' : 'الكمية الجديدة'}</p>
-                            <div className="flex items-center gap-2">
-                                {mode === 'quantity' && (
-                                    <button
-                                        onClick={() => handleIncrement(-1)}
-                                        className="w-14 h-14 rounded-2xl bg-red-500/10 hover:bg-red-500/20 text-red-500 border-2 border-red-500/20 flex items-center justify-center transition-all active:scale-95"
-                                        title="إنقاص 1"
-                                    >
-                                        <Minus size={24} />
-                                    </button>
-                                )}
-                                <p className="text-5xl font-black text-text-main font-mono tracking-tighter flex-1 text-center py-2">
-                                    <span>{display || '0'}</span>
-                                    {mode === 'payment' && <span className="text-lg text-text-muted ml-2">{currency}</span>}
-                                </p>
-                                {mode === 'quantity' && (
-                                    <button
-                                        onClick={() => handleIncrement(1)}
-                                        className="w-14 h-14 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border-2 border-emerald-500/20 flex items-center justify-center transition-all active:scale-95"
-                                        title="زيادة 1"
-                                    >
-                                        <Plus size={24} />
-                                    </button>
-                                )}
-                            </div>
+        <div className="space-y-3 border-t bg-surface p-4">
+            <div className="rounded-2xl border bg-bg p-4">
+                {mode === 'quantity' && productName && <p className="mb-2 text-sm font-bold text-text-muted">{productName}</p>}
+                <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                        <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-text-muted">{mode === 'payment' ? 'المستلم' : 'الكمية الجديدة'}</p>
+                        <div className="flex items-center gap-2">
+                            {mode === 'quantity' && (
+                                <Button variant="icon" onClick={() => handleIncrement(-1)} title="إنقاص 1">
+                                    <Minus size={22} />
+                                </Button>
+                            )}
+                            <p className="truncate text-center text-4xl font-black font-mono tracking-tighter text-text-main">{display || '0'}</p>
+                            {mode === 'quantity' && (
+                                <Button variant="icon" onClick={() => handleIncrement(1)} title="زيادة 1">
+                                    <Plus size={22} />
+                                </Button>
+                            )}
                         </div>
-                        {mode === 'payment' && (
-                            <div className="text-right">
-                                <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">الباقي</p>
-                                <p className={`text-xl font-black font-mono tracking-tighter ${change >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                    {change >= 0 ? formatCurrency(change, currency).replace(currency, '') : `-${formatCurrency(Math.abs(change), currency).replace(currency, '')}`}
-                                </p>
-                            </div>
-                        )}
                     </div>
+                    {mode === 'payment' && (
+                        <div className="shrink-0 text-right">
+                            <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-text-muted">الباقي</p>
+                            <p className={`text-xl font-black font-mono tracking-tighter ${change >= 0 ? 'text-success' : 'text-danger'}`}>
+                                {change >= 0 ? formatCurrency(change, currency).replace(currency, '') : `-${formatCurrency(Math.abs(change), currency).replace(currency, '')}`}
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Quick Buttons */}
-            {mode === 'payment' ? (
-                <div className="grid grid-cols-6 gap-1.5">
-                    {QUICK_AMOUNTS.map(amount => (
+            <div className="grid grid-cols-6 gap-1.5">
+                {quickItems.map((amount) => {
+                    const selected = mode === 'payment' ? amount === total : amount === currentValue;
+                    return (
                         <button
                             key={amount}
-                            onClick={() => handleQuickAmount(amount)}
-                            className="py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg text-[10px] font-bold transition-all active:scale-95"
+                            type="button"
+                            onClick={() => (mode === 'payment' ? handleQuickAmount(amount) : handleIncrement(amount - currentValue))}
+                            className={`rounded-xl px-2 py-2 text-[10px] font-bold transition active:scale-[0.98] ${selected ? 'bg-primary text-white' : 'border bg-primary-dim text-primary hover:bg-primary/15'}`}
                         >
-                            {(amount / 1000)}K
+                            {mode === 'payment' ? `${amount / 1000}K` : amount}
                         </button>
-                    ))}
-                </div>
-            ) : (
-                <div className="grid grid-cols-6 gap-2">
-                    {QUICK_QUANTITIES.map(qty => (
-                        <button
-                            key={qty}
-                            onClick={() => handleQuickQuantity(qty)}
-                            className={`py-3.5 rounded-xl text-base font-bold transition-all active:scale-95 ${currentValue === qty
-                                ? 'bg-primary text-primary-fg shadow-lg shadow-primary/30'
-                                : 'bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20'
-                                }`}
-                        >
-                            {qty}
-                        </button>
-                    ))}
-                </div>
-            )}
+                    );
+                })}
+            </div>
 
-            {/* Numpad Grid */}
             <div className="grid grid-cols-4 gap-2">
-                {['7', '8', '9'].map(d => (
-                    <button key={d} onClick={() => handleDigit(d)} className="h-16 text-2xl font-bold bg-surface hover:bg-surface-hover border border-border rounded-2xl text-text-main transition-all active:scale-95 shadow-sm">
-                        {d}
-                    </button>
+                {DIGITS.map((digit) => (
+                    <Button key={digit} variant="secondary" onClick={() => handleDigit(digit)} className="h-14 text-2xl font-bold">
+                        {digit}
+                    </Button>
                 ))}
-                <button onClick={handleBackspace} title="مسح" className="h-16 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/20 rounded-2xl transition-all active:scale-95 flex items-center justify-center">
+                <Button variant="soft" onClick={handleBackspace} title="مسح" className="h-14">
                     <Delete size={22} />
-                </button>
-
-                {['4', '5', '6'].map(d => (
-                    <button key={d} onClick={() => handleDigit(d)} className="h-16 text-2xl font-bold bg-surface hover:bg-surface-hover border border-border rounded-2xl text-text-main transition-all active:scale-95 shadow-sm">
-                        {d}
-                    </button>
-                ))}
-                <button onClick={handleClear} title="إلغاء" className="h-16 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-2xl transition-all active:scale-95 flex items-center justify-center">
+                </Button>
+                <Button variant="soft" onClick={handleClear} title="إلغاء" className="h-14">
                     <X size={22} />
-                </button>
-
-                {['1', '2', '3'].map(d => (
-                    <button key={d} onClick={() => handleDigit(d)} className="h-16 text-2xl font-bold bg-surface hover:bg-surface-hover border border-border rounded-2xl text-text-main transition-all active:scale-95 shadow-sm">
-                        {d}
-                    </button>
-                ))}
-                {mode === 'payment' ? (
-                    <button onClick={handleExact} className="h-16 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-2xl transition-all active:scale-95 text-sm font-bold">
-                        المبلغ
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => handleIncrement(0.5)}
-                        className="h-16 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-2xl transition-all active:scale-95 text-base font-bold"
-                        title="إضافة 0.5"
-                    >
-                        +0.5
-                    </button>
-                )}
-
-                {mode === 'payment' ? (
-                    <button onClick={() => handleDigit('00')} className="h-16 text-xl font-bold bg-surface hover:bg-surface-hover border border-border rounded-2xl text-text-main transition-all active:scale-95 shadow-sm">
-                        00
-                    </button>
-                ) : (
-                    <button onClick={() => handleDigit('.')} className="h-16 text-2xl font-bold bg-surface hover:bg-surface-hover border border-border rounded-2xl text-text-main transition-all active:scale-95 shadow-sm">
-                        .
-                    </button>
-                )}
-                <button onClick={() => handleDigit('0')} className="h-16 text-2xl font-bold bg-surface hover:bg-surface-hover border border-border rounded-2xl text-text-main transition-all active:scale-95 shadow-sm">
-                    0
-                </button>
-                {mode === 'payment' ? (
-                    <button onClick={() => handleDigit('.')} className="h-16 text-2xl font-bold bg-surface hover:bg-surface-hover border border-border rounded-2xl text-text-main transition-all active:scale-95 shadow-sm">
-                        .
-                    </button>
-                ) : (
-                    <button onClick={() => handleDigit('000')} className="h-16 text-xl font-bold bg-surface hover:bg-surface-hover border border-border rounded-2xl text-text-main transition-all active:scale-95 shadow-sm">
-                        000
-                    </button>
-                )}
-                <button
-                    onClick={() => onConfirm?.()}
-                    title="تأكيد"
-                    disabled={mode === 'quantity' && currentValue <= 0}
-                    className={`h-16 rounded-2xl transition-all active:scale-95 flex items-center justify-center font-bold ${mode === 'quantity' && currentValue <= 0
-                        ? 'bg-gray-500/10 text-gray-500 border border-gray-500/20 cursor-not-allowed'
-                        : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30'
-                        }`}
-                >
-                    <CornerDownLeft size={24} />
-                </button>
+                </Button>
+                <Button variant="primary" onClick={handleExact} title="المبلغ المضبوط" className="h-14">
+                    <CornerDownLeft size={22} />
+                </Button>
+                <Button variant="primary" onClick={onConfirm} className="h-14">
+                    <Check size={22} />
+                </Button>
             </div>
         </div>
     );

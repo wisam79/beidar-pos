@@ -16,7 +16,7 @@ export const DEFAULT_PREFS: AppPreferences = {
     currency: 'IQD',
     receiptFooter: 'شكراً لزيارتكم',
     defaultPrinter: 'System',
-    accentColor: '#10B981',
+    accentColor: '#306D29',
     compactMode: false,
     fontSize: 'normal',
     theme: 'dark',

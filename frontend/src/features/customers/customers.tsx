@@ -547,16 +547,24 @@ export const CustomersPage: React.FC = () => {
                 historyModal && <Modal title="سجل المشتريات" onClose={() => setHistoryModal(null)} size="lg">
                     <div className="bg-bg border border-border rounded-2xl overflow-hidden shadow-2xl">
                         <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-                            <table className="w-full text-right text-sm">
-                                <thead className="bg-surface/50 text-text-muted text-[10px] uppercase font-bold sticky top-0 backdrop-blur-md"><tr><th className="p-4">التاريخ</th><th className="p-4">رقم الفاتورة</th><th className="p-4">المبلغ</th><th className="p-4">طريقة الدفع</th><th className="p-4">الحالة</th></tr></thead>
-                                <tbody className="divide-y divide-border">
+                            <table className="w-full text-sm">
+                                <thead className="bg-surface-hover border-b border-border sticky top-0 z-10">
+                                    <tr>
+                                        <th className="text-right">التاريخ</th>
+                                        <th className="text-right">رقم الفاتورة</th>
+                                        <th className="text-left">المبلغ</th>
+                                        <th className="text-center">طريقة الدفع</th>
+                                        <th className="text-center">الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                                     {selectedCustomerHistory.map(s => (
-                                        <tr key={s.id} className="hover:bg-white/5 transition-colors">
-                                            <td className="p-4 text-text-muted font-mono text-xs">{new Date(s.timestamp).toLocaleDateString('en-GB')}</td>
-                                            <td className="p-4 text-text-main font-mono text-xs">{s.id}</td>
-                                            <td className="p-4 font-black text-primary font-mono">{formatCurrency(s.total, prefs?.currency)}</td>
-                                            <td className="p-4 text-xs font-bold">{t(`sales.${s.paymentMethod}`)}</td>
-                                            <td className="p-4"><Badge type={s.status === 'completed' ? 'success' : 'warning'} text={s.status} /></td>
+                                        <tr key={s.id} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
+                                            <td className="text-text-muted font-mono text-right">{new Date(s.timestamp).toLocaleDateString('en-GB')}</td>
+                                            <td className="text-text-main font-mono text-right">{s.id}</td>
+                                            <td className="font-mono font-bold text-primary text-left">{formatCurrency(s.total, prefs?.currency)}</td>
+                                            <td className="text-center font-bold text-text-main">{t(`sales.${s.paymentMethod}`)}</td>
+                                            <td className="text-center"><Badge type={s.status === 'completed' ? 'success' : 'warning'} text={s.status} /></td>
                                         </tr>
                                     ))}
                                 </tbody>

@@ -4,6 +4,7 @@
  */
 import React, { memo } from 'react';
 import { LucideIcon } from 'lucide-react';
+import { Card } from '../ds';
 
 // ═══════════════════════════════════════════════════════
 //  StatCard Colors
@@ -107,36 +108,29 @@ export const StatCard = memo(({
     children,
 }: StatCardProps) => {
     const c = colorMap[color];
-    const Tag = onClick ? 'button' : 'div';
 
     return (
-        <Tag
+        <Card
             onClick={onClick}
-            className={`
-                bg-surface border border-border p-4 rounded-2xl
-                flex items-center gap-4 group
-                transition-all duration-200
-                ${c.hoverBorder} ${c.hoverShadow}
-                hover:shadow-lg
-                ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''}
-            `}
+            interactive={!!onClick}
+            className="p-5 rounded-3xl flex items-center gap-4 group"
         >
             {/* Icon */}
-            <div className={`w-12 h-12 rounded-xl ${c.iconBg} border ${c.iconBorder} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+            <div className={`w-12 h-12 rounded-2xl ${c.iconBg} border ${c.iconBorder} flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm`}>
                 <Icon size={22} className={c.iconText} />
             </div>
 
             {/* Content */}
-            <div className="flex-1 min-w-0 text-right">
-                <span className="text-[10px] font-bold text-text-muted uppercase block leading-tight">{label}</span>
-                <div className="flex items-center justify-end gap-2 mt-0.5">
-                    <span className={`font-mono font-black text-xl ${c.valueText} leading-none`}>{value}</span>
+            <div className="flex-1 min-w-0 text-start">
+                <span className="text-[10px] font-black text-text-muted uppercase block leading-tight tracking-wider">{label}</span>
+                <div className="flex items-center justify-start gap-2 mt-1">
+                    <span className={`font-mono font-black text-2xl ${c.valueText} leading-none tracking-tight`}>{value}</span>
                     {trend}
                 </div>
-                {subtitle && <span className="text-[9px] text-text-muted font-bold block mt-0.5">{subtitle}</span>}
+                {subtitle && <span className="text-[9px] text-text-muted font-bold block mt-1">{subtitle}</span>}
                 {children}
             </div>
-        </Tag>
+        </Card>
     );
 });
 StatCard.displayName = 'StatCard';

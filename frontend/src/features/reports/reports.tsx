@@ -342,11 +342,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
     const netProfit = stats.netProfit || 0;
     const totalExpenses = stats.totalExpenses || 0;
     const grossProfit = stats.grossProfit || 0;
-    const cogs = revenue - grossProfit;
     const completedCount = stats.totalOrders || 0;
 
-    // Calc margins if not in backend, or use backend if available.
-    // Backend doesn't send profitMargin explicitly in new update, we calc it.
+    // Calc margins
     const profitMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
     const avgOrderValue = completedCount > 0 ? revenue / completedCount : 0;
 
@@ -358,179 +356,155 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
     const topCustomers = stats.topCustomers || [];
 
     return (
-        <div className="h-full grid grid-cols-1 lg:grid-cols-4 gap-4 overflow-y-auto custom-scrollbar pb-4 animate-in fade-in duration-300">
-            {/* KPI Cards - Top Row with enhanced styling */}
-            <div className="bg-surface border border-border rounded-lg p-5 hover:border-primary/30 transition-all group shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-bg/60 dark:bg-white/5 text-text-muted group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-all duration-200">
-                        <Wallet size={20} />
-                    </div>
-                    <p className="text-xs font-bold text-text-muted uppercase tracking-wider">إجمالي الإيرادات</p>
-                </div>
-                <p className="text-xl font-black text-text-main font-mono">{formatCurrency(revenue, currency).replace(currency, '')}</p>
-                <div className="flex items-center gap-2 mt-2">
-                    <div className="h-1.5 flex-1 bg-secondary rounded-full overflow-hidden">
-                        <div className="h-full bg-primary w-full" />
-                    </div>
-                    <p className="text-[10px] text-text-muted">{currency}</p>
-                </div>
-            </div>
-
-            <div className="bg-surface border border-border rounded-lg p-5 hover:border-emerald-500/30 transition-all group shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Activity size={20} className="text-emerald-500" />
-                    </div>
-                    <p className="text-xs font-bold text-text-muted uppercase tracking-wider">صافي الربح</p>
-                </div>
-                <p className="text-xl font-black text-text-main font-mono">{formatCurrency(netProfit, currency).replace(currency, '')}</p>
-                <div className="flex items-center gap-2 mt-2">
-                    <ArrowUpRight size={14} className={profitMargin > 0 ? 'text-emerald-500' : 'text-red-500 rotate-90'} />
-                    <p className={`text-xs font-bold ${profitMargin > 0 ? 'text-emerald-500' : 'text-red-500'}`}>هامش {profitMargin.toFixed(1)}%</p>
-                </div>
-            </div>
-
-            <div className="bg-surface border border-border rounded-lg p-5 hover:border-red-500/30 transition-all group shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <TrendingDown size={20} className="text-red-500" />
-                    </div>
-                    <p className="text-xs font-bold text-text-muted uppercase tracking-wider">المصروفات</p>
-                </div>
-                <p className="text-xl font-black text-text-main font-mono">{formatCurrency(totalExpenses, currency).replace(currency, '')}</p>
-                <p className="text-xs text-text-muted mt-2">{expenseRatio}% من الدخل</p>
-            </div>
-
-            <div className="bg-surface border border-border rounded-lg p-5 hover:border-primary/30 transition-all group shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-bg/60 dark:bg-white/5 text-text-muted group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-all duration-200">
-                        <ShoppingBag size={20} />
-                    </div>
-                    <p className="text-xs font-bold text-text-muted uppercase tracking-wider">متوسط الطلب</p>
-                </div>
-                <p className="text-xl font-black text-text-main font-mono">{formatCurrency(avgOrderValue, currency).replace(currency, '')}</p>
-                <p className="text-xs text-text-muted mt-2">{completedCount} طلب مكتمل</p>
-            </div>
-
-            {/* Revenue Chart - Enhanced */}
-            <SpotlightCard className="lg:col-span-2 bg-surface p-6 rounded-lg border border-border flex flex-col min-h-[300px]" spotlightColor="rgba(16, 185, 129, 0.08)">
-                <div className="flex justify-between items-start mb-5 shrink-0">
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center shadow-lg shadow-primary/20">
-                            <TrendingUp size={26} className="text-white" />
+        <div className="h-full overflow-y-auto custom-scrollbar pb-4 animate-in fade-in duration-300">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                {/* KPI Cards - Top Row */}
+                <div className="bg-surface border border-border rounded-xl p-5 hover:border-primary/30 transition-all group shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted group-hover:text-primary group-hover:bg-primary/5 group-hover:border-primary/20 flex items-center justify-center transition-all duration-200">
+                            <Wallet size={18} />
                         </div>
-                        <div>
-                            <h3 className="text-text-main font-black text-lg">تحليل الإيرادات</h3>
-                            <p className="text-text-muted text-sm">الأداء خلال الفترة المحددة</p>
+                        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">إجمالي الإيرادات</p>
+                    </div>
+                    <div>
+                        <p className="text-xl font-black text-text-main font-mono">{formatCurrency(revenue, currency).replace(currency, '')}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                            <div className="h-1.5 flex-1 bg-secondary rounded-full overflow-hidden">
+                                <div className="h-full bg-primary w-full" />
+                            </div>
+                            <p className="text-[10px] text-text-muted">{currency}</p>
                         </div>
                     </div>
-                    <div className="text-left px-4 py-2 bg-gradient-to-r from-primary/10 to-transparent rounded-xl border border-primary/20">
-                        <p className="text-[10px] text-text-muted font-bold">أعلى قيمة</p>
-                        <p className="text-primary font-black font-mono text-lg">{formatCurrency(Math.max(0, ...chartData.map((d) => d.value)), currency)}</p>
+                </div>
+
+                <div className="bg-surface border border-border rounded-xl p-5 hover:border-primary/30 transition-all group shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted group-hover:text-primary group-hover:bg-primary/5 group-hover:border-primary/20 flex items-center justify-center transition-all duration-200">
+                            <Activity size={18} />
+                        </div>
+                        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">صافي الربح</p>
+                    </div>
+                    <div>
+                        <p className="text-xl font-black text-text-main font-mono">{formatCurrency(netProfit, currency).replace(currency, '')}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                            <ArrowUpRight size={14} className={profitMargin > 0 ? 'text-emerald-500' : 'text-red-500 rotate-90'} />
+                            <p className={`text-xs font-bold ${profitMargin > 0 ? 'text-emerald-500' : 'text-red-500'}`}>هامش {profitMargin.toFixed(1)}%</p>
+                        </div>
                     </div>
                 </div>
-                <div className="flex-1 min-h-0"><SalesAreaChart data={chartData} /></div>
-            </SpotlightCard>
 
-            {/* AI Forecast + Top Products Grid */}
-            {/* AI Forecast + Top Products Grid */}
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* AI Forecast - Enhanced */}
-                <Card className="p-5 bg-surface border-border h-full flex flex-col">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-text-main font-black text-base flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                <Sparkles size={16} className="text-primary" />
+                <div className="bg-surface border border-border rounded-xl p-5 hover:border-primary/30 transition-all group shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted group-hover:text-primary group-hover:bg-primary/5 group-hover:border-primary/20 flex items-center justify-center transition-all duration-200">
+                            <TrendingDown size={18} />
+                        </div>
+                        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">المصروفات</p>
+                    </div>
+                    <div>
+                        <p className="text-xl font-black text-text-main font-mono">{formatCurrency(totalExpenses, currency).replace(currency, '')}</p>
+                        <p className="text-xs text-text-muted mt-2">{expenseRatio}% من الدخل</p>
+                    </div>
+                </div>
+
+                <div className="bg-surface border border-border rounded-xl p-5 hover:border-primary/30 transition-all group shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted group-hover:text-primary group-hover:bg-primary/5 group-hover:border-primary/20 flex items-center justify-center transition-all duration-200">
+                            <ShoppingBag size={18} />
+                        </div>
+                        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">متوسط الطلب</p>
+                    </div>
+                    <div>
+                        <p className="text-xl font-black text-text-main font-mono">{formatCurrency(avgOrderValue, currency).replace(currency, '')}</p>
+                        <p className="text-xs text-text-muted mt-2">{completedCount} طلب مكتمل</p>
+                    </div>
+                </div>
+
+                {/* Revenue Chart */}
+                <SpotlightCard className="lg:col-span-3 bg-surface p-6 rounded-xl border border-border flex flex-col min-h-[350px]" spotlightColor="var(--color-primary-dim)">
+                    <div className="flex justify-between items-start mb-5 shrink-0">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
+                                <TrendingUp size={22} />
+                            </div>
+                            <div>
+                                <h3 className="text-text-main font-black text-base">تحليل الإيرادات</h3>
+                                <p className="text-text-muted text-xs">الأداء خلال الفترة المحددة</p>
+                            </div>
+                        </div>
+                        <div className="text-left px-4 py-2 bg-surface hover:bg-surface-hover rounded-xl border border-border shadow-sm">
+                            <p className="text-[10px] text-text-muted font-bold">أعلى قيمة</p>
+                            <p className="text-primary font-black font-mono text-base">{formatCurrency(Math.max(0, ...chartData.map((d) => d.value)), currency)}</p>
+                        </div>
+                    </div>
+                    <div className="flex-1 min-h-0"><SalesAreaChart data={chartData} /></div>
+                </SpotlightCard>
+
+                {/* AI Forecast */}
+                <Card className="lg:col-span-1 p-5 bg-surface border-border flex flex-col h-full hover:border-primary/30 transition-all">
+                    <div className="flex justify-between items-center mb-4 shrink-0">
+                        <h3 className="text-text-main font-black text-sm flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-bg border border-border/60 flex items-center justify-center">
+                                <Sparkles size={14} className="text-text-muted" />
                             </div>
                             التوقعات الذكية
                         </h3>
-                        <button onClick={handleForecast} disabled={isForecasting} className="p-2 rounded-lg text-text-muted hover:bg-bg transition-all active:scale-95 border border-border" title="تحديث التوقعات">
-                            <RefreshCw size={14} className={isForecasting ? 'animate-spin' : ''} />
+                        <button onClick={handleForecast} disabled={isForecasting} className="p-1.5 rounded-lg text-text-muted hover:bg-bg transition-all active:scale-95 border border-border bg-surface" title="تحديث التوقعات">
+                            <RefreshCw size={12} className={isForecasting ? 'animate-spin' : ''} />
                         </button>
                     </div>
-                    <div className="flex-1 flex items-center justify-center bg-bg/50 rounded-lg p-4 border border-border">
+                    <div className="flex-1 flex items-center justify-center bg-bg/40 rounded-lg p-4 border border-border/60 overflow-y-auto no-scrollbar">
                         {forecast ? (
-                            <p className="text-text-main text-sm leading-relaxed">{forecast}</p>
+                            <p className="text-text-main text-xs leading-relaxed text-center">{forecast}</p>
                         ) : (
                             <div className="text-center">
-                                <Sparkles size={24} className="mx-auto mb-3 text-text-muted/30" />
-                                <p className="text-text-muted text-xs">اضغط لتحليل البيانات وتوقع المبيعات</p>
+                                <Sparkles size={20} className="mx-auto mb-2 text-text-muted/30" />
+                                <p className="text-text-muted text-[11px]">اضغط لتحليل البيانات وتوقع المبيعات</p>
                             </div>
                         )}
                     </div>
                 </Card>
 
-                {/* Top Products - Enhanced */}
-                <Card className="p-5 bg-surface border-border group hover:border-primary/30 transition-all">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-bg/60 dark:bg-white/5 text-text-muted group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all duration-200">
-                            <ShoppingBag size={18} className="text-text-muted group-hover:text-primary transition-colors" />
+                {/* Top Products */}
+                <Card className="lg:col-span-2 p-5 bg-surface border-border hover:border-primary/30 transition-all flex flex-col justify-between">
+                    <div className="flex items-center gap-3 mb-4 shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
+                            <ShoppingBag size={18} />
                         </div>
-                        <h3 className="text-text-main font-black">الأكثر مبيعاً</h3>
+                        <h3 className="text-text-main font-black text-sm">المنتجات الأكثر مبيعاً</h3>
                     </div>
-                    <div className="space-y-3">
-                        {productPerformance.slice(0, 4).map((p, i: number) => (
+                    <div className="space-y-2">
+                        {productPerformance.slice(0, 5).map((p, i: number) => (
                             <div key={i} className="flex items-center gap-3 p-2 rounded-xl bg-bg/30 hover:bg-bg transition-colors border border-transparent hover:border-border">
-                                <span className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-black ${i === 0 ? 'bg-amber-500 text-black' : 'bg-surface border border-border text-text-muted'}`}>{i + 1}</span>
-                                <span className="text-text-main text-sm font-bold truncate flex-1">{p.label}</span>
-                                <span className="text-text-main font-black text-sm font-mono">{p.value}</span>
+                                <span className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-black ${i === 0 ? 'bg-primary text-primary-fg' : 'bg-surface border border-border text-text-muted'}`}>{i + 1}</span>
+                                <span className="text-text-main text-xs font-bold truncate flex-1">{p.label}</span>
+                                <span className="text-text-main font-black text-xs font-mono">{p.value}</span>
                             </div>
                         ))}
                     </div>
                 </Card>
-            </div>
 
-            {/* Financial Health - Enhanced */}
-            <Card className="lg:col-span-2 p-6 bg-surface border-border">
-                <div className="flex items-center gap-3 mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                        <DollarSign size={24} className="text-emerald-500" />
-                    </div>
-                    <div>
-                        <h3 className="text-text-main font-black text-lg">الصحة المالية</h3>
-                        <p className="text-text-muted text-xs">ملخص الأداء المالي</p>
-                    </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-bg/50 border border-border rounded-lg p-4 text-center hover:bg-bg transition-colors">
-                        <p className="text-xs text-text-muted font-bold mb-2">إيرادات</p>
-                        <p className="text-text-main font-black text-2xl font-mono">{formatCurrency(revenue, currency).replace(currency, '')}</p>
-                    </div>
-                    <div className="bg-bg/50 border border-border rounded-lg p-4 text-center hover:bg-bg transition-colors">
-                        <p className="text-xs text-text-muted font-bold mb-2">تكاليف</p>
-                        <p className="text-text-main font-bold text-xl font-mono">{formatCurrency(cogs + totalExpenses, currency).replace(currency, '')}</p>
-                    </div>
-                    <div className="bg-bg/50 border border-border rounded-lg p-4 text-center hover:bg-bg transition-colors">
-                        <p className="text-xs text-text-muted font-bold mb-2">صافي الربح</p>
-                        <p className={`font-black text-2xl font-mono ${netProfit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>{formatCurrency(netProfit, currency).replace(currency, '')}</p>
-                    </div>
-                </div>
-            </Card>
-
-            {/* Top Customers - Enhanced */}
-            <Card className="lg:col-span-2 p-6 bg-surface border-border group hover:border-primary/30 transition-all">
-                <div className="flex items-center gap-3 mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-bg/60 dark:bg-white/5 text-text-muted group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all duration-200">
-                        <Users size={24} className="text-text-muted group-hover:text-primary transition-colors" />
-                    </div>
-                    <div>
-                        <h3 className="text-text-main font-black text-lg">أفضل العملاء</h3>
-                        <p className="text-text-muted text-xs">حسب إجمالي المشتريات</p>
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    {topCustomers.length === 0 ? (
-                        <div className="py-8 text-center text-text-muted">
-                            <Users size={32} className="mx-auto mb-2 opacity-30" />
-                            <p className="text-sm">لا توجد بيانات كافية</p>
+                {/* Top Customers */}
+                <Card className="lg:col-span-2 p-6 bg-surface border-border hover:border-primary/30 transition-all flex flex-col justify-between">
+                    <div className="flex items-center gap-3 mb-5 shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
+                            <Users size={18} />
                         </div>
-                    ) : (
-                        topCustomers.slice(0, 5).map((c, i: number) => (
-                            <CustomerRank key={i} rank={i + 1} name={c.name} total={c.total} currency={currency} />
-                        ))
-                    )}
-                </div>
-            </Card>
+                        <h3 className="text-text-main font-black text-sm">أفضل العملاء</h3>
+                    </div>
+                    <div className="space-y-2">
+                        {topCustomers.length === 0 ? (
+                            <div className="py-8 text-center text-text-muted">
+                                <Users size={24} className="mx-auto mb-2 opacity-30" />
+                                <p className="text-xs">لا توجد بيانات كافية</p>
+                            </div>
+                        ) : (
+                            topCustomers.slice(0, 5).map((c, i: number) => (
+                                <CustomerRank key={i} rank={i + 1} name={c.name} total={c.total} currency={currency} />
+                            ))
+                        )}
+                    </div>
+                </Card>
+            </div>
         </div>
     );
 };
@@ -578,31 +552,31 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
         <div className="h-full flex flex-col gap-4 animate-in fade-in duration-300">
             {/* Stats Row - Unified */}
             <div className="grid grid-cols-3 gap-3 shrink-0">
-                <div className="bg-surface border border-border rounded-lg p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                        <Receipt size={22} className="text-blue-500" />
+                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
+                        <Receipt size={22} />
                     </div>
                     <div>
                         <p className="text-[10px] text-text-muted font-bold uppercase">إجمالي المبيعات</p>
-                        <p className="text-blue-500 font-black text-xl font-mono">{formatCurrency(stats.total, currency).replace(currency, '')}</p>
+                        <p className="text-primary font-black text-xl font-mono">{formatCurrency(stats.total, currency).replace(currency, '')}</p>
                     </div>
                 </div>
-                <div className="bg-surface border border-border rounded-lg p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                        <FileText size={22} className="text-emerald-500" />
+                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
+                        <FileText size={22} />
                     </div>
                     <div>
                         <p className="text-[10px] text-text-muted font-bold uppercase">عدد الفواتير</p>
-                        <p className="text-emerald-500 font-black text-xl font-mono">{stats.count}</p>
+                        <p className="text-text-main font-black text-xl font-mono">{stats.count}</p>
                     </div>
                 </div>
-                <div className="bg-surface border border-border rounded-lg p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                        <Activity size={22} className="text-purple-500" />
+                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
+                        <Activity size={22} />
                     </div>
                     <div>
                         <p className="text-[10px] text-text-muted font-bold uppercase">متوسط الفاتورة</p>
-                        <p className="text-purple-500 font-black text-xl font-mono">{formatCurrency(stats.avgValue, currency).replace(currency, '')}</p>
+                        <p className="text-text-main font-black text-xl font-mono">{formatCurrency(stats.avgValue, currency).replace(currency, '')}</p>
                     </div>
                 </div>
             </div>
@@ -629,25 +603,25 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
             <div className="flex-1 overflow-y-auto custom-scrollbar rounded-xl border border-border bg-surface relative">
                 {isLoading && <div className="absolute inset-0 bg-surface/50 backdrop-blur-sm flex items-center justify-center z-10"><RefreshCw className="animate-spin text-primary" /></div>}
                 <table className="w-full text-sm">
-                    <thead className="bg-gradient-to-r from-primary/10 via-surface/50 to-transparent border-b border-primary/20 sticky top-0 z-10 backdrop-blur-md">
+                    <thead className="bg-surface-hover border-b border-border sticky top-0 z-10">
                         <tr>
-                            <th className="text-right p-3 font-bold text-text-muted text-xs">رقم الفاتورة</th>
-                            <th className="text-right p-3 font-bold text-text-muted text-xs">التاريخ</th>
-                            <th className="text-right p-3 font-bold text-text-muted text-xs">العميل</th>
-                            <th className="text-right p-3 font-bold text-text-muted text-xs">الطريقة</th>
-                            <th className="text-right p-3 font-bold text-text-muted text-xs">الحالة</th>
-                            <th className="text-left p-3 font-bold text-text-muted text-xs">المبلغ</th>
+                            <th className="text-right">رقم الفاتورة</th>
+                            <th className="text-right">التاريخ</th>
+                            <th className="text-right">العميل</th>
+                            <th className="text-center">الطريقة</th>
+                            <th className="text-center">الحالة</th>
+                            <th className="text-left">المبلغ</th>
                         </tr>
                     </thead>
                     <tbody>
                         {sales.map(sale => (
-                            <tr key={sale.id} className="border-t border-border hover:bg-bg/50 transition-colors">
-                                <td className="p-3 font-mono text-text-main font-bold">{sale.id}</td>
-                                <td className="p-3 text-text-muted">{new Date(sale.date).toLocaleDateString('ar-IQ')}</td>
-                                <td className="p-3 text-text-main">{sale.customer || 'زبون عام'}</td>
-                                <td className="p-3"><span className={`px-2 py-1 rounded-lg text-xs font-bold ${sale.paymentMethod === 'cash' ? 'bg-emerald-500/10 text-emerald-500' : sale.paymentMethod === 'card' ? 'bg-blue-500/10 text-blue-500' : 'bg-orange-500/10 text-orange-500'}`}>{sale.paymentMethod === 'cash' ? 'نقدي' : sale.paymentMethod === 'card' ? 'بطاقة' : 'آجل'}</span></td>
-                                <td className="p-3"><span className={`px-2 py-1 rounded-lg text-xs font-bold ${sale.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500' : sale.status === 'pending' ? 'bg-amber-500/10 text-amber-500' : 'bg-red-500/10 text-red-500'}`}>{sale.status === 'completed' ? 'مكتمل' : sale.status === 'pending' ? 'معلق' : 'مرتجع'}</span></td>
-                                <td className="p-3 text-left font-mono font-black text-text-main">{formatCurrency(sale.total, currency)}</td>
+                            <tr key={sale.id} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
+                                <td className="font-mono text-text-main font-bold text-right">{sale.id}</td>
+                                <td className="text-text-muted text-right">{new Date(sale.date).toLocaleDateString('ar-IQ')}</td>
+                                <td className="text-text-main text-right">{sale.customer || 'زبون عام'}</td>
+                                <td className="text-center"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${sale.paymentMethod === 'cash' ? 'bg-success-dim text-success' : sale.paymentMethod === 'card' ? 'bg-info-dim text-info' : 'bg-warning-dim text-warning'}`}>{sale.paymentMethod === 'cash' ? 'نقدي' : sale.paymentMethod === 'card' ? 'بطاقة' : 'آجل'}</span></td>
+                                <td className="text-center"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${sale.status === 'completed' ? 'bg-success-dim text-success' : sale.status === 'pending' ? 'bg-warning-dim text-warning' : 'bg-danger-dim text-danger'}`}>{sale.status === 'completed' ? 'مكتمل' : sale.status === 'pending' ? 'معلق' : 'مرتجع'}</span></td>
+                                <td className="text-left font-mono font-black text-text-main">{formatCurrency(sale.total, currency)}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -694,25 +668,25 @@ const InventoryReportTab: React.FC<InventoryReportTabProps> = ({ products, stock
         <div className="h-full flex flex-col gap-4">
             {/* Stats */}
             <div className="grid grid-cols-4 gap-4 shrink-0">
-                <div className="bg-surface border border-border rounded-xl p-4 text-center">
-                    <Package size={20} className="mx-auto mb-2 text-blue-500" />
+                <div className="bg-surface border border-border rounded-xl p-4 text-center group hover:border-primary/20 transition-all shadow-sm">
+                    <Package size={20} className="mx-auto mb-2 text-text-muted" />
                     <p className="text-[10px] text-text-muted uppercase font-bold">إجمالي المنتجات</p>
-                    <p className="text-blue-500 font-black text-xl font-mono">{stats.totalProducts}</p>
+                    <p className="text-text-main font-black text-xl font-mono">{stats.totalProducts}</p>
                 </div>
-                <div className="bg-surface border border-border rounded-xl p-4 text-center">
-                    <DollarSign size={20} className="mx-auto mb-2 text-emerald-500" />
+                <div className="bg-surface border border-border rounded-xl p-4 text-center group hover:border-primary/20 transition-all shadow-sm">
+                    <DollarSign size={20} className="mx-auto mb-2 text-text-muted" />
                     <p className="text-[10px] text-text-muted uppercase font-bold">قيمة المخزون</p>
-                    <p className="text-emerald-500 font-black text-xl font-mono">{formatCurrency(stats.totalValue, currency).replace(currency, '')}</p>
+                    <p className="text-primary font-black text-xl font-mono">{formatCurrency(stats.totalValue, currency).replace(currency, '')}</p>
                 </div>
-                <div className="bg-surface border border-amber-500/30 rounded-xl p-4 text-center">
+                <div className="bg-surface border border-amber-500/20 rounded-xl p-4 text-center hover:bg-amber-500/[0.02] transition-all shadow-sm">
                     <AlertTriangle size={20} className="mx-auto mb-2 text-amber-500" />
                     <p className="text-[10px] text-text-muted uppercase font-bold">مخزون منخفض</p>
-                    <p className="text-amber-500 font-black text-xl font-mono">{stats.lowStock}</p>
+                    <p className="text-amber-600 dark:text-amber-400 font-black text-xl font-mono">{stats.lowStock}</p>
                 </div>
-                <div className="bg-surface border border-red-500/30 rounded-xl p-4 text-center">
+                <div className="bg-surface border border-red-500/20 rounded-xl p-4 text-center hover:bg-red-500/[0.02] transition-all shadow-sm">
                     <TrendingDown size={20} className="mx-auto mb-2 text-red-500" />
                     <p className="text-[10px] text-text-muted uppercase font-bold">نفذ من المخزون</p>
-                    <p className="text-red-500 font-black text-xl font-mono">{stats.outOfStock}</p>
+                    <p className="text-red-600 dark:text-red-400 font-black text-xl font-mono">{stats.outOfStock}</p>
                 </div>
             </div>
 
@@ -805,25 +779,25 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
         <div className="h-full flex flex-col gap-4">
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 shrink-0">
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center"><Users size={22} className="text-blue-500" /></div>
+                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><Users size={22} /></div>
                     <div>
                         <p className="text-[10px] text-text-muted font-bold uppercase">إجمالي العملاء</p>
-                        <p className="text-blue-500 font-black text-xl font-mono">{customers.length}</p>
+                        <p className="text-text-main font-black text-xl font-mono">{customers.length}</p>
                     </div>
                 </div>
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center"><Wallet size={22} className="text-emerald-500" /></div>
+                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><Wallet size={22} /></div>
                     <div>
                         <p className="text-[10px] text-text-muted font-bold uppercase">إجمالي المشتريات</p>
-                        <p className="text-emerald-500 font-black text-xl font-mono">{formatCurrency(totalSpent, currency).replace(currency, '')}</p>
+                        <p className="text-primary font-black text-xl font-mono">{formatCurrency(totalSpent, currency).replace(currency, '')}</p>
                     </div>
                 </div>
-                <div className="bg-surface border border-red-500/30 rounded-xl p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center"><CreditCard size={22} className="text-red-500" /></div>
+                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><CreditCard size={22} /></div>
                     <div>
                         <p className="text-[10px] text-text-muted font-bold uppercase">إجمالي الديون</p>
-                        <p className="text-red-500 font-black text-xl font-mono">{formatCurrency(totalDebt, currency).replace(currency, '')}</p>
+                        <p className="text-red-600 dark:text-red-400 font-black text-xl font-mono">{formatCurrency(totalDebt, currency).replace(currency, '')}</p>
                     </div>
                 </div>
             </div>
@@ -831,24 +805,24 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
             {/* Customer List */}
             <div className="flex-1 overflow-y-auto custom-scrollbar rounded-xl border border-border bg-surface">
                 <table className="w-full text-sm">
-                    <thead className="bg-bg sticky top-0">
+                    <thead className="bg-surface-hover border-b border-border sticky top-0 z-10">
                         <tr>
-                            <th className="text-right p-3 font-bold text-text-muted text-xs">العميل</th>
-                            <th className="text-right p-3 font-bold text-text-muted text-xs">الهاتف</th>
-                            <th className="text-right p-3 font-bold text-text-muted text-xs">عدد الطلبات</th>
-                            <th className="text-right p-3 font-bold text-text-muted text-xs">إجمالي المشتريات</th>
-                            <th className="text-left p-3 font-bold text-text-muted text-xs">الديون المستحقة</th>
+                            <th className="text-right">العميل</th>
+                            <th className="text-right">الهاتف</th>
+                            <th className="text-center">عدد الطلبات</th>
+                            <th className="text-left">إجمالي المشتريات</th>
+                            <th className="text-left">الديون المستحقة</th>
                         </tr>
                     </thead>
                     <tbody>
                         {customerStats.map(c => (
-                            <tr key={c.id} className="border-t border-border hover:bg-bg/50 transition-colors">
-                                <td className="p-3 font-bold text-text-main">{c.name}</td>
-                                <td className="p-3 text-text-muted font-mono">{c.phone || '-'}</td>
-                                <td className="p-3 text-text-main font-mono">{c.orderCount}</td>
-                                <td className="p-3 text-emerald-500 font-mono font-bold">{formatCurrency(c.totalSpent, currency)}</td>
-                                <td className="p-3 text-left">
-                                    <span className={`font-mono font-bold ${c.pendingDebt > 0 ? 'text-red-500' : 'text-text-muted'}`}>
+                            <tr key={c.id} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
+                                <td className="font-bold text-text-main text-right">{c.name}</td>
+                                <td className="text-text-muted font-mono text-right">{c.phone || '-'}</td>
+                                <td className="text-text-main font-mono text-center">{c.orderCount}</td>
+                                <td className="text-success font-mono font-bold text-left">{formatCurrency(c.totalSpent, currency)}</td>
+                                <td className="text-left">
+                                    <span className={`font-mono font-bold ${c.pendingDebt > 0 ? 'text-danger' : 'text-text-muted'}`}>
                                         {c.pendingDebt > 0 ? formatCurrency(c.pendingDebt, currency) : '-'}
                                     </span>
                                 </td>
@@ -887,25 +861,25 @@ const StaffReportTab: React.FC<StaffReportTabProps> = ({ staffList, sales, curre
         <div className="h-full flex flex-col gap-4">
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 shrink-0">
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center"><UserCheck size={22} className="text-blue-500" /></div>
+                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><UserCheck size={22} /></div>
                     <div>
                         <p className="text-[10px] text-text-muted font-bold uppercase">عدد الموظفين</p>
-                        <p className="text-blue-500 font-black text-xl font-mono">{staffList.length}</p>
+                        <p className="text-text-main font-black text-xl font-mono">{staffList.length}</p>
                     </div>
                 </div>
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center"><Receipt size={22} className="text-emerald-500" /></div>
+                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><Receipt size={22} /></div>
                     <div>
                         <p className="text-[10px] text-text-muted font-bold uppercase">إجمالي المبيعات</p>
-                        <p className="text-emerald-500 font-black text-xl font-mono">{formatCurrency(totalSalesValue, currency).replace(currency, '')}</p>
+                        <p className="text-primary font-black text-xl font-mono">{formatCurrency(totalSalesValue, currency).replace(currency, '')}</p>
                     </div>
                 </div>
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center"><Activity size={22} className="text-purple-500" /></div>
+                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><Activity size={22} /></div>
                     <div>
                         <p className="text-[10px] text-text-muted font-bold uppercase">متوسط للموظف</p>
-                        <p className="text-purple-500 font-black text-xl font-mono">{formatCurrency(staffList.length > 0 ? totalSalesValue / staffList.length : 0, currency).replace(currency, '')}</p>
+                        <p className="text-text-main font-black text-xl font-mono">{formatCurrency(staffList.length > 0 ? totalSalesValue / staffList.length : 0, currency).replace(currency, '')}</p>
                     </div>
                 </div>
             </div>
@@ -915,27 +889,27 @@ const StaffReportTab: React.FC<StaffReportTabProps> = ({ staffList, sales, curre
                 {staffStats.map((s, i) => {
                     const percentage = totalSalesValue > 0 ? (s.totalSales / totalSalesValue) * 100 : 0;
                     return (
-                        <div key={s.id} className="bg-surface border border-border rounded-lg p-4 hover:border-primary/30 transition-colors">
+                        <div key={s.id} className="bg-surface border border-border rounded-xl p-4 hover:border-primary/25 transition-colors shadow-sm flex flex-col justify-between">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-gray-400' : i === 2 ? 'bg-orange-600' : 'bg-surface-hover text-text-muted'}`}>
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold ${i === 0 ? 'bg-primary text-primary-fg' : 'bg-bg border border-border text-text-muted'}`}>
                                     {i + 1}
                                 </div>
                                 <div>
-                                    <p className="text-text-main font-bold">{s.name}</p>
+                                    <p className="text-text-main font-bold text-sm">{s.name}</p>
                                     <p className="text-text-muted text-xs">{s.role === 'admin' ? 'مدير' : s.role === 'manager' ? 'مشرف' : 'كاشير'}</p>
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <div className="flex justify-between text-sm">
+                                <div className="flex justify-between text-xs">
                                     <span className="text-text-muted">المبيعات</span>
-                                    <span className="text-emerald-500 font-bold font-mono">{formatCurrency(s.totalSales, currency).replace(currency, '')}</span>
+                                    <span className="text-primary font-bold font-mono">{formatCurrency(s.totalSales, currency).replace(currency, '')}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
+                                <div className="flex justify-between text-xs">
                                     <span className="text-text-muted">عدد الفواتير</span>
                                     <span className="text-text-main font-bold font-mono">{s.salesCount}</span>
                                 </div>
-                                <div className="w-full h-2 bg-bg rounded-full overflow-hidden">
-                                    <div className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all duration-500"
+                                <div className="w-full h-1.5 bg-bg rounded-full overflow-hidden">
+                                    <div className="h-full bg-primary rounded-full transition-all duration-500"
                                         style={{ width: `${percentage}%` }} />
                                 </div>
                                 <p className="text-[10px] text-text-muted text-center">{percentage.toFixed(1)}% من الإجمالي</p>

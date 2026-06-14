@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { toPng } from 'html-to-image';
 
 interface PrintPortalProps {
     children: React.ReactNode;
@@ -7,7 +6,7 @@ interface PrintPortalProps {
 }
 
 /**
- * PrintPortal - Uses html-to-image for perfect Arabic text rendering
+ * PrintPortal - Uses direct DOM clone for thermal receipts and lazy image capture for A4
  * Uses direct window.print() on the main window for Wails compatibility
  */
 export const PrintPortal: React.FC<PrintPortalProps> = ({ children, onAfterPrint }) => {
@@ -88,6 +87,7 @@ export const PrintPortal: React.FC<PrintPortalProps> = ({ children, onAfterPrint
                     // A4: Image Capture (Legacy method for A4 per user request/stability)
                     let imagesHtml = '';
                     if (pages.length > 0) {
+                        const { toPng } = await import('html-to-image');
                         for (let i = 0; i < pages.length; i++) {
                             const page = pages[i] as HTMLElement;
                             const dataUrl = await toPng(page, {
@@ -100,6 +100,7 @@ export const PrintPortal: React.FC<PrintPortalProps> = ({ children, onAfterPrint
                         }
                     } else {
                         // Fallback
+                        const { toPng } = await import('html-to-image');
                         const dataUrl = await toPng(container, {
                             quality: 1.0,
                             pixelRatio: 2,

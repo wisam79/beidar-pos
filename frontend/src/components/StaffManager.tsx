@@ -85,7 +85,7 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
         // Validate
         const validation = validateStaffInput(formData);
         let newErrors: Record<string, string> = {};
-        let newHints: Record<string, string> = {};
+        const newHints: Record<string, string> = {};
 
         if (!validation.success) {
             newErrors = validation.errors || {};
