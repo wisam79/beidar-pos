@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"math"
 	"sync"
 	"time"
 
@@ -124,10 +123,6 @@ func ErrPriceMismatch(productName string, oldPrice, newPrice domain.Amount) *Sal
 		i18n.GetHint("PRICE_MISMATCH"),
 		"price",
 	)
-}
-
-func roundTo2Decimals(val float64) float64 {
-	return math.Round(val*100) / 100
 }
 
 type saleService struct {

@@ -44,19 +44,6 @@ func (s *lanService) saveLanConfig() error {
 	return os.WriteFile(configPath, data, 0600)
 }
 
-func (s *lanService) loadLanConfig() *LanConfig {
-	data, err := os.ReadFile(getLanConfigPath())
-	if err != nil {
-		return nil
-	}
-
-	var config LanConfig
-	if err := json.Unmarshal(data, &config); err != nil {
-		return nil
-	}
-	return &config
-}
-
 func (s *lanService) ConnectToServer(serverIP string, port int) error {
 	s.clientMutex.Lock()
 	defer s.clientMutex.Unlock()

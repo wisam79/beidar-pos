@@ -763,7 +763,7 @@ func (s *cloudService) GetLicenseUserDetails(userID string) (*domain.UserDetails
 	userResp, err := getPinnedClient().Do(userReq)
 	if err == nil && userResp.StatusCode == 200 {
 		var userData map[string]interface{}
-		json.NewDecoder(userResp.Body).Decode(&userData)
+		_ = json.NewDecoder(userResp.Body).Decode(&userData)
 		details.Email = licenseGetString(userData, "email")
 		details.StoreName = licenseGetString(userData, "raw_user_meta_data.store_name")
 		details.CreatedAt = licenseGetString(userData, "created_at")
@@ -781,7 +781,7 @@ func (s *cloudService) GetLicenseUserDetails(userID string) (*domain.UserDetails
 	backupsResp, err := getPinnedClient().Do(backupsReq)
 	if err == nil {
 		var backupsData []map[string]interface{}
-		json.NewDecoder(backupsResp.Body).Decode(&backupsData)
+		_ = json.NewDecoder(backupsResp.Body).Decode(&backupsData)
 		backupsResp.Body.Close()
 
 		for _, b := range backupsData {
@@ -803,7 +803,7 @@ func (s *cloudService) GetLicenseUserDetails(userID string) (*domain.UserDetails
 	sessionsResp, err := getPinnedClient().Do(sessionsReq)
 	if err == nil {
 		var sessionsData []map[string]interface{}
-		json.NewDecoder(sessionsResp.Body).Decode(&sessionsData)
+		_ = json.NewDecoder(sessionsResp.Body).Decode(&sessionsData)
 		sessionsResp.Body.Close()
 
 		for _, sRef := range sessionsData {

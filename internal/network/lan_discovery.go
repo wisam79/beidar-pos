@@ -28,7 +28,6 @@ type DiscoveryMessage struct {
 var (
 	udpBroadcastStop chan struct{}
 	udpBroadcastMutex sync.Mutex
-	udpConn          *net.UDPConn
 )
 
 // GetLocalIP returns the local IP address of this machine
@@ -92,8 +91,6 @@ func (s *lanService) StartBroadcasting(httpPort int) error {
 			return fmt.Errorf("failed to create UDP socket: %w", err)
 		}
 	}
-	udpConn = conn
-
 	udpBroadcastStop = make(chan struct{})
 	s.isBroadcasting = true
 

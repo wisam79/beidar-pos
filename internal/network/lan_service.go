@@ -80,7 +80,6 @@ type lanService struct {
 	httpClient     *http.Client
 
 	// UDP Discovery state
-	broadcastConn *http.Server // Not HTTP but we keep UDP handles in lan_discovery.go
 	isBroadcasting bool
 }
 

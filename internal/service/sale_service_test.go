@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"math"
 	"os"
 	"testing"
 	"time"
@@ -14,10 +13,6 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
-
-func floatEq(a, b float64) bool {
-	return math.Abs(a-b) < 0.01
-}
 
 func amountEq(a, b domain.Amount) bool {
 	return a.Sub(b).Abs().Cents() <= 1

@@ -41,9 +41,7 @@ func (h *CRMHandler) SearchCustomers(query string) ([]domain.Customer, error) {
 		}
 		// Basic client side filter
 		var filtered []domain.Customer
-		for i := range customers {
-			filtered = append(filtered, customers[i])
-		}
+		filtered = append(filtered, customers...)
 		return filtered, nil
 	}
 	return h.crmService.SearchCustomers(query)

@@ -70,7 +70,7 @@ func (s *productService) GetProductByID(id string) (*domain.Product, error) {
 	}
 
 	s.cacheMu.RLock()
-	if s.cacheMap != nil && len(s.cacheMap) > 0 && time.Since(s.lastUpdate) < 5*time.Minute {
+	if len(s.cacheMap) > 0 && time.Since(s.lastUpdate) < 5*time.Minute {
 		if prod, found := s.cacheMap[id]; found {
 			prodCopy := prod
 			s.cacheMu.RUnlock()
