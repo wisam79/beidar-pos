@@ -87,7 +87,7 @@ func TestGetProductByID(t *testing.T) {
 		Barcode: "999888",
 		Price:   domain.NewAmount(2000),
 	}
-	s.CreateProduct(p)
+	_ = s.CreateProduct(p)
 
 	// 1. Success case
 	found, err := s.GetProductByID(p.ID)
@@ -120,7 +120,7 @@ func TestUpdateProduct(t *testing.T) {
 		Barcode: "555555",
 		Price:   domain.NewAmount(1000),
 	}
-	s.CreateProduct(p)
+	_ = s.CreateProduct(p)
 
 	// 1. Success case
 	p.Name = "Updated Product Name"
@@ -165,7 +165,7 @@ func TestDeleteProduct(t *testing.T) {
 		Barcode: "777777",
 		Price:   domain.NewAmount(500),
 	}
-	s.CreateProduct(p)
+	_ = s.CreateProduct(p)
 
 	// 1. Error case: empty ID
 	err := s.DeleteProduct("")
@@ -205,8 +205,8 @@ func TestGetAllProductsAndSearch(t *testing.T) {
 		Barcode: "2222",
 		Price:   domain.NewAmount(600),
 	}
-	s.CreateProduct(p1)
-	s.CreateProduct(p2)
+	_ = s.CreateProduct(p1)
+	_ = s.CreateProduct(p2)
 
 	// GetAllProducts
 	all, err := s.GetAllProducts()

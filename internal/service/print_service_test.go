@@ -24,10 +24,12 @@ func setupPrintTestDB(t *testing.T) (service.PrintService, *gorm.DB, func()) {
 		t.Fatalf("Failed to open test DB: %v", err)
 	}
 
-	db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Customer{}, &domain.Payment{},
 		&domain.AppPreferences{},
-	)
+	); err != nil {
+		t.Fatalf("Failed to migrate test DB: %v", err)
+	}
 
 	// Create default preferences
 	db.Create(&domain.AppPreferences{

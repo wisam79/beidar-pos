@@ -126,7 +126,7 @@ func TestGetActiveDiscountsAndValidateCoupon(t *testing.T) {
 		StartDate: yesterday,
 		EndDate:   tomorrow,
 	}
-	s.CreateDiscount(activeDisc)
+	_, _ = s.CreateDiscount(activeDisc)
 
 	// 2. Inactive discount
 	inactiveDisc := domain.Discount{
@@ -138,7 +138,7 @@ func TestGetActiveDiscountsAndValidateCoupon(t *testing.T) {
 		StartDate: yesterday,
 		EndDate:   tomorrow,
 	}
-	s.CreateDiscount(inactiveDisc)
+	_, _ = s.CreateDiscount(inactiveDisc)
 
 	// 3. Expired discount
 	expiredDisc := domain.Discount{
@@ -150,7 +150,7 @@ func TestGetActiveDiscountsAndValidateCoupon(t *testing.T) {
 		StartDate: yesterday,
 		EndDate:   yesterday,
 	}
-	s.CreateDiscount(expiredDisc)
+	_, _ = s.CreateDiscount(expiredDisc)
 
 	// 4. Check GetActiveDiscounts
 	actives, err := s.GetActiveDiscounts()

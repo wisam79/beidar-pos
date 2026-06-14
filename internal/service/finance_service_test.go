@@ -24,11 +24,13 @@ func setupFinanceTestDB(t *testing.T) (service.FinanceService, *gorm.DB, func())
 		t.Fatalf("Failed to open test DB: %v", err)
 	}
 
-	db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&domain.Product{}, &domain.Supplier{}, &domain.Expense{}, &domain.Category{},
 		&domain.StockMovement{}, &domain.AppPreferences{}, &domain.Shift{}, &domain.CashMovement{},
 		&domain.PurchaseOrder{}, &domain.PurchaseOrderItem{},
-	)
+	); err != nil {
+		t.Fatalf("Failed to migrate test DB: %v", err)
+	}
 
 	db.Create(&domain.AppPreferences{ID: 1, StoreName: "Test Store", Currency: "IQD"})
 

@@ -31,7 +31,9 @@ func setupSettingsTestDB(t *testing.T) (service.SettingsService, *gorm.DB, func(
 		t.Fatalf("Failed to open test DB: %v", err)
 	}
 
-	db.AutoMigrate(&domain.AppPreferences{})
+	if err := db.AutoMigrate(&domain.AppPreferences{}); err != nil {
+		t.Fatalf("Failed to migrate test DB: %v", err)
+	}
 
 	// Seed default preferences so Get() doesn't fail
 	defaultPrefs := domain.AppPreferences{
@@ -220,7 +222,7 @@ func TestSettingsService_SupabaseAndUpdater(t *testing.T) {
 						"updated_at": "2026-06-12T12:00:00Z",
 					},
 				}
-				json.NewEncoder(w).Encode(response)
+				_ = json.NewEncoder(w).Encode(response)
 				return
 			}
 			if r.Method == "PATCH" {
