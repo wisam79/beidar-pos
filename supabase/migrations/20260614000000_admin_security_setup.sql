@@ -1,9 +1,5 @@
 -- =========================================================================
--- BEIDAR ADMIN SECURITY SETUP
--- =========================================================================
--- This script sets up Row Level Security (RLS) on the licenses and admin_logs
--- tables so they can be securely managed from a standalone admin portal
--- without exposing the master service_role_key.
+-- BEIDAR ADMIN SECURITY SETUP & SEED
 -- =========================================================================
 
 -- Drop the old, deprecated app_admins table (which had username/password_hash columns)
@@ -16,9 +12,11 @@ CREATE TABLE public.app_admins (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Enable RLS on app_admins (only admins should see who else is an admin)
+-- Enable RLS
 ALTER TABLE public.app_admins ENABLE ROW LEVEL SECURITY;
 
+-- Policy
+DROP POLICY IF EXISTS "Admins can view admins" ON public.app_admins;
 CREATE POLICY "Admins can view admins" ON public.app_admins
     FOR SELECT TO authenticated
     USING (auth.uid() IN (SELECT user_id FROM public.app_admins));
@@ -26,12 +24,12 @@ CREATE POLICY "Admins can view admins" ON public.app_admins
 -- 2. Configure RLS and Policies for 'licenses' table
 ALTER TABLE public.licenses ENABLE ROW LEVEL SECURITY;
 
--- Policy: Normal authenticated cashiers/store-owners can view ONLY their own bound license
+DROP POLICY IF EXISTS "Users can read own license" ON public.licenses;
 CREATE POLICY "Users can read own license" ON public.licenses
     FOR SELECT TO authenticated
     USING (auth.uid() = user_id);
 
--- Policy: Admins can perform any action (select, insert, update, delete) on any license
+DROP POLICY IF EXISTS "Admins have full access to licenses" ON public.licenses;
 CREATE POLICY "Admins have full access to licenses" ON public.licenses
     FOR ALL TO authenticated
     USING (auth.uid() IN (SELECT user_id FROM public.app_admins))
@@ -40,19 +38,17 @@ CREATE POLICY "Admins have full access to licenses" ON public.licenses
 -- 3. Configure RLS and Policies for 'admin_logs' table
 ALTER TABLE public.admin_logs ENABLE ROW LEVEL SECURITY;
 
--- Policy: Admins can view and insert admin logs
+DROP POLICY IF EXISTS "Admins can read logs" ON public.admin_logs;
 CREATE POLICY "Admins can read logs" ON public.admin_logs
     FOR SELECT TO authenticated
     USING (auth.uid() IN (SELECT user_id FROM public.app_admins));
 
+DROP POLICY IF EXISTS "Admins can write logs" ON public.admin_logs;
 CREATE POLICY "Admins can write logs" ON public.admin_logs
     FOR INSERT TO authenticated
     WITH CHECK (auth.uid() IN (SELECT user_id FROM public.app_admins));
 
 -- 4. Database Trigger for Feature Metadata Synchronization
--- This replaces the Go backend "syncUserFeaturesFromLicense" logic.
--- When an admin modifies features in the licenses table, this trigger
--- automatically syncs those changes to auth.users raw_user_meta_data.
 CREATE OR REPLACE FUNCTION public.sync_user_features_from_license()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -60,7 +56,6 @@ DECLARE
     enable_lan BOOLEAN := FALSE;
     enable_whatsapp BOOLEAN := FALSE;
 BEGIN
-    -- Only sync if license status is active and user is bound
     IF NEW.status = 'active' AND NEW.user_id IS NOT NULL THEN
         IF NEW.features->>'ai_features' = 'true' THEN
             enable_ai := TRUE;
@@ -73,7 +68,6 @@ BEGIN
         END IF;
     END IF;
 
-    -- Update metadata in auth.users
     UPDATE auth.users
     SET raw_user_meta_data = 
         COALESCE(raw_user_meta_data, '{}'::jsonb) || 
@@ -88,10 +82,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Drop trigger if exists
 DROP TRIGGER IF EXISTS tr_sync_user_features ON public.licenses;
-
--- Create the trigger
 CREATE TRIGGER tr_sync_user_features
     AFTER INSERT OR UPDATE OF status, user_id, features
     ON public.licenses
@@ -99,6 +90,7 @@ CREATE TRIGGER tr_sync_user_features
     EXECUTE FUNCTION public.sync_user_features_from_license();
 
 -- 5. Configure RLS and Policies for 'global_settings' table
+DROP POLICY IF EXISTS "Admins have full access to global_settings" ON public.global_settings;
 CREATE POLICY "Admins have full access to global_settings" ON public.global_settings
     FOR ALL TO authenticated
     USING (auth.uid() IN (SELECT user_id FROM public.app_admins))
@@ -107,12 +99,11 @@ CREATE POLICY "Admins have full access to global_settings" ON public.global_sett
 -- =========================================================================
 -- SEED INITIAL ADMIN USER
 -- =========================================================================
--- This block automatically registers your first admin.
 DO $$
 DECLARE
     new_user_id UUID := gen_random_uuid();
     admin_email TEXT := 'wisamsamir78@gmail.com'; -- Your admin email
-    admin_pass TEXT := 'wisam77862@@';                -- Your secure admin password
+    admin_pass TEXT := 'wisam77862@@';            -- Your secure admin password
     admin_user TEXT := 'wisam';                  -- Your admin username
 BEGIN
     -- Check if user already exists
@@ -150,7 +141,7 @@ BEGIN
         INSERT INTO public.app_admins (user_id, username)
         VALUES (new_user_id, admin_user);
         
-        RAISE NOTICE 'Admin user created successfully with ID %', new_user_id;
+        RAISE NOTICE 'Admin user created successfully.';
     ELSE
         -- If the user exists in auth.users, just link them to public.app_admins
         SELECT id INTO new_user_id FROM auth.users WHERE email = admin_email;
@@ -164,5 +155,3 @@ BEGIN
         END IF;
     END IF;
 END $$;
-
-
