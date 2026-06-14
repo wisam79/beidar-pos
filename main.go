@@ -19,7 +19,6 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
-	syswin "golang.org/x/sys/windows"
 )
 
 //go:embed all:frontend/dist
@@ -73,20 +72,13 @@ func getWebviewCacheDir() string {
 }
 
 func main() {
-	// 🔒 Single Instance Lock using Windows Named Mutex
-	mutexName := "BeidarPOS_SingleInstance_Mutex"
-	h, err := syswin.CreateMutex(nil, false, syswin.StringToUTF16Ptr(mutexName))
+	// 🔒 Single Instance Lock
+	cleanup, err := checkSingleInstance()
 	if err != nil {
-		println("Error creating named mutex:", err.Error())
-		return
-	}
-	defer syswin.CloseHandle(h)
-
-	if syswin.GetLastError() == syswin.ERROR_ALREADY_EXISTS {
-		// If another instance is running, exit immediately
 		fmt.Println("❌ Application instance already running. Exiting...")
 		return
 	}
+	defer cleanup()
 
 	// Load window state
 	initialWidth := 1280
