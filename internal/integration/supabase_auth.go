@@ -359,7 +359,7 @@ func (s *cloudService) Login(email, password string) (*domain.SupabaseAuthResult
 	defer resp.Body.Close()
 
 	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
+	_ = json.NewDecoder(resp.Body).Decode(&result)
 
 	if resp.StatusCode >= 400 {
 		errMsg, _ := result["error_description"].(string)
@@ -559,7 +559,7 @@ func (s *cloudService) RecoverPassword(email string) (*domain.SupabaseAuthResult
 
 	if resp.StatusCode >= 400 {
 		var result map[string]interface{}
-		json.NewDecoder(resp.Body).Decode(&result)
+		_ = json.NewDecoder(resp.Body).Decode(&result)
 
 		msg, _ := result["msg"].(string)
 		if msg == "" {
@@ -662,7 +662,7 @@ func (s *cloudService) verifySessionLock() error {
 	defer resp.Body.Close()
 
 	var results []map[string]string
-	json.NewDecoder(resp.Body).Decode(&results)
+	_ = json.NewDecoder(resp.Body).Decode(&results)
 
 	if len(results) == 0 {
 		s.Logout()
@@ -790,7 +790,7 @@ func (s *cloudService) ListCloudBackupsForUser() ([]domain.CloudBackup, error) {
 	}
 
 	var results []map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&results)
+	_ = json.NewDecoder(resp.Body).Decode(&results)
 
 	var backups []domain.CloudBackup
 	for _, r := range results {
@@ -862,7 +862,7 @@ func (s *cloudService) RestoreCloudBackup(backupID string) error {
 	defer resp.Body.Close()
 
 	var chunks []map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&chunks)
+	_ = json.NewDecoder(resp.Body).Decode(&chunks)
 
 	if len(chunks) == 0 {
 		return fmt.Errorf("النسخة الاحتياطية غير موجودة")
