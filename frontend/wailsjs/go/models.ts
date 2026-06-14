@@ -1,41 +1,5 @@
 export namespace domain {
 	
-	export class AdminLogEntry {
-	    id: number;
-	    admin_username: string;
-	    action: string;
-	    target_license: string;
-	    details: string;
-	    created_at: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new AdminLogEntry(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.admin_username = source["admin_username"];
-	        this.action = source["action"];
-	        this.target_license = source["target_license"];
-	        this.details = source["details"];
-	        this.created_at = source["created_at"];
-	    }
-	}
-	export class AdminLoginResult {
-	    success: boolean;
-	    message: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new AdminLoginResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.success = source["success"];
-	        this.message = source["message"];
-	    }
-	}
 	export class AppPreferences {
 	    storeName: string;
 	    storeAddress: string;
@@ -429,42 +393,6 @@ export namespace domain {
 	        this.lastVisit = source["lastVisit"];
 	        this.points = source["points"];
 	        this.notes = source["notes"];
-	    }
-	}
-	export class DashboardBackupInfo {
-	    id: string;
-	    backup_id: string;
-	    store_name: string;
-	    size: number;
-	    created_at: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new DashboardBackupInfo(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.backup_id = source["backup_id"];
-	        this.store_name = source["store_name"];
-	        this.size = source["size"];
-	        this.created_at = source["created_at"];
-	    }
-	}
-	export class DashboardSessionInfo {
-	    device_name: string;
-	    login_time: string;
-	    last_seen: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new DashboardSessionInfo(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.device_name = source["device_name"];
-	        this.login_time = source["login_time"];
-	        this.last_seen = source["last_seen"];
 	    }
 	}
 	export class TopCustomer {
@@ -1168,44 +1096,6 @@ export namespace domain {
 	        this.clients = source["clients"];
 	    }
 	}
-	export class LicenseInfo {
-	    id: number;
-	    license_key: string;
-	    customer_name: string;
-	    customer_phone: string;
-	    store_name: string;
-	    status: string;
-	    expires_at: string;
-	    created_at: string;
-	    device_id: string;
-	    bound_at: string;
-	    last_check_in: string;
-	    app_version: string;
-	    features: Record<string, boolean>;
-	    is_paid: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new LicenseInfo(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.license_key = source["license_key"];
-	        this.customer_name = source["customer_name"];
-	        this.customer_phone = source["customer_phone"];
-	        this.store_name = source["store_name"];
-	        this.status = source["status"];
-	        this.expires_at = source["expires_at"];
-	        this.created_at = source["created_at"];
-	        this.device_id = source["device_id"];
-	        this.bound_at = source["bound_at"];
-	        this.last_check_in = source["last_check_in"];
-	        this.app_version = source["app_version"];
-	        this.features = source["features"];
-	        this.is_paid = source["is_paid"];
-	    }
-	}
 	export class LicenseResult {
 	    licensed: boolean;
 	    success: boolean;
@@ -1495,48 +1385,6 @@ export namespace domain {
 	
 	
 	
-	export class UserDetails {
-	    user_id: string;
-	    email: string;
-	    store_name: string;
-	    created_at: string;
-	    last_sign_in: string;
-	    backups: DashboardBackupInfo[];
-	    sessions: DashboardSessionInfo[];
-	
-	    static createFrom(source: any = {}) {
-	        return new UserDetails(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.user_id = source["user_id"];
-	        this.email = source["email"];
-	        this.store_name = source["store_name"];
-	        this.created_at = source["created_at"];
-	        this.last_sign_in = source["last_sign_in"];
-	        this.backups = this.convertValues(source["backups"], DashboardBackupInfo);
-	        this.sessions = this.convertValues(source["sessions"], DashboardSessionInfo);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
 	
 
 }

@@ -602,10 +602,7 @@ func (a *App) CalculateInstallmentPlan(total, downPayment float64, months int) (
 	return a.PaymentHandler.CalculateInstallmentPlan(total, downPayment, months)
 }
 
-// GetLicenseUserDetails retrieves license details for a user
-func (a *App) GetLicenseUserDetails(userID string) (*domain.UserDetails, error) {
-	return a.CloudHandler.GetLicenseUserDetails(userID)
-}
+
 
 // GetBackupConfig retrieves current backup/sync config
 func (a *App) GetBackupConfig() (map[string]interface{}, error) {

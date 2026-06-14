@@ -6,14 +6,6 @@ export function ActivateLicense(arg1) {
   return window['go']['handlers']['CloudHandler']['ActivateLicense'](arg1);
 }
 
-export function AdminLogin(arg1, arg2) {
-  return window['go']['handlers']['CloudHandler']['AdminLogin'](arg1, arg2);
-}
-
-export function CheckLicenseStatus(arg1) {
-  return window['go']['handlers']['CloudHandler']['CheckLicenseStatus'](arg1);
-}
-
 export function CheckSessionValidity() {
   return window['go']['handlers']['CloudHandler']['CheckSessionValidity']();
 }
@@ -26,20 +18,12 @@ export function CompleteGoogleAuth() {
   return window['go']['handlers']['CloudHandler']['CompleteGoogleAuth']();
 }
 
-export function CreateLicense(arg1, arg2, arg3, arg4) {
-  return window['go']['handlers']['CloudHandler']['CreateLicense'](arg1, arg2, arg3, arg4);
-}
-
 export function DeleteCloudBackup(arg1) {
   return window['go']['handlers']['CloudHandler']['DeleteCloudBackup'](arg1);
 }
 
 export function DeleteCurrentUser() {
   return window['go']['handlers']['CloudHandler']['DeleteCurrentUser']();
-}
-
-export function DeleteLicenseRemote(arg1) {
-  return window['go']['handlers']['CloudHandler']['DeleteLicenseRemote'](arg1);
 }
 
 export function DisableZohoIntegration() {
@@ -50,28 +34,12 @@ export function DisconnectGoogle() {
   return window['go']['handlers']['CloudHandler']['DisconnectGoogle']();
 }
 
-export function ExtendLicense(arg1, arg2, arg3) {
-  return window['go']['handlers']['CloudHandler']['ExtendLicense'](arg1, arg2, arg3);
-}
-
-export function FetchAdminLogs() {
-  return window['go']['handlers']['CloudHandler']['FetchAdminLogs']();
-}
-
-export function FetchAllLicenses() {
-  return window['go']['handlers']['CloudHandler']['FetchAllLicenses']();
-}
-
 export function GetCachedLicense() {
   return window['go']['handlers']['CloudHandler']['GetCachedLicense']();
 }
 
 export function GetCurrentUser() {
   return window['go']['handlers']['CloudHandler']['GetCurrentUser']();
-}
-
-export function GetLicenseUserDetails(arg1) {
-  return window['go']['handlers']['CloudHandler']['GetLicenseUserDetails'](arg1);
 }
 
 export function GetStoredLicenseKey() {
@@ -102,10 +70,6 @@ export function ListCloudBackupsForUser() {
   return window['go']['handlers']['CloudHandler']['ListCloudBackupsForUser']();
 }
 
-export function LogAdminAction(arg1, arg2, arg3, arg4) {
-  return window['go']['handlers']['CloudHandler']['LogAdminAction'](arg1, arg2, arg3, arg4);
-}
-
 export function Login(arg1, arg2) {
   return window['go']['handlers']['CloudHandler']['Login'](arg1, arg2);
 }
@@ -122,16 +86,8 @@ export function Register(arg1, arg2, arg3) {
   return window['go']['handlers']['CloudHandler']['Register'](arg1, arg2, arg3);
 }
 
-export function ResetLicenseToTrial(arg1) {
-  return window['go']['handlers']['CloudHandler']['ResetLicenseToTrial'](arg1);
-}
-
 export function RestoreCloudBackup(arg1) {
   return window['go']['handlers']['CloudHandler']['RestoreCloudBackup'](arg1);
-}
-
-export function SetMasterKey(arg1) {
-  return window['go']['handlers']['CloudHandler']['SetMasterKey'](arg1);
 }
 
 export function SetupZohoIntegration(arg1, arg2, arg3) {
@@ -140,18 +96,6 @@ export function SetupZohoIntegration(arg1, arg2, arg3) {
 
 export function Startup(arg1) {
   return window['go']['handlers']['CloudHandler']['Startup'](arg1);
-}
-
-export function UpdateLicenseFeatures(arg1, arg2) {
-  return window['go']['handlers']['CloudHandler']['UpdateLicenseFeatures'](arg1, arg2);
-}
-
-export function UpdateLicenseStatus(arg1, arg2) {
-  return window['go']['handlers']['CloudHandler']['UpdateLicenseStatus'](arg1, arg2);
-}
-
-export function UpdatePaymentStatus(arg1, arg2) {
-  return window['go']['handlers']['CloudHandler']['UpdatePaymentStatus'](arg1, arg2);
 }
 
 export function UploadBackupToDrive(arg1, arg2) {

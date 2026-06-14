@@ -38,10 +38,6 @@ export function GetInstallmentAlertSummary() {
   return window['go']['main']['App']['GetInstallmentAlertSummary']();
 }
 
-export function GetLicenseUserDetails(arg1) {
-  return window['go']['main']['App']['GetLicenseUserDetails'](arg1);
-}
-
 export function ImportDatabaseBackupNative() {
   return window['go']['main']['App']['ImportDatabaseBackupNative']();
 }

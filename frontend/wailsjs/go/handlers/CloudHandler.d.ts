@@ -5,39 +5,23 @@ import {context} from '../models';
 
 export function ActivateLicense(arg1:string):Promise<domain.LicenseResult>;
 
-export function AdminLogin(arg1:string,arg2:string):Promise<domain.AdminLoginResult>;
-
-export function CheckLicenseStatus(arg1:string):Promise<domain.LicenseResult>;
-
 export function CheckSessionValidity():Promise<domain.SessionValidityResult>;
 
 export function CloudBackupNow():Promise<void>;
 
 export function CompleteGoogleAuth():Promise<void>;
 
-export function CreateLicense(arg1:string,arg2:string,arg3:number,arg4:Record<string, boolean>):Promise<domain.LicenseInfo>;
-
 export function DeleteCloudBackup(arg1:string):Promise<void>;
 
 export function DeleteCurrentUser():Promise<void>;
-
-export function DeleteLicenseRemote(arg1:number):Promise<void>;
 
 export function DisableZohoIntegration():Promise<void>;
 
 export function DisconnectGoogle():Promise<void>;
 
-export function ExtendLicense(arg1:number,arg2:string,arg3:number):Promise<void>;
-
-export function FetchAdminLogs():Promise<Array<domain.AdminLogEntry>>;
-
-export function FetchAllLicenses():Promise<Array<domain.LicenseInfo>>;
-
 export function GetCachedLicense():Promise<domain.LicenseResult>;
 
 export function GetCurrentUser():Promise<domain.UserSession>;
-
-export function GetLicenseUserDetails(arg1:string):Promise<domain.UserDetails>;
 
 export function GetStoredLicenseKey():Promise<string>;
 
@@ -53,8 +37,6 @@ export function IsLoggedIn():Promise<boolean>;
 
 export function ListCloudBackupsForUser():Promise<Array<domain.CloudBackup>>;
 
-export function LogAdminAction(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
-
 export function Login(arg1:string,arg2:string):Promise<domain.SupabaseAuthResult>;
 
 export function Logout():Promise<void>;
@@ -63,21 +45,11 @@ export function RecoverPassword(arg1:string):Promise<domain.SupabaseAuthResult>;
 
 export function Register(arg1:string,arg2:string,arg3:string):Promise<domain.SupabaseAuthResult>;
 
-export function ResetLicenseToTrial(arg1:number):Promise<void>;
-
 export function RestoreCloudBackup(arg1:string):Promise<void>;
-
-export function SetMasterKey(arg1:string):Promise<void>;
 
 export function SetupZohoIntegration(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function Startup(arg1:context.Context):Promise<void>;
-
-export function UpdateLicenseFeatures(arg1:number,arg2:Record<string, boolean>):Promise<void>;
-
-export function UpdateLicenseStatus(arg1:number,arg2:string):Promise<void>;
-
-export function UpdatePaymentStatus(arg1:number,arg2:boolean):Promise<void>;
 
 export function UploadBackupToDrive(arg1:string,arg2:string):Promise<string>;
 

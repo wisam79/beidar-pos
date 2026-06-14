@@ -57,13 +57,6 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
         setError('');
 
         try {
-            const check = await api.license.checkStatus(licenseKey);
-            if (!check || !check.licensed) {
-                setError(check?.message || 'مفتاح الترخيص غير صالح');
-                setLoading(false);
-                return;
-            }
-
             const regRes = await api.cloud.register(email, password, storeName);
             if (!regRes || !regRes.success) {
                 setError(regRes?.message || 'فشل إنشاء الحساب');

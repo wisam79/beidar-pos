@@ -41,22 +41,6 @@ type CloudService interface {
 	GetCachedLicense() (*domain.LicenseResult, error)
 	GetStoredLicenseKey() string
 	GetUserLicenseStatus() (*domain.LicenseResult, error)
-	CheckLicenseStatus(key string) (*domain.LicenseResult, error)
-
-	// Admin Dashboard License Management
-	AdminLogin(username, password string) (*domain.AdminLoginResult, error)
-	SetMasterKey(key string)
-	FetchAllLicenses() ([]domain.LicenseInfo, error)
-	CreateLicense(customerName, customerPhone string, months int, features map[string]bool) (*domain.LicenseInfo, error)
-	UpdateLicenseStatus(id int, status string) error
-	ExtendLicense(id int, currentExpiry string, months int) error
-	ResetLicenseToTrial(id int) error
-	UpdatePaymentStatus(id int, isPaid bool) error
-	UpdateLicenseFeatures(id int, features map[string]bool) error
-	DeleteLicenseRemote(id int) error
-	FetchAdminLogs() ([]domain.AdminLogEntry, error)
-	LogAdminAction(adminUsername, action, targetLicense, details string)
-	GetLicenseUserDetails(userID string) (*domain.UserDetails, error)
 }
 
 type cloudService struct {

@@ -15,8 +15,6 @@ export type Staff = Models.domain.Staff;
 export type AuthResult = Models.domain.AuthResult;
 export type StaffRole = 'admin' | 'manager' | 'cashier' | 'viewer';
 export type LicenseResult = Models.domain.LicenseResult;
-export type AdminLicense = Models.domain.LicenseInfo;
-export type AdminLogEntry = Models.domain.AdminLogEntry;
 
 export interface ParkedSaleDB {
     id: number;

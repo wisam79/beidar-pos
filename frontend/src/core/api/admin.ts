@@ -37,26 +37,8 @@ export const license = {
     getCached: () => CloudHandler.GetCachedLicense(),
     getStoredKey: () => CloudHandler.GetStoredLicenseKey(),
     getUserLicenseStatus: () => CloudHandler.GetUserLicenseStatus(),
-    checkStatus: (key: string) => CloudHandler.CheckLicenseStatus(key),
 };
 
-export const admin = {
-    setMasterKey: (key: string) => CloudHandler.SetMasterKey(key),
-    login: (username: string, password: string) => CloudHandler.AdminLogin(username, password),
-    fetchLicenses: () => CloudHandler.FetchAllLicenses(),
-    createLicense: (name: string, phone: string, months: number, features: Record<string, boolean>) =>
-        CloudHandler.CreateLicense(name, phone, months, features),
-    updateStatus: (id: number, status: string) => CloudHandler.UpdateLicenseStatus(id, status),
-    extendLicense: (id: number, expiry: string, months: number) => CloudHandler.ExtendLicense(id, expiry, months),
-    resetToTrial: (id: number) => CloudHandler.ResetLicenseToTrial(id),
-    updatePaymentStatus: (id: number, isPaid: boolean) => CloudHandler.UpdatePaymentStatus(id, isPaid),
-    updateFeatures: (id: number, features: Record<string, boolean>) => CloudHandler.UpdateLicenseFeatures(id, features),
-    deleteLicense: (id: number) => CloudHandler.DeleteLicenseRemote(id),
-    fetchLogs: () => CloudHandler.FetchAdminLogs(),
-    logAction: (user: string, action: string, target: string, details: string) =>
-        CloudHandler.LogAdminAction(user, action, target, details),
-    getUserDetails: (userId: string) => CloudHandler.GetLicenseUserDetails(userId),
-};
 
 export const cloud = {
     register: (email: string, password: string, storeName: string) =>

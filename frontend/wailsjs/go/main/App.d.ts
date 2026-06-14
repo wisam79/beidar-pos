@@ -20,8 +20,6 @@ export function GetCSVTemplate():Promise<string>;
 
 export function GetInstallmentAlertSummary():Promise<Record<string, any>>;
 
-export function GetLicenseUserDetails(arg1:string):Promise<domain.UserDetails>;
-
 export function ImportDatabaseBackupNative():Promise<boolean>;
 
 export function ImportProductsCSV(arg1:string,arg2:boolean):Promise<domain.CSVImportResult>;

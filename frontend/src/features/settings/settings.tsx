@@ -8,7 +8,6 @@ import { DiscountManager } from './components/DiscountManager';
 import { StaffManager } from '../../components/StaffManager';
 import { LanSyncPanel } from '../../components/LanSyncPanel';
 import { DesktopSettingsPanel } from './components/DesktopSettingsPanel';
-import { DeveloperDashboard } from '../admin/admin';
 import { api } from '../../core/api';
 import { AppPreferences } from '../../core/types';
 import { compressImage } from '../../core/utils';
@@ -45,7 +44,6 @@ export const SettingsPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState('store');
     const [showDiscountManager, setShowDiscountManager] = useState(false);
     const [showStaffManager, setShowStaffManager] = useState(false);
-    const [showDevDashboard, setShowDevDashboard] = useState(false);
     const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; type?: 'confirm' | 'warning' | 'error' | 'info'; onConfirm: () => void }>({
         open: false, title: '', message: '', onConfirm: () => { }
     });
@@ -219,7 +217,6 @@ export const SettingsPage: React.FC = () => {
             <ConfirmModal isOpen={confirmModal.open} title={confirmModal.title} message={confirmModal.message} type={confirmModal.type} onConfirm={confirmModal.onConfirm} onCancel={() => setConfirmModal(prev => ({ ...prev, open: false }))} />
             <DiscountManager isOpen={showDiscountManager} onClose={() => setShowDiscountManager(false)} notify={notify} />
             <StaffManager isOpen={showStaffManager} onClose={() => setShowStaffManager(false)} notify={notify} />
-            {showDevDashboard && <DeveloperDashboard onClose={() => setShowDevDashboard(false)} />}
 
             <div className="flex gap-4 flex-1 min-h-0">
                 {/* Sidebar - Redesigned & Organized */}
@@ -271,7 +268,6 @@ export const SettingsPage: React.FC = () => {
                     {/* Pro Badge - Bottom Footer */}
                     <div className="pt-3 mt-auto border-t border-border">
                         <div
-                            onClick={(e) => e.detail === 5 && setShowDevDashboard(true)}
                             className="relative bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/10 rounded-lg p-3 overflow-hidden group hover:border-amber-500/30 transition-all cursor-default"
                         >
                             <div className="flex items-center gap-2">
