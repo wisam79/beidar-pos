@@ -14,6 +14,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -140,6 +141,9 @@ func TestAutoStart(t *testing.T) {
 }
 
 func TestSettingsService_SupabaseAndUpdater(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Skipping settings service supabase and updater tests on non-Windows platforms")
+	}
 	s, _, cleanup := setupSettingsTestDB(t)
 	defer cleanup()
 

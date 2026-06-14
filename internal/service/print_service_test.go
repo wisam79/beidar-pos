@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -68,6 +69,9 @@ func TestGenerateQRCode(t *testing.T) {
 }
 
 func TestBuildESCPOSReceipt(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Skipping print receipt test on non-Windows platforms")
+	}
 	items := []domain.ReceiptItem{
 		{Name: "تفاحة", Qty: 3, Price: 1500, Total: 4500},
 		{Name: "موز", Qty: 2, Price: 2000, Total: 4000},
@@ -123,6 +127,9 @@ func TestGenerateInvoicePDFToPath(t *testing.T) {
 }
 
 func TestPrintService_DirectPrinting(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Skipping direct printing test on non-Windows platforms")
+	}
 	printService, _, cleanup := setupPrintTestDB(t)
 	defer cleanup()
 
