@@ -24,12 +24,14 @@ func setupTestIntegration(t *testing.T) (CloudService, *gorm.DB, func()) {
 	}
 
 	// Auto-migrate tables
-	db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&domain.AppPreferences{},
 		&domain.Sale{},
 		&domain.SaleItem{},
 		&domain.Staff{},
-	)
+	); err != nil {
+		t.Fatalf("Failed to migrate DB: %v", err)
+	}
 
 	// Seed default preferences
 	defaultPrefs := domain.AppPreferences{
@@ -127,7 +129,7 @@ func TestLicenseCache(t *testing.T) {
 	// Decrypt, modify and save without checksum update
 	decrypted, _ := s.decrypt(data)
 	var cache licenseCache
-	json.Unmarshal(decrypted, &cache)
+	_ = json.Unmarshal(decrypted, &cache)
 	cache.Result.CustomerName = "اسم متلاعب به"
 	tamperedData, _ := json.Marshal(cache)
 	encryptedTampered, _ := s.encrypt(tamperedData)

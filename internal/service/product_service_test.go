@@ -21,7 +21,9 @@ func setupProductTestDB(t *testing.T) (service.ProductService, *gorm.DB, func())
 		t.Fatalf("Failed to open test DB: %v", err)
 	}
 
-	db.AutoMigrate(&domain.Product{}, &domain.StockMovement{})
+	if err := db.AutoMigrate(&domain.Product{}, &domain.StockMovement{}); err != nil {
+		t.Fatalf("Failed to migrate test DB: %v", err)
+	}
 
 	productRepo := repository.NewProductRepository(db)
 	productService := service.NewProductService(productRepo)

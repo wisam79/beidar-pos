@@ -25,9 +25,11 @@ func setupStaffTestDB(t *testing.T) (service.StaffService, *gorm.DB, func()) {
 		t.Fatalf("Failed to open test DB: %v", err)
 	}
 
-	db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&domain.Staff{}, &domain.LoginAttempt{}, &domain.Sale{}, &domain.Payment{},
-	)
+	); err != nil {
+		t.Fatalf("Failed to migrate DB: %v", err)
+	}
 
 	staffRepo := repository.NewStaffRepository(db)
 	staffService := service.NewStaffService(staffRepo)
@@ -106,7 +108,7 @@ func TestStaffCRUDAndAuth(t *testing.T) {
 
 	// 5. Rate limiting/lockout test
 	for i := 0; i < 5; i++ {
-		s.AuthenticateByUsername("admin", "wrong_pin")
+		_, _ = s.AuthenticateByUsername("admin", "wrong_pin")
 	}
 
 	lockRes, _ := s.AuthenticateByUsername("admin", "0000")
@@ -309,7 +311,7 @@ func TestStaffValidationAndCounts(t *testing.T) {
 	}
 
 	// Seed admin
-	s.SeedDefaultAdmin()
+	_ = s.SeedDefaultAdmin()
 	count, _ = s.GetStaffCount()
 	if count != 1 {
 		t.Errorf("Expected staff count 1, got %d", count)

@@ -80,7 +80,7 @@ func (s *cloudService) InitGoogleAuth() (string, error) {
 
 		go func() {
 			time.Sleep(1 * time.Second)
-			server.Shutdown(context.Background())
+			_ = server.Shutdown(context.Background())
 		}()
 	})
 

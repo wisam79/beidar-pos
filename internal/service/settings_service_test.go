@@ -230,7 +230,7 @@ func TestSettingsService_SupabaseAndUpdater(t *testing.T) {
 				authHeader := r.Header.Get("Authorization")
 				if authHeader != "Bearer test-user-token" {
 					w.WriteHeader(http.StatusUnauthorized)
-					w.Write([]byte(`{"error": "unauthorized"}`))
+					_, _ = w.Write([]byte(`{"error": "unauthorized"}`))
 					return
 				}
 				w.WriteHeader(http.StatusNoContent) // 204
@@ -242,7 +242,7 @@ func TestSettingsService_SupabaseAndUpdater(t *testing.T) {
 		if r.URL.Path == "/download/setup.exe" {
 			w.Header().Set("Content-Length", "13")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("dummy content"))
+			_, _ = w.Write([]byte("dummy content"))
 			return
 		}
 

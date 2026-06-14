@@ -237,7 +237,7 @@ func (s *cloudService) VerifyLicense(licenseKey string) (*domain.LicenseResult, 
 
 	result, err := s.verifyOnline(user.UserID)
 	if err == nil && result.Licensed {
-		s.cacheResult(licenseKey, user.UserID, result)
+		_ = s.cacheResult(licenseKey, user.UserID, result)
 		s.saveSessionToCache()
 		return result, nil
 	}
@@ -274,7 +274,7 @@ func (s *cloudService) ActivateLicense(licenseKey string) (*domain.LicenseResult
 
 	if result.Licensed {
 		s.storeLicenseKey(licenseKey)
-		s.cacheResult(licenseKey, user.UserID, result)
+		_ = s.cacheResult(licenseKey, user.UserID, result)
 		s.saveSessionToCache()
 	}
 
@@ -310,7 +310,7 @@ func (s *cloudService) GetUserLicenseStatus() (*domain.LicenseResult, error) {
 				storedKey = "AUTO_" + user.UserID[:8]
 				s.storeLicenseKey(storedKey)
 			}
-			s.cacheResult(storedKey, user.UserID, result)
+			_ = s.cacheResult(storedKey, user.UserID, result)
 			s.saveSessionToCache()
 			return result, nil
 		} else {
