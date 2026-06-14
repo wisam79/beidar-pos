@@ -355,7 +355,7 @@ func (s *cloudService) CheckLicenseStatus(licenseKey string) (*domain.LicenseRes
 	defer resp.Body.Close()
 
 	var rows []map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&rows)
+	_ = json.NewDecoder(resp.Body).Decode(&rows)
 
 	if len(rows) == 0 {
 		return &domain.LicenseResult{Licensed: false, Message: "مفتاح الترخيص غير موجود"}, nil
@@ -495,7 +495,7 @@ func (s *cloudService) FetchAllLicenses() ([]domain.LicenseInfo, error) {
 	defer resp.Body.Close()
 
 	var rows []map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&rows)
+	_ = json.NewDecoder(resp.Body).Decode(&rows)
 
 	licenses := make([]domain.LicenseInfo, len(rows))
 	for i, row := range rows {
@@ -575,7 +575,7 @@ func (s *cloudService) CreateLicense(customerName, customerPhone string, months 
 
 func generateLicenseKey() string {
 	bytes := make([]byte, 8)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	return "BIDAR-" + strings.ToUpper(hex.EncodeToString(bytes))
 }
 
@@ -712,7 +712,7 @@ func (s *cloudService) FetchAdminLogs() ([]domain.AdminLogEntry, error) {
 	defer resp.Body.Close()
 
 	var rows []map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&rows)
+	_ = json.NewDecoder(resp.Body).Decode(&rows)
 
 	logs := make([]domain.AdminLogEntry, len(rows))
 	for i, row := range rows {
@@ -1002,8 +1002,8 @@ func compressDatabaseForBackup() ([]byte, error) {
 		return nil, err
 	}
 
-	io.Copy(writer, dbFile)
-	zipWriter.Close()
+	_, _ = io.Copy(writer, dbFile)
+	_ = zipWriter.Close()
 
 	return buf.Bytes(), nil
 }

@@ -455,7 +455,7 @@ func (s *cloudService) linkCloudIdentity(userID string) {
 	if err == nil {
 		for _, member := range staff {
 			if member.Role == "admin" && member.SupabaseUserID == "" {
-				s.staffRepo.Updates(member.ID, map[string]interface{}{"supabase_user_id": userID})
+				_ = s.staffRepo.Updates(member.ID, map[string]interface{}{"supabase_user_id": userID})
 				break
 			}
 		}
@@ -602,7 +602,7 @@ func (s *cloudService) DeleteCurrentUser() error {
 
 func (s *cloudService) generateSessionToken() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
 }
 
@@ -698,7 +698,7 @@ func (s *cloudService) CloudBackupNow() error {
 	if err == nil && len(backups) >= limitCount {
 		if len(backups) > 0 {
 			oldest := backups[len(backups)-1]
-			s.DeleteCloudBackup(oldest.ID)
+			_ = s.DeleteCloudBackup(oldest.ID)
 		}
 	}
 

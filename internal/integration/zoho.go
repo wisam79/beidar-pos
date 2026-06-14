@@ -279,7 +279,7 @@ func (s *cloudService) ProcessSyncQueue() {
 	}
 
 	for _, sale := range unsyncedSales {
-		s.CreateZohoInvoice(&sale)
+		_ = s.CreateZohoInvoice(&sale)
 	}
 }
 

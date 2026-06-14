@@ -24,9 +24,11 @@ func setupStatsTestDB(t *testing.T) (service.StatsService, *gorm.DB, func()) {
 		t.Fatalf("Failed to open test DB: %v", err)
 	}
 
-	db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Expense{}, &domain.Category{},
-	)
+	); err != nil {
+		t.Fatalf("Failed to migrate test DB: %v", err)
+	}
 
 	statsRepo := repository.NewStatsRepository(db)
 	statsService := service.NewStatsService(statsRepo)
