@@ -20,6 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create dummy frontend dist for Go embed
+        run: |
+          mkdir -p frontend/dist
+          echo "placeholder" > frontend/dist/index.html
+
       - uses: actions/setup-go@v6
         with:
           go-version: 'stable'
@@ -94,14 +99,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Unit Tests with Coverage
-        run: npm run test:ci -- --coverage
-
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v7
-        with:
-          name: frontend-coverage
-          path: frontend/coverage/
+      - name: Unit Tests
+        run: npm run test:ci
 
       - name: Bundle Size Analysis
         run: |
