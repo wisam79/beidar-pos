@@ -23,9 +23,11 @@ func setupCRMTestDB(t *testing.T) (service.CRMService, *gorm.DB, func()) {
 		t.Fatalf("Failed to open test DB: %v", err)
 	}
 
-	db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&domain.Customer{}, &domain.Supplier{}, &domain.Product{}, &domain.Sale{},
-	)
+	); err != nil {
+		t.Fatalf("Failed to migrate test DB: %v", err)
+	}
 
 	customerRepo := repository.NewCustomerRepository(db)
 	supplierRepo := repository.NewSupplierRepository(db)

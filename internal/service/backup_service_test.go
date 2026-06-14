@@ -25,12 +25,14 @@ func setupBackupTestDB(t *testing.T) (service.BackupService, *gorm.DB, func()) {
 	// Set global DB for ResetDatabase/InitDB to work
 	repository.SetTestDB(db)
 
-	db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Customer{}, &domain.Payment{},
 		&domain.StockMovement{}, &domain.Shift{}, &domain.CashMovement{}, &domain.Staff{},
 		&domain.AppPreferences{}, &domain.LoginAttempt{}, &domain.Supplier{}, &domain.Category{},
 		&domain.Expense{}, &domain.ParkedSale{}, &domain.PurchaseOrder{}, &domain.PurchaseOrderItem{},
-	)
+	); err != nil {
+		t.Fatalf("Failed to migrate test DB: %v", err)
+	}
 
 	backupRepo := repository.NewBackupRepository(db)
 	productRepo := repository.NewProductRepository(db)

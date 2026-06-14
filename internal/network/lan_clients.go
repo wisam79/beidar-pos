@@ -11,7 +11,7 @@ import (
 // GenerateSessionToken creates a unique session token for a client
 func (s *lanService) GenerateSessionToken() string {
 	bytes := make([]byte, 16)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	return hex.EncodeToString(bytes)
 }
 
@@ -186,7 +186,7 @@ func (s *lanService) GenerateServerSecret() string {
 	defer s.secretMutex.Unlock()
 
 	bytes := make([]byte, 4) // 8 hex characters
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	s.secret = hex.EncodeToString(bytes)
 	return s.secret
 }

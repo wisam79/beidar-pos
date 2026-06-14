@@ -22,7 +22,9 @@ func setupDiscountTestDB(t *testing.T) (service.DiscountService, *gorm.DB, func(
 		t.Fatalf("Failed to open test DB: %v", err)
 	}
 
-	db.AutoMigrate(&domain.Discount{})
+	if err := db.AutoMigrate(&domain.Discount{}); err != nil {
+		t.Fatalf("Failed to migrate test DB: %v", err)
+	}
 
 	discountRepo := repository.NewDiscountRepository(db)
 	discountService := service.NewDiscountService(discountRepo)

@@ -123,7 +123,7 @@ func (s *lanService) StartBroadcasting(httpPort int) error {
 				fmt.Println("📡 Stopping UDP discovery broadcast")
 				return
 			case <-ticker.C:
-				conn.WriteToUDP(msgBytes, broadcastAddr)
+				_, _ = conn.WriteToUDP(msgBytes, broadcastAddr)
 			}
 		}
 	}()
@@ -190,7 +190,7 @@ func (s *lanService) discoverViaUDP() []domain.DiscoveredServer {
 	}
 	defer conn.Close()
 
-	conn.SetReadDeadline(time.Now().Add(DiscoveryScanDuration))
+	_ = conn.SetReadDeadline(time.Now().Add(DiscoveryScanDuration))
 
 	buffer := make([]byte, 1024)
 

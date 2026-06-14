@@ -102,9 +102,9 @@ func InitDB() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.Exec("PRAGMA journal_mode=WAL;")
-	sqlDB.Exec("PRAGMA busy_timeout=5000;") // 5 seconds wait on lock
-	sqlDB.Exec("PRAGMA foreign_keys=ON;")   // Enable foreign key constraints
+	_, _ = sqlDB.Exec("PRAGMA journal_mode=WAL;")
+	_, _ = sqlDB.Exec("PRAGMA busy_timeout=5000;") // 5 seconds wait on lock
+	_, _ = sqlDB.Exec("PRAGMA foreign_keys=ON;")   // Enable foreign key constraints
 
 	// Auto Migrate Domain Models
 	err = db.AutoMigrate(
