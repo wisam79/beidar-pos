@@ -1,11 +1,14 @@
 import { test, expect } from '@playwright/test';
+import { mockWails } from './mock-wails';
 
 test.setTimeout(90000);
 
 test.describe('POS Full Sales Cycle', () => {
     test.beforeEach(async ({ page }) => {
+        await mockWails(page);
         await page.goto('/#/sales');
         await page.waitForLoadState('networkidle');
+
         await page.waitForTimeout(1500);
 
         // Check if we are on the login screen and handle authentication if needed

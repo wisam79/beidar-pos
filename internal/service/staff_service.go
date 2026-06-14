@@ -520,13 +520,13 @@ func (s *staffService) AuthenticateByUsername(username, password string) (*domai
 
 	staff, err := s.staffRepo.GetByUsername(username)
 	if err != nil || !staff.Active {
-		s.recordFailedAttempt(username, MaxLoginAttempts)
+		_ = s.recordFailedAttempt(username, MaxLoginAttempts)
 		logger.Logger.Warn("SECURITY", fmt.Sprintf("Login failed: Username %s not found or inactive", username))
 		return &domain.AuthResult{Success: false, Message: i18n.GetMessage("INVALID_CREDENTIALS")}, nil
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(staff.PasswordHash), []byte(password)); err != nil {
-		s.recordFailedAttempt(username, MaxLoginAttempts)
+		_ = s.recordFailedAttempt(username, MaxLoginAttempts)
 		logger.Logger.Warn("SECURITY", fmt.Sprintf("Login failed: Incorrect PIN for username %s", username))
 
 		attempt, err := s.staffRepo.GetLoginAttempt(username)
@@ -539,10 +539,10 @@ func (s *staffService) AuthenticateByUsername(username, password string) (*domai
 		return &domain.AuthResult{Success: false, Message: i18n.GetMessage("INVALID_CREDENTIALS")}, nil
 	}
 
-	s.clearLoginAttempts(username)
+	_ = s.clearLoginAttempts(username)
 
 	staff.LastLogin = time.Now().Unix()
-	s.staffRepo.Update(staff)
+	_ = s.staffRepo.Update(staff)
 
 	requireChange := staff.MustChangePin || s.CheckUsingDefaultPassword(password)
 
@@ -567,9 +567,9 @@ func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 	fastMatch, err := s.staffRepo.GetByFastPIN(hashedInput)
 	if err == nil && fastMatch != nil {
 		if err := bcrypt.CompareHashAndPassword([]byte(fastMatch.PasswordHash), []byte(pin)); err == nil {
-			s.clearLoginAttempts("pin_auth")
+			_ = s.clearLoginAttempts("pin_auth")
 			fastMatch.LastLogin = time.Now().Unix()
-			s.staffRepo.Update(fastMatch)
+			_ = s.staffRepo.Update(fastMatch)
 			requireChange := fastMatch.MustChangePin || s.CheckUsingDefaultPassword(pin)
 
 			return &domain.AuthResult{
@@ -592,11 +592,11 @@ func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 			if err := bcrypt.CompareHashAndPassword([]byte(st.PasswordHash), []byte(pin)); err == nil {
 				// Lazy Migration: save FastPIN
 				st.FastPIN = hashedInput
-				s.staffRepo.Update(&st)
+				_ = s.staffRepo.Update(&st)
 
-				s.clearLoginAttempts("pin_auth")
+				_ = s.clearLoginAttempts("pin_auth")
 				st.LastLogin = time.Now().Unix()
-				s.staffRepo.Update(&st)
+				_ = s.staffRepo.Update(&st)
 
 				requireChange := st.MustChangePin || s.CheckUsingDefaultPassword(pin)
 
@@ -610,7 +610,7 @@ func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 		}
 	}
 
-	s.recordFailedAttempt("pin_auth", MaxGlobalPinAttempts)
+	_ = s.recordFailedAttempt("pin_auth", MaxGlobalPinAttempts)
 	time.Sleep(2 * time.Second) // Throttling brute force
 
 	attempt, err := s.staffRepo.GetLoginAttempt("pin_auth")

@@ -118,7 +118,9 @@ func (s *lanService) ConnectToServer(serverIP string, port int) error {
 	s.sessionToken = token
 	s.clientMode = true
 
-	go s.saveLanConfig()
+	go func() {
+		_ = s.saveLanConfig()
+	}()
 
 	fmt.Printf("✅ Connected to LAN server at %s\n", address)
 	return nil
@@ -132,7 +134,9 @@ func (s *lanService) DisconnectFromServer() {
 	s.serverAddress = ""
 	s.sessionToken = ""
 
-	go s.saveLanConfig()
+	go func() {
+		_ = s.saveLanConfig()
+	}()
 
 	fmt.Println("🔌 Disconnected from LAN server")
 }
