@@ -860,7 +860,7 @@ func (s *cloudService) syncUserFeaturesFromLicense(licenseID int) {
 	defer resp.Body.Close()
 
 	var rows []map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&rows)
+	_ = json.NewDecoder(resp.Body).Decode(&rows)
 
 	if len(rows) == 0 {
 		return

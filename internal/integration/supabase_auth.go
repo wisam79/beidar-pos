@@ -182,7 +182,7 @@ func (s *cloudService) RefreshSession() error {
 	defer resp.Body.Close()
 
 	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
+	_ = json.NewDecoder(resp.Body).Decode(&result)
 
 	if resp.StatusCode >= 400 {
 		msg, _ := result["error_description"].(string)
@@ -272,7 +272,7 @@ func (s *cloudService) Register(email, password, storeName string) (*domain.Supa
 	defer resp.Body.Close()
 
 	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
+	_ = json.NewDecoder(resp.Body).Decode(&result)
 
 	if resp.StatusCode >= 400 {
 		msg, _ := result["msg"].(string)
