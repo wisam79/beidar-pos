@@ -23,6 +23,8 @@ export function HasPermission(arg1:string,arg2:string):Promise<boolean>;
 
 export function IsUsingDefaultPassword(arg1:string):Promise<boolean>;
 
+export function Logout():Promise<void>;
+
 export function Startup(arg1:context.Context):Promise<void>;
 
 export function ToggleStaffStatus(arg1:string):Promise<void>;

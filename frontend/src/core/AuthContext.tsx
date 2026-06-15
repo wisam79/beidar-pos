@@ -175,8 +175,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    // Logout
+    // Logout — clears the backend session singleton so that any subsequent
+    // Wails call is properly rejected by the auth middleware.
     const logout = () => {
+        try {
+            // Fire-and-forget: the backend session is cleared regardless of
+            // whether this IPC call succeeds (the window is closing anyway).
+            const { StaffHandler } = require('../../wailsjs/go/handlers/StaffHandler');
+            StaffHandler.Logout?.();
+        } catch {
+            // Binding may not exist during development; ignore silently.
+        }
         setCurrentUser(null);
         setPermissions([]);
         setSessionTimeoutWarning(false);

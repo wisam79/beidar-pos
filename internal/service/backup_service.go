@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type backupService struct {
@@ -250,118 +252,194 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 		return result, nil
 	}
 
-	if len(records) < 2 {
+	if len(records) < 1 {
 		result.Success = false
 		result.Errors = append(result.Errors, "الملف فارغ أو لا يحتوي على بيانات")
 		return result, nil
 	}
 
-	result.TotalRows = len(records) - 1
+	// Map headers (supports both Arabic and English)
+	headerMap := map[string]string{
+		"الباركود":        "barcode",
+		"barcode":         "barcode",
+		"اسم المنتج":      "name",
+		"name":            "name",
+		"الوصف":          "description",
+		"description":     "description",
+		"الفئة":           "category",
+		"category":        "category",
+		"المورد":          "supplier",
+		"supplier":        "supplier",
+		"التكلفة":         "cost",
+		"cost":            "cost",
+		"السعر":           "price",
+		"price":           "price",
+		"المخزون":         "stock",
+		"stock":           "stock",
+		"الحد الأدنى":     "minstock",
+		"minstock":        "minstock",
+		"سعر الجملة":      "wholesaleprice",
+		"wholesaleprice":   "wholesaleprice",
+	}
 
-	for i, record := range records[1:] {
-		rowNum := i + 2
+	firstRow := records[0]
+	colIndices := make(map[string]int)
+	isHeader := false
 
-		if len(record) < 7 {
-			result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: عدد الأعمدة غير صحيح", rowNum))
-			result.Skipped++
-			continue
-		}
-
-		barcode := strings.TrimSpace(record[0])
-		name := strings.TrimSpace(record[1])
-		description := strings.TrimSpace(record[2])
-		category := strings.TrimSpace(record[3])
-		supplier := strings.TrimSpace(record[4])
-
-		cost, err := parseFloat(record[5])
-		if err != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: التكلفة غير صالحة", rowNum))
-			result.Skipped++
-			continue
-		}
-
-		price, err := parseFloat(record[6])
-		if err != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: السعر غير صالح", rowNum))
-			result.Skipped++
-			continue
-		}
-
-		var stock float64 = 0
-		if len(record) > 7 {
-			stock, _ = parseFloat(record[7])
-		}
-
-		var minStock float64 = 5
-		if len(record) > 8 {
-			minStock, _ = parseFloat(record[8])
-		}
-
-		if name == "" {
-			result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: اسم المنتج مطلوب", rowNum))
-			result.Skipped++
-			continue
-		}
-
-		if price <= 0 {
-			result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: السعر يجب أن يكون أكبر من صفر", rowNum))
-			result.Skipped++
-			continue
-		}
-
-		var existingProduct *domain.Product
-		found := false
-
-		if barcode != "" {
-			if p, err := s.productRepo.GetByBarcode(barcode); err == nil && p != nil {
-				existingProduct = p
-				found = true
-			}
-		}
-
-		if found && updateExisting {
-			existingProduct.Name = name
-			existingProduct.Description = description
-			existingProduct.Category = category
-			existingProduct.Supplier = supplier
-			existingProduct.Cost = domain.NewAmount(cost)
-			existingProduct.Price = domain.NewAmount(price)
-			existingProduct.Stock = stock
-			existingProduct.MinStock = minStock
-
-			if err := s.productRepo.Update(existingProduct); err != nil {
-				result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: فشل التحديث - %v", rowNum, err))
-				result.Skipped++
-				continue
-			}
-			result.Updated++
-			result.ImportedIDs = append(result.ImportedIDs, existingProduct.ID)
-		} else if found && !updateExisting {
-			result.Skipped++
-			continue
+	for i, col := range firstRow {
+		cleanCol := strings.ToLower(strings.TrimSpace(col))
+		if key, ok := headerMap[cleanCol]; ok {
+			colIndices[key] = i
+			isHeader = true
 		} else {
-			newProduct := domain.Product{
-				ID:          generateID(),
-				Barcode:     barcode,
-				Name:        name,
-				Description: description,
-				Category:    category,
-				Supplier:    supplier,
-				Cost:        domain.NewAmount(cost),
-				Price:       domain.NewAmount(price),
-				Stock:       stock,
-				MinStock:    minStock,
-			}
-
-			if err := s.productRepo.Create(&newProduct); err != nil {
-				result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: فشل الإنشاء - %v", rowNum, err))
-				result.Skipped++
-				continue
-			}
-			result.Imported++
-			result.ImportedIDs = append(result.ImportedIDs, newProduct.ID)
+			colIndices[cleanCol] = i
 		}
 	}
+
+	var dataRows [][]string
+	if isHeader {
+		if len(records) < 2 {
+			result.Success = false
+			result.Errors = append(result.Errors, "الملف لا يحتوي على صفوف بيانات")
+			return result, nil
+		}
+		dataRows = records[1:]
+	} else {
+		// No header detected. Fallback to fixed positions and treat the first row as data.
+		colIndices = map[string]int{
+			"barcode":     0,
+			"name":        1,
+			"description": 2,
+			"category":    3,
+			"supplier":    4,
+			"cost":        5,
+			"price":       6,
+			"stock":       7,
+			"minstock":    8,
+		}
+		dataRows = records
+	}
+
+	result.TotalRows = len(dataRows)
+
+	// Build a lookup map of existing products by barcode to avoid N+2 database lookups
+	barcodeIndex := make(map[string]*domain.Product)
+	allProducts, err := s.productRepo.GetAll()
+	if err == nil {
+		for i := range allProducts {
+			if allProducts[i].Barcode != "" {
+				barcodeIndex[allProducts[i].Barcode] = &allProducts[i]
+			}
+		}
+	}
+
+	_ = s.productRepo.Transaction(func(tx domain.Tx) error {
+		txRepo := s.productRepo.WithTx(tx)
+
+		for i, record := range dataRows {
+			rowNum := i + 1
+			if isHeader {
+				rowNum++
+			}
+
+			getVal := func(key string) string {
+				if idx, ok := colIndices[key]; ok && idx < len(record) {
+					return strings.TrimSpace(record[idx])
+				}
+				return ""
+			}
+
+			name := getVal("name")
+			barcode := getVal("barcode")
+			priceStr := getVal("price")
+			costStr := getVal("cost")
+			stockStr := getVal("stock")
+			minStockStr := getVal("minstock")
+			category := getVal("category")
+			supplier := getVal("supplier")
+			description := getVal("description")
+			wholesalePriceStr := getVal("wholesaleprice")
+
+			if name == "" {
+				result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: اسم المنتج مطلوب", rowNum))
+				result.Skipped++
+				continue
+			}
+
+			priceVal, err := parseFloat(priceStr)
+			if err != nil || priceVal <= 0 {
+				result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: السعر غير صالح (يجب أن يكون أكبر من صفر)", rowNum))
+				result.Skipped++
+				continue
+			}
+
+			costVal, _ := parseFloat(costStr)
+			stockVal, _ := parseFloat(stockStr)
+			minStockVal, _ := parseFloat(minStockStr)
+			wholesalePriceVal, _ := parseFloat(wholesalePriceStr)
+
+			price := domain.NewAmount(priceVal)
+			cost := domain.NewAmount(costVal)
+			wholesalePrice := domain.NewAmount(wholesalePriceVal)
+
+			var existingProduct *domain.Product
+			found := false
+
+			if barcode != "" {
+				if p, ok := barcodeIndex[barcode]; ok {
+					existingProduct = p
+					found = true
+				}
+			}
+
+			if found && updateExisting {
+				existingProduct.Name = name
+				existingProduct.Description = description
+				existingProduct.Category = category
+				existingProduct.Supplier = supplier
+				existingProduct.Cost = cost
+				existingProduct.Price = price
+				existingProduct.Stock = stockVal
+				existingProduct.MinStock = minStockVal
+				existingProduct.WholesalePrice = wholesalePrice
+
+				if err := txRepo.Update(existingProduct); err != nil {
+					result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: فشل التحديث - %v", rowNum, err))
+					result.Skipped++
+					continue
+				}
+				result.Updated++
+				result.ImportedIDs = append(result.ImportedIDs, existingProduct.ID)
+			} else if found && !updateExisting {
+				result.Skipped++
+				continue
+			} else {
+				prodID := "prod_" + uuid.New().String()
+				newProduct := domain.Product{
+					ID:             prodID,
+					Barcode:        barcode,
+					Name:           name,
+					Description:    description,
+					Category:       category,
+					Supplier:       supplier,
+					Cost:           cost,
+					Price:          price,
+					Stock:          stockVal,
+					MinStock:       minStockVal,
+					WholesalePrice: wholesalePrice,
+				}
+
+				if err := txRepo.Create(&newProduct); err != nil {
+					result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: فشل الإنشاء - %v", rowNum, err))
+					result.Skipped++
+					continue
+				}
+				result.Imported++
+				result.ImportedIDs = append(result.ImportedIDs, newProduct.ID)
+			}
+		}
+		return nil
+	})
 
 	result.Success = len(result.Errors) == 0 || (result.Imported+result.Updated) > 0
 	return result, nil

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/pkg/auth"
 	"beidar-desktop/pkg/notification"
 	"beidar-desktop/pkg/updater"
 	"context"
@@ -26,10 +27,16 @@ func (h *SettingsHandler) Startup(ctx context.Context) {
 }
 
 func (h *SettingsHandler) GetPreferences() (*domain.AppPreferences, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.settingsService.GetPreferences()
 }
 
 func (h *SettingsHandler) UpdatePreferences(prefs domain.AppPreferences) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.settingsService.UpdatePreferences(prefs)
 }
 
@@ -54,6 +61,9 @@ func (h *SettingsHandler) GetUpdateStatus() updater.UpdateStatus {
 }
 
 func (h *SettingsHandler) DownloadUpdate(url string) (string, error) {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return "", err
+	}
 	status := h.settingsService.GetUpdateStatus()
 	expectedChecksum := ""
 	if status.Info != nil {
@@ -63,6 +73,9 @@ func (h *SettingsHandler) DownloadUpdate(url string) (string, error) {
 }
 
 func (h *SettingsHandler) InstallUpdate(installerPath string) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.settingsService.InstallUpdate(installerPath)
 }
 
@@ -99,9 +112,15 @@ func (h *SettingsHandler) ShowNativeNotification(title, message, notifType strin
 }
 
 func (h *SettingsHandler) FetchGlobalAIKeys() ([]string, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.settingsService.FetchGlobalAIKeys()
 }
 
 func (h *SettingsHandler) SaveGlobalAIKeys(keys []string, userToken string) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.settingsService.SaveGlobalAIKeys(keys, userToken)
 }

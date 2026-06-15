@@ -7,7 +7,7 @@ import { Badge, PageHeader, EmptyState } from '../../components/ui';
 import { analyzeInventoryRisk } from '../../core/ai';
 import { api, ProductStats } from '../../core/api';
 import { useInvalidateProducts } from '../../hooks';
-import { PageShell, StatsGrid, StatCard, LoadingState, FilterBar, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
+import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
 
 // Internal debounce hook since lodash might not be available
@@ -258,21 +258,89 @@ export const InventoryPage: React.FC = () => {
                         />
                         <button
                             onClick={() => setShowStats(!showStats)}
-                            className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
                                 ? 'bg-surface border border-border text-text-muted hover:text-text-main'
                                 : 'bg-gradient-to-br from-primary to-emerald-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
                                 }`}
                             title={showStats ? 'إخفاء الإحصائيات' : 'عرض التحليل'}
                         >
-                            <BarChart2 size={showStats ? 20 : 22} strokeWidth={showStats ? 1.5 : 2.5} />
+                            <BarChart2 size={showStats ? 18 : 20} strokeWidth={showStats ? 1.5 : 2.5} />
                         </button>
-                        <button onClick={handlePrint} className="px-4 py-3 bg-surface hover:bg-surface-hover text-text-main border border-border rounded-xl text-sm font-bold flex items-center gap-2 transition-colors touch-target active:scale-95"><Printer size={18} /> طباعة</button>
-                        <button onClick={handleRunAnalysis} disabled={isAnalyzing} className={`px-4 py-3 rounded-xl border flex items-center gap-2 transition-all text-sm font-bold shadow-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-500 dark:text-purple-400 border-purple-500/30 hover:border-purple-500/50 hover:shadow-purple-500/20 touch-target active:scale-95`}>
-                            {isAnalyzing ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />} تحليل AI
+                        <button onClick={handlePrint} className="h-10 px-4 bg-surface hover:bg-surface-hover text-text-main border border-border rounded-xl text-xs font-bold flex items-center gap-2 transition-colors touch-target active:scale-95"><Printer size={16} /> طباعة</button>
+                        <button onClick={handleRunAnalysis} disabled={isAnalyzing} className={`h-10 px-4 rounded-xl border flex items-center gap-2 transition-all text-xs font-bold shadow-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-500 dark:text-purple-400 border-purple-500/30 hover:border-purple-500/50 hover:shadow-purple-500/20 touch-target active:scale-95`}>
+                            {isAnalyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />} تحليل AI
                         </button>
                     </div>
                 }
-            />
+            >
+                {activeTab === 'products' && (
+                    <div className="flex flex-col md:flex-row gap-3 items-center w-full">
+                        {/* Status Segmented Control */}
+                        <SegmentedControl
+                            options={[
+                                { id: 'all', label: 'الكل' },
+                                { id: 'low', label: 'منخفض' },
+                                { id: 'out', label: 'نافذ' },
+                            ]}
+                            value={filterType}
+                            onChange={(v) => setFilterType(v as 'all' | 'low' | 'out')}
+                        />
+
+                        <div className="hidden xl:block w-px h-8 bg-border/60 mx-1" />
+
+                        <div className="flex flex-wrap items-center gap-2 flex-1 w-full md:w-auto justify-end">
+                            {/* Category Dropdown */}
+                            <div className="relative shrink-0 group">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
+                                    <ChevronDown size={14} />
+                                </div>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted/70 pointer-events-none">
+                                    <Package size={14} />
+                                </div>
+                                <select
+                                    title="اختر الفئة"
+                                    className="appearance-none bg-input-bg border border-border text-text-main text-[11px] font-bold 
+                                        rounded-xl pl-8 pr-9 h-10 outline-none cursor-pointer 
+                                        focus:border-primary/50 transition-all hover:bg-surface-hover"
+                                    value={categoryFilter}
+                                    onChange={(e) => { setCategoryFilter(e.target.value); }}
+                                >
+                                    <option value="all">جميع الفئات</option>
+                                    {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Supplier Dropdown */}
+                            <div className="relative shrink-0 group">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
+                                    <ChevronDown size={14} />
+                                </div>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted/70 pointer-events-none">
+                                    <Truck size={14} />
+                                </div>
+                                <select
+                                    title="اختر المورد"
+                                    className="appearance-none bg-input-bg border border-border text-text-main text-[11px] font-bold 
+                                        rounded-xl pl-8 pr-9 h-10 outline-none cursor-pointer 
+                                        focus:border-primary/50 transition-all hover:bg-surface-hover"
+                                    value={supplierFilter}
+                                    onChange={(e) => { setSupplierFilter(e.target.value); }}
+                                >
+                                    <option value="all">جميع الموردين</option>
+                                    {suppliers.map(s => <option key={s.id} value={s.companyName}>{s.companyName}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Search Input */}
+                            <SearchInput
+                                value={search}
+                                onChange={setSearch}
+                                placeholder="بحث باسم المنتج، الباركود..."
+                            />
+                        </div>
+                    </div>
+                )}
+            </PageHeader>
 
             {/* Stats Grid - Matching Invoices Style */}
             <StatsGrid columns={4} visible={showStats}>
@@ -316,70 +384,6 @@ export const InventoryPage: React.FC = () => {
             <div className="flex-1 min-h-0 border border-border rounded-2xl flex flex-col overflow-hidden relative">
                 {activeTab === 'products' ? (
                     <>
-                        {/* Filters - Compact Unified Design */}
-                        <FilterBar>
-                            {/* Status Segmented Control */}
-                            <SegmentedControl
-                                options={[
-                                    { id: 'all', label: 'الكل' },
-                                    { id: 'low', label: 'منخفض' },
-                                    { id: 'out', label: 'نافذ' },
-                                ]}
-                                value={filterType}
-                                onChange={(v) => setFilterType(v as 'all' | 'low' | 'out')}
-                            />
-
-                            <div className="hidden xl:block w-px h-8 bg-border mx-1" />
-
-                            {/* Category Dropdown */}
-                            <div className="relative shrink-0 group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
-                                    <ChevronDown size={14} />
-                                </div>
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted/70 pointer-events-none">
-                                    <Package size={14} />
-                                </div>
-                                <select
-                                    title="اختر الفئة"
-                                    className="appearance-none bg-surface border border-border text-text-main text-[11px] font-bold 
-                                        rounded-xl pl-8 pr-9 py-2.5 outline-none cursor-pointer 
-                                        focus:border-primary/50 transition-all hover:bg-surface-hover"
-                                    value={categoryFilter}
-                                    onChange={(e) => { setCategoryFilter(e.target.value); }}
-                                >
-                                    <option value="all">جميع الفئات</option>
-                                    {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                </select>
-                            </div>
-
-                            {/* Supplier Dropdown */}
-                            <div className="relative shrink-0 group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
-                                    <ChevronDown size={14} />
-                                </div>
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted/70 pointer-events-none">
-                                    <Truck size={14} />
-                                </div>
-                                <select
-                                    title="اختر المورد"
-                                    className="appearance-none bg-surface border border-border text-text-main text-[11px] font-bold 
-                                        rounded-xl pl-8 pr-9 py-2.5 outline-none cursor-pointer 
-                                        focus:border-primary/50 transition-all hover:bg-surface-hover"
-                                    value={supplierFilter}
-                                    onChange={(e) => { setSupplierFilter(e.target.value); }}
-                                >
-                                    <option value="all">جميع الموردين</option>
-                                    {suppliers.map(s => <option key={s.id} value={s.companyName}>{s.companyName}</option>)}
-                                </select>
-                            </div>
-
-                            {/* Search Input */}
-                            <SearchInput
-                                value={search}
-                                onChange={setSearch}
-                                placeholder="بحث باسم المنتج، الباركود..."
-                            />
-                        </FilterBar>
 
                         {/* Products List - Card Style matching Invoices exactly */}
                         <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-2 pb-10 relative">

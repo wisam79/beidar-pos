@@ -724,7 +724,22 @@ func (s *cloudService) CloudBackupNow() error {
 
 	client := getPinnedClient()
 
-	for i, chunk := range chunks {
+	// Upload chunks 1..N-1 first, and chunk 0 last as a commit marker.
+	// This prevents incomplete backups from being listed (since listing filters by chunk_index=0).
+	uploadOrder := make([]int, len(chunks))
+	if len(chunks) > 1 {
+		idx := 0
+		for i := 1; i < len(chunks); i++ {
+			uploadOrder[idx] = i
+			idx++
+		}
+		uploadOrder[idx] = 0
+	} else {
+		uploadOrder[0] = 0
+	}
+
+	for _, i := range uploadOrder {
+		chunk := chunks[i]
 		chunkID := fmt.Sprintf("%s_chunk_%d", backupID, i)
 		url := fmt.Sprintf("%s/rest/v1/user_backups", supabaseURL)
 

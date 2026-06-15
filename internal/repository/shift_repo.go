@@ -77,24 +77,27 @@ func (r *shiftRepository) GetCashInAndOut(shiftID string) (cashIn domain.Amount,
 }
 
 func (r *shiftRepository) UpdateShiftSales(saleTotal, cashAmount domain.Amount, requireShift bool) error {
-	shift, err := r.GetActiveShift()
+	var id string
+	err := r.db.Model(&domain.Shift{}).
+		Where("status = ?", "open").
+		Limit(1).
+		Pluck("id", &id).Error
 	if err != nil {
 		return err
 	}
-
-	if shift == nil {
+	if id == "" {
 		if requireShift {
 			return fmt.Errorf("لا يوجد شفت مفتوح. يرجى فتح شفت قبل البيع")
 		}
 		return nil
 	}
 
-	shift.TotalSales = shift.TotalSales.Add(saleTotal)
-	shift.CashSales = shift.CashSales.Add(cashAmount)
-	shift.SalesCount++
-	shift.ExpectedBalance = shift.ExpectedBalance.Add(cashAmount)
-
-	return r.Save(shift)
+	return r.db.Model(&domain.Shift{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"total_sales":      gorm.Expr("total_sales + ?", int64(saleTotal)),
+		"cash_sales":       gorm.Expr("cash_sales + ?", int64(cashAmount)),
+		"sales_count":      gorm.Expr("sales_count + 1"),
+		"expected_balance": gorm.Expr("expected_balance + ?", int64(cashAmount)),
+	}).Error
 }
 
 func (r *shiftRepository) Save(shift *domain.Shift) error {

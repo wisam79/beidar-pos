@@ -5,6 +5,7 @@ import (
 
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/integration"
+	"beidar-desktop/pkg/auth"
 )
 
 type CloudHandler struct {
@@ -24,10 +25,16 @@ func (h *CloudHandler) Startup(ctx context.Context) {
 
 // Google Drive Auth & Backup
 func (h *CloudHandler) InitGoogleAuth() (string, error) {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return "", err
+	}
 	return h.cloudService.InitGoogleAuth()
 }
 
 func (h *CloudHandler) CompleteGoogleAuth() error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.cloudService.CompleteGoogleAuth()
 }
 
@@ -36,10 +43,16 @@ func (h *CloudHandler) IsGoogleConnected() bool {
 }
 
 func (h *CloudHandler) DisconnectGoogle() error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.cloudService.DisconnectGoogle()
 }
 
 func (h *CloudHandler) UploadBackupToDrive(filename string, content string) (string, error) {
+	if err := auth.RequirePermission(auth.PermExportData); err != nil {
+		return "", err
+	}
 	return h.cloudService.UploadBackupToDrive(filename, content)
 }
 
@@ -78,23 +91,38 @@ func (h *CloudHandler) CheckSessionValidity() *domain.SessionValidityResult {
 
 // Supabase Cloud Backup
 func (h *CloudHandler) CloudBackupNow() error {
+	if err := auth.RequirePermission(auth.PermExportData); err != nil {
+		return err
+	}
 	return h.cloudService.CloudBackupNow()
 }
 
 func (h *CloudHandler) ListCloudBackupsForUser() ([]domain.CloudBackup, error) {
+	if err := auth.RequirePermission(auth.PermExportData); err != nil {
+		return nil, err
+	}
 	return h.cloudService.ListCloudBackupsForUser()
 }
 
 func (h *CloudHandler) DeleteCloudBackup(backupID string) error {
+	if err := auth.RequirePermission(auth.PermExportData); err != nil {
+		return err
+	}
 	return h.cloudService.DeleteCloudBackup(backupID)
 }
 
 func (h *CloudHandler) RestoreCloudBackup(backupID string) error {
+	if err := auth.RequireAdmin(); err != nil {
+		return err
+	}
 	return h.cloudService.RestoreCloudBackup(backupID)
 }
 
 // Zoho Books Integration
 func (h *CloudHandler) SetupZohoIntegration(clientID, clientSecret, authCode string) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.cloudService.SetupZohoIntegration(clientID, clientSecret, authCode)
 }
 
@@ -103,6 +131,9 @@ func (h *CloudHandler) GetZohoStatus() map[string]interface{} {
 }
 
 func (h *CloudHandler) DisableZohoIntegration() error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.cloudService.DisableZohoIntegration()
 }
 

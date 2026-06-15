@@ -3,6 +3,7 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
+	"beidar-desktop/pkg/auth"
 	"context"
 )
 
@@ -24,6 +25,9 @@ func (h *StatsHandler) Startup(ctx context.Context) {
 }
 
 func (h *StatsHandler) GetDashboardStats(timeRange string) (*domain.DashboardStats, error) {
+	if err := auth.RequirePermission(auth.PermReports); err != nil {
+		return nil, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result domain.DashboardStats
 		err := h.lanService.RemoteGet("/api/stats/dashboard?range="+timeRange, &result)
@@ -33,5 +37,8 @@ func (h *StatsHandler) GetDashboardStats(timeRange string) (*domain.DashboardSta
 }
 
 func (h *StatsHandler) GetMonthlyComparison() (*domain.MonthlyComparison, error) {
+	if err := auth.RequirePermission(auth.PermReports); err != nil {
+		return nil, err
+	}
 	return h.statsService.GetMonthlyComparison()
 }

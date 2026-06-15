@@ -3,6 +3,7 @@ package network
 import (
 	"beidar-desktop/internal/core/domain"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"time"
@@ -180,12 +181,13 @@ func (s *lanService) ClearAllClients() {
 	s.clientsMutex.Unlock()
 }
 
-// GenerateServerSecret creates a new random secret for the LAN server
+// GenerateServerSecret creates a new random secret for the LAN server.
+// Uses 16 bytes (128 bits) of entropy, rendered as 32 hex characters.
 func (s *lanService) GenerateServerSecret() string {
 	s.secretMutex.Lock()
 	defer s.secretMutex.Unlock()
 
-	bytes := make([]byte, 4) // 8 hex characters
+	bytes := make([]byte, 16) // 128-bit secret → 32 hex characters
 	_, _ = rand.Read(bytes)
 	s.secret = hex.EncodeToString(bytes)
 	return s.secret
@@ -198,9 +200,13 @@ func (s *lanService) GetServerSecret() string {
 	return s.secret
 }
 
-// ValidateServerSecret checks if the provided secret matches
+// ValidateServerSecret checks if the provided secret matches using a
+// constant-time comparison to resist timing attacks.
 func (s *lanService) ValidateServerSecret(secret string) bool {
 	s.secretMutex.RLock()
 	defer s.secretMutex.RUnlock()
-	return s.secret != "" && secret == s.secret
+	if s.secret == "" || secret == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(secret), []byte(s.secret)) == 1
 }

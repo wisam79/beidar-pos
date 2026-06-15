@@ -3,6 +3,7 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
+	"beidar-desktop/pkg/auth"
 	"context"
 )
 
@@ -24,6 +25,9 @@ func (h *DiscountHandler) Startup(ctx context.Context) {
 }
 
 func (h *DiscountHandler) GetAllDiscounts() ([]domain.Discount, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result []domain.Discount
 		err := h.lanService.RemoteGet("/api/discounts", &result)
@@ -33,6 +37,9 @@ func (h *DiscountHandler) GetAllDiscounts() ([]domain.Discount, error) {
 }
 
 func (h *DiscountHandler) GetActiveDiscounts() ([]domain.Discount, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result []domain.Discount
 		err := h.lanService.RemoteGet("/api/discounts/active", &result)
@@ -42,6 +49,9 @@ func (h *DiscountHandler) GetActiveDiscounts() ([]domain.Discount, error) {
 }
 
 func (h *DiscountHandler) GetDiscount(id string) (domain.Discount, error) {
+	if err := auth.Require(); err != nil {
+		return domain.Discount{}, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result domain.Discount
 		err := h.lanService.RemoteGet("/api/discounts/get?id="+id, &result)
@@ -55,6 +65,9 @@ func (h *DiscountHandler) GetDiscount(id string) (domain.Discount, error) {
 }
 
 func (h *DiscountHandler) CreateDiscount(d domain.Discount) (domain.Discount, error) {
+	if err := auth.RequirePermission(auth.PermDiscounts); err != nil {
+		return domain.Discount{}, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result domain.Discount
 		err := h.lanService.RemotePost("/api/discounts", d, &result)
@@ -68,6 +81,9 @@ func (h *DiscountHandler) CreateDiscount(d domain.Discount) (domain.Discount, er
 }
 
 func (h *DiscountHandler) UpdateDiscount(d domain.Discount) error {
+	if err := auth.RequirePermission(auth.PermDiscounts); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemotePost("/api/discounts/update", d, nil)
 	}
@@ -75,6 +91,9 @@ func (h *DiscountHandler) UpdateDiscount(d domain.Discount) error {
 }
 
 func (h *DiscountHandler) DeleteDiscount(id string) error {
+	if err := auth.RequirePermission(auth.PermDiscounts); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemoteDelete("/api/discounts?id=" + id)
 	}
@@ -82,6 +101,9 @@ func (h *DiscountHandler) DeleteDiscount(id string) error {
 }
 
 func (h *DiscountHandler) ToggleDiscountStatus(id string) error {
+	if err := auth.RequirePermission(auth.PermDiscounts); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemotePost("/api/discounts/toggle?id="+id, nil, nil)
 	}
@@ -89,6 +111,9 @@ func (h *DiscountHandler) ToggleDiscountStatus(id string) error {
 }
 
 func (h *DiscountHandler) ValidateCoupon(code string) (domain.Discount, error) {
+	if err := auth.Require(); err != nil {
+		return domain.Discount{}, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result domain.Discount
 		err := h.lanService.RemoteGet("/api/discounts/validate?code="+code, &result)
@@ -102,6 +127,9 @@ func (h *DiscountHandler) ValidateCoupon(code string) (domain.Discount, error) {
 }
 
 func (h *DiscountHandler) ApplyDiscount(id string) error {
+	if err := auth.Require(); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemotePost("/api/discounts/apply?id="+id, nil, nil)
 	}

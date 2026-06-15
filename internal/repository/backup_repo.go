@@ -102,17 +102,17 @@ func (r *backupRepository) Import(data domain.DatabaseExport) error {
 		}
 
 		// Import in order (dependencies first)
-		for _, c := range data.Categories {
-			tx.Create(&c)
+		if len(data.Categories) > 0 {
+			tx.Create(&data.Categories)
 		}
-		for _, s := range data.Suppliers {
-			tx.Create(&s)
+		if len(data.Suppliers) > 0 {
+			tx.Create(&data.Suppliers)
 		}
-		for _, c := range data.Customers {
-			tx.Create(&c)
+		if len(data.Customers) > 0 {
+			tx.Create(&data.Customers)
 		}
-		for _, p := range data.Products {
-			tx.Create(&p)
+		if len(data.Products) > 0 {
+			tx.Create(&data.Products)
 		}
 		for _, s := range data.Sales {
 			items := s.Items
@@ -123,11 +123,11 @@ func (r *backupRepository) Import(data domain.DatabaseExport) error {
 				tx.Create(&item)
 			}
 		}
-		for _, e := range data.Expenses {
-			tx.Create(&e)
+		if len(data.Expenses) > 0 {
+			tx.Create(&data.Expenses)
 		}
-		for _, m := range data.StockMovements {
-			tx.Create(&m)
+		if len(data.StockMovements) > 0 {
+			tx.Create(&data.StockMovements)
 		}
 		if data.Preferences != nil {
 			tx.Create(data.Preferences)

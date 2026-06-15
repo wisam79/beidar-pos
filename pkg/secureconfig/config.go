@@ -52,8 +52,20 @@ func Load() (*Secrets, error) {
 		if data, err := os.ReadFile(configPath); err == nil {
 			key := deriveMachineKey()
 			decrypted, err := crypto.Decrypt(string(data), key)
-			if err == nil {
-				_ = json.Unmarshal(decrypted, s)
+			if err == nil && json.Unmarshal(decrypted, s) == nil && s.SupabaseURL != "" {
+				// Successfully loaded with new device-bound key
+			} else {
+				// Fallback: Try decrypting with legacy key derivation (windows-default)
+				legacyKey := deriveLegacyMachineKey()
+				decryptedLegacy, errLegacy := crypto.Decrypt(string(data), legacyKey)
+				if errLegacy == nil {
+					var legacySecrets Secrets
+					if json.Unmarshal(decryptedLegacy, &legacySecrets) == nil && legacySecrets.SupabaseURL != "" {
+						// Migration: Re-save using the new device-bound key
+						*s = legacySecrets
+						_ = Save(s)
+					}
+				}
 			}
 		}
 	}
@@ -71,6 +83,14 @@ func Load() (*Secrets, error) {
 
 	loadedSecrets = s
 	return s, nil
+}
+
+// deriveLegacyMachineKey derives the legacy machine key using "windows-default"
+// as the Windows machine ID fallback, allowing decryption of legacy config files.
+func deriveLegacyMachineKey() []byte {
+	host, _ := os.Hostname()
+	seed := fmt.Sprintf("beidar-v3-secure-%s-windows-default", host)
+	return crypto.DeriveKey(seed)
 }
 
 // ResetCache clears the cached secrets, forcing a reload on the next access.
@@ -131,19 +151,4 @@ func deriveMachineKey() []byte {
 	machineID := readMachineID()
 	seed := fmt.Sprintf("beidar-v3-secure-%s-%s", host, machineID)
 	return crypto.DeriveKey(seed)
-}
-
-func readMachineID() string {
-	// Try Linux machine-id
-	paths := []string{
-		"/etc/machine-id",
-		"/var/lib/dbus/machine-id",
-	}
-	for _, p := range paths {
-		if data, err := os.ReadFile(p); err == nil {
-			return string(data)
-		}
-	}
-	// Windows fallback: use hostname only (file encryption per-user is sufficient)
-	return "windows-default"
 }

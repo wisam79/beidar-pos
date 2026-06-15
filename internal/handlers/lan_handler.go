@@ -3,6 +3,7 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
+	"beidar-desktop/pkg/auth"
 	"context"
 )
 
@@ -23,11 +24,17 @@ func (h *LanHandler) Startup(ctx context.Context) {
 }
 
 func (h *LanHandler) StartLanServer() error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	// Start on default port
 	return h.lanService.StartServer(network.DefaultLanPort)
 }
 
 func (h *LanHandler) StopLanServer() error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.lanService.StopServer()
 }
 
@@ -36,6 +43,9 @@ func (h *LanHandler) GetLanServerStatus() domain.LanServerStatus {
 }
 
 func (h *LanHandler) ConnectToLanServer(serverIP string, port int) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.lanService.ConnectToServer(serverIP, port)
 }
 
@@ -52,6 +62,9 @@ func (h *LanHandler) GetLocalIP() (string, error) {
 }
 
 func (h *LanHandler) DiscoverServers() ([]domain.DiscoveredServer, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.lanService.DiscoverServers()
 }
 
@@ -72,25 +85,43 @@ func (h *LanHandler) GetConnectedClients() []domain.ConnectedClient {
 }
 
 func (h *LanHandler) DisconnectLanClient(deviceID string) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.lanService.DisconnectClient(deviceID)
 }
 
 func (h *LanHandler) SuspendLanClient(deviceID string) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.lanService.SuspendClient(deviceID)
 }
 
 func (h *LanHandler) ResumeLanClient(deviceID string) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.lanService.ResumeClient(deviceID)
 }
 
 func (h *LanHandler) BlockLanDevice(deviceID, deviceName, reason string) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.lanService.BlockDevice(deviceID, deviceName, reason)
 }
 
 func (h *LanHandler) UnblockLanDevice(id uint) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.lanService.UnblockDevice(id)
 }
 
 func (h *LanHandler) GetBlockedDevices() ([]domain.BlockedDevice, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.lanService.GetBlockedDevices()
 }

@@ -42,6 +42,10 @@ export function IsUsingDefaultPassword(arg1) {
   return window['go']['handlers']['StaffHandler']['IsUsingDefaultPassword'](arg1);
 }
 
+export function Logout() {
+  return window['go']['handlers']['StaffHandler']['Logout']();
+}
+
 export function Startup(arg1) {
   return window['go']['handlers']['StaffHandler']['Startup'](arg1);
 }

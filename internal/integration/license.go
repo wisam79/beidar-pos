@@ -17,19 +17,29 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/repository"
 )
 
-var (
-	encryptionSalt = "BeidarPOS_Dev_Salt"
-)
+// legacySalt is retained ONLY for backwards-compatible decryption of license
+// caches that were written by older builds. New writes always use a per-device
+// random master key (see getMasterKey). Do not use this for new encryption.
+const legacySalt = "BeidarPOS_Dev_Salt"
 
 const (
 	cacheDuration      = 30 * 24 * time.Hour
 	gracePeriodWarning = 7 * 24 * time.Hour
+)
+
+// masterKeyState lazily loads (or generates) the device-bound master key used
+// for license cache encryption. The key is stored in a 0600 file under AppData.
+var (
+	masterKeyMu     sync.Mutex
+	masterKeyBytes  []byte
+	masterKeyLoaded bool
 )
 
 type licenseCache struct {
@@ -163,7 +173,10 @@ func (s *cloudService) getCachedLicense(licenseKey, userID string) (*domain.Lice
 }
 
 func (s *cloudService) computeChecksum(data []byte) string {
-	hash := sha256.Sum256(append(data, []byte(encryptionSalt)...))
+	// The checksum uses the legacy salt for backwards compatibility with
+	// existing caches; the integrity it provides is about tamper detection of
+	// the cache payload, not secrecy of the data (which is handled by AES-GCM).
+	hash := sha256.Sum256(append(data, []byte(legacySalt)...))
 	return hex.EncodeToString(hash[:])
 }
 
@@ -172,13 +185,73 @@ func (s *cloudService) ClearLicenseCache() {
 	_ = os.Remove(getStoredLicenseKeyPath())
 }
 
-func (s *cloudService) getEncryptionKey() []byte {
-	hash := sha256.Sum256([]byte(encryptionSalt + "BeidarPOS_Encryption_Key_v3"))
+// masterKeyPath returns the location of the device-bound master key file under
+// AppData. The file holds 32 random bytes written with mode 0600.
+func masterKeyPath() string {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		configDir = "."
+	}
+	dir := filepath.Join(configDir, "BeidarPOS_V3")
+	_ = os.MkdirAll(dir, 0755)
+	return filepath.Join(dir, ".license_masterkey")
+}
+
+// loadOrCreateMasterKey returns the 32-byte master key, generating and
+// persisting it on first use. Subsequent calls return the cached value.
+func loadOrCreateMasterKey() ([]byte, error) {
+	masterKeyMu.Lock()
+	defer masterKeyMu.Unlock()
+
+	if masterKeyLoaded {
+		return masterKeyBytes, nil
+	}
+
+	path := masterKeyPath()
+	if data, err := os.ReadFile(path); err == nil && len(data) >= 32 {
+		masterKeyBytes = data[:32]
+		masterKeyLoaded = true
+		return masterKeyBytes, nil
+	}
+
+	// Generate a fresh 256-bit key.
+	key := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, key); err != nil {
+		return nil, fmt.Errorf("generate master key: %w", err)
+	}
+	if err := os.WriteFile(path, key, 0600); err != nil {
+		return nil, fmt.Errorf("persist master key: %w", err)
+	}
+	masterKeyBytes = key
+	masterKeyLoaded = true
+	return masterKeyBytes, nil
+}
+
+// getEncryptionKey returns the device-bound AES key derived from the master key.
+// Used for all NEW encryption.
+func (s *cloudService) getEncryptionKey() ([]byte, error) {
+	mk, err := loadOrCreateMasterKey()
+	if err != nil {
+		return nil, err
+	}
+	// Derive a 32-byte AES key from the master key via SHA-256.
+	sum := sha256.Sum256(append(mk, []byte("BeidarPOS_License_AES_v3")...))
+	return sum[:], nil
+}
+
+// legacyEncryptionKey reproduces the OLD hardcoded derivation so we can still
+// decrypt caches written by previous builds (one-time migration).
+func legacyEncryptionKey() []byte {
+	hash := sha256.Sum256([]byte(legacySalt + "BeidarPOS_Encryption_Key_v3"))
 	return hash[:]
 }
 
 func (s *cloudService) encrypt(plaintext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(s.getEncryptionKey())
+	key, err := s.getEncryptionKey()
+	if err != nil {
+		return nil, err
+	}
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
@@ -203,20 +276,33 @@ func (s *cloudService) decrypt(data []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	block, err := aes.NewCipher(s.getEncryptionKey())
+	// Try the new device-bound key first.
+	key, kerr := s.getEncryptionKey()
+	if kerr == nil {
+		if plaintext, derr := aesGCMDecrypt(key, ciphertext); derr == nil {
+			return plaintext, nil
+		}
+	}
+
+	// Backwards-compat fallback: caches written by older builds used the
+	// hardcoded key. This lets users upgrade without losing their cached
+	// license; the next write rotates them onto the device-bound key.
+	return aesGCMDecrypt(legacyEncryptionKey(), ciphertext)
+}
+
+// aesGCMDecrypt performs AES-GCM decryption with the given key.
+func aesGCMDecrypt(key, ciphertext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
-
 	if len(ciphertext) < gcm.NonceSize() {
 		return nil, errors.New("ciphertext too short")
 	}
-
 	nonce, ciphertext := ciphertext[:gcm.NonceSize()], ciphertext[gcm.NonceSize():]
 	return gcm.Open(nil, nonce, ciphertext, nil)
 }
@@ -399,11 +485,31 @@ func compressDatabaseForBackup() ([]byte, error) {
 	}
 	dbPath := filepath.Join(configDir, "BeidarPOS_V3", "beidar_v3.db")
 
-	dbFile, err := os.Open(dbPath)
+	var srcPath string
+	useTemp := false
+
+	db := repository.GetDB()
+	if db != nil {
+		tempFile := filepath.Join(os.TempDir(), fmt.Sprintf("beidar_backup_%d.db", time.Now().UnixNano()))
+		if err := db.Exec("VACUUM INTO ?", tempFile).Error; err == nil {
+			srcPath = tempFile
+			useTemp = true
+		}
+	}
+
+	if srcPath == "" {
+		srcPath = dbPath
+	}
+
+	dbFile, err := os.Open(srcPath)
 	if err != nil {
 		return nil, err
 	}
 	defer dbFile.Close()
+
+	if useTemp {
+		defer os.Remove(srcPath)
+	}
 
 	info, err := dbFile.Stat()
 	if err != nil {

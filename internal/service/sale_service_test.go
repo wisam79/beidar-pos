@@ -751,3 +751,54 @@ func TestSaleService_ExtraCoverage(t *testing.T) {
 		t.Error("Expected error when returning more than remaining quantity")
 	}
 }
+
+func TestReturnSalePartial_Fractional(t *testing.T) {
+	saleService, _, db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	customer := createTestCustomer(t, db, "Fractional Customer", 0)
+	product := createTestProduct(t, db, "Sugar", 10000, 10.0) // 10,000 IQD per kg
+
+	sale := domain.Sale{
+		ID:            uuid.New().String(),
+		CustomerID:    customer.ID,
+		CustomerName:  customer.Name,
+		Date:          time.Now().Format("2006-01-02"),
+		Timestamp:     time.Now().UnixMilli(),
+		Total:         domain.NewAmount(15000), // 1.5 kg * 10,000 = 15,000
+		Subtotal:      domain.NewAmount(15000),
+		PaymentMethod: "credit",
+		Status:        "pending",
+		Items: []domain.SaleItem{{
+			ProductID: product.ID,
+			Name:      product.Name,
+			Quantity:  1.5,
+			Price:     domain.NewAmount(10000),
+			Total:     domain.NewAmount(15000),
+		}},
+	}
+
+	if err := saleService.ProcessSale(&sale); err != nil {
+		t.Fatalf("ProcessSale failed: %v", err)
+	}
+
+	// Return 0.5 kg of sugar
+	err := saleService.ReturnSalePartial(sale.ID, product.ID, 0.5)
+	if err != nil {
+		t.Fatalf("ReturnSalePartial failed: %v", err)
+	}
+
+	// Verify stock (10.0 - 1.5 + 0.5 = 9.0)
+	var p domain.Product
+	db.First(&p, "id = ?", product.ID)
+	if p.Stock != 9.0 {
+		t.Errorf("Expected stock to be 9.0, got %.2f", p.Stock)
+	}
+
+	// Verify customer debt (15,000 - 5,000 = 10,000)
+	c := refreshCustomer(t, db, customer.ID)
+	expectedDebt := domain.NewAmount(10000)
+	if !amountEq(c.Debt, expectedDebt) {
+		t.Errorf("Expected debt %s, got %s", expectedDebt.String(), c.Debt.String())
+	}
+}

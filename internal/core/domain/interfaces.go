@@ -11,8 +11,10 @@ import (
 // ProductRepository defines database operations for products
 type ProductRepository interface {
 	WithTx(tx Tx) ProductRepository
+	Transaction(fn func(tx Tx) error) error
 	GetAll() ([]Product, error)
 	GetByID(id string) (*Product, error)
+	GetByIDs(ids []string) ([]Product, error)
 	GetByBarcode(barcode string) (*Product, error)
 	GetProductsWithBase64Images() ([]Product, error)
 	CountProductsWithBase64Images() (int64, error)
@@ -84,6 +86,7 @@ type StaffRepository interface {
 	Updates(id string, updates map[string]interface{}) error
 	Delete(id string) error
 	GetStaffCount() (int64, error)
+	CountByRole(role Role) (int64, error)
 	GetStaffSalesCount(staffID string) (int64, error)
 	GetStaffPaymentsCount(staffID string) (int64, error)
 	GetLoginAttempt(identifier string) (*LoginAttempt, error)

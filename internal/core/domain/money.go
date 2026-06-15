@@ -62,23 +62,47 @@ func (a Amount) Mul(factor int64) Amount {
 }
 
 // MulFloat returns a new amount multiplied by a floating point factor.
+// Computed in the integer (cents) domain with rounding to avoid the
+// floating-point drift that the naive a.Float()*factor introduces.
 func (a Amount) MulFloat(factor float64) Amount {
-	return NewAmount(a.Float() * factor)
+	cents := float64(int64(a))
+	return Amount(math.Round(cents * factor))
 }
 
 // Div returns a new amount divided by an integer divisor.
-// It uses integer division (truncates towards zero).
+// It uses integer division with rounding to the nearest cent. Division by zero
+// yields a zero Amount instead of panicking — callers that need to distinguish
+// the zero-divisor case should check the divisor beforehand.
 func (a Amount) Div(divisor int64) Amount {
 	if divisor == 0 {
-		panic("division by zero")
+		return Zero()
 	}
-	return a / Amount(divisor)
+	return Amount(roundDiv(int64(a), divisor))
 }
 
 // Percentage returns a new amount that is a percentage of the current amount.
-// Rounds to the nearest cent.
+// Computed in the integer (cents) domain with rounding to the nearest cent.
 func (a Amount) Percentage(p float64) Amount {
-	return NewAmount(a.Float() * (p / 100.0))
+	cents := int64(a)
+	return Amount(math.Round(float64(cents) * (p / 100.0)))
+}
+
+// roundDiv performs integer division of a by b with rounding to nearest.
+func roundDiv(a, b int64) int64 {
+	if b == 0 {
+		return 0
+	}
+	q := a / b
+	r := a % b
+	// Round half away from zero.
+	if (b > 0 && r*2 >= b) || (b < 0 && r*2 <= b) {
+		if (a < 0) == (b < 0) {
+			q++
+		} else {
+			q--
+		}
+	}
+	return q
 }
 
 // IsZero returns true if the amount is zero.

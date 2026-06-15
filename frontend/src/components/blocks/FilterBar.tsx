@@ -19,12 +19,12 @@ interface SearchInputProps {
 export const SearchInput = memo(({ value, onChange, placeholder = 'بحث...', className = '' }: SearchInputProps) => (
     <div className={`relative group flex-1 min-w-[200px] ${className}`}>
         <input
-            className="w-full bg-input-bg text-text-main border border-border rounded-full pl-12 pr-5 py-3 outline-none focus:border-primary transition-all text-sm font-black placeholder:text-text-muted focus:shadow-[0_0_0_4px_rgba(var(--color-primary-rgb),0.15)] touch-target"
+            className="w-full h-10 bg-input-bg text-text-main border border-border rounded-full pl-12 pr-5 outline-none focus:border-primary transition-all text-sm font-black placeholder:text-text-muted focus:shadow-[0_0_0_4px_rgba(var(--color-primary-rgb),0.15)] touch-target"
             placeholder={placeholder}
             value={value}
             onChange={e => onChange(e.target.value)}
         />
-        <Search className="absolute left-4.5 top-3.5 text-text-muted group-focus-within:text-primary transition-colors" size={18} />
+        <Search className="absolute left-4.5 top-2.5 text-text-muted group-focus-within:text-primary transition-colors" size={16} />
     </div>
 ));
 SearchInput.displayName = 'SearchInput';

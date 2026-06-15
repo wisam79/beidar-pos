@@ -2,10 +2,10 @@ package network
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
-	"sync"
 	"time"
 )
 
@@ -24,11 +24,6 @@ type DiscoveryMessage struct {
 	Port       int    `json:"port"`
 	DeviceID   string `json:"deviceId"`
 }
-
-var (
-	udpBroadcastStop chan struct{}
-	udpBroadcastMutex sync.Mutex
-)
 
 // GetLocalIP returns the local IP address of this machine
 func GetLocalIP() (string, error) {
@@ -58,8 +53,8 @@ func isPrivateIP(ip string) bool {
 
 // StartBroadcasting begins UDP broadcast for server discovery
 func (s *lanService) StartBroadcasting(httpPort int) error {
-	udpBroadcastMutex.Lock()
-	defer udpBroadcastMutex.Unlock()
+	s.broadcastMutex.Lock()
+	defer s.broadcastMutex.Unlock()
 
 	if s.isBroadcasting {
 		return nil
@@ -91,7 +86,9 @@ func (s *lanService) StartBroadcasting(httpPort int) error {
 			return fmt.Errorf("failed to create UDP socket: %w", err)
 		}
 	}
-	udpBroadcastStop = make(chan struct{})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	s.broadcastCancel = cancel
 	s.isBroadcasting = true
 
 	deviceID, _ := s.settingsService.GetDeviceID()
@@ -106,7 +103,7 @@ func (s *lanService) StartBroadcasting(httpPort int) error {
 	}
 	msgBytes, _ := json.Marshal(msg)
 
-	go func() {
+	go func(ctx context.Context, conn *net.UDPConn) {
 		ticker := time.NewTicker(BroadcastInterval)
 		defer ticker.Stop()
 		defer conn.Close()
@@ -116,29 +113,30 @@ func (s *lanService) StartBroadcasting(httpPort int) error {
 
 		for {
 			select {
-			case <-udpBroadcastStop:
-				fmt.Println("📡 Stopping UDP discovery broadcast")
+			case <-ctx.Done():
+				fmt.Println("📡 Stopping UDP discovery broadcast safely")
 				return
 			case <-ticker.C:
 				_, _ = conn.WriteToUDP(msgBytes, broadcastAddr)
 			}
 		}
-	}()
+	}(ctx, conn)
 
 	return nil
 }
 
 // StopBroadcasting stops the UDP broadcast
 func (s *lanService) StopBroadcasting() {
-	udpBroadcastMutex.Lock()
-	defer udpBroadcastMutex.Unlock()
+	s.broadcastMutex.Lock()
+	defer s.broadcastMutex.Unlock()
 
 	if !s.isBroadcasting {
 		return
 	}
 
-	if udpBroadcastStop != nil {
-		close(udpBroadcastStop)
+	if s.broadcastCancel != nil {
+		s.broadcastCancel()
+		s.broadcastCancel = nil
 	}
 	s.isBroadcasting = false
 }

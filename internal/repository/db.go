@@ -76,6 +76,11 @@ func SetTestDB(db *gorm.DB) {
 
 var activeDB *gorm.DB
 
+// GetDB returns the active database connection
+func GetDB() *gorm.DB {
+	return activeDB
+}
+
 func InitDB() (*gorm.DB, error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {

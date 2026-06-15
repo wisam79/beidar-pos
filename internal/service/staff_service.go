@@ -326,15 +326,7 @@ func (s *staffService) UpdateStaff(staff domain.Staff) error {
 	}
 
 	if current.Role == domain.RoleAdmin && staff.Role != domain.RoleAdmin {
-		allStaff, err := s.staffRepo.GetAll()
-		var adminCount int
-		if err == nil {
-			for _, st := range allStaff {
-				if st.Role == domain.RoleAdmin {
-					adminCount++
-				}
-			}
-		}
+		adminCount, err := s.staffRepo.CountByRole(domain.RoleAdmin)
 		if err == nil && adminCount <= 1 {
 			return pkgerrors.NewAppError(
 				pkgerrors.ModuleStaff,
@@ -441,15 +433,7 @@ func (s *staffService) DeleteStaff(id string, force bool) error {
 	}
 
 	if staff.Role == domain.RoleAdmin {
-		allStaff, err := s.staffRepo.GetAll()
-		var adminCount int
-		if err == nil {
-			for _, st := range allStaff {
-				if st.Role == domain.RoleAdmin {
-					adminCount++
-				}
-			}
-		}
+		adminCount, err := s.staffRepo.CountByRole(domain.RoleAdmin)
 		if err == nil && adminCount <= 1 {
 			return pkgerrors.NewAppError(
 				pkgerrors.ModuleStaff,
@@ -706,9 +690,17 @@ func (s *staffService) IsUsingDefaultPassword(staffID string) (bool, error) {
 	if staff.MustChangePin {
 		return true, nil
 	}
-	// Check standard default passwords
-	if s.CheckUsingDefaultPassword(staff.Username) {
-		return true, nil
+	// Check whether the stored password hash matches any of the well-known
+	// default passwords. We compare the hash rather than the username/PIN field
+	// because defaults are plaintext constants that must be hashed the same way
+	// user-chosen passwords are.
+	if staff.PasswordHash != "" {
+		defaults := []string{"0000", "admin123", "password", "123456", "1234"}
+		for _, d := range defaults {
+			if bcrypt.CompareHashAndPassword([]byte(staff.PasswordHash), []byte(d)) == nil {
+				return true, nil
+			}
+		}
 	}
 	return false, nil
 }

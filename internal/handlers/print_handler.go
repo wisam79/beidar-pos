@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/pkg/auth"
 	"context"
 	"fmt"
 
@@ -28,6 +29,9 @@ func (h *PrintHandler) Startup(ctx context.Context) {
 
 // GenerateInvoicePDF shows a save dialog and generates the PDF invoice at the chosen path
 func (h *PrintHandler) GenerateInvoicePDF(saleID string, format string) (string, error) {
+	if err := auth.Require(); err != nil {
+		return "", err
+	}
 	defaultFilename := fmt.Sprintf("فاتورة_%s.pdf", saleID)
 	savePath, err := runtime.SaveFileDialog(h.ctx, runtime.SaveDialogOptions{
 		Title:           "حفظ الفاتورة PDF",
@@ -50,30 +54,48 @@ func (h *PrintHandler) GenerateInvoicePDF(saleID string, format string) (string,
 
 // GenerateQRCode creates a QR code and returns it as a base64 encoded string
 func (h *PrintHandler) GenerateQRCode(data string, size int) (string, error) {
+	if err := auth.Require(); err != nil {
+		return "", err
+	}
 	return h.printService.GenerateQRCode(data, size)
 }
 
 // GetAvailablePrinters returns the list of system printers
 func (h *PrintHandler) GetAvailablePrinters() ([]domain.PrinterInfo, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.printService.GetAvailablePrinters()
 }
 
 // GetDefaultPrinter returns the default system printer
 func (h *PrintHandler) GetDefaultPrinter() (string, error) {
+	if err := auth.Require(); err != nil {
+		return "", err
+	}
 	return h.printService.GetDefaultPrinter()
 }
 
 // PrintReceiptDirect sends an ESC/POS receipt directly to a printer
 func (h *PrintHandler) PrintReceiptDirect(printerName, storeName string, items []domain.ReceiptItem, total float64, currency string) error {
+	if err := auth.Require(); err != nil {
+		return err
+	}
 	return h.printService.PrintReceiptDirect(printerName, storeName, items, total, currency)
 }
 
 // TestPrinter prints a test page
 func (h *PrintHandler) TestPrinter(printerName string) error {
+	if err := auth.Require(); err != nil {
+		return err
+	}
 	return h.printService.TestPrinter(printerName)
 }
 
 // PrintBitmapReceipt prints a base64 receipt image directly
 func (h *PrintHandler) PrintBitmapReceipt(printerName, base64Image string) error {
+	if err := auth.Require(); err != nil {
+		return err
+	}
 	return h.printService.PrintBitmapReceipt(printerName, base64Image)
 }

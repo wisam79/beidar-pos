@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/pkg/auth"
 	"context"
 )
 
@@ -21,26 +22,44 @@ func (h *PaymentHandler) Startup(ctx context.Context) {
 }
 
 func (h *PaymentHandler) CreatePayment(payment domain.Payment) (*domain.Payment, error) {
+	if err := auth.RequirePermission(auth.PermSales); err != nil {
+		return nil, err
+	}
 	return h.paymentService.CreatePayment(payment)
 }
 
 func (h *PaymentHandler) GetPaymentsBySale(saleID string) ([]domain.Payment, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.paymentService.GetPaymentsBySale(saleID)
 }
 
 func (h *PaymentHandler) GetPaymentsByCustomer(customerID string) ([]domain.Payment, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.paymentService.GetPaymentsByCustomer(customerID)
 }
 
 func (h *PaymentHandler) DeletePayment(id uint) error {
+	if err := auth.RequirePermission(auth.PermDeleteSales); err != nil {
+		return err
+	}
 	return h.paymentService.DeletePayment(id)
 }
 
 func (h *PaymentHandler) PayInstallment(saleID string, installmentIndex int, amount float64, method string) error {
+	if err := auth.RequirePermission(auth.PermSales); err != nil {
+		return err
+	}
 	return h.paymentService.PayInstallment(saleID, installmentIndex, domain.NewAmount(amount), method)
 }
 
 func (h *PaymentHandler) GetCustomerInstallments(customerID string) ([]domain.Sale, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.paymentService.GetCustomerInstallments(customerID)
 }
 
@@ -51,6 +70,9 @@ type InstallmentSummaryResult struct {
 }
 
 func (h *PaymentHandler) GetInstallmentSummary(saleID string) (*InstallmentSummaryResult, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	total, paid, remaining, err := h.paymentService.GetInstallmentSummary(saleID)
 	if err != nil {
 		return nil, err
@@ -63,6 +85,9 @@ func (h *PaymentHandler) GetInstallmentSummary(saleID string) (*InstallmentSumma
 }
 
 func (h *PaymentHandler) CalculateInstallmentPlan(total, downPayment float64, months int) (*domain.InstallmentPlan, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.paymentService.CalculateInstallmentPlan(domain.NewAmount(total), domain.NewAmount(downPayment), months)
 }
 

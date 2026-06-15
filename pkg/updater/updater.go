@@ -392,10 +392,33 @@ func InstallUpdate(installerPath string) error {
 		return fmt.Errorf("installer file not found: %s", installerPath)
 	}
 
-	err := runAsAdmin(installerPath, "/S")
-	if err != nil {
+	// Verify checksum if we have one for this download, to defend against a
+	// tampered/intercepted installer on disk before elevating it.
+	status := GetUpdateStatus()
+	if status.Info != nil && status.Info.Checksum != "" {
+		actual, err := calculateSHA256(installerPath)
+		if err != nil {
+			return fmt.Errorf("فشل التحقق من سلامة المثبّت: %w", err)
+		}
+		if !strings.EqualFold(actual, status.Info.Checksum) {
+			return fmt.Errorf("بصمة المثبّت غير مطابقة - قد يكون العبث بالملف")
+		}
+	}
+
+	if err := runAsAdmin(installerPath, "/S"); err != nil {
 		return fmt.Errorf("failed to start installer: %w", err)
 	}
+
+	// Give the elevated installer a moment to actually launch before we exit,
+	// otherwise Windows may tear down our process tree (and the installer with
+	// it) on slow machines.
+	time.Sleep(2 * time.Second)
+
+	// Best-effort flush of any pending state before terminating.
+	setStatus(func(s *UpdateStatus) {
+		s.Installing = false
+		s.Stage = "completed"
+	})
 
 	os.Exit(0)
 	return nil

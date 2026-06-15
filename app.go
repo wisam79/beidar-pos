@@ -12,8 +12,6 @@ import (
 	"net/http"
 	"os"
 	"sort"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -23,10 +21,10 @@ import (
 	"beidar-desktop/internal/network"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
+	"beidar-desktop/pkg/auth"
 	"beidar-desktop/pkg/imagestore"
 	"beidar-desktop/pkg/updater"
 
-	"github.com/google/uuid"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"gorm.io/gorm"
 )
@@ -47,7 +45,10 @@ type App struct {
 	LanHandler      *handlers.LanHandler
 	CloudHandler    *handlers.CloudHandler
 	DiscountHandler *handlers.DiscountHandler
+	productRepo     domain.ProductRepository
+	productService  domain.ProductService
 	aiMutex         sync.Mutex
+	aiCancelMu      sync.Mutex
 	aiCancel        context.CancelFunc
 }
 
@@ -194,7 +195,7 @@ func initServices(repos *appRepositories) *appServices {
 	}
 }
 
-func initHandlers(services *appServices) *App {
+func initHandlers(services *appServices, repos *appRepositories) *App {
 	return &App{
 		ProductHandler:  handlers.NewProductHandler(services.product, services.lan),
 		SaleHandler:     handlers.NewSaleHandler(services.sale, services.lan),
@@ -209,6 +210,8 @@ func initHandlers(services *appServices) *App {
 		LanHandler:      handlers.NewLanHandler(services.lan),
 		CloudHandler:    handlers.NewCloudHandler(services.cloud),
 		DiscountHandler: handlers.NewDiscountHandler(services.discount, services.lan),
+		productRepo:     repos.product,
+		productService:  services.product,
 	}
 }
 
@@ -221,7 +224,7 @@ func NewApp() *App {
 
 	repos := initRepositories(db)
 	services := initServices(repos)
-	return initHandlers(services)
+	return initHandlers(services, repos)
 }
 
 // startup is called when the app starts. The context is saved
@@ -269,6 +272,9 @@ func (a *App) GetCSVTemplate() string {
 
 // ExportProductsCSV exports all products to a CSV string
 func (a *App) ExportProductsCSV() (*domain.CSVExportResult, error) {
+	if err := auth.RequirePermission(auth.PermExportData); err != nil {
+		return nil, err
+	}
 	products, err := a.ProductHandler.GetAllProducts()
 	if err != nil {
 		return nil, err
@@ -310,152 +316,21 @@ func (a *App) ExportProductsCSV() (*domain.CSVExportResult, error) {
 
 // ImportProductsCSV imports products from a CSV string
 func (a *App) ImportProductsCSV(csvData string, updateExisting bool) (*domain.CSVImportResult, error) {
-	reader := csv.NewReader(strings.NewReader(csvData))
-	records, err := reader.ReadAll()
-	if err != nil {
-		return &domain.CSVImportResult{Success: false, Errors: []string{err.Error()}}, nil
+	if err := auth.RequirePermission(auth.PermProducts); err != nil {
+		return nil, err
 	}
-
-	if len(records) < 2 {
-		return &domain.CSVImportResult{Success: false, Errors: []string{"الملف فارغ أو لا يحتوي على بيانات"}}, nil
+	res, err := a.BackupHandler.ImportProductsCSV(csvData, updateExisting)
+	if err == nil && a.productService != nil {
+		a.productService.ClearCache()
 	}
-
-	header := records[0]
-	colIndices := make(map[string]int)
-	for i, col := range header {
-		colIndices[strings.ToLower(strings.TrimSpace(col))] = i
-	}
-
-	// Required columns
-	required := []string{"name", "price"}
-	for _, req := range required {
-		if _, ok := colIndices[req]; !ok {
-			return &domain.CSVImportResult{
-				Success: false,
-				Errors:  []string{fmt.Sprintf("العمود المطلوب غير موجود: %s", req)},
-			}, nil
-		}
-	}
-
-	result := &domain.CSVImportResult{
-		TotalRows:   len(records) - 1,
-		Errors:      []string{},
-		ImportedIDs: []string{},
-	}
-
-	// Pre-fetch all products once to build a barcode lookup map (avoids O(n²) DB calls per row)
-	barcodeIndex := make(map[string]*domain.Product)
-	if updateExisting {
-		allProducts, err := a.ProductHandler.GetAllProducts()
-		if err == nil {
-			for i := range allProducts {
-				if allProducts[i].Barcode != "" {
-					p := allProducts[i]
-					barcodeIndex[p.Barcode] = &p
-				}
-			}
-		}
-	}
-
-	for rowIndex := 1; rowIndex < len(records); rowIndex++ {
-		row := records[rowIndex]
-		if len(row) < len(header) {
-			result.Skipped++
-			result.Errors = append(result.Errors, fmt.Sprintf("السطر %d: عدد الأعمدة غير مطابق للترويسة", rowIndex+1))
-			continue
-		}
-
-		getVal := func(key string) string {
-			if idx, ok := colIndices[key]; ok && idx < len(row) {
-				return strings.TrimSpace(row[idx])
-			}
-			return ""
-		}
-
-		name := getVal("name")
-		barcode := getVal("barcode")
-		priceStr := getVal("price")
-		costStr := getVal("cost")
-		stockStr := getVal("stock")
-		minStockStr := getVal("minstock")
-		category := getVal("category")
-		wholesalePriceStr := getVal("wholesaleprice")
-		description := getVal("description")
-
-		if name == "" {
-			result.Skipped++
-			result.Errors = append(result.Errors, fmt.Sprintf("السطر %d: الاسم مطلوب", rowIndex+1))
-			continue
-		}
-
-		priceVal, _ := strconv.ParseFloat(priceStr, 64)
-		costVal, _ := strconv.ParseFloat(costStr, 64)
-		stockVal, _ := strconv.ParseFloat(stockStr, 64)
-		minStockVal, _ := strconv.ParseFloat(minStockStr, 64)
-		wholesalePriceVal, _ := strconv.ParseFloat(wholesalePriceStr, 64)
-
-		price := domain.NewAmount(priceVal)
-		cost := domain.NewAmount(costVal)
-		wholesalePrice := domain.NewAmount(wholesalePriceVal)
-
-		var existing *domain.Product
-		if barcode != "" {
-			existing = barcodeIndex[barcode]
-		}
-
-		if existing != nil {
-			if !updateExisting {
-				result.Skipped++
-				result.Errors = append(result.Errors, fmt.Sprintf("السطر %d: المنتج موجود بالفعل بالباركود %s", rowIndex+1, barcode))
-				continue
-			}
-
-			existing.Name = name
-			existing.Price = price
-			existing.Cost = cost
-			existing.Stock = stockVal
-			existing.MinStock = minStockVal
-			existing.Category = category
-			existing.WholesalePrice = wholesalePrice
-			existing.Description = description
-
-			err = a.ProductHandler.UpdateProduct(*existing)
-			if err != nil {
-				result.Errors = append(result.Errors, fmt.Sprintf("السطر %d: فشل في تحديث المنتج: %s", rowIndex+1, err.Error()))
-				continue
-			}
-			result.Updated++
-			result.ImportedIDs = append(result.ImportedIDs, existing.ID)
-		} else {
-			prodID := "prod_" + uuid.New().String()
-			p := domain.Product{
-				ID:             prodID,
-				Name:           name,
-				Barcode:        barcode,
-				Price:          price,
-				Cost:           cost,
-				Stock:          stockVal,
-				MinStock:       minStockVal,
-				Category:       category,
-				WholesalePrice: wholesalePrice,
-				Description:    description,
-			}
-			err = a.ProductHandler.CreateProduct(p)
-			if err != nil {
-				result.Errors = append(result.Errors, fmt.Sprintf("السطر %d: فشل في إضافة المنتج: %s", rowIndex+1, err.Error()))
-				continue
-			}
-			result.Imported++
-			result.ImportedIDs = append(result.ImportedIDs, prodID)
-		}
-	}
-
-	result.Success = len(result.Errors) == 0
-	return result, nil
+	return res, err
 }
 
 // ExportProductsCSVNative prompts the user with SaveFileDialog and writes the products CSV directly to disk
 func (a *App) ExportProductsCSVNative() (*domain.CSVExportResult, error) {
+	if err := auth.RequirePermission(auth.PermExportData); err != nil {
+		return nil, err
+	}
 	res, err := a.ExportProductsCSV()
 	if err != nil {
 		return nil, err
@@ -485,6 +360,9 @@ func (a *App) ExportProductsCSVNative() (*domain.CSVExportResult, error) {
 
 // DownloadProductsTemplateNative prompts the user with SaveFileDialog for products_template.csv and writes it to disk
 func (a *App) DownloadProductsTemplateNative() (bool, error) {
+	if err := auth.Require(); err != nil {
+		return false, err
+	}
 	templateStr := a.GetCSVTemplate()
 
 	savePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
@@ -511,6 +389,9 @@ func (a *App) DownloadProductsTemplateNative() (bool, error) {
 
 // ImportProductsCSVNative prompts the user with OpenFileDialog, reads the CSV, and imports it
 func (a *App) ImportProductsCSVNative(updateExisting bool) (*domain.CSVImportResult, error) {
+	if err := auth.RequirePermission(auth.PermProducts); err != nil {
+		return nil, err
+	}
 	openPath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "استيراد المنتجات CSV",
 		Filters: []runtime.FileFilter{
@@ -534,6 +415,9 @@ func (a *App) ImportProductsCSVNative(updateExisting bool) (*domain.CSVImportRes
 
 // ExportDatabaseBackupNative prompts the user with SaveFileDialog and exports a database backup JSON to disk
 func (a *App) ExportDatabaseBackupNative() (bool, error) {
+	if err := auth.RequirePermission(auth.PermExportData); err != nil {
+		return false, err
+	}
 	data, err := a.BackupHandler.ExportDatabase()
 	if err != nil {
 		return false, err
@@ -570,6 +454,9 @@ func (a *App) ExportDatabaseBackupNative() (bool, error) {
 
 // ImportDatabaseBackupNative prompts the user with OpenFileDialog, reads JSON backup, and restores database
 func (a *App) ImportDatabaseBackupNative() (bool, error) {
+	if err := auth.RequireAdmin(); err != nil {
+		return false, err
+	}
 	openPath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "استيراد نسخة احتياطية لقاعدة البيانات",
 		Filters: []runtime.FileFilter{
@@ -610,6 +497,9 @@ func (a *App) CalculateInstallmentPlan(total, downPayment float64, months int) (
 
 // GetBackupConfig retrieves current backup/sync config
 func (a *App) GetBackupConfig() (map[string]interface{}, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	prefs, err := a.SettingsHandler.GetPreferences()
 	if err != nil {
 		return nil, err
@@ -621,6 +511,9 @@ func (a *App) GetBackupConfig() (map[string]interface{}, error) {
 
 // SetCloudAutoSync updates the cloud auto sync preference
 func (a *App) SetCloudAutoSync(enabled bool) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	prefs, err := a.SettingsHandler.GetPreferences()
 	if err != nil {
 		return err
@@ -631,6 +524,9 @@ func (a *App) SetCloudAutoSync(enabled bool) error {
 
 // GetInstallmentAlertSummary calculates overdue installments metrics
 func (a *App) GetInstallmentAlertSummary() (map[string]interface{}, error) {
+	if err := auth.RequirePermission(auth.PermReports); err != nil {
+		return nil, err
+	}
 	customers, err := a.CRMHandler.GetCustomers()
 	if err != nil {
 		return nil, err
@@ -779,6 +675,9 @@ func (a *App) GetInstallmentAlertSummary() (map[string]interface{}, error) {
 
 // AI_GenerateStream streams generation response from Gemini API
 func (a *App) AI_GenerateStream(prompt string) error {
+	if err := auth.Require(); err != nil {
+		return err
+	}
 	if !a.aiMutex.TryLock() {
 		return fmt.Errorf("يوجد طلب ذكاء اصطناعي قيد التنفيذ بالفعل، انتظر حتى يكتمل")
 	}
@@ -804,7 +703,9 @@ func (a *App) AI_GenerateStream(prompt string) error {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	a.aiCancelMu.Lock()
 	a.aiCancel = cancel
+	a.aiCancelMu.Unlock()
 
 	go func() {
 		defer func() {
@@ -944,6 +845,8 @@ func (a *App) AI_GenerateStream(prompt string) error {
 
 // AI_CancelStream cancels the current AI generation stream
 func (a *App) AI_CancelStream() {
+	a.aiCancelMu.Lock()
+	defer a.aiCancelMu.Unlock()
 	if a.aiCancel != nil {
 		a.aiCancel()
 		a.aiCancel = nil

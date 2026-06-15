@@ -111,16 +111,16 @@ export const Badge = memo(({ type, text }: { type: BadgeType | string, text: str
 Badge.displayName = 'Badge';
 
 export const PageHeader = memo(({ title, icon: Icon, description, actions, children }: PageHeaderProps) => (
-    <header className="shrink-0 flex flex-col gap-3 bg-surface/85 backdrop-blur-md border border-border rounded-3xl p-4 lg:p-5 shadow-card mb-4 w-full text-right">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full">
+    <header className="shrink-0 flex flex-col gap-2.5 bg-surface/85 backdrop-blur-md border border-border rounded-2xl py-2.5 px-4 lg:py-3 lg:px-5 shadow-card mb-3 w-full text-right">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 w-full">
             {/* Right-to-Left (Arabic friendly) layout: Icon & Title */}
-            <div className="flex items-center gap-3.5 w-full md:w-auto">
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary border border-primary/10 shadow-sm shrink-0">
-                    <Icon size={22} />
+            <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary border border-primary/10 shadow-sm shrink-0">
+                    <Icon size={20} />
                 </div>
                 <div>
-                    <h1 className="text-xl font-black text-text-main leading-tight tracking-tight">{title}</h1>
-                    {description && <p className="text-xs text-text-muted mt-1 font-medium">{description}</p>}
+                    <h1 className="text-lg font-black text-text-main leading-tight tracking-tight">{title}</h1>
+                    {description && <p className="text-[11px] text-text-muted mt-0.5 font-medium">{description}</p>}
                 </div>
             </div>
 
@@ -131,7 +131,7 @@ export const PageHeader = memo(({ title, icon: Icon, description, actions, child
                 </div>
             )}
         </div>
-        {children && <div className="w-full mt-1 border-t border-border/40 pt-3">{children}</div>}
+        {children && <div className="w-full mt-0.5 border-t border-border/40 pt-2.5">{children}</div>}
     </header>
 ));
 PageHeader.displayName = 'PageHeader';

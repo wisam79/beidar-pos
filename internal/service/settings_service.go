@@ -4,7 +4,6 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/pkg/autostart"
 	"beidar-desktop/pkg/crashreporter"
-	"beidar-desktop/pkg/crypto"
 	"beidar-desktop/pkg/secureconfig"
 	"beidar-desktop/pkg/updater"
 	"bytes"
@@ -31,27 +30,7 @@ func NewSettingsService(preferencesRepo domain.PreferencesRepository) domain.Set
 }
 
 func (s *settingsService) GetPreferences() (*domain.AppPreferences, error) {
-	prefs, err := s.preferencesRepo.Get()
-	if err != nil {
-		return nil, err
-	}
-	// Decrypt GeminiAPIKey if encrypted
-	if prefs.GeminiAPIKey != "" {
-		decrypted, err := crypto.Decrypt(prefs.GeminiAPIKey, settingsMachineKey)
-		if err == nil {
-			prefs.GeminiAPIKey = string(decrypted)
-		}
-	}
-	// Decrypt GeminiAPIKeys if encrypted
-	if len(prefs.GeminiAPIKeys) > 0 {
-		for i, key := range prefs.GeminiAPIKeys {
-			decrypted, err := crypto.Decrypt(key, settingsMachineKey)
-			if err == nil {
-				prefs.GeminiAPIKeys[i] = string(decrypted)
-			}
-		}
-	}
-	return prefs, nil
+	return s.preferencesRepo.Get()
 }
 
 func (s *settingsService) UpdatePreferences(prefs domain.AppPreferences) error {
@@ -69,23 +48,6 @@ func (s *settingsService) UpdatePreferences(prefs domain.AppPreferences) error {
 		prefs.AdminPin = string(hashedPin)
 	} else if prefs.AdminPin == "" || prefs.AdminPin == "********" {
 		prefs.AdminPin = currentPrefs.AdminPin
-	}
-
-	// Encrypt GeminiAPIKey before storing
-	if prefs.GeminiAPIKey != "" {
-		encrypted, err := crypto.Encrypt([]byte(prefs.GeminiAPIKey), settingsMachineKey)
-		if err == nil {
-			prefs.GeminiAPIKey = encrypted
-		}
-	}
-	// Encrypt GeminiAPIKeys before storing
-	if len(prefs.GeminiAPIKeys) > 0 {
-		for i, key := range prefs.GeminiAPIKeys {
-			encrypted, err := crypto.Encrypt([]byte(key), settingsMachineKey)
-			if err == nil {
-				prefs.GeminiAPIKeys[i] = encrypted
-			}
-		}
 	}
 
 	return s.preferencesRepo.Save(&prefs)

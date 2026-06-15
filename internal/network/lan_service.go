@@ -80,7 +80,9 @@ type lanService struct {
 	httpClient     *http.Client
 
 	// UDP Discovery state
-	isBroadcasting bool
+	isBroadcasting  bool
+	broadcastCancel context.CancelFunc
+	broadcastMutex  sync.Mutex
 }
 
 // NewLanService creates a new instance of LanService
@@ -140,6 +142,8 @@ func (s *lanService) startConnectivityBroadcaster(ctx context.Context) {
 				runtime.EventsEmit(ctx, "network-status", online)
 				lastStatus = online
 			}
+			// Clean up inactive LAN clients (inactive for > 5 minutes)
+			s.CleanupInactiveClients(300)
 		}
 	}
 }

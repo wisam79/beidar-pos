@@ -304,17 +304,17 @@ export const FinancePage: React.FC = () => {
         <PageShell>
             <PageHeader title="الإدارة المالية" icon={Landmark} description="متابعة المصروفات، الأرباح، وديون الموردين." actions={
                 <div className="flex gap-2">
-                    <button onClick={() => { setExpenseForm({}); setExpenseModal(true); }} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all text-sm touch-target active:scale-95"><Minus size={18} /> تسجيل مصروف</button>
-                    <button onClick={() => { setSupplierForm({}); setSupplierModal(true); }} className="bg-primary/10 text-primary hover:bg-primary hover:text-black border border-primary/20 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all text-sm touch-target active:scale-95"><Users size={18} /> إدارة الموردين</button>
+                    <button onClick={() => { setExpenseForm({}); setExpenseModal(true); }} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 h-10 px-4 rounded-xl font-bold flex items-center gap-2 transition-all text-xs touch-target active:scale-95"><Minus size={16} /> تسجيل مصروف</button>
+                    <button onClick={() => { setSupplierForm({}); setSupplierModal(true); }} className="bg-primary/10 text-primary hover:bg-primary hover:text-black border border-primary/20 h-10 px-4 rounded-xl font-bold flex items-center gap-2 transition-all text-xs touch-target active:scale-95"><Users size={16} /> إدارة الموردين</button>
                     <button
                         onClick={() => setShowStats(!showStats)}
-                        className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
                             ? 'bg-surface border border-border text-text-muted hover:text-text-main'
                             : 'bg-gradient-to-br from-primary to-emerald-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
                             }`}
                         title={showStats ? 'إخفاء الإحصائيات' : 'عرض التحليل المالي'}
                     >
-                        <LayoutDashboard size={showStats ? 20 : 22} />
+                        <LayoutDashboard size={showStats ? 18 : 20} />
                     </button>
                 </div>
             } />

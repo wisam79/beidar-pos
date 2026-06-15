@@ -81,6 +81,12 @@ func (r *staffRepository) GetStaffCount() (int64, error) {
 	return count, err
 }
 
+func (r *staffRepository) CountByRole(role domain.Role) (int64, error) {
+	var count int64
+	err := r.db.Model(&domain.Staff{}).Where("role = ?", role).Count(&count).Error
+	return count, err
+}
+
 func (r *staffRepository) GetStaffSalesCount(staffID string) (int64, error) {
 	var count int64
 	err := r.db.Model(&domain.Sale{}).Where("staff_id = ?", staffID).Count(&count).Error

@@ -244,24 +244,24 @@ export const CustomersPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setShowStats(!showStats)}
-                        className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
                             ? 'bg-surface border border-border text-text-muted hover:text-text-main'
                             : 'bg-gradient-to-br from-primary to-emerald-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
                             }`}
                         title={showStats ? 'إخفاء الإحصائيات' : 'عرض تحليل العملاء'}
                     >
-                        <Users size={showStats ? 20 : 22} />
+                        <Users size={showStats ? 18 : 20} />
                     </button>
-                    <button onClick={handleInitAdd} className="bg-primary text-primary-fg hover:brightness-110 px-5 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-95 text-sm border border-primary/20 touch-target"><Plus size={18} /> إضافة عميل جديد</button>
+                    <button onClick={handleInitAdd} className="bg-primary text-primary-fg hover:brightness-110 h-10 px-4 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-95 text-xs border border-primary/20 touch-target"><Plus size={16} /> إضافة عميل جديد</button>
                 </div>
             }>
                 <div className="flex gap-3 items-center">
                     <SearchInput value={search} onChange={setSearch} placeholder="ابحث باسم العميل أو رقم الهاتف..." />
                     <button
                         onClick={() => setShowOnlyDebt(!showOnlyDebt)}
-                        className={`px-4 py-3.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all border touch-target ${showOnlyDebt ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-surface text-text-muted border-border hover:text-text-main hover:border-text-muted'}`}
+                        className={`h-10 px-4 rounded-xl font-bold text-xs flex items-center gap-2 transition-all border touch-target ${showOnlyDebt ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-surface text-text-muted border-border hover:text-text-main hover:border-text-muted'}`}
                     >
-                        <Filter size={16} /> {showOnlyDebt ? 'المديونين فقط' : 'الكل'}
+                        <Filter size={14} /> {showOnlyDebt ? 'المديونين فقط' : 'الكل'}
                     </button>
                 </div>
             </PageHeader>

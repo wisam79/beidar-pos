@@ -21,6 +21,7 @@ var (
 	zohoConfigLock sync.RWMutex
 	syncQueue      []domain.ZohoSyncQueue
 	syncQueueLock  sync.Mutex
+	zohoHTTPClient = &http.Client{Timeout: 15 * time.Second}
 )
 
 func getZohoConfigPath() string {
@@ -85,7 +86,7 @@ func (s *cloudService) ExchangeCodeForToken(clientID, clientSecret, code string)
 	data.Set("client_secret", clientSecret)
 	data.Set("code", code)
 
-	resp, err := http.PostForm("https://accounts.zoho.com/oauth/v2/token", data)
+	resp, err := zohoHTTPClient.PostForm("https://accounts.zoho.com/oauth/v2/token", data)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +117,7 @@ func (s *cloudService) RefreshAccessToken() error {
 	data.Set("client_secret", config.ClientSecret)
 	data.Set("refresh_token", config.RefreshToken)
 
-	resp, err := http.PostForm("https://accounts.zoho.com/oauth/v2/token", data)
+	resp, err := zohoHTTPClient.PostForm("https://accounts.zoho.com/oauth/v2/token", data)
 	if err != nil {
 		return err
 	}
@@ -162,7 +163,7 @@ func (s *cloudService) GetOrganizationID() (string, error) {
 	req, _ := http.NewRequest("GET", "https://www.zohoapis.com/books/v3/organizations", nil)
 	req.Header.Set("Authorization", "Zoho-oauthtoken "+token)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := zohoHTTPClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -232,7 +233,7 @@ func (s *cloudService) CreateZohoInvoice(sale *domain.Sale) error {
 	req.Header.Set("Authorization", "Zoho-oauthtoken "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := zohoHTTPClient.Do(req)
 	if err != nil {
 		s.AddToSyncQueue(sale.ID)
 		return err

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -128,9 +129,25 @@ func (s *lanService) GetServerStatus() domain.LanServerStatus {
 
 // REST Route Handlers Setup
 func (s *lanService) setupRoutes(mux *http.ServeMux) {
+	// allowedCORSOrigins restricts cross-origin browser access to the Wails
+	// webview (served from localhost) only. LAN clients talk plain HTTP without
+	// a browser Origin header and are unaffected.
+	allowedCORSOrigins := map[string]bool{
+		"http://localhost:5173": true, // Vite dev server
+		"http://127.0.0.1:5173": true,
+		"http://wails.localhost": true,
+		"https://wails.localhost": true,
+		"http://localhost": true,
+		"http://127.0.0.1": true,
+	}
+
 	corsMiddleware := func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
+			origin := r.Header.Get("Origin")
+			if origin != "" && allowedCORSOrigins[origin] {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Vary", "Origin")
+			}
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
@@ -170,6 +187,17 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 					"/api/products":      true,
 				}
 
+				// Reject cashier from accessing sensitive GET admin/stats endpoints
+				if r.Method == "GET" {
+					if r.URL.Path == "/api/database/export" ||
+						r.URL.Path == "/api/stats/dashboard" ||
+						r.URL.Path == "/api/admin/clients" ||
+						r.URL.Path == "/api/admin/blocked" {
+						http.Error(w, `{"error":"غير مصرح لك بهذه العملية - صلاحيات المدير مطلوبة"}`, http.StatusForbidden)
+						return
+					}
+				}
+
 				if r.Method == "DELETE" {
 					http.Error(w, `{"error":"غير مصرح لك بالحذف - صلاحيات المدير مطلوبة"}`, http.StatusForbidden)
 					return
@@ -199,12 +227,13 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 	// Client Connect
 	mux.HandleFunc("/api/connect", corsMiddleware(s.handleConnect))
 
-	// Admin Endpoints
-	mux.HandleFunc("/api/admin/clients", corsMiddleware(s.handleAdminClients))
-	mux.HandleFunc("/api/admin/blocked", corsMiddleware(s.handleAdminBlocked))
+	// Admin Endpoints - now protected under authMiddleware
+	mux.HandleFunc("/api/admin/clients", authMiddleware(s.handleAdminClients))
+	mux.HandleFunc("/api/admin/blocked", authMiddleware(s.handleAdminBlocked))
 
 	// Protected Data Endpoints
 	mux.HandleFunc("/api/products", authMiddleware(s.handleProducts))
+	mux.HandleFunc("/api/products/detail", authMiddleware(s.handleProductDetail))
 	mux.HandleFunc("/api/products/search", authMiddleware(s.handleProductSearch))
 	mux.HandleFunc("/api/sales", authMiddleware(s.handleSales))
 	mux.HandleFunc("/api/sales/process", authMiddleware(s.handleProcessSale))
@@ -216,7 +245,29 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/preferences", authMiddleware(s.handlePreferences))
 	mux.HandleFunc("/api/stock/movements", authMiddleware(s.handleStockMovements))
 	mux.HandleFunc("/api/database/export", authMiddleware(s.handleDatabaseExport))
-	mux.HandleFunc("/api/remote-scan", corsMiddleware(s.handleRemoteScan))
+	mux.HandleFunc("/api/remote-scan", corsMiddleware(s.requireServerSecret(s.handleRemoteScan)))
+}
+
+// requireServerSecret gates an endpoint behind the shared server secret, read
+// from either the Authorization Bearer header or an X-Server-Secret header.
+// Endpoints that serve non-browser LAN devices (e.g. barcode scanners) use this
+// instead of session-token auth. If no secret is configured, the endpoint is
+// left open for backwards compatibility during first-time setup.
+func (s *lanService) requireServerSecret(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		provided := r.Header.Get("X-Server-Secret")
+		if provided == "" {
+			if auth := r.Header.Get("Authorization"); len(auth) > 7 && auth[:7] == "Bearer " {
+				provided = auth[7:]
+			}
+		}
+		serverSecret := s.GetServerSecret()
+		if serverSecret != "" && !s.ValidateServerSecret(provided) {
+			http.Error(w, `{"error":"سر الخادم مطلوب وغير صحيح"}`, http.StatusUnauthorized)
+			return
+		}
+		next(w, r)
+	}
 }
 
 func (s *lanService) handleConnect(w http.ResponseWriter, r *http.Request) {
@@ -226,14 +277,27 @@ func (s *lanService) handleConnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Cap request body size to protect against memory-exhaustion DoS.
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
+
 	var req struct {
 		DeviceID   string `json:"deviceId"`
 		DeviceName string `json:"deviceName"`
+		Secret     string `json:"secret"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, `{"error":"Invalid request"}`, http.StatusBadRequest)
 		return
+	}
+
+	// Enforce the shared server secret when one has been configured. This stops
+	// arbitrary devices on the LAN from registering without the operator's key.
+	if serverSecret := s.GetServerSecret(); serverSecret != "" {
+		if !s.ValidateServerSecret(req.Secret) {
+			http.Error(w, `{"error":"سر الخادم غير صحيح"}`, http.StatusUnauthorized)
+			return
+		}
 	}
 
 	token, err := s.RegisterClient(req.DeviceID, req.DeviceName, r.RemoteAddr)
@@ -257,6 +321,7 @@ func (s *lanService) handleAdminClients(w http.ResponseWriter, r *http.Request) 
 		_ = json.NewEncoder(w).Encode(clients)
 
 	case "POST":
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
 		var req struct {
 			Action   string `json:"action"` // disconnect, suspend, resume, block
 			DeviceID string `json:"deviceId"`
@@ -313,6 +378,7 @@ func (s *lanService) handleAdminBlocked(w http.ResponseWriter, r *http.Request) 
 		_ = json.NewEncoder(w).Encode(devices)
 
 	case "DELETE":
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
 		var req struct {
 			ID uint `json:"id"`
 		}
@@ -346,6 +412,7 @@ func (s *lanService) handleProducts(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(PaginatedProducts{Data: products, Total: int64(len(products))})
 
 	case "POST":
+		r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB (products may have base64 images)
 		var product domain.Product
 		if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -373,6 +440,21 @@ func (s *lanService) handleProducts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *lanService) handleProductDetail(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, `{"error":"id parameter is required"}`, http.StatusBadRequest)
+		return
+	}
+	product, err := s.productService.GetProductByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_ = json.NewEncoder(w).Encode(product)
+}
+
 func (s *lanService) handleProductSearch(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	query := r.URL.Query().Get("q")
@@ -389,7 +471,32 @@ func (s *lanService) handleSales(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		sales, err := s.saleService.GetSales(1, 10000, "", "", "")
+		id := r.URL.Query().Get("id")
+		if id != "" {
+			sale, err := s.saleService.GetSale(id)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+			_ = json.NewEncoder(w).Encode(sale)
+			return
+		}
+		// Paginate the list instead of pulling 10,000 rows in one shot.
+		page, pageSize := 1, 50
+		if v := r.URL.Query().Get("page"); v != "" {
+			if p, err := strconv.Atoi(v); err == nil && p > 0 {
+				page = p
+			}
+		}
+		if v := r.URL.Query().Get("pageSize"); v != "" {
+			if ps, err := strconv.Atoi(v); err == nil && ps > 0 && ps <= 200 {
+				pageSize = ps
+			}
+		}
+		search := r.URL.Query().Get("search")
+		statusFilter := r.URL.Query().Get("status")
+		dateFilter := r.URL.Query().Get("date")
+		sales, err := s.saleService.GetSales(page, pageSize, search, statusFilter, dateFilter)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -413,6 +520,7 @@ func (s *lanService) handleProcessSale(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB (sales can carry many items)
 	var sale domain.Sale
 	if err := json.NewDecoder(r.Body).Decode(&sale); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -438,6 +546,7 @@ func (s *lanService) handleCustomers(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(customers)
 
 	case "POST":
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
 		var customer domain.Customer
 		if err := json.NewDecoder(r.Body).Decode(&customer); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -472,6 +581,7 @@ func (s *lanService) handleSuppliers(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(suppliers)
 
 	case "POST":
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
 		var supplier domain.Supplier
 		if err := json.NewDecoder(r.Body).Decode(&supplier); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -506,6 +616,7 @@ func (s *lanService) handleCategories(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(categories)
 
 	case "POST":
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
 		var category domain.Category
 		if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -540,6 +651,7 @@ func (s *lanService) handleExpenses(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(expenses)
 
 	case "POST":
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
 		var expense domain.Expense
 		if err := json.NewDecoder(r.Body).Decode(&expense); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -588,9 +700,16 @@ func (s *lanService) handlePreferences(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		// Scrub secrets before sending to LAN clients — they only need store
+		// identity, currency, tax, and printing prefs, never the admin PIN or
+		// AI API keys.
+		prefs.AdminPin = ""
+		prefs.GeminiAPIKey = ""
+		prefs.GeminiAPIKeys = nil
 		_ = json.NewEncoder(w).Encode(prefs)
 
 	case "POST":
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
 		var prefs domain.AppPreferences
 		if err := json.NewDecoder(r.Body).Decode(&prefs); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -630,6 +749,8 @@ func (s *lanService) handleRemoteScan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
 		return
 	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
 
 	type ScannerPayload struct {
 		Code   string `json:"code"`

@@ -5,7 +5,6 @@ import (
 	pkgerrors "beidar-desktop/pkg/errors"
 	"beidar-desktop/pkg/i18n"
 	"beidar-desktop/pkg/logger"
-	"beidar-desktop/pkg/crypto"
 	"fmt"
 	"time"
 
@@ -155,21 +154,6 @@ func (s *financeService) GetPreferences() (*domain.AppPreferences, error) {
 	if prefs.AdminPin != "" {
 		prefs.AdminPin = "********"
 	}
-	// Decrypt GeminiAPIKey if encrypted
-	if prefs.GeminiAPIKey != "" {
-		decrypted, err := crypto.Decrypt(prefs.GeminiAPIKey, settingsMachineKey)
-		if err == nil {
-			prefs.GeminiAPIKey = string(decrypted)
-		}
-	}
-	if len(prefs.GeminiAPIKeys) > 0 {
-		for i, key := range prefs.GeminiAPIKeys {
-			decrypted, err := crypto.Decrypt(key, settingsMachineKey)
-			if err == nil {
-				prefs.GeminiAPIKeys[i] = string(decrypted)
-			}
-		}
-	}
 	return prefs, nil
 }
 
@@ -189,22 +173,6 @@ func (s *financeService) UpdatePreferences(newPrefs domain.AppPreferences) error
 			return err
 		}
 		newPrefs.AdminPin = string(hashedPin)
-	}
-
-	// Encrypt GeminiAPIKey before storing
-	if newPrefs.GeminiAPIKey != "" {
-		encrypted, err := crypto.Encrypt([]byte(newPrefs.GeminiAPIKey), settingsMachineKey)
-		if err == nil {
-			newPrefs.GeminiAPIKey = encrypted
-		}
-	}
-	if len(newPrefs.GeminiAPIKeys) > 0 {
-		for i, key := range newPrefs.GeminiAPIKeys {
-			encrypted, err := crypto.Encrypt([]byte(key), settingsMachineKey)
-			if err == nil {
-				newPrefs.GeminiAPIKeys[i] = encrypted
-			}
-		}
 	}
 
 	return s.preferencesRepo.Save(&newPrefs)

@@ -3,6 +3,7 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
+	"beidar-desktop/pkg/auth"
 	"context"
 )
 
@@ -24,6 +25,9 @@ func (h *CRMHandler) Startup(ctx context.Context) {
 }
 
 func (h *CRMHandler) GetCustomers() ([]domain.Customer, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result []domain.Customer
 		err := h.lanService.RemoteGet("/api/customers", &result)
@@ -33,6 +37,9 @@ func (h *CRMHandler) GetCustomers() ([]domain.Customer, error) {
 }
 
 func (h *CRMHandler) SearchCustomers(query string) ([]domain.Customer, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	// Remote server doesn't have a search customer endpoint, so search locally or filter
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		customers, err := h.GetCustomers()
@@ -48,6 +55,9 @@ func (h *CRMHandler) SearchCustomers(query string) ([]domain.Customer, error) {
 }
 
 func (h *CRMHandler) SaveCustomer(c domain.Customer) error {
+	if err := auth.RequirePermission(auth.PermCustomers); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemotePost("/api/customers", c, nil)
 	}
@@ -55,6 +65,9 @@ func (h *CRMHandler) SaveCustomer(c domain.Customer) error {
 }
 
 func (h *CRMHandler) DeleteCustomer(id string, force bool) error {
+	if err := auth.RequirePermission(auth.PermCustomers); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemoteDelete("/api/customers?id=" + id)
 	}
@@ -62,6 +75,9 @@ func (h *CRMHandler) DeleteCustomer(id string, force bool) error {
 }
 
 func (h *CRMHandler) GetSuppliers() ([]domain.Supplier, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result []domain.Supplier
 		err := h.lanService.RemoteGet("/api/suppliers", &result)
@@ -71,6 +87,9 @@ func (h *CRMHandler) GetSuppliers() ([]domain.Supplier, error) {
 }
 
 func (h *CRMHandler) SaveSupplier(s domain.Supplier) error {
+	if err := auth.RequirePermission(auth.PermFinance); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemotePost("/api/suppliers", s, nil)
 	}
@@ -78,6 +97,9 @@ func (h *CRMHandler) SaveSupplier(s domain.Supplier) error {
 }
 
 func (h *CRMHandler) DeleteSupplier(id string, force bool) error {
+	if err := auth.RequirePermission(auth.PermFinance); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemoteDelete("/api/suppliers?id=" + id)
 	}

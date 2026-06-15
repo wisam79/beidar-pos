@@ -11,7 +11,7 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { BarcodeScannerOverlay, ScanResult } from '../../components/BarcodeScannerOverlay';
 import { api } from '../../core/api';
 import { useInvalidateSales, useInvalidateProducts, useInvalidateCustomers } from '../../hooks';
-import { PageShell, StatsGrid, StatCard, LoadingState, FilterBar, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
+import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
 
 export const InvoicesPage: React.FC = () => {
@@ -162,16 +162,55 @@ export const InvoicesPage: React.FC = () => {
                 actions={
                     <button
                         onClick={() => setShowStats(!showStats)}
-                        className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
                             ? 'bg-surface border border-border text-text-muted hover:text-text-main'
                             : 'bg-gradient-to-br from-primary to-emerald-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
                             }`}
                         title={showStats ? 'إخفاء الإحصائيات' : 'عرض التحليل'}
                     >
-                        <ArrowUpRight size={showStats ? 20 : 22} />
+                        <ArrowUpRight size={showStats ? 18 : 20} />
                     </button>
                 }
-            />
+            >
+                <div className="flex flex-col md:flex-row gap-3 items-center w-full">
+                    <SearchInput
+                        value={search}
+                        onChange={v => { setSearch(v); setPage(0); }}
+                        placeholder="بحث برقم الفاتورة أو اسم العميل..."
+                    />
+
+                    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+                        <SegmentedControl
+                            options={[
+                                { id: 'all', label: 'الكل' },
+                                { id: 'completed', label: 'مكتمل' },
+                                { id: 'pending', label: 'معلق' },
+                                { id: 'returned', label: 'مرتجع' },
+                            ]}
+                            value={statusFilter}
+                            onChange={v => { setStatusFilter(v as 'all' | 'completed' | 'pending' | 'returned'); setPage(0); }}
+                        />
+                        <div className="w-px h-8 bg-border/60 mx-1 hidden md:block"></div>
+                        <SegmentedControl
+                            options={[
+                                { id: 'all', label: 'الكل' },
+                                { id: 'today', label: 'اليوم' },
+                                { id: 'week', label: 'أسبوع' },
+                            ]}
+                            value={dateFilter}
+                            onChange={v => setDateFilter(v as 'all' | 'today' | 'week')}
+                        />
+                        <button
+                            onClick={() => setIsScannerOpen(true)}
+                            className="h-10 px-4 bg-primary text-primary-fg rounded-xl hover:brightness-110 transition-all flex items-center gap-2 font-bold text-xs shrink-0 touch-target active:scale-95"
+                            title="مسح QR الفاتورة"
+                        >
+                            <ScanLine size={16} />
+                            <span className="hidden sm:inline">مسح QR</span>
+                        </button>
+                    </div>
+                </div>
+            </PageHeader>
 
             {/* Stats Cards */}
             <StatsGrid columns={4} visible={showStats}>
@@ -180,44 +219,6 @@ export const InvoicesPage: React.FC = () => {
                 <StatCard icon={RefreshCcw} label="عدد المرتجعات" value={stats.returns} color="red" subtitle="تم استرجاعها" />
                 <StatCard icon={CheckCircle2} label="صافي العمليات" value={stats.count - stats.returns} color="emerald" subtitle="• مكتملة" />
             </StatsGrid>
-
-            {/* Filter Bar */}
-            <FilterBar>
-                <SearchInput
-                    value={search}
-                    onChange={v => { setSearch(v); setPage(0); }}
-                    placeholder="بحث برقم الفاتورة أو اسم العميل..."
-                />
-
-                    <SegmentedControl
-                        options={[
-                            { id: 'all', label: 'الكل' },
-                            { id: 'completed', label: 'مكتمل' },
-                            { id: 'pending', label: 'معلق' },
-                            { id: 'returned', label: 'مرتجع' },
-                        ]}
-                        value={statusFilter}
-                        onChange={v => { setStatusFilter(v as 'all' | 'completed' | 'pending' | 'returned'); setPage(0); }}
-                    />
-                    <div className="w-px h-8 bg-border mx-1"></div>
-                    <SegmentedControl
-                        options={[
-                            { id: 'all', label: 'الكل' },
-                            { id: 'today', label: 'اليوم' },
-                            { id: 'week', label: 'أسبوع' },
-                        ]}
-                        value={dateFilter}
-                        onChange={v => setDateFilter(v as 'all' | 'today' | 'week')}
-                    />
-                    <button
-                        onClick={() => setIsScannerOpen(true)}
-                        className="p-3.5 bg-primary text-primary-fg rounded-xl hover:brightness-110 transition-all flex items-center gap-2 font-bold text-sm shrink-0 touch-target active:scale-95"
-                        title="مسح QR الفاتورة"
-                    >
-                        <ScanLine size={18} />
-                        <span className="hidden sm:inline">مسح QR</span>
-                    </button>
-            </FilterBar>
 
             <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-2 pb-10">
                 {salesData.length === 0 ? (

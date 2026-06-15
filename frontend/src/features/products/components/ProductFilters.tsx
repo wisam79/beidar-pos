@@ -40,7 +40,7 @@ export const ProductFilters = memo(({
     const { t } = useTranslation();
 
     return (
-        <div className="flex flex-col xl:flex-row gap-2 items-center bg-surface border border-border p-1 rounded-2xl shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="flex flex-col xl:flex-row gap-2 items-center w-full animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="relative group w-full xl:w-auto xl:flex-1">
                 <input
                     className="w-full bg-input-bg text-text-main border border-border rounded-xl pl-9 pr-3 py-2.5 outline-none focus:border-primary transition-all text-sm font-bold placeholder:text-text-muted focus:shadow-[0_0_15px_var(--color-primary-dim)]"

@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"beidar-desktop/internal/core/domain"
@@ -125,7 +124,6 @@ func ErrPriceMismatch(productName string, oldPrice, newPrice domain.Amount) *Sal
 }
 
 type saleService struct {
-	mu              sync.Mutex
 	saleRepo        domain.SaleRepository
 	productRepo     domain.ProductRepository
 	customerRepo    domain.CustomerRepository
@@ -165,8 +163,6 @@ func (s *saleService) GetSale(id string) (*domain.Sale, error) {
 }
 
 func (s *saleService) ProcessSale(sale *domain.Sale) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if len(sale.Items) == 0 {
 		return ErrEmptyCart()
@@ -218,6 +214,13 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		}
 	}
 
+	// Snapshot the shift-required preference BEFORE opening the transaction so
+	// the value is fixed for the whole sale and we avoid a read inside the tx.
+	requireShiftPref := false
+	if prefs, err := s.preferencesRepo.Get(); err == nil {
+		requireShiftPref = prefs.RequireShift
+	}
+
 	err := s.saleRepo.Transaction(func(tx domain.Tx) error {
 		txSaleRepo := s.saleRepo.WithTx(tx)
 		txProductRepo := s.productRepo.WithTx(tx)
@@ -228,9 +231,22 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		var calculatedTotal domain.Amount
 		var calculatedSubtotal domain.Amount
 
+		productIDs := make([]string, len(sale.Items))
 		for i, item := range sale.Items {
-			product, err := txProductRepo.GetByID(item.ProductID)
-			if err != nil {
+			productIDs[i] = item.ProductID
+		}
+		products, err := txProductRepo.GetByIDs(productIDs)
+		if err != nil {
+			return err
+		}
+		productMap := make(map[string]*domain.Product, len(products))
+		for i := range products {
+			productMap[products[i].ID] = &products[i]
+		}
+
+		for i, item := range sale.Items {
+			product, ok := productMap[item.ProductID]
+			if !ok {
 				return ErrSalesProductNotFound(item.ProductID)
 			}
 
@@ -256,7 +272,6 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 			calculatedSubtotal = calculatedSubtotal.Add(realPrice.MulFloat(item.Quantity))
 			calculatedTotal = calculatedTotal.Add(itemTotal)
 
-			// Atomic Stock Update
 			err = txProductRepo.UpdateStock(item.ProductID, -item.Quantity)
 			if err != nil {
 				if errors.Is(err, domain.ErrInsufficientStock) {
@@ -265,7 +280,6 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 				return err
 			}
 
-			// Log Stock Movement
 			movement := domain.StockMovement{
 				ProductID:   product.ID,
 				ProductName: product.Name,
@@ -367,10 +381,7 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 			cashAmount = sale.SplitDetails["cash"]
 		}
 
-		requireShift := false
-		if prefs, err := s.preferencesRepo.Get(); err == nil {
-			requireShift = prefs.RequireShift
-		}
+		requireShift := requireShiftPref
 
 		if err := txShiftRepo.UpdateShiftSales(sale.Total, cashAmount, requireShift); err != nil {
 			return errors.New(i18n.GetMessage("SALE_PROCESS_FAILED", err.Error()))
@@ -440,11 +451,12 @@ func (s *saleService) ReturnSale(id string) error {
 				return err
 			}
 
-			if sale.PaymentMethod == "credit" {
+			switch sale.PaymentMethod {
+			case "credit":
 				if err := txCustomerRepo.DecrementDebt(sale.CustomerID, sale.Total); err != nil {
 					return err
 				}
-			} else if sale.PaymentMethod == "installment" {
+			case "installment":
 				installmentAmount := sale.Total
 				if sale.InstallmentPlan != nil {
 					installmentAmount = sale.Total.Sub(sale.InstallmentPlan.DownPayment)
@@ -532,7 +544,7 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 
 		var refundAmount domain.Amount
 		if item.Quantity > 0 {
-			refundAmount = item.Total.MulFloat(qtyToReturn).Div(int64(item.Quantity))
+			refundAmount = item.Total.MulFloat(qtyToReturn / item.Quantity)
 		}
 
 		if sale.CustomerID != "" {
@@ -565,7 +577,7 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 			SaleID:     sale.ID,
 			CustomerID: sale.CustomerID,
 			Amount:     domain.Amount(-refundAmount.Cents()),
-			Method:     "cash",
+			Method:     sale.PaymentMethod,
 			Timestamp:  time.Now().UnixMilli(),
 			Note:       fmt.Sprintf("Partial Return: %.2f x %s", qtyToReturn, item.Name),
 		}

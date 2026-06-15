@@ -34,7 +34,7 @@ type InstallmentPlan struct {
 
 type Sale struct {
 	ID              string             `gorm:"primaryKey" json:"id"`
-	CustomerID      string             `json:"customerId,omitempty"`
+	CustomerID      string             `gorm:"index" json:"customerId,omitempty"`
 	CustomerName    string             `gorm:"index" json:"customer"`
 	StaffID         string             `gorm:"index" json:"staffId"`
 	StaffName       string             `json:"staffName"`
@@ -58,7 +58,7 @@ type Sale struct {
 type SaleItem struct {
 	ID          uint    `gorm:"primaryKey;autoIncrement" json:"pid"`
 	SaleID      string  `gorm:"index" json:"-"`
-	ProductID   string  `json:"id"`
+	ProductID   string  `gorm:"index" json:"id"`
 	Name        string  `json:"name"`
 	Price       Amount  `json:"price"`
 	Quantity    float64 `json:"qty"`
@@ -94,8 +94,8 @@ type Expense struct {
 	ID       string `gorm:"primaryKey" json:"id"`
 	Title    string `json:"title"`
 	Amount   Amount `json:"amount"`
-	Date     string `json:"date"`
-	Category string `json:"category"`
+	Date     string `gorm:"index" json:"date"`
+	Category string `gorm:"index" json:"category"`
 	Notes    string `json:"notes,omitempty"`
 }
 

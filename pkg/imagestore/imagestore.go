@@ -136,9 +136,13 @@ func isValidBase64Image(s string) bool {
 		return false
 	}
 
-	for _, c := range s[:50] {
+	// Validate the entire string contains only valid base64 characters.
+	// The old check only inspected the first 50 characters, allowing invalid
+	// characters later in the data URI body.
+	for _, c := range s {
 		if !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
-			(c >= '0' && c <= '9') || c == '+' || c == '/' || c == '=') {
+			(c >= '0' && c <= '9') || c == '+' || c == '/' || c == '=' ||
+			c == ',') {
 			return false
 		}
 	}

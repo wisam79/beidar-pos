@@ -3,8 +3,8 @@ package handlers
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/network"
+	"beidar-desktop/pkg/auth"
 	"context"
-	"fmt"
 )
 
 // ProductHandler struct to bind to Wails
@@ -29,6 +29,9 @@ func (h *ProductHandler) Startup(ctx context.Context) {
 
 // GetAllProducts retrieves all products to be shown in the UI
 func (h *ProductHandler) GetAllProducts() ([]domain.Product, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		type PaginatedProducts struct {
 			Data  []domain.Product `json:"data"`
@@ -43,24 +46,25 @@ func (h *ProductHandler) GetAllProducts() ([]domain.Product, error) {
 
 // GetProductByID retrieves a product by its ID
 func (h *ProductHandler) GetProductByID(id string) (*domain.Product, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
-		// LAN server doesn't have a direct GetByID endpoint, so we search or filter
-		products, err := h.GetAllProducts()
+		var product domain.Product
+		err := h.lanService.RemoteGet("/api/products/detail?id="+id, &product)
 		if err != nil {
 			return nil, err
 		}
-		for i := range products {
-			if products[i].ID == id {
-				return &products[i], nil
-			}
-		}
-		return nil, fmt.Errorf("product not found")
+		return &product, nil
 	}
 	return h.productService.GetProductByID(id)
 }
 
 // CreateProduct adds a new product
 func (h *ProductHandler) CreateProduct(product domain.Product) error {
+	if err := auth.RequirePermission(auth.PermProducts); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemotePost("/api/products", product, nil)
 	}
@@ -69,6 +73,9 @@ func (h *ProductHandler) CreateProduct(product domain.Product) error {
 
 // UpdateProduct updates an existing product
 func (h *ProductHandler) UpdateProduct(product domain.Product) error {
+	if err := auth.RequirePermission(auth.PermProducts); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemotePost("/api/products", product, nil)
 	}
@@ -77,6 +84,9 @@ func (h *ProductHandler) UpdateProduct(product domain.Product) error {
 
 // DeleteProduct deletes a product
 func (h *ProductHandler) DeleteProduct(id string) error {
+	if err := auth.RequirePermission(auth.PermProducts); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemoteDelete("/api/products?id=" + id)
 	}
@@ -85,6 +95,9 @@ func (h *ProductHandler) DeleteProduct(id string) error {
 
 // SearchProducts searches for products by name or barcode
 func (h *ProductHandler) SearchProducts(query string) ([]domain.Product, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result []domain.Product
 		err := h.lanService.RemoteGet("/api/products/search?q="+query, &result)
@@ -94,6 +107,9 @@ func (h *ProductHandler) SearchProducts(query string) ([]domain.Product, error) 
 }
 
 func (h *ProductHandler) GetStockMovements() ([]domain.StockMovement, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result []domain.StockMovement
 		err := h.lanService.RemoteGet("/api/stock/movements", &result)
@@ -103,6 +119,9 @@ func (h *ProductHandler) GetStockMovements() ([]domain.StockMovement, error) {
 }
 
 func (h *ProductHandler) LogStockMovement(productID string, productName string, movementType string, qty float64, reason string) error {
+	if err := auth.RequirePermission(auth.PermInventory); err != nil {
+		return err
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemotePost("/api/stock/movements", map[string]interface{}{
 			"productId":   productID,

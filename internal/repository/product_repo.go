@@ -23,6 +23,12 @@ func (r *productRepository) WithTx(tx domain.Tx) domain.ProductRepository {
 	}
 }
 
+func (r *productRepository) Transaction(fn func(tx domain.Tx) error) error {
+	return r.db.Transaction(func(gdb *gorm.DB) error {
+		return fn(gdb)
+	})
+}
+
 func (r *productRepository) GetAll() ([]domain.Product, error) {
 	var products []domain.Product
 	if err := r.db.Find(&products).Error; err != nil {
@@ -37,6 +43,17 @@ func (r *productRepository) GetByID(id string) (*domain.Product, error) {
 		return nil, err
 	}
 	return &product, nil
+}
+
+func (r *productRepository) GetByIDs(ids []string) ([]domain.Product, error) {
+	if len(ids) == 0 {
+		return []domain.Product{}, nil
+	}
+	var products []domain.Product
+	if err := r.db.Where("id IN ?", ids).Find(&products).Error; err != nil {
+		return nil, err
+	}
+	return products, nil
 }
 
 func (r *productRepository) Create(product *domain.Product) error {
