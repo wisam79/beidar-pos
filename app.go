@@ -777,9 +777,6 @@ func (a *App) GetInstallmentAlertSummary() (map[string]interface{}, error) {
 	}, nil
 }
 
-// aiRateLimitInterval minimum interval between AI requests in milliseconds
-const aiRateLimitInterval = 2000
-
 // AI_GenerateStream streams generation response from Gemini API
 func (a *App) AI_GenerateStream(prompt string) error {
 	if !a.aiMutex.TryLock() {
