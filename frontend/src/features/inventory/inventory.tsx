@@ -212,12 +212,12 @@ export const InventoryPage: React.FC = () => {
         try {
             if (p.id) {
                 await api.products.save({ ...p, stock: newStock });
+                await api.stock.log(p.id, p.name, change > 0 ? 'in' : 'out', Math.abs(change), 'تعديل سريع للمخزون');
                 invalidateProducts();
                 notify('تم تحديث المخزون', 'success');
             }
         } catch (e: unknown) {
             console.error(e);
-            const msg = e instanceof Error ? e.message : String(e);
             loadProducts(); // Revert
         }
     };

@@ -397,7 +397,13 @@ export const ProductsPage: React.FC = () => {
     const updateStock = async (p: Product, change: number) => {
         if (!p.id) return;
         const newStock = Math.max(0, p.stock + change);
-        try { await api.products.save({ ...p, stock: newStock }); refetchProducts(); } catch (_e) { refetchProducts(); }
+        try {
+            await api.products.save({ ...p, stock: newStock });
+            await api.stock.log(p.id, p.name, change > 0 ? 'in' : 'out', Math.abs(change), 'تعديل سريع للمخزون');
+            refetchProducts();
+        } catch (_e) {
+            refetchProducts();
+        }
     };
 
     // --- AI HANDLERS ---

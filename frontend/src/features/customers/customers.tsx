@@ -484,7 +484,7 @@ export const CustomersPage: React.FC = () => {
                                             <span className="text-xs text-green-500 font-bold flex items-center gap-1"><Check size={14} /> تم الدفع</span>
                                         ) : (
                                             <button
-                                                onClick={() => handlePayInstallment(s.id, idx, inst.amount)}
+                                                onClick={() => handlePayInstallment(s.id, idx, inst.amount / 100)}
                                                 className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-bold hover:bg-primary hover:text-black transition-all"
                                             >
                                                 تسديد الآن
