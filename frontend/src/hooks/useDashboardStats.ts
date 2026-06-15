@@ -3,10 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import { api, Sale } from '../core/api';
-import { queryKeys } from '../core/queryClient';
-import { formatCurrency } from '../core/utils';
 import { usePageVisibility } from './usePageVisibility';
 
 export interface DashboardStats {
@@ -33,17 +30,15 @@ interface UseDashboardStatsReturn {
 export function useDashboardStats(timeRange: string = 'week'): UseDashboardStatsReturn {
     const isVisible = usePageVisibility();
 
-    // Only poll when page is visible - saves CPU when tab is hidden
-    // Increased interval from 15s to 30s for better performance
     const { data: stats, isLoading, isError, refetch } = useQuery({
         queryKey: ['dashboard_stats', timeRange],
         queryFn: async () => {
             const data = await api.stats.getDashboard(timeRange);
             return data;
         },
-        refetchInterval: isVisible ? 30000 : false, // 30 seconds when visible, disabled when hidden
-        staleTime: 20000, // Consider data fresh for 20 seconds
-        enabled: isVisible, // Don't fetch at all when hidden
+        refetchInterval: isVisible ? 120000 : false,
+        staleTime: 60000,
+        enabled: isVisible,
     });
 
     // Fallback empty stats if loading or error

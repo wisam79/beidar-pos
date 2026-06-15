@@ -7,6 +7,8 @@ export function DeleteParkedSale(arg1:number):Promise<void>;
 
 export function DeleteSale(arg1:string):Promise<void>;
 
+export function GetInstallmentSales():Promise<Array<domain.Sale>>;
+
 export function GetParkedSales():Promise<Array<domain.ParkedSale>>;
 
 export function GetParkedSalesCount():Promise<number>;

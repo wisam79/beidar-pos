@@ -33,9 +33,15 @@ func (r *saleRepository) GetCustomerInstallments(customerID string) ([]domain.Sa
 	return sales, err
 }
 
+const maxPageSize = 200
+
 func (r *saleRepository) GetSales(page int, pageSize int, search string, statusFilter string, dateFilter string) (*domain.PaginatedSales, error) {
 	var sales []domain.Sale
 	var total int64
+
+	if pageSize <= 0 || pageSize > maxPageSize {
+		pageSize = maxPageSize
+	}
 
 	query := r.db.Model(&domain.Sale{})
 

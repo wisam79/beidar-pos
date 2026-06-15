@@ -30,6 +30,7 @@ func (s *statsService) GetDashboardStats(timeRange string) (stats *domain.Dashbo
 	var wg sync.WaitGroup
 	var errs []error
 	var mu sync.Mutex
+	var totalCOGS float64
 
 	appendErr := func(e error) {
 		if e != nil {
@@ -88,14 +89,15 @@ func (s *statsService) GetDashboardStats(timeRange string) (stats *domain.Dashbo
 	// 4. Profit & Expenses
 	go func() {
 		defer wg.Done()
-		totalCOGS, totalExpenses, expenseBreakdown, e := s.statsRepo.GetProfitAndExpenses()
+		cogs, totalExpenses, expenseBreakdown, e := s.statsRepo.GetProfitAndExpenses()
 		if e != nil {
 			appendErr(e)
 			return
 		}
 		mu.Lock()
+		totalCOGS = cogs
 		stats.TotalExpenses = totalExpenses
-		stats.GrossProfit = stats.TotalRevenue - totalCOGS
+		stats.GrossProfit = stats.TotalRevenue - cogs
 		stats.NetProfit = stats.GrossProfit - totalExpenses
 		stats.ExpenseBreakdown = expenseBreakdown
 		mu.Unlock()
@@ -124,13 +126,8 @@ func (s *statsService) GetDashboardStats(timeRange string) (stats *domain.Dashbo
 
 	wg.Wait()
 
-	// Recalculate gross and net profit based on loaded basic stats if necessary
-	var totalCOGS float64
-	totalCOGS, _, _, err = s.statsRepo.GetProfitAndExpenses()
-	if err == nil {
-		stats.GrossProfit = stats.TotalRevenue - totalCOGS
-		stats.NetProfit = stats.GrossProfit - stats.TotalExpenses
-	}
+	stats.GrossProfit = stats.TotalRevenue - totalCOGS
+	stats.NetProfit = stats.GrossProfit - stats.TotalExpenses
 
 	if len(errs) > 0 {
 		return nil, errs[0]

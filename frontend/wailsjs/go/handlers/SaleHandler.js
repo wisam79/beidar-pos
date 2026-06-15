@@ -10,6 +10,10 @@ export function DeleteSale(arg1) {
   return window['go']['handlers']['SaleHandler']['DeleteSale'](arg1);
 }
 
+export function GetInstallmentSales() {
+  return window['go']['handlers']['SaleHandler']['GetInstallmentSales']();
+}
+
 export function GetParkedSales() {
   return window['go']['handlers']['SaleHandler']['GetParkedSales']();
 }

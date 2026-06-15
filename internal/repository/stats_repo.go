@@ -14,32 +14,39 @@ func NewStatsRepository(db *gorm.DB) domain.StatsRepository {
 }
 
 func (r *statsRepository) GetBasicStats(today string) (totalRevenue float64, totalOrders int64, dailyRevenue float64, dailyOrders int64, totalProducts int64, lowStockCount int64, err error) {
-	err = r.db.Model(&domain.Sale{}).Where("status != ?", "returned").Select("COALESCE(SUM(total), 0)").Scan(&totalRevenue).Error
+	type saleStats struct {
+		Revenue float64
+		Orders  int64
+	}
+	type prodStats struct {
+		Total     int64
+		LowStock  int64
+	}
+
+	var allSales saleStats
+	err = r.db.Model(&domain.Sale{}).Where("status != ?", "returned").Select("COALESCE(SUM(total), 0) as revenue, COUNT(*) as orders").Scan(&allSales).Error
 	if err != nil {
 		return
 	}
 
-	err = r.db.Model(&domain.Sale{}).Where("status != ?", "returned").Count(&totalOrders).Error
+	var dailySales saleStats
+	err = r.db.Model(&domain.Sale{}).Where("date = ? AND status != ?", today, "returned").Select("COALESCE(SUM(total), 0) as revenue, COUNT(*) as orders").Scan(&dailySales).Error
 	if err != nil {
 		return
 	}
 
-	err = r.db.Model(&domain.Sale{}).Where("date = ? AND status != ?", today, "returned").Select("COALESCE(SUM(total), 0)").Scan(&dailyRevenue).Error
+	var prods prodStats
+	err = r.db.Model(&domain.Product{}).Select("COUNT(*) as total, COUNT(CASE WHEN stock <= CASE WHEN min_stock > 0 THEN min_stock ELSE 5 END THEN 1 END) as low_stock").Scan(&prods).Error
 	if err != nil {
 		return
 	}
 
-	err = r.db.Model(&domain.Sale{}).Where("date = ? AND status != ?", today, "returned").Count(&dailyOrders).Error
-	if err != nil {
-		return
-	}
-
-	err = r.db.Model(&domain.Product{}).Count(&totalProducts).Error
-	if err != nil {
-		return
-	}
-
-	err = r.db.Model(&domain.Product{}).Where("stock <= CASE WHEN min_stock > 0 THEN min_stock ELSE 5 END").Count(&lowStockCount).Error
+	totalRevenue = allSales.Revenue
+	totalOrders = allSales.Orders
+	dailyRevenue = dailySales.Revenue
+	dailyOrders = dailySales.Orders
+	totalProducts = prods.Total
+	lowStockCount = prods.LowStock
 	return
 }
 
