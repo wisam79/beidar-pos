@@ -14,12 +14,14 @@ func NewShiftRepository(db *gorm.DB) domain.ShiftRepository {
 	return &shiftRepository{db: db}
 }
 
-func (r *shiftRepository) WithTx(tx *gorm.DB) domain.ShiftRepository {
-	return &shiftRepository{db: tx}
+func (r *shiftRepository) WithTx(tx domain.Tx) domain.ShiftRepository {
+	return &shiftRepository{db: getDB(tx, r.db)}
 }
 
-func (r *shiftRepository) Transaction(fn func(tx *gorm.DB) error) error {
-	return r.db.Transaction(fn)
+func (r *shiftRepository) Transaction(fn func(tx domain.Tx) error) error {
+	return r.db.Transaction(func(gdb *gorm.DB) error {
+		return fn(gdb)
+	})
 }
 
 func (r *shiftRepository) GetActiveShift() (*domain.Shift, error) {

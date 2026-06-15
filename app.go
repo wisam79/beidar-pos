@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"beidar-desktop/internal/core/domain"
@@ -45,6 +47,8 @@ type App struct {
 	LanHandler      *handlers.LanHandler
 	CloudHandler    *handlers.CloudHandler
 	DiscountHandler *handlers.DiscountHandler
+	aiMutex         sync.Mutex
+	aiCancel        context.CancelFunc
 }
 
 type appRepositories struct {
@@ -636,7 +640,8 @@ func (a *App) GetInstallmentAlertSummary() (map[string]interface{}, error) {
 		customerMap[c.ID] = c
 	}
 
-	salesResult, err := a.SaleHandler.GetSales(1, 100000, "", "", "")
+	// Only fetch installment sales instead of all 100k records
+	sales, err := a.SaleHandler.GetInstallmentSales()
 	if err != nil {
 		return nil, err
 	}
@@ -667,7 +672,7 @@ func (a *App) GetInstallmentAlertSummary() (map[string]interface{}, error) {
 
 	today := time.Now().Truncate(24 * time.Hour)
 
-	for _, sale := range salesResult.Data {
+	for _, sale := range sales {
 		if sale.InstallmentPlan == nil {
 			continue
 		}
@@ -772,10 +777,18 @@ func (a *App) GetInstallmentAlertSummary() (map[string]interface{}, error) {
 	}, nil
 }
 
+// aiRateLimitInterval minimum interval between AI requests in milliseconds
+const aiRateLimitInterval = 2000
+
 // AI_GenerateStream streams generation response from Gemini API
 func (a *App) AI_GenerateStream(prompt string) error {
+	if !a.aiMutex.TryLock() {
+		return fmt.Errorf("يوجد طلب ذكاء اصطناعي قيد التنفيذ بالفعل، انتظر حتى يكتمل")
+	}
+
 	prefs, err := a.SettingsHandler.GetPreferences()
 	if err != nil {
+		a.aiMutex.Unlock()
 		return fmt.Errorf("failed to load preferences: %w", err)
 	}
 
@@ -789,15 +802,27 @@ func (a *App) AI_GenerateStream(prompt string) error {
 	}
 
 	if apiKey == "" {
+		a.aiMutex.Unlock()
 		return fmt.Errorf("يرجى إدخال مفتاح Gemini API في الإعدادات أولاً")
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	a.aiCancel = cancel
+
 	go func() {
 		defer func() {
+			a.aiMutex.Unlock()
 			if r := recover(); r != nil {
 				runtime.EventsEmit(a.ctx, "ai-stream-error", fmt.Sprintf("Panic: %v", r))
 			}
 		}()
+
+		select {
+		case <-ctx.Done():
+			runtime.EventsEmit(a.ctx, "ai-stream-complete", "")
+			return
+		default:
+		}
 
 		url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=%s", apiKey)
 
@@ -817,7 +842,7 @@ func (a *App) AI_GenerateStream(prompt string) error {
 			return
 		}
 
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
 		if err != nil {
 			runtime.EventsEmit(a.ctx, "ai-stream-error", "فشل في إنشاء طلب HTTP: "+err.Error())
 			return
@@ -830,6 +855,10 @@ func (a *App) AI_GenerateStream(prompt string) error {
 
 		resp, err := client.Do(req)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				runtime.EventsEmit(a.ctx, "ai-stream-complete", "")
+				return
+			}
 			runtime.EventsEmit(a.ctx, "ai-stream-error", "فشل الاتصال بخدمة الذكاء الاصطناعي: "+err.Error())
 			return
 		}
@@ -876,6 +905,13 @@ func (a *App) AI_GenerateStream(prompt string) error {
 		if firstByte == '[' {
 			_, _ = dec.Token()
 			for dec.More() {
+				select {
+				case <-ctx.Done():
+					runtime.EventsEmit(a.ctx, "ai-stream-complete", "")
+					return
+				default:
+				}
+
 				var chunk GeminiChunk
 				if err := dec.Decode(&chunk); err != nil {
 					runtime.EventsEmit(a.ctx, "ai-stream-error", "خطأ أثناء تحليل النص: "+err.Error())
@@ -907,4 +943,12 @@ func (a *App) AI_GenerateStream(prompt string) error {
 	}()
 
 	return nil
+}
+
+// AI_CancelStream cancels the current AI generation stream
+func (a *App) AI_CancelStream() {
+	if a.aiCancel != nil {
+		a.aiCancel()
+		a.aiCancel = nil
+	}
 }

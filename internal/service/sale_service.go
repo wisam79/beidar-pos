@@ -12,7 +12,6 @@ import (
 	"beidar-desktop/pkg/logger"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 // SalesErrorCode represents specific sales error types
@@ -219,7 +218,7 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		}
 	}
 
-	err := s.saleRepo.Transaction(func(tx *gorm.DB) error {
+	err := s.saleRepo.Transaction(func(tx domain.Tx) error {
 		txSaleRepo := s.saleRepo.WithTx(tx)
 		txProductRepo := s.productRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
@@ -388,7 +387,7 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 }
 
 func (s *saleService) ReturnSale(id string) error {
-	err := s.saleRepo.Transaction(func(tx *gorm.DB) error {
+	err := s.saleRepo.Transaction(func(tx domain.Tx) error {
 		txSaleRepo := s.saleRepo.WithTx(tx)
 		txProductRepo := s.productRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
@@ -484,7 +483,7 @@ func (s *saleService) ReturnSale(id string) error {
 }
 
 func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToReturn float64) error {
-	err := s.saleRepo.Transaction(func(tx *gorm.DB) error {
+	err := s.saleRepo.Transaction(func(tx domain.Tx) error {
 		txSaleRepo := s.saleRepo.WithTx(tx)
 		txProductRepo := s.productRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
@@ -646,4 +645,8 @@ func (s *saleService) RetrieveParkedSale(id uint) (*domain.ParkedSale, error) {
 
 func (s *saleService) DeleteParkedSale(id uint) error {
 	return s.saleRepo.DeleteParkedSale(id)
+}
+
+func (s *saleService) GetInstallmentSales() ([]domain.Sale, error) {
+	return s.saleRepo.GetInstallmentSales()
 }

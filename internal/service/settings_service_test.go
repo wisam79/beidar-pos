@@ -19,6 +19,7 @@ import (
 
 	"github.com/glebarez/sqlite"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -37,9 +38,10 @@ func setupSettingsTestDB(t *testing.T) (service.SettingsService, *gorm.DB, func(
 	}
 
 	// Seed default preferences so Get() doesn't fail
+	hashedPin, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
 	defaultPrefs := domain.AppPreferences{
 		StoreName: "بيدر",
-		AdminPin:  "1234",
+		AdminPin:  string(hashedPin),
 	}
 	db.Create(&defaultPrefs)
 

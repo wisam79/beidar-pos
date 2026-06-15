@@ -17,9 +17,9 @@ func NewProductRepository(db *gorm.DB) domain.ProductRepository {
 	}
 }
 
-func (r *productRepository) WithTx(tx *gorm.DB) domain.ProductRepository {
+func (r *productRepository) WithTx(tx domain.Tx) domain.ProductRepository {
 	return &productRepository{
-		db: tx,
+		db: getDB(tx, r.db),
 	}
 }
 

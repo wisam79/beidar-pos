@@ -12,7 +12,6 @@ import (
 	"beidar-desktop/pkg/i18n"
 	"beidar-desktop/pkg/logger"
 
-	"gorm.io/gorm"
 )
 
 type paymentService struct {
@@ -53,7 +52,7 @@ func (s *paymentService) CreatePayment(payment domain.Payment) (*domain.Payment,
 
 	payment.Timestamp = time.Now().UnixMilli()
 
-	return &payment, s.paymentRepo.Transaction(func(tx *gorm.DB) error {
+	return &payment, s.paymentRepo.Transaction(func(tx domain.Tx) error {
 		txPaymentRepo := s.paymentRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
 		txSaleRepo := s.saleRepo.WithTx(tx)
@@ -135,7 +134,7 @@ func (s *paymentService) GetPaymentsByCustomer(customerID string) ([]domain.Paym
 }
 
 func (s *paymentService) DeletePayment(id uint) error {
-	return s.paymentRepo.Transaction(func(tx *gorm.DB) error {
+	return s.paymentRepo.Transaction(func(tx domain.Tx) error {
 		txPaymentRepo := s.paymentRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
 
@@ -183,7 +182,7 @@ func (s *paymentService) PayInstallment(saleID string, installmentIndex int, amo
 		)
 	}
 
-	return s.paymentRepo.Transaction(func(tx *gorm.DB) error {
+	return s.paymentRepo.Transaction(func(tx domain.Tx) error {
 		txPaymentRepo := s.paymentRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
 		txSaleRepo := s.saleRepo.WithTx(tx)

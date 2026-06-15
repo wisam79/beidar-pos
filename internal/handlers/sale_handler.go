@@ -103,3 +103,7 @@ func (h *SaleHandler) RetrieveParkedSale(id uint) (*domain.ParkedSale, error) {
 func (h *SaleHandler) DeleteParkedSale(id uint) error {
 	return h.saleService.DeleteParkedSale(id)
 }
+
+func (h *SaleHandler) GetInstallmentSales() ([]domain.Sale, error) {
+	return h.saleService.GetInstallmentSales()
+}

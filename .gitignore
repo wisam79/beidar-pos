@@ -21,6 +21,10 @@ build/windows/installer/tmp/
 coverage.out
 coverage/
 
+# Test leftovers
+ci_logs.txt
+internal/service/test_*.db
+
 # IDE
 .idea/
 .vscode/

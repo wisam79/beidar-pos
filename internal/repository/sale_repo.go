@@ -15,12 +15,14 @@ func NewSaleRepository(db *gorm.DB) domain.SaleRepository {
 	return &saleRepository{db: db}
 }
 
-func (r *saleRepository) WithTx(tx *gorm.DB) domain.SaleRepository {
-	return &saleRepository{db: tx}
+func (r *saleRepository) WithTx(tx domain.Tx) domain.SaleRepository {
+	return &saleRepository{db: getDB(tx, r.db)}
 }
 
-func (r *saleRepository) Transaction(fn func(tx *gorm.DB) error) error {
-	return r.db.Transaction(fn)
+func (r *saleRepository) Transaction(fn func(tx domain.Tx) error) error {
+	return r.db.Transaction(func(gdb *gorm.DB) error {
+		return fn(gdb)
+	})
 }
 
 func (r *saleRepository) GetCustomerInstallments(customerID string) ([]domain.Sale, error) {
@@ -181,4 +183,13 @@ func (r *saleRepository) UpdateSaleInstallmentPlan(saleID string, planJSON strin
 		"installment_plan": planJSON,
 		"status":           status,
 	}).Error
+}
+
+func (r *saleRepository) GetInstallmentSales() ([]domain.Sale, error) {
+	var sales []domain.Sale
+	err := r.db.Where("payment_method = ?", "installment").
+		Preload("Items").
+		Order("timestamp desc").
+		Find(&sales).Error
+	return sales, err
 }

@@ -13,12 +13,14 @@ func NewSupplierRepository(db *gorm.DB) domain.SupplierRepository {
 	return &supplierRepository{db: db}
 }
 
-func (r *supplierRepository) WithTx(tx *gorm.DB) domain.SupplierRepository {
-	return &supplierRepository{db: tx}
+func (r *supplierRepository) WithTx(tx domain.Tx) domain.SupplierRepository {
+	return &supplierRepository{db: getDB(tx, r.db)}
 }
 
-func (r *supplierRepository) Transaction(fn func(tx *gorm.DB) error) error {
-	return r.db.Transaction(fn)
+func (r *supplierRepository) Transaction(fn func(tx domain.Tx) error) error {
+	return r.db.Transaction(func(gdb *gorm.DB) error {
+		return fn(gdb)
+	})
 }
 
 func (r *supplierRepository) GetAll() ([]domain.Supplier, error) {

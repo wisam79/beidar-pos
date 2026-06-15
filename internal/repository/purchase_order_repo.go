@@ -13,12 +13,14 @@ func NewPurchaseOrderRepository(db *gorm.DB) domain.PurchaseOrderRepository {
 	return &purchaseOrderRepository{db: db}
 }
 
-func (r *purchaseOrderRepository) WithTx(tx *gorm.DB) domain.PurchaseOrderRepository {
-	return &purchaseOrderRepository{db: tx}
+func (r *purchaseOrderRepository) WithTx(tx domain.Tx) domain.PurchaseOrderRepository {
+	return &purchaseOrderRepository{db: getDB(tx, r.db)}
 }
 
-func (r *purchaseOrderRepository) Transaction(fn func(tx *gorm.DB) error) error {
-	return r.db.Transaction(fn)
+func (r *purchaseOrderRepository) Transaction(fn func(tx domain.Tx) error) error {
+	return r.db.Transaction(func(gdb *gorm.DB) error {
+		return fn(gdb)
+	})
 }
 
 func (r *purchaseOrderRepository) GetByID(id string) (*domain.PurchaseOrder, error) {

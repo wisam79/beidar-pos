@@ -5,12 +5,12 @@ import (
 	pkgerrors "beidar-desktop/pkg/errors"
 	"beidar-desktop/pkg/i18n"
 	"beidar-desktop/pkg/logger"
+	"beidar-desktop/pkg/crypto"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 type financeService struct {
@@ -155,6 +155,21 @@ func (s *financeService) GetPreferences() (*domain.AppPreferences, error) {
 	if prefs.AdminPin != "" {
 		prefs.AdminPin = "********"
 	}
+	// Decrypt GeminiAPIKey if encrypted
+	if prefs.GeminiAPIKey != "" {
+		decrypted, err := crypto.Decrypt(prefs.GeminiAPIKey, settingsMachineKey)
+		if err == nil {
+			prefs.GeminiAPIKey = string(decrypted)
+		}
+	}
+	if len(prefs.GeminiAPIKeys) > 0 {
+		for i, key := range prefs.GeminiAPIKeys {
+			decrypted, err := crypto.Decrypt(key, settingsMachineKey)
+			if err == nil {
+				prefs.GeminiAPIKeys[i] = string(decrypted)
+			}
+		}
+	}
 	return prefs, nil
 }
 
@@ -174,6 +189,22 @@ func (s *financeService) UpdatePreferences(newPrefs domain.AppPreferences) error
 			return err
 		}
 		newPrefs.AdminPin = string(hashedPin)
+	}
+
+	// Encrypt GeminiAPIKey before storing
+	if newPrefs.GeminiAPIKey != "" {
+		encrypted, err := crypto.Encrypt([]byte(newPrefs.GeminiAPIKey), settingsMachineKey)
+		if err == nil {
+			newPrefs.GeminiAPIKey = encrypted
+		}
+	}
+	if len(newPrefs.GeminiAPIKeys) > 0 {
+		for i, key := range newPrefs.GeminiAPIKeys {
+			encrypted, err := crypto.Encrypt([]byte(key), settingsMachineKey)
+			if err == nil {
+				newPrefs.GeminiAPIKeys[i] = encrypted
+			}
+		}
 	}
 
 	return s.preferencesRepo.Save(&newPrefs)
@@ -222,7 +253,7 @@ func (s *financeService) OpenShift(staffID, staffName string, openingBalance dom
 
 func (s *financeService) CloseShift(shiftID string, closingBalance domain.Amount, note string) (*domain.Shift, error) {
 	var shift domain.Shift
-	err := s.shiftRepo.Transaction(func(tx *gorm.DB) error {
+	err := s.shiftRepo.Transaction(func(tx domain.Tx) error {
 		txShiftRepo := s.shiftRepo.WithTx(tx)
 		sPointer, err := txShiftRepo.GetByID(shiftID)
 		if err != nil {
@@ -283,7 +314,7 @@ func (s *financeService) GetActiveShift() (*domain.Shift, error) {
 
 func (s *financeService) AddCashMovement(shiftID, moveType, reason, staffID, staffName string, amount domain.Amount) (*domain.CashMovement, error) {
 	var move domain.CashMovement
-	err := s.shiftRepo.Transaction(func(tx *gorm.DB) error {
+	err := s.shiftRepo.Transaction(func(tx domain.Tx) error {
 		txShiftRepo := s.shiftRepo.WithTx(tx)
 		shift, err := txShiftRepo.GetByID(shiftID)
 		if err != nil {
@@ -395,7 +426,7 @@ func (s *financeService) UpdatePurchaseOrder(order domain.PurchaseOrder) error {
 	}
 	order.TotalAmount = total
 
-	return s.purchaseRepo.Transaction(func(tx *gorm.DB) error {
+	return s.purchaseRepo.Transaction(func(tx domain.Tx) error {
 		txPurchaseRepo := s.purchaseRepo.WithTx(tx)
 		if err := txPurchaseRepo.DeleteItemsByOrderID(order.ID); err != nil {
 			return err
@@ -414,7 +445,7 @@ func (s *financeService) DeletePurchaseOrder(id string) error {
 		return fmt.Errorf("لا يمكن حذف أمر شراء تم استلامه")
 	}
 
-	return s.purchaseRepo.Transaction(func(tx *gorm.DB) error {
+	return s.purchaseRepo.Transaction(func(tx domain.Tx) error {
 		txPurchaseRepo := s.purchaseRepo.WithTx(tx)
 		if err := txPurchaseRepo.DeleteItemsByOrderID(id); err != nil {
 			return err
@@ -438,7 +469,7 @@ func (s *financeService) CancelPurchaseOrder(id string) error {
 }
 
 func (s *financeService) ReceivePurchaseOrder(orderID string, items []domain.PurchaseOrderItem) error {
-	err := s.purchaseRepo.Transaction(func(tx *gorm.DB) error {
+	err := s.purchaseRepo.Transaction(func(tx domain.Tx) error {
 		txPurchaseRepo := s.purchaseRepo.WithTx(tx)
 		txProductRepo := s.productRepo.WithTx(tx)
 
@@ -557,7 +588,7 @@ func (s *financeService) PayPurchaseOrder(orderID string, amount domain.Amount, 
 		return fmt.Errorf("المبلغ أكبر من المتبقي (%s)", remaining.String())
 	}
 
-	return s.purchaseRepo.Transaction(func(tx *gorm.DB) error {
+	return s.purchaseRepo.Transaction(func(tx domain.Tx) error {
 		txPurchaseRepo := s.purchaseRepo.WithTx(tx)
 		txSupplierRepo := s.supplierRepo.WithTx(tx)
 

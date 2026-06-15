@@ -2,18 +2,15 @@ package domain
 
 import (
 	"beidar-desktop/pkg/updater"
-
-	"gorm.io/gorm"
 )
 
 //go:generate mockgen -source=interfaces.go -destination=../../../internal/repository/mocks/mock_repository.go -package=mocks
 
 // ---------- Repository Interfaces (in domain per Clean Architecture) ----------
-// NOTE: *gorm.DB in Transaction/WithTx is a known leak (TODO: opaque Tx type)
 
 // ProductRepository defines database operations for products
 type ProductRepository interface {
-	WithTx(tx *gorm.DB) ProductRepository
+	WithTx(tx Tx) ProductRepository
 	GetAll() ([]Product, error)
 	GetByID(id string) (*Product, error)
 	GetByBarcode(barcode string) (*Product, error)
@@ -33,8 +30,8 @@ type ProductRepository interface {
 
 // SaleRepository defines database operations for sales
 type SaleRepository interface {
-	WithTx(tx *gorm.DB) SaleRepository
-	Transaction(fn func(tx *gorm.DB) error) error
+	WithTx(tx Tx) SaleRepository
+	Transaction(fn func(tx Tx) error) error
 	GetSales(page int, pageSize int, search string, statusFilter string, dateFilter string) (*PaginatedSales, error)
 	GetByID(id string) (*Sale, error)
 	Create(sale *Sale) error
@@ -51,12 +48,13 @@ type SaleRepository interface {
 	GetUnsyncedSales() ([]Sale, error)
 	MarkSaleAsSynced(id string) error
 	UpdateSaleInstallmentPlan(saleID string, planJSON string, status string) error
+	GetInstallmentSales() ([]Sale, error)
 }
 
 // CustomerRepository defines database operations for customers
 type CustomerRepository interface {
-	WithTx(tx *gorm.DB) CustomerRepository
-	Transaction(fn func(tx *gorm.DB) error) error
+	WithTx(tx Tx) CustomerRepository
+	Transaction(fn func(tx Tx) error) error
 	GetAll() ([]Customer, error)
 	GetByID(id string) (*Customer, error)
 	GetByPhone(phone string) (*Customer, error)
@@ -74,8 +72,8 @@ type CustomerRepository interface {
 
 // StaffRepository defines database operations for staff
 type StaffRepository interface {
-	WithTx(tx *gorm.DB) StaffRepository
-	Transaction(fn func(tx *gorm.DB) error) error
+	WithTx(tx Tx) StaffRepository
+	Transaction(fn func(tx Tx) error) error
 	GetByID(id string) (*Staff, error)
 	GetByUsername(username string) (*Staff, error)
 	GetByFastPIN(fastPIN string) (*Staff, error)
@@ -95,8 +93,8 @@ type StaffRepository interface {
 
 // PaymentRepository defines database operations for payments
 type PaymentRepository interface {
-	WithTx(tx *gorm.DB) PaymentRepository
-	Transaction(fn func(tx *gorm.DB) error) error
+	WithTx(tx Tx) PaymentRepository
+	Transaction(fn func(tx Tx) error) error
 	Create(payment *Payment) error
 	GetPaymentsBySale(saleID string) ([]Payment, error)
 	GetPaymentsByCustomer(customerID string) ([]Payment, error)
@@ -106,8 +104,8 @@ type PaymentRepository interface {
 
 // ShiftRepository defines database operations for shifts
 type ShiftRepository interface {
-	WithTx(tx *gorm.DB) ShiftRepository
-	Transaction(fn func(tx *gorm.DB) error) error
+	WithTx(tx Tx) ShiftRepository
+	Transaction(fn func(tx Tx) error) error
 	GetActiveShift() (*Shift, error)
 	UpdateShiftSales(saleTotal, cashAmount Amount, requireShift bool) error
 	Save(shift *Shift) error
@@ -126,8 +124,8 @@ type PreferencesRepository interface {
 
 // ExpenseRepository defines database operations for expenses and categories
 type ExpenseRepository interface {
-	WithTx(tx *gorm.DB) ExpenseRepository
-	Transaction(fn func(tx *gorm.DB) error) error
+	WithTx(tx Tx) ExpenseRepository
+	Transaction(fn func(tx Tx) error) error
 	GetExpenses() ([]Expense, error)
 	GetExpenseByID(id string) (*Expense, error)
 	CreateExpense(e *Expense) error
@@ -145,8 +143,8 @@ type ExpenseRepository interface {
 
 // SupplierRepository defines database operations for suppliers
 type SupplierRepository interface {
-	WithTx(tx *gorm.DB) SupplierRepository
-	Transaction(fn func(tx *gorm.DB) error) error
+	WithTx(tx Tx) SupplierRepository
+	Transaction(fn func(tx Tx) error) error
 	GetAll() ([]Supplier, error)
 	GetByID(id string) (*Supplier, error)
 	Create(supplier *Supplier) error
@@ -157,8 +155,8 @@ type SupplierRepository interface {
 
 // PurchaseOrderRepository defines database operations for purchase orders
 type PurchaseOrderRepository interface {
-	WithTx(tx *gorm.DB) PurchaseOrderRepository
-	Transaction(fn func(tx *gorm.DB) error) error
+	WithTx(tx Tx) PurchaseOrderRepository
+	Transaction(fn func(tx Tx) error) error
 	GetByID(id string) (*PurchaseOrder, error)
 	GetPurchaseOrders(status string, supplierID string) ([]PurchaseOrder, error)
 	Create(order *PurchaseOrder) error
@@ -238,6 +236,7 @@ type SaleService interface {
 	GetParkedSalesCount() (int, error)
 	RetrieveParkedSale(id uint) (*ParkedSale, error)
 	DeleteParkedSale(id uint) error
+	GetInstallmentSales() ([]Sale, error)
 }
 
 // PaymentService defines the business logic for payments
@@ -394,4 +393,3 @@ type DiscountService interface {
 	ApplyDiscount(id string) error
 	CalculateDiscountAmount(discountID string, subtotal Amount, itemsCount int) (Amount, error)
 }
-

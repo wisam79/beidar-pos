@@ -13,12 +13,14 @@ func NewPaymentRepository(db *gorm.DB) domain.PaymentRepository {
 	return &paymentRepository{db: db}
 }
 
-func (r *paymentRepository) WithTx(tx *gorm.DB) domain.PaymentRepository {
-	return &paymentRepository{db: tx}
+func (r *paymentRepository) WithTx(tx domain.Tx) domain.PaymentRepository {
+	return &paymentRepository{db: getDB(tx, r.db)}
 }
 
-func (r *paymentRepository) Transaction(fn func(tx *gorm.DB) error) error {
-	return r.db.Transaction(fn)
+func (r *paymentRepository) Transaction(fn func(tx domain.Tx) error) error {
+	return r.db.Transaction(func(gdb *gorm.DB) error {
+		return fn(gdb)
+	})
 }
 
 func (r *paymentRepository) Create(payment *domain.Payment) error {

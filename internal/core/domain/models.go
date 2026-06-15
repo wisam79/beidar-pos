@@ -44,7 +44,7 @@ type Sale struct {
 	Discount        Amount             `json:"discount"`
 	VAT             Amount             `json:"vat"`
 	Total           Amount             `json:"total"`
-	PaymentMethod   string             `json:"paymentMethod"`
+	PaymentMethod   string             `gorm:"index" json:"paymentMethod"`
 	Status          string             `gorm:"index" json:"status"`
 	ItemsCount      float64            `json:"itemsCount"`
 	Items           []SaleItem         `gorm:"foreignKey:SaleID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"items"`

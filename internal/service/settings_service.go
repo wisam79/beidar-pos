@@ -4,6 +4,7 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/pkg/autostart"
 	"beidar-desktop/pkg/crashreporter"
+	"beidar-desktop/pkg/crypto"
 	"beidar-desktop/pkg/secureconfig"
 	"beidar-desktop/pkg/updater"
 	"bytes"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type settingsService struct {
@@ -29,10 +31,63 @@ func NewSettingsService(preferencesRepo domain.PreferencesRepository) domain.Set
 }
 
 func (s *settingsService) GetPreferences() (*domain.AppPreferences, error) {
-	return s.preferencesRepo.Get()
+	prefs, err := s.preferencesRepo.Get()
+	if err != nil {
+		return nil, err
+	}
+	// Decrypt GeminiAPIKey if encrypted
+	if prefs.GeminiAPIKey != "" {
+		decrypted, err := crypto.Decrypt(prefs.GeminiAPIKey, settingsMachineKey)
+		if err == nil {
+			prefs.GeminiAPIKey = string(decrypted)
+		}
+	}
+	// Decrypt GeminiAPIKeys if encrypted
+	if len(prefs.GeminiAPIKeys) > 0 {
+		for i, key := range prefs.GeminiAPIKeys {
+			decrypted, err := crypto.Decrypt(key, settingsMachineKey)
+			if err == nil {
+				prefs.GeminiAPIKeys[i] = string(decrypted)
+			}
+		}
+	}
+	return prefs, nil
 }
 
 func (s *settingsService) UpdatePreferences(prefs domain.AppPreferences) error {
+	currentPrefs, err := s.preferencesRepo.Get()
+	if err != nil {
+		return s.preferencesRepo.Save(&prefs)
+	}
+
+	// Hash AdminPin if it changed
+	if prefs.AdminPin != "" && prefs.AdminPin != "********" && prefs.AdminPin != currentPrefs.AdminPin {
+		hashedPin, err := bcrypt.GenerateFromPassword([]byte(prefs.AdminPin), bcrypt.DefaultCost)
+		if err != nil {
+			return fmt.Errorf("failed to hash admin pin: %w", err)
+		}
+		prefs.AdminPin = string(hashedPin)
+	} else if prefs.AdminPin == "" || prefs.AdminPin == "********" {
+		prefs.AdminPin = currentPrefs.AdminPin
+	}
+
+	// Encrypt GeminiAPIKey before storing
+	if prefs.GeminiAPIKey != "" {
+		encrypted, err := crypto.Encrypt([]byte(prefs.GeminiAPIKey), settingsMachineKey)
+		if err == nil {
+			prefs.GeminiAPIKey = encrypted
+		}
+	}
+	// Encrypt GeminiAPIKeys before storing
+	if len(prefs.GeminiAPIKeys) > 0 {
+		for i, key := range prefs.GeminiAPIKeys {
+			encrypted, err := crypto.Encrypt([]byte(key), settingsMachineKey)
+			if err == nil {
+				prefs.GeminiAPIKeys[i] = encrypted
+			}
+		}
+	}
+
 	return s.preferencesRepo.Save(&prefs)
 }
 
@@ -41,7 +96,11 @@ func (s *settingsService) VerifyAdminPin(pin string) bool {
 	if err != nil {
 		return false
 	}
-	return prefs.AdminPin == pin
+	if prefs.AdminPin == "" {
+		return false
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(prefs.AdminPin), []byte(pin))
+	return err == nil
 }
 
 func (s *settingsService) GetDeviceID() (string, error) {

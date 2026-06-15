@@ -13,12 +13,14 @@ func NewCustomerRepository(db *gorm.DB) domain.CustomerRepository {
 	return &customerRepository{db: db}
 }
 
-func (r *customerRepository) WithTx(tx *gorm.DB) domain.CustomerRepository {
-	return &customerRepository{db: tx}
+func (r *customerRepository) WithTx(tx domain.Tx) domain.CustomerRepository {
+	return &customerRepository{db: getDB(tx, r.db)}
 }
 
-func (r *customerRepository) Transaction(fn func(tx *gorm.DB) error) error {
-	return r.db.Transaction(fn)
+func (r *customerRepository) Transaction(fn func(tx domain.Tx) error) error {
+	return r.db.Transaction(func(gdb *gorm.DB) error {
+		return fn(gdb)
+	})
 }
 
 func (r *customerRepository) GetAll() ([]domain.Customer, error) {

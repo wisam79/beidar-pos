@@ -13,12 +13,14 @@ func NewStaffRepository(db *gorm.DB) domain.StaffRepository {
 	return &staffRepository{db: db}
 }
 
-func (r *staffRepository) WithTx(tx *gorm.DB) domain.StaffRepository {
-	return &staffRepository{db: tx}
+func (r *staffRepository) WithTx(tx domain.Tx) domain.StaffRepository {
+	return &staffRepository{db: getDB(tx, r.db)}
 }
 
-func (r *staffRepository) Transaction(fn func(tx *gorm.DB) error) error {
-	return r.db.Transaction(fn)
+func (r *staffRepository) Transaction(fn func(tx domain.Tx) error) error {
+	return r.db.Transaction(func(gdb *gorm.DB) error {
+		return fn(gdb)
+	})
 }
 
 func (r *staffRepository) GetByID(id string) (*domain.Staff, error) {
