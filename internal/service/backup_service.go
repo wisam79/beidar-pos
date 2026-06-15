@@ -547,6 +547,4 @@ func parseFloat(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
 }
 
-func generateID() string {
-	return fmt.Sprintf("%d", time.Now().UnixNano())
-}
+

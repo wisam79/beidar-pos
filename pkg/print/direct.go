@@ -22,7 +22,6 @@ import (
 
 var (
 	winspool             = syscall.NewLazyDLL("winspool.drv")
-	procEnumPrintersW    = winspool.NewProc("EnumPrintersW")
 	procOpenPrinterW     = winspool.NewProc("OpenPrinterW")
 	procClosePrinter     = winspool.NewProc("ClosePrinter")
 	procStartDocPrinterW = winspool.NewProc("StartDocPrinterW")
@@ -102,7 +101,7 @@ func PrintRaw(printerName string, data []byte) error {
 	if ret == 0 {
 		return fmt.Errorf("failed to open printer: %v", err)
 	}
-	defer procClosePrinter.Call(hPrinter)
+	defer func() { _, _, _ = procClosePrinter.Call(hPrinter) }()
 
 	docName, _ := syscall.UTF16PtrFromString("Beidar Receipt")
 	dataType, _ := syscall.UTF16PtrFromString("RAW")
@@ -126,13 +125,13 @@ func PrintRaw(printerName string, data []byte) error {
 	if ret == 0 {
 		return fmt.Errorf("failed to start document: %v", err)
 	}
-	defer procEndDocPrinter.Call(hPrinter)
+	defer func() { _, _, _ = procEndDocPrinter.Call(hPrinter) }()
 
 	ret, _, err = procStartPagePrinter.Call(hPrinter)
 	if ret == 0 {
 		return fmt.Errorf("failed to start page: %v", err)
 	}
-	defer procEndPagePrinter.Call(hPrinter)
+	defer func() { _, _, _ = procEndPagePrinter.Call(hPrinter) }()
 
 	var written uint32
 	ret, _, err = procWritePrinter.Call(
@@ -159,8 +158,7 @@ const (
 // utf8ToPC864 converts UTF-8 string to PC864 bytes (DOS Arabic Code Page)
 func utf8ToPC864(s string) []byte {
 	var res []byte
-	runes := []rune(s)
-	for _, r := range runes {
+	for _, r := range s {
 		if r < 128 {
 			res = append(res, byte(r))
 			continue

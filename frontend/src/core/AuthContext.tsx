@@ -181,8 +181,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             // Fire-and-forget: the backend session is cleared regardless of
             // whether this IPC call succeeds (the window is closing anyway).
-            const { StaffHandler } = require('../../wailsjs/go/handlers/StaffHandler');
-            StaffHandler.Logout?.();
+            api.staff.logout();
         } catch {
             // Binding may not exist during development; ignore silently.
         }

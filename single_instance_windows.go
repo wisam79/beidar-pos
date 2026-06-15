@@ -15,12 +15,12 @@ func checkSingleInstance() (func(), error) {
 	}
 
 	if syswin.GetLastError() == syswin.ERROR_ALREADY_EXISTS {
-		syswin.CloseHandle(h)
+		_ = syswin.CloseHandle(h)
 		return nil, fmt.Errorf("application instance already running")
 	}
 
 	cleanup := func() {
-		syswin.CloseHandle(h)
+		_ = syswin.CloseHandle(h)
 	}
 	return cleanup, nil
 }

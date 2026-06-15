@@ -29,6 +29,7 @@ export const staff = {
     hasPermission: (staffId: string, permission: string) => StaffHandler.HasPermission(staffId, permission),
     count: () => StaffHandler.GetStaffCount(),
     isUsingDefaultPassword: (staffId: string) => StaffHandler.IsUsingDefaultPassword(staffId),
+    logout: () => StaffHandler.Logout(),
 };
 
 export const license = {
