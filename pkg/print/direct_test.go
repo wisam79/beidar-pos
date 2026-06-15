@@ -132,3 +132,22 @@ func TestPrintRawRouting(t *testing.T) {
 		t.Errorf("routed data mismatch: received %q, expected %q", string(receivedData), string(testData))
 	}
 }
+
+func TestGetAvailablePrinters(t *testing.T) {
+	printers, err := GetAvailablePrinters()
+	if err != nil {
+		t.Fatalf("GetAvailablePrinters failed: %v", err)
+	}
+	t.Logf("Found %d available printers", len(printers))
+	for i, p := range printers {
+		t.Logf("  Printer %d: %s", i+1, p.Name)
+	}
+}
+
+func TestGetDefaultPrinter(t *testing.T) {
+	printer, err := GetDefaultPrinter()
+	if err != nil {
+		t.Fatalf("GetDefaultPrinter failed: %v", err)
+	}
+	t.Logf("Default printer: %q", printer)
+}

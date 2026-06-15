@@ -3,6 +3,7 @@ package imagestore
 import (
 	"encoding/base64"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,12 +32,48 @@ func GetImageStoreDir() (string, error) {
 		return "", err
 	}
 
-	imageStoreDir = filepath.Join(configDir, "BeidarPOS", ImagesDir)
+	imageStoreDir = filepath.Join(configDir, "BeidarPOS_V3", ImagesDir)
 	if err := os.MkdirAll(imageStoreDir, 0755); err != nil {
 		return "", err
 	}
 
+	// Migrate legacy images from BeidarPOS to BeidarPOS_V3 if they exist
+	legacyDir := filepath.Join(configDir, "BeidarPOS", ImagesDir)
+	if _, err := os.Stat(legacyDir); err == nil {
+		if entries, err := os.ReadDir(legacyDir); err == nil {
+			for _, entry := range entries {
+				if !entry.IsDir() {
+					oldPath := filepath.Join(legacyDir, entry.Name())
+					newPath := filepath.Join(imageStoreDir, entry.Name())
+					if _, err := os.Stat(newPath); os.IsNotExist(err) {
+						_ = copyFile(oldPath, newPath)
+					}
+				}
+			}
+		}
+	}
+
 	return imageStoreDir, nil
+}
+
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+	return out.Sync()
 }
 
 // StartImageServer is an empty stub because images are served natively via Wails AssetHandler

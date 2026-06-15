@@ -187,15 +187,13 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 					"/api/products":      true,
 				}
 
-				// Reject cashier from accessing sensitive GET admin/stats endpoints
-				if r.Method == "GET" {
-					if r.URL.Path == "/api/database/export" ||
-						r.URL.Path == "/api/stats/dashboard" ||
-						r.URL.Path == "/api/admin/clients" ||
-						r.URL.Path == "/api/admin/blocked" {
-						http.Error(w, `{"error":"غير مصرح لك بهذه العملية - صلاحيات المدير مطلوبة"}`, http.StatusForbidden)
-						return
-					}
+				// Reject cashier from accessing sensitive admin/stats endpoints (any HTTP method)
+				if r.URL.Path == "/api/database/export" ||
+					r.URL.Path == "/api/stats/dashboard" ||
+					r.URL.Path == "/api/admin/clients" ||
+					r.URL.Path == "/api/admin/blocked" {
+					http.Error(w, `{"error":"غير مصرح لك بهذه العملية - صلاحيات المدير مطلوبة"}`, http.StatusForbidden)
+					return
 				}
 
 				if r.Method == "DELETE" {
@@ -675,6 +673,10 @@ func (s *lanService) handleExpenses(w http.ResponseWriter, r *http.Request) {
 
 func (s *lanService) handleDashboardStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
 	timeRange := r.URL.Query().Get("range")
 	if timeRange == "" {
 		timeRange = "week"
@@ -725,6 +727,10 @@ func (s *lanService) handlePreferences(w http.ResponseWriter, r *http.Request) {
 
 func (s *lanService) handleStockMovements(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
 	movements, err := s.productService.GetStockMovements()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -735,6 +741,10 @@ func (s *lanService) handleStockMovements(w http.ResponseWriter, r *http.Request
 
 func (s *lanService) handleDatabaseExport(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
 	data, err := s.backupService.ExportDatabase()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

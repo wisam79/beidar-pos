@@ -441,7 +441,7 @@ func (s *saleService) ReturnSale(id string) error {
 		if sale.CustomerID != "" {
 			pointsToRevert := sale.PointsAwarded
 			if pointsToRevert == 0 {
-				pointsToRevert = int(sale.Total / 1000)
+				pointsToRevert = int(sale.Total.Div(1000).Cents())
 			}
 
 			if err := txCustomerRepo.DecrementPurchases(sale.CustomerID, sale.Total); err != nil {

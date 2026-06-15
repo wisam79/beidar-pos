@@ -25,7 +25,7 @@ var (
 
 const (
 	GitHubOwner = "wisam79"
-	GitHubRepo  = "beidar"
+	GitHubRepo  = "beidar-pos"
 
 	PrimaryUpdateURL  = "https://beidar-updater.wisamsamir78.workers.dev/releases/latest"
 	FallbackUpdateURL = "https://api.github.com/repos/" + GitHubOwner + "/" + GitHubRepo + "/releases/latest"

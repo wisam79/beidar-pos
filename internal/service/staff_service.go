@@ -539,7 +539,8 @@ func (s *staffService) AuthenticateByUsername(username, password string) (*domai
 }
 
 func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error) {
-	locked, msg, err := s.checkRateLimit("pin_auth")
+	hashedInput := s.generateFastPIN(pin)
+	locked, msg, err := s.checkRateLimit("pin_auth_" + hashedInput)
 	if err != nil {
 		return nil, err
 	}
@@ -547,11 +548,10 @@ func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 		return &domain.AuthResult{Success: false, Message: msg}, nil
 	}
 
-	hashedInput := s.generateFastPIN(pin)
 	fastMatch, err := s.staffRepo.GetByFastPIN(hashedInput)
 	if err == nil && fastMatch != nil {
 		if err := bcrypt.CompareHashAndPassword([]byte(fastMatch.PasswordHash), []byte(pin)); err == nil {
-			_ = s.clearLoginAttempts("pin_auth")
+			_ = s.clearLoginAttempts("pin_auth_" + hashedInput)
 			fastMatch.LastLogin = time.Now().Unix()
 			_ = s.staffRepo.Update(fastMatch)
 			requireChange := fastMatch.MustChangePin || s.CheckUsingDefaultPassword(pin)
@@ -578,7 +578,7 @@ func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 				st.FastPIN = hashedInput
 				_ = s.staffRepo.Update(&st)
 
-				_ = s.clearLoginAttempts("pin_auth")
+				_ = s.clearLoginAttempts("pin_auth_" + hashedInput)
 				st.LastLogin = time.Now().Unix()
 				_ = s.staffRepo.Update(&st)
 
@@ -594,10 +594,10 @@ func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 		}
 	}
 
-	_ = s.recordFailedAttempt("pin_auth", MaxGlobalPinAttempts)
+	_ = s.recordFailedAttempt("pin_auth_"+hashedInput, MaxGlobalPinAttempts)
 	time.Sleep(2 * time.Second) // Throttling brute force
 
-	attempt, err := s.staffRepo.GetLoginAttempt("pin_auth")
+	attempt, err := s.staffRepo.GetLoginAttempt("pin_auth_" + hashedInput)
 	if err == nil && attempt != nil {
 		remaining := MaxGlobalPinAttempts - attempt.Attempts
 		if remaining > 0 {

@@ -38,7 +38,40 @@ const (
 
 // GetAvailablePrinters returns list of installed printers
 func GetAvailablePrinters() ([]domain.PrinterInfo, error) {
+	printers, err := getPrintersFromRegistry()
+	if err == nil && len(printers) > 0 {
+		return printers, nil
+	}
 	return getPrintersFromWMI()
+}
+
+func getPrintersFromRegistry() ([]domain.PrinterInfo, error) {
+	cmd := exec.Command("reg", "query", `HKCU\Software\Microsoft\Windows NT\CurrentVersion\Devices`)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(string(output), "\n")
+	var printers []domain.PrinterInfo
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		// Expecting: PrinterName   REG_SZ   winspool,Port:
+		if idx := strings.Index(line, "REG_SZ"); idx != -1 {
+			name := strings.TrimSpace(line[:idx])
+			if name != "" {
+				printers = append(printers, domain.PrinterInfo{
+					Name: name,
+				})
+			}
+		}
+	}
+	return printers, nil
 }
 
 func getPrintersFromWMI() ([]domain.PrinterInfo, error) {
@@ -68,6 +101,43 @@ func getPrintersFromWMI() ([]domain.PrinterInfo, error) {
 
 // GetDefaultPrinter returns the default system printer
 func GetDefaultPrinter() (string, error) {
+	name, err := getDefaultPrinterFromRegistry()
+	if err == nil && name != "" {
+		return name, nil
+	}
+	return getDefaultPrinterFromWMI()
+}
+
+func getDefaultPrinterFromRegistry() (string, error) {
+	cmd := exec.Command("reg", "query", `HKCU\Software\Microsoft\Windows NT\CurrentVersion\Windows`, "/v", "Device")
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		// Expecting: Device   REG_SZ   PrinterName,winspool,Port:
+		if idx := strings.Index(line, "REG_SZ"); idx != -1 {
+			val := strings.TrimSpace(line[idx+len("REG_SZ"):])
+			if commaIdx := strings.Index(val, ","); commaIdx != -1 {
+				name := strings.TrimSpace(val[:commaIdx])
+				if name != "" {
+					return name, nil
+				}
+			}
+		}
+	}
+	return "", fmt.Errorf("default printer not found in registry output")
+}
+
+func getDefaultPrinterFromWMI() (string, error) {
 	cmd := exec.Command("powershell", "-NoProfile", "-Command",
 		`(Get-WmiObject -Query "SELECT * FROM Win32_Printer WHERE Default=$true").Name`)
 
@@ -75,7 +145,7 @@ func GetDefaultPrinter() (string, error) {
 
 	output, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to get default printer: %w", err)
+		return "", fmt.Errorf("failed to get default printer from WMI: %w", err)
 	}
 
 	return strings.TrimSpace(string(output)), nil
