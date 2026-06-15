@@ -18,6 +18,7 @@ build/bin/
 build/windows/installer/tmp/
 
 # Coverage
+coverage
 coverage.out
 coverage/
 

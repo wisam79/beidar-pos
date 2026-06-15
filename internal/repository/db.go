@@ -91,7 +91,7 @@ func InitDB() (*gorm.DB, error) {
 
 	// Config for glebarez (pure go)
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect database: %w", err)

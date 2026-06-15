@@ -8,6 +8,18 @@ import (
 	"time"
 )
 
+var arabicDays = map[string]string{
+	"Sunday": "أحد", "Monday": "إثن", "Tuesday": "ثلا",
+	"Wednesday": "أرب", "Thursday": "خمي", "Friday": "جمع", "Saturday": "سبت",
+}
+
+var arabicMonthAbbr = map[string]string{
+	"January": "يناير", "February": "فبراير", "March": "مارس",
+	"April": "أبريل", "May": "مايو", "June": "يونيو",
+	"July": "يوليو", "August": "أغسطس", "September": "سبتمبر",
+	"October": "أكتوبر", "November": "نوفمبر", "December": "ديسمبر",
+}
+
 type statsService struct {
 	statsRepo domain.StatsRepository
 }
@@ -153,20 +165,6 @@ func (s *statsService) getChartDataPoints(timeRange string) []domain.ChartDataPo
 	var days int
 	var dateFormat string
 
-	// Arabic day names for weekly chart
-	arabicDays := map[string]string{
-		"Sunday": "أحد", "Monday": "إثن", "Tuesday": "ثلا",
-		"Wednesday": "أرب", "Thursday": "خمي", "Friday": "جمع", "Saturday": "سبت",
-	}
-
-	// Arabic month abbreviations for yearly chart
-	arabicMonthAbbr := map[string]string{
-		"January": "يناير", "February": "فبراير", "March": "مارس",
-		"April": "أبريل", "May": "مايو", "June": "يونيو",
-		"July": "يوليو", "August": "أغسطس", "September": "سبتمبر",
-		"October": "أكتوبر", "November": "نوفمبر", "December": "ديسمبر",
-	}
-
 	switch timeRange {
 	case "year":
 		days = 365
@@ -244,31 +242,50 @@ func (s *statsService) GetMonthlyComparison() (*domain.MonthlyComparison, error)
 
 	comparison := &domain.MonthlyComparison{}
 
-	// Current month data
-	currRev, currOrd, currExp, currCogs, err := s.statsRepo.GetMonthStats(
-		currentMonthStart.Format("2006-01-02"),
-		currentMonthEnd.Format("2006-01-02"),
-	)
-	if err != nil {
-		return nil, err
-	}
-	comparison.CurrentMonth = s.buildMonthData(
-		currRev, currOrd, currExp, currCogs,
-		arabicMonths[now.Month()-1]+" "+fmt.Sprintf("%d", now.Year()),
-	)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var queryErr error
 
-	// Previous month data
-	prevRev, prevOrd, prevExp, prevCogs, err := s.statsRepo.GetMonthStats(
-		prevMonthStart.Format("2006-01-02"),
-		prevMonthEnd.Format("2006-01-02"),
-	)
-	if err != nil {
-		return nil, err
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		rev, ord, exp, cogs, e := s.statsRepo.GetMonthStats(
+			currentMonthStart.Format("2006-01-02"),
+			currentMonthEnd.Format("2006-01-02"),
+		)
+		mu.Lock()
+		if e != nil {
+			queryErr = e
+		} else {
+			comparison.CurrentMonth = s.buildMonthData(
+				rev, ord, exp, cogs,
+				arabicMonths[now.Month()-1]+" "+fmt.Sprintf("%d", now.Year()),
+			)
+		}
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		rev, ord, exp, cogs, e := s.statsRepo.GetMonthStats(
+			prevMonthStart.Format("2006-01-02"),
+			prevMonthEnd.Format("2006-01-02"),
+		)
+		mu.Lock()
+		if e != nil {
+			queryErr = e
+		} else {
+			comparison.PreviousMonth = s.buildMonthData(
+				rev, ord, exp, cogs,
+				arabicMonths[prevMonthStart.Month()-1]+" "+fmt.Sprintf("%d", prevMonthStart.Year()),
+			)
+		}
+		mu.Unlock()
+	}()
+	wg.Wait()
+
+	if queryErr != nil {
+		return nil, queryErr
 	}
-	comparison.PreviousMonth = s.buildMonthData(
-		prevRev, prevOrd, prevExp, prevCogs,
-		arabicMonths[prevMonthStart.Month()-1]+" "+fmt.Sprintf("%d", prevMonthStart.Year()),
-	)
 
 	// Calculate percentage changes
 	if comparison.PreviousMonth.Revenue > 0 {
