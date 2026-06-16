@@ -71,7 +71,7 @@ export const ProductCard = memo(({ product, onClick, isJustAdded, onPrint, curre
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                                 e.stopPropagation();
-                                onPrint(e as any);
+                                onPrint(e as unknown as React.MouseEvent);
                             }
                         }}
                         className="absolute left-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-lg border border-border/30 bg-surface/90 text-text-muted hover:text-text-main opacity-0 group-hover:opacity-100 transition-opacity touch-target cursor-pointer"

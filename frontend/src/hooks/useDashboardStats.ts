@@ -42,25 +42,25 @@ export function useDashboardStats(timeRange: string = 'week'): UseDashboardStats
                 data.grossProfit = (data.grossProfit || 0) / 100;
                 data.totalExpenses = (data.totalExpenses || 0) / 100;
                 if (data.chartData) {
-                    data.chartData = data.chartData.map((d: any) => ({
+                    data.chartData = data.chartData.map((d: { label: string; value: number; formattedValue: string }) => ({
                         ...d,
                         value: (d.value || 0) / 100,
                     }));
                 }
                 if (data.expenseBreakdown) {
-                    data.expenseBreakdown = data.expenseBreakdown.map((d: any) => ({
+                    data.expenseBreakdown = data.expenseBreakdown.map((d: { label: string; value: number; formattedValue?: string; color?: string }) => ({
                         ...d,
                         value: (d.value || 0) / 100,
                     }));
                 }
                 if (data.topCustomers) {
-                    data.topCustomers = data.topCustomers.map((c: any) => ({
+                    data.topCustomers = data.topCustomers.map((c: { name: string; total: number }) => ({
                         ...c,
                         total: (c.total || 0) / 100,
                     }));
                 }
                 if (data.recentSales) {
-                    data.recentSales = data.recentSales.map((sale: any) => ({
+                    data.recentSales = data.recentSales.map((sale: Sale) => ({
                         ...sale,
                         total: (sale.total || 0) / 100,
                         subtotal: (sale.subtotal || 0) / 100,
