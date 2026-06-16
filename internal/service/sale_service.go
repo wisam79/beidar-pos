@@ -13,110 +13,80 @@ import (
 	"github.com/google/uuid"
 )
 
-// SalesErrorCode represents specific sales error types
-type SalesErrorCode string
-
-const (
-	ErrCodeSalesInsufficientStock SalesErrorCode = "SALES_INSUFFICIENT_STOCK"
-	ErrCodeInvalidPayment         SalesErrorCode = "INVALID_PAYMENT"
-	ErrCodeEmptyCart              SalesErrorCode = "EMPTY_CART"
-	ErrCodeSaleNotFound           SalesErrorCode = "SALE_NOT_FOUND"
-	ErrCodeAlreadyReturned        SalesErrorCode = "ALREADY_RETURNED"
-	ErrCodeSalesProductNotFound   SalesErrorCode = "SALES_PRODUCT_NOT_FOUND"
-	ErrCodeSalesInvalidQuantity   SalesErrorCode = "SALES_INVALID_QUANTITY"
-	ErrCodePriceMismatch          SalesErrorCode = "PRICE_MISMATCH"
-)
-
-// SalesError represents a detailed sales error with hints
-type SalesError struct {
-	Code    SalesErrorCode `json:"code"`
-	Message string         `json:"message"`
-	Hint    string         `json:"hint,omitempty"`
-	Field   string         `json:"field,omitempty"`
-}
-
-func (e *SalesError) Error() string {
-	if e.Hint != "" {
-		return fmt.Sprintf("%s. %s", e.Message, e.Hint)
-	}
-	return e.Message
-}
-
-func NewSalesError(code SalesErrorCode, message, hint, field string) *SalesError {
-	return &SalesError{
-		Code:    code,
-		Message: message,
-		Hint:    hint,
-		Field:   field,
-	}
-}
-
-func ErrSalesInsufficientStock(productName string, available, requested float64) *SalesError {
-	return NewSalesError(
-		ErrCodeSalesInsufficientStock,
+func ErrSalesInsufficientStock(productName string, available, requested float64) *pkgerrors.AppError {
+	return pkgerrors.NewAppError(
+		pkgerrors.ModuleSales,
+		"SALES_INSUFFICIENT_STOCK",
 		i18n.GetMessage("SALES_INSUFFICIENT_STOCK", productName, fmt.Sprintf("%.2f", available), fmt.Sprintf("%.2f", requested)),
 		i18n.GetHint("SALES_INSUFFICIENT_STOCK"),
 		"stock",
 	)
 }
 
-func ErrInvalidPayment() *SalesError {
-	return NewSalesError(
-		ErrCodeInvalidPayment,
+func ErrInvalidPayment() *pkgerrors.AppError {
+	return pkgerrors.NewAppError(
+		pkgerrors.ModuleSales,
+		"INVALID_PAYMENT",
 		i18n.GetMessage("INVALID_PAYMENT"),
 		i18n.GetHint("INVALID_PAYMENT"),
 		"payment",
 	)
 }
 
-func ErrEmptyCart() *SalesError {
-	return NewSalesError(
-		ErrCodeEmptyCart,
+func ErrEmptyCart() *pkgerrors.AppError {
+	return pkgerrors.NewAppError(
+		pkgerrors.ModuleSales,
+		"EMPTY_CART",
 		i18n.GetMessage("EMPTY_CART"),
 		i18n.GetHint("EMPTY_CART"),
 		"items",
 	)
 }
 
-func ErrSalesNotFound(id string) *SalesError {
-	return NewSalesError(
-		ErrCodeSaleNotFound,
+func ErrSalesNotFound(id string) *pkgerrors.AppError {
+	return pkgerrors.NewAppError(
+		pkgerrors.ModuleSales,
+		"SALE_NOT_FOUND",
 		i18n.GetMessage("SALE_NOT_FOUND", id),
 		i18n.GetHint("SALE_NOT_FOUND"),
 		"id",
 	)
 }
 
-func ErrAlreadyReturned() *SalesError {
-	return NewSalesError(
-		ErrCodeAlreadyReturned,
+func ErrAlreadyReturned() *pkgerrors.AppError {
+	return pkgerrors.NewAppError(
+		pkgerrors.ModuleSales,
+		"ALREADY_RETURNED",
 		i18n.GetMessage("ALREADY_RETURNED"),
 		i18n.GetHint("ALREADY_RETURNED"),
 		"status",
 	)
 }
 
-func ErrSalesProductNotFound(productID string) *SalesError {
-	return NewSalesError(
-		ErrCodeSalesProductNotFound,
+func ErrSalesProductNotFound(productID string) *pkgerrors.AppError {
+	return pkgerrors.NewAppError(
+		pkgerrors.ModuleSales,
+		"SALES_PRODUCT_NOT_FOUND",
 		i18n.GetMessage("SALES_PRODUCT_NOT_FOUND", productID),
 		i18n.GetHint("SALES_PRODUCT_NOT_FOUND"),
 		"product_id",
 	)
 }
 
-func ErrSalesInvalidQuantity() *SalesError {
-	return NewSalesError(
-		ErrCodeSalesInvalidQuantity,
+func ErrSalesInvalidQuantity() *pkgerrors.AppError {
+	return pkgerrors.NewAppError(
+		pkgerrors.ModuleSales,
+		"SALES_INVALID_QUANTITY",
 		i18n.GetMessage("SALES_INVALID_QUANTITY"),
 		i18n.GetHint("SALES_INVALID_QUANTITY"),
 		"quantity",
 	)
 }
 
-func ErrPriceMismatch(productName string, oldPrice, newPrice domain.Amount) *SalesError {
-	return NewSalesError(
-		ErrCodePriceMismatch,
+func ErrPriceMismatch(productName string, oldPrice, newPrice domain.Amount) *pkgerrors.AppError {
+	return pkgerrors.NewAppError(
+		pkgerrors.ModuleSales,
+		"PRICE_MISMATCH",
 		i18n.GetMessage("PRICE_MISMATCH", productName, oldPrice.String(), newPrice.String()),
 		i18n.GetHint("PRICE_MISMATCH"),
 		"price",
@@ -174,16 +144,18 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 
 	if sale.CustomerID == "" {
 		if sale.PaymentMethod == "credit" {
-			return NewSalesError(
-				ErrCodeInvalidPayment,
+			return pkgerrors.NewAppError(
+				pkgerrors.ModuleSales,
+				"INVALID_PAYMENT",
 				i18n.GetMessage("CREDIT_WITHOUT_CUSTOMER"),
 				i18n.GetHint("CREDIT_WITHOUT_CUSTOMER"),
 				"customer",
 			)
 		}
 		if sale.PaymentMethod == "installment" {
-			return NewSalesError(
-				ErrCodeInvalidPayment,
+			return pkgerrors.NewAppError(
+				pkgerrors.ModuleSales,
+				"INVALID_PAYMENT",
 				i18n.GetMessage("INSTALLMENT_WITHOUT_CUSTOMER"),
 				i18n.GetHint("INSTALLMENT_WITHOUT_CUSTOMER"),
 				"customer",
@@ -191,8 +163,9 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		}
 		if sale.PaymentMethod == "split" && sale.SplitDetails != nil {
 			if creditAmount, ok := sale.SplitDetails["credit"]; ok && creditAmount > 0 {
-				return NewSalesError(
-					ErrCodeInvalidPayment,
+				return pkgerrors.NewAppError(
+					pkgerrors.ModuleSales,
+					"INVALID_PAYMENT",
 					i18n.GetMessage("SPLIT_CREDIT_WITHOUT_CUSTOMER"),
 					i18n.GetHint("SPLIT_CREDIT_WITHOUT_CUSTOMER"),
 					"customer",
@@ -206,11 +179,11 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 			return ErrSalesInvalidQuantity()
 		}
 		if item.Discount.IsNegative() {
-			return NewSalesError(ErrCodeInvalidPayment, "قيمة خصم المنتج لا يمكن أن تكون سالبة", "يجب أن تكون قيمة خصم المنتج صفراً أو أكبر", "discount")
+			return pkgerrors.NewAppError(pkgerrors.ModuleSales, "INVALID_PAYMENT", "قيمة خصم المنتج لا يمكن أن تكون سالبة", "يجب أن تكون قيمة خصم المنتج صفراً أو أكبر", "discount")
 		}
 		baseAmount := item.Price.MulFloat(item.Quantity)
 		if item.Discount > baseAmount {
-			return NewSalesError(ErrCodeInvalidPayment, "قيمة خصم المنتج تتجاوز الإجمالي", "لا يمكن أن تتجاوز قيمة خصم المنتج السعر الإجمالي للمنتج", "discount")
+			return pkgerrors.NewAppError(pkgerrors.ModuleSales, "INVALID_PAYMENT", "قيمة خصم المنتج تتجاوز الإجمالي", "لا يمكن أن تتجاوز قيمة خصم المنتج السعر الإجمالي للمنتج", "discount")
 		}
 	}
 

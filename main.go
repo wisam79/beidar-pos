@@ -186,6 +186,7 @@ func main() {
 			app.LanHandler,      // Expose LAN sync logic
 			app.CloudHandler,    // Expose Cloud & Integration logic
 			app.DiscountHandler, // Expose Discount logic
+			app.AIHandler,       // Expose AI logic
 		},
 	})
 

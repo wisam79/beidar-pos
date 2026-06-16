@@ -25,7 +25,7 @@ func (r *productRepository) WithTx(tx domain.Tx) domain.ProductRepository {
 
 func (r *productRepository) Transaction(fn func(tx domain.Tx) error) error {
 	return r.db.Transaction(func(gdb *gorm.DB) error {
-		return fn(gdb)
+		return fn(domain.NewTx(gdb))
 	})
 }
 

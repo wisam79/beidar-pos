@@ -13,9 +13,9 @@ func NewStatsRepository(db *gorm.DB) domain.StatsRepository {
 	return &statsRepository{db: db}
 }
 
-func (r *statsRepository) GetBasicStats(today string) (totalRevenue float64, totalOrders int64, dailyRevenue float64, dailyOrders int64, totalProducts int64, lowStockCount int64, err error) {
+func (r *statsRepository) GetBasicStats(today string) (totalRevenue domain.Amount, totalOrders int64, dailyRevenue domain.Amount, dailyOrders int64, totalProducts int64, lowStockCount int64, err error) {
 	type saleStats struct {
-		Revenue float64
+		Revenue domain.Amount
 		Orders  int64
 	}
 	type prodStats struct {
@@ -81,7 +81,7 @@ func (r *statsRepository) GetTopSellingProducts(limit int) ([]domain.TopProduct,
 	return topProducts, nil
 }
 
-func (r *statsRepository) GetProfitAndExpenses() (totalCOGS float64, totalExpenses float64, expenseBreakdown []domain.ChartDataPoint, err error) {
+func (r *statsRepository) GetProfitAndExpenses() (totalCOGS domain.Amount, totalExpenses domain.Amount, expenseBreakdown []domain.ChartDataPoint, err error) {
 	err = r.db.Table("sale_items").
 		Joins("JOIN sales ON sales.id = sale_items.sale_id").
 		Where("sales.status != ?", "returned").
@@ -108,7 +108,7 @@ func (r *statsRepository) GetProfitAndExpenses() (totalCOGS float64, totalExpens
 
 	for rows.Next() {
 		var cat string
-		var am float64
+		var am domain.Amount
 		if err := rows.Scan(&cat, &am); err == nil {
 			expenseBreakdown = append(expenseBreakdown, domain.ChartDataPoint{
 				Label: cat,
@@ -156,7 +156,7 @@ func (r *statsRepository) GetChartData(startDate string, dateFormat string) ([]d
 	return results, err
 }
 
-func (r *statsRepository) GetMonthStats(startDate, endDate string) (revenue float64, orders int64, expenses float64, cogs float64, err error) {
+func (r *statsRepository) GetMonthStats(startDate, endDate string) (revenue domain.Amount, orders int64, expenses domain.Amount, cogs domain.Amount, err error) {
 	err = r.db.Model(&domain.Sale{}).
 		Where("date >= ? AND date <= ? AND status != ?", startDate, endDate, "returned").
 		Select("COALESCE(SUM(total), 0)").

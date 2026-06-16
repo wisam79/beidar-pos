@@ -1,18 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/csv"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"sort"
-	"sync"
 	"time"
 
 	"beidar-desktop/internal/core/domain"
@@ -45,11 +39,10 @@ type App struct {
 	LanHandler      *handlers.LanHandler
 	CloudHandler    *handlers.CloudHandler
 	DiscountHandler *handlers.DiscountHandler
+	AIHandler       *handlers.AIHandler
 	productRepo     domain.ProductRepository
 	productService  domain.ProductService
-	aiMutex         sync.Mutex
-	aiCancelMu      sync.Mutex
-	aiCancel        context.CancelFunc
+	paymentService  domain.PaymentService
 }
 
 type appRepositories struct {
@@ -83,6 +76,7 @@ type appServices struct {
 	discount domain.DiscountService
 	lan      network.LanService
 	cloud    integration.CloudService
+	ai       domain.AIService
 }
 
 func initDatabase() (*gorm.DB, error) {
@@ -177,6 +171,7 @@ func initServices(repos *appRepositories) *appServices {
 	}
 
 	cloudService := integration.NewCloudService(repos.preferences, repos.sale, repos.staff)
+	aiService := service.NewAIService(settingsService)
 
 	return &appServices{
 		product:  productService,
@@ -192,6 +187,7 @@ func initServices(repos *appRepositories) *appServices {
 		discount: discountService,
 		lan:      lanService,
 		cloud:    cloudService,
+		ai:       aiService,
 	}
 }
 
@@ -210,8 +206,10 @@ func initHandlers(services *appServices, repos *appRepositories) *App {
 		LanHandler:      handlers.NewLanHandler(services.lan),
 		CloudHandler:    handlers.NewCloudHandler(services.cloud),
 		DiscountHandler: handlers.NewDiscountHandler(services.discount, services.lan),
+		AIHandler:       handlers.NewAIHandler(services.ai),
 		productRepo:     repos.product,
 		productService:  services.product,
+		paymentService:  services.payment,
 	}
 }
 
@@ -244,6 +242,7 @@ func (a *App) startup(ctx context.Context) {
 	a.LanHandler.Startup(ctx)
 	a.CloudHandler.Startup(ctx)
 	a.DiscountHandler.Startup(ctx)
+	a.AIHandler.Startup(ctx)
 
 	// 🔄 Start background update checker
 	updater.StartAutoUpdateCheck()
@@ -496,7 +495,7 @@ func (a *App) CalculateInstallmentPlan(total, downPayment float64, months int) (
 
 
 // GetBackupConfig retrieves current backup/sync config
-func (a *App) GetBackupConfig() (map[string]interface{}, error) {
+func (a *App) GetBackupConfig() (*domain.BackupConfig, error) {
 	if err := auth.Require(); err != nil {
 		return nil, err
 	}
@@ -504,8 +503,8 @@ func (a *App) GetBackupConfig() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return map[string]interface{}{
-		"cloudAutoSync": prefs.CloudAutoSync,
+	return &domain.BackupConfig{
+		CloudAutoSync: prefs.CloudAutoSync,
 	}, nil
 }
 
@@ -522,333 +521,76 @@ func (a *App) SetCloudAutoSync(enabled bool) error {
 	return a.SettingsHandler.UpdatePreferences(*prefs)
 }
 
-// GetInstallmentAlertSummary calculates overdue installments metrics
+// GetInstallmentAlertSummary calculates overdue installments metrics (backward-compatible wrapper)
 func (a *App) GetInstallmentAlertSummary() (map[string]interface{}, error) {
 	if err := auth.RequirePermission(auth.PermReports); err != nil {
 		return nil, err
 	}
-	customers, err := a.CRMHandler.GetCustomers()
-	if err != nil {
-		return nil, err
-	}
-	customerMap := make(map[string]domain.Customer)
-	for _, c := range customers {
-		customerMap[c.ID] = c
-	}
-
-	// Only fetch installment sales instead of all 100k records
-	sales, err := a.SaleHandler.GetInstallmentSales()
+	summary, err := a.paymentService.GetInstallmentAlertSummary()
 	if err != nil {
 		return nil, err
 	}
 
-	var totalOverdue int64
-	var totalAmount float64
-	byDay := map[string]int64{
-		"1-7":  0,
-		"8-30": 0,
-		"30+":  0,
-	}
-
-	type InstallmentAlert struct {
+	// Map domain.InstallmentAlertSummary to the exact structure the frontend expects
+	type InstallmentAlertCompatible struct {
 		SaleID        string  `json:"saleId"`
 		CustomerID    string  `json:"customerId"`
 		CustomerName  string  `json:"customerName"`
 		CustomerPhone string  `json:"customerPhone"`
 		InstNumber    int     `json:"instNumber"`
 		DueDate       string  `json:"dueDate"`
-		Amount        float64 `json:"amount"`
+		Amount        float64 `json:"amount"` // float64 for frontend compatibility
 		DaysOverdue   int     `json:"daysOverdue"`
-		TotalDue      float64 `json:"totalDue"`
+		TotalDue      float64 `json:"totalDue"` // float64 for frontend compatibility
 	}
 
-	alerts := []InstallmentAlert{}
-	customerOverdueDebt := make(map[string]float64)
-	customerOverdueCount := make(map[string]int)
-
-	today := time.Now().Truncate(24 * time.Hour)
-
-	for _, sale := range sales {
-		if sale.InstallmentPlan == nil {
-			continue
-		}
-
-		var totalDueForSale float64
-		for _, inst := range sale.InstallmentPlan.Schedule {
-			if inst.Status != "paid" {
-				totalDueForSale += inst.Amount.Float()
-			}
-		}
-
-		for _, inst := range sale.InstallmentPlan.Schedule {
-			if inst.Status == "paid" {
-				continue
-			}
-
-			dueTime, err := time.Parse("2006-01-02", inst.DueDate)
-			if err != nil {
-				continue
-			}
-
-			if dueTime.Before(today) {
-				daysOverdue := int(today.Sub(dueTime).Hours() / 24)
-				if daysOverdue <= 0 {
-					continue
-				}
-
-				totalOverdue++
-				amtFloat := inst.Amount.Float()
-				totalAmount += amtFloat
-
-				if daysOverdue <= 7 {
-					byDay["1-7"]++
-				} else if daysOverdue <= 30 {
-					byDay["8-30"]++
-				} else {
-					byDay["30+"]++
-				}
-
-				phone := ""
-				custName := sale.CustomerName
-				if c, ok := customerMap[sale.CustomerID]; ok {
-					phone = c.Phone
-					if custName == "" {
-						custName = c.Name
-					}
-				}
-
-				alerts = append(alerts, InstallmentAlert{
-					SaleID:        sale.ID,
-					CustomerID:    sale.CustomerID,
-					CustomerName:  custName,
-					CustomerPhone: phone,
-					InstNumber:    inst.Number,
-					DueDate:       inst.DueDate,
-					Amount:        amtFloat,
-					DaysOverdue:   daysOverdue,
-					TotalDue:      totalDueForSale,
-				})
-
-				customerOverdueDebt[sale.CustomerID] += amtFloat
-				customerOverdueCount[sale.CustomerID]++
-			}
-		}
-	}
-
-	type TopCustomer struct {
+	type TopCustomerCompatible struct {
 		CustomerID   string  `json:"customerId"`
 		CustomerName string  `json:"customerName"`
-		TotalDebt    float64 `json:"totalDebt"`
+		TotalDebt    float64 `json:"totalDebt"` // float64 for frontend compatibility
 		OverdueCount int     `json:"overdueCount"`
 	}
 
-	topCustomers := []TopCustomer{}
-	for cID, debt := range customerOverdueDebt {
-		name := ""
-		if c, ok := customerMap[cID]; ok {
-			name = c.Name
+	alerts := make([]InstallmentAlertCompatible, len(summary.Alerts))
+	for i, alert := range summary.Alerts {
+		alerts[i] = InstallmentAlertCompatible{
+			SaleID:        alert.SaleID,
+			CustomerID:    alert.CustomerID,
+			CustomerName:  alert.CustomerName,
+			CustomerPhone: alert.CustomerPhone,
+			InstNumber:    alert.InstNumber,
+			DueDate:       alert.DueDate,
+			Amount:        alert.Amount.Float(),
+			DaysOverdue:   alert.DaysOverdue,
+			TotalDue:      alert.TotalDue.Float(),
 		}
-		topCustomers = append(topCustomers, TopCustomer{
-			CustomerID:   cID,
-			CustomerName: name,
-			TotalDebt:    debt,
-			OverdueCount: customerOverdueCount[cID],
-		})
 	}
 
-	sort.Slice(topCustomers, func(i, j int) bool {
-		return topCustomers[i].TotalDebt > topCustomers[j].TotalDebt
-	})
-
-	if len(topCustomers) > 5 {
-		topCustomers = topCustomers[:5]
+	topCustomers := make([]TopCustomerCompatible, len(summary.TopCustomers))
+	for i, customer := range summary.TopCustomers {
+		topCustomers[i] = TopCustomerCompatible{
+			CustomerID:   customer.CustomerID,
+			CustomerName: customer.CustomerName,
+			TotalDebt:    customer.TotalDebt.Float(),
+			OverdueCount: customer.OverdueCount,
+		}
 	}
 
 	return map[string]interface{}{
-		"totalOverdue": totalOverdue,
-		"totalAmount":  totalAmount,
-		"byDay":        byDay,
+		"totalOverdue": summary.TotalOverdue,
+		"totalAmount":  summary.TotalAmount.Float(),
+		"byDay":        summary.ByDay,
 		"topCustomers": topCustomers,
 		"alerts":       alerts,
 	}, nil
 }
 
-// AI_GenerateStream streams generation response from Gemini API
+// AI_GenerateStream streams generation response from Gemini API (backward-compatible proxy)
 func (a *App) AI_GenerateStream(prompt string) error {
-	if err := auth.Require(); err != nil {
-		return err
-	}
-	if !a.aiMutex.TryLock() {
-		return fmt.Errorf("يوجد طلب ذكاء اصطناعي قيد التنفيذ بالفعل، انتظر حتى يكتمل")
-	}
-
-	prefs, err := a.SettingsHandler.GetPreferences()
-	if err != nil {
-		a.aiMutex.Unlock()
-		return fmt.Errorf("failed to load preferences: %w", err)
-	}
-
-	apiKey := prefs.GeminiAPIKey
-	if apiKey == "" && len(prefs.GeminiAPIKeys) > 0 {
-		apiKey = prefs.GeminiAPIKeys[0]
-	}
-
-	if apiKey == "" {
-		apiKey = os.Getenv("GEMINI_API_KEY")
-	}
-
-	if apiKey == "" {
-		a.aiMutex.Unlock()
-		return fmt.Errorf("يرجى إدخال مفتاح Gemini API في الإعدادات أولاً")
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	a.aiCancelMu.Lock()
-	a.aiCancel = cancel
-	a.aiCancelMu.Unlock()
-
-	go func() {
-		defer func() {
-			a.aiMutex.Unlock()
-			if r := recover(); r != nil {
-				runtime.EventsEmit(a.ctx, "ai-stream-error", fmt.Sprintf("Panic: %v", r))
-			}
-		}()
-
-		select {
-		case <-ctx.Done():
-			runtime.EventsEmit(a.ctx, "ai-stream-complete", "")
-			return
-		default:
-		}
-
-		url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=%s", apiKey)
-
-		reqBody := map[string]interface{}{
-			"contents": []map[string]interface{}{
-				{
-					"parts": []map[string]interface{}{
-						{"text": prompt},
-					},
-				},
-			},
-		}
-
-		jsonData, err := json.Marshal(reqBody)
-		if err != nil {
-			runtime.EventsEmit(a.ctx, "ai-stream-error", "فشل في تشفير طلب الذكاء الاصطناعي: "+err.Error())
-			return
-		}
-
-		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-		if err != nil {
-			runtime.EventsEmit(a.ctx, "ai-stream-error", "فشل في إنشاء طلب HTTP: "+err.Error())
-			return
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		client := &http.Client{
-			Timeout: 60 * time.Second,
-		}
-
-		resp, err := client.Do(req)
-		if err != nil {
-			if errors.Is(err, context.Canceled) {
-				runtime.EventsEmit(a.ctx, "ai-stream-complete", "")
-				return
-			}
-			runtime.EventsEmit(a.ctx, "ai-stream-error", "فشل الاتصال بخدمة الذكاء الاصطناعي: "+err.Error())
-			return
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			bodyBytes, _ := io.ReadAll(resp.Body)
-			runtime.EventsEmit(a.ctx, "ai-stream-error", fmt.Sprintf("خطأ من خادم Gemini (Status %d): %s", resp.StatusCode, string(bodyBytes)))
-			return
-		}
-
-		bufReader := bufio.NewReader(resp.Body)
-		var firstByte byte
-		for {
-			b, err := bufReader.ReadByte()
-			if err != nil {
-				runtime.EventsEmit(a.ctx, "ai-stream-error", "فشل قراءة الاستجابة: "+err.Error())
-				return
-			}
-			if b != ' ' && b != '\t' && b != '\r' && b != '\n' {
-				firstByte = b
-				break
-			}
-		}
-
-		err = bufReader.UnreadByte()
-		if err != nil {
-			runtime.EventsEmit(a.ctx, "ai-stream-error", "فشل تهيئة القارئ: "+err.Error())
-			return
-		}
-
-		dec := json.NewDecoder(bufReader)
-
-		type GeminiChunk struct {
-			Candidates []struct {
-				Content struct {
-					Parts []struct {
-						Text string `json:"text"`
-					} `json:"parts"`
-				} `json:"content"`
-			} `json:"candidates"`
-		}
-
-		if firstByte == '[' {
-			_, _ = dec.Token()
-			for dec.More() {
-				select {
-				case <-ctx.Done():
-					runtime.EventsEmit(a.ctx, "ai-stream-complete", "")
-					return
-				default:
-				}
-
-				var chunk GeminiChunk
-				if err := dec.Decode(&chunk); err != nil {
-					runtime.EventsEmit(a.ctx, "ai-stream-error", "خطأ أثناء تحليل النص: "+err.Error())
-					return
-				}
-				if len(chunk.Candidates) > 0 && len(chunk.Candidates[0].Content.Parts) > 0 {
-					textChunk := chunk.Candidates[0].Content.Parts[0].Text
-					if textChunk != "" {
-						runtime.EventsEmit(a.ctx, "ai-stream-chunk", textChunk)
-					}
-				}
-			}
-			_, _ = dec.Token()
-		} else {
-			var chunk GeminiChunk
-			if err := dec.Decode(&chunk); err != nil {
-				runtime.EventsEmit(a.ctx, "ai-stream-error", "خطأ أثناء تحليل النص: "+err.Error())
-				return
-			}
-			if len(chunk.Candidates) > 0 && len(chunk.Candidates[0].Content.Parts) > 0 {
-				textChunk := chunk.Candidates[0].Content.Parts[0].Text
-				if textChunk != "" {
-					runtime.EventsEmit(a.ctx, "ai-stream-chunk", textChunk)
-				}
-			}
-		}
-
-		runtime.EventsEmit(a.ctx, "ai-stream-complete", "")
-	}()
-
-	return nil
+	return a.AIHandler.AI_GenerateStream(prompt)
 }
 
-// AI_CancelStream cancels the current AI generation stream
+// AI_CancelStream cancels the current AI generation stream (backward-compatible proxy)
 func (a *App) AI_CancelStream() {
-	a.aiCancelMu.Lock()
-	defer a.aiCancelMu.Unlock()
-	if a.aiCancel != nil {
-		a.aiCancel()
-		a.aiCancel = nil
-	}
+	a.AIHandler.AI_CancelStream()
 }

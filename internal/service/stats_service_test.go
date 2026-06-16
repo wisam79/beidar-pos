@@ -95,18 +95,18 @@ func TestStatsAggregations(t *testing.T) {
 		t.Fatalf("GetDashboardStats failed: %v", err)
 	}
 
-	if stats.TotalRevenue != 50000 {
-		t.Errorf("Expected total revenue 50000, got %.2f", stats.TotalRevenue)
+	if stats.TotalRevenue.Cents() != 50000 {
+		t.Errorf("Expected total revenue 50000, got %.2f", stats.TotalRevenue.Float())
 	}
 
 	// Gross Profit: Revenue (50,000) - COGS (2 * 15,000 = 30,000) = 20,000
-	if stats.GrossProfit != 20000 {
-		t.Errorf("Expected gross profit 20000, got %.2f", stats.GrossProfit)
+	if stats.GrossProfit.Cents() != 20000 {
+		t.Errorf("Expected gross profit 20000, got %.2f", stats.GrossProfit.Float())
 	}
 
 	// Net Profit: Gross Profit (20,000) - Expenses (50,000) = -30,000
-	if stats.NetProfit != -30000 {
-		t.Errorf("Expected net profit -30000, got %.2f", stats.NetProfit)
+	if stats.NetProfit.Cents() != -30000 {
+		t.Errorf("Expected net profit -30000, got %.2f", stats.NetProfit.Float())
 	}
 
 	if len(stats.RecentSales) != 1 {
@@ -118,16 +118,16 @@ func TestStatsAggregations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetDashboardStats('month') failed: %v", err)
 	}
-	if monthStats.TotalRevenue != 50000 {
-		t.Errorf("Expected month total revenue 50000, got %.2f", monthStats.TotalRevenue)
+	if monthStats.TotalRevenue.Cents() != 50000 {
+		t.Errorf("Expected month total revenue 50000, got %.2f", monthStats.TotalRevenue.Float())
 	}
 
 	yearStats, err := s.GetDashboardStats("year")
 	if err != nil {
 		t.Fatalf("GetDashboardStats('year') failed: %v", err)
 	}
-	if yearStats.TotalRevenue != 50000 {
-		t.Errorf("Expected year total revenue 50000, got %.2f", yearStats.TotalRevenue)
+	if yearStats.TotalRevenue.Cents() != 50000 {
+		t.Errorf("Expected year total revenue 50000, got %.2f", yearStats.TotalRevenue.Float())
 	}
 
 	// 5. Monthly comparison
@@ -136,10 +136,10 @@ func TestStatsAggregations(t *testing.T) {
 		t.Fatalf("GetMonthlyComparison failed: %v", err)
 	}
 
-	if comparison.CurrentMonth.Revenue != 50000 {
-		t.Errorf("Expected current month revenue 50000, got %.2f", comparison.CurrentMonth.Revenue)
+	if comparison.CurrentMonth.Revenue.Cents() != 50000 {
+		t.Errorf("Expected current month revenue 50000, got %.2f", comparison.CurrentMonth.Revenue.Float())
 	}
-	if comparison.CurrentMonth.NetProfit != -30000 {
-		t.Errorf("Expected current month net profit -30000, got %.2f", comparison.CurrentMonth.NetProfit)
+	if comparison.CurrentMonth.NetProfit.Cents() != -30000 {
+		t.Errorf("Expected current month net profit -30000, got %.2f", comparison.CurrentMonth.NetProfit.Float())
 	}
 }

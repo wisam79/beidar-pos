@@ -19,7 +19,7 @@ func (r *staffRepository) WithTx(tx domain.Tx) domain.StaffRepository {
 
 func (r *staffRepository) Transaction(fn func(tx domain.Tx) error) error {
 	return r.db.Transaction(func(gdb *gorm.DB) error {
-		return fn(gdb)
+		return fn(domain.NewTx(gdb))
 	})
 }
 

@@ -19,7 +19,7 @@ func (r *purchaseOrderRepository) WithTx(tx domain.Tx) domain.PurchaseOrderRepos
 
 func (r *purchaseOrderRepository) Transaction(fn func(tx domain.Tx) error) error {
 	return r.db.Transaction(func(gdb *gorm.DB) error {
-		return fn(gdb)
+		return fn(domain.NewTx(gdb))
 	})
 }
 
@@ -84,26 +84,22 @@ func (r *purchaseOrderRepository) GetOrderItems(orderID string) ([]domain.Purcha
 	return items, nil
 }
 
-func (r *purchaseOrderRepository) GetPurchaseOrderStats() (map[string]interface{}, error) {
-	var stats struct {
-		TotalOrders   int64   `json:"totalOrders"`
-		PendingOrders int64   `json:"pendingOrders"`
-		TotalValue    float64 `json:"totalValue"`
-		TotalPaid     float64 `json:"totalPaid"`
-		TotalUnpaid   float64 `json:"totalUnpaid"`
-	}
+func (r *purchaseOrderRepository) GetPurchaseOrderStats() (*domain.PurchaseOrderStats, error) {
+	var stats domain.PurchaseOrderStats
 
-	r.db.Model(&domain.PurchaseOrder{}).Count(&stats.TotalOrders)
-	r.db.Model(&domain.PurchaseOrder{}).Where("status IN ?", []string{"pending", "partial"}).Count(&stats.PendingOrders)
-	r.db.Model(&domain.PurchaseOrder{}).Select("COALESCE(SUM(total_amount), 0)").Scan(&stats.TotalValue)
-	r.db.Model(&domain.PurchaseOrder{}).Select("COALESCE(SUM(paid_amount), 0)").Scan(&stats.TotalPaid)
+	if err := r.db.Model(&domain.PurchaseOrder{}).Count(&stats.TotalOrders).Error; err != nil {
+		return nil, err
+	}
+	if err := r.db.Model(&domain.PurchaseOrder{}).Where("status IN ?", []string{"pending", "partial"}).Count(&stats.PendingOrders).Error; err != nil {
+		return nil, err
+	}
+	if err := r.db.Model(&domain.PurchaseOrder{}).Select("COALESCE(SUM(total_amount), 0)").Scan(&stats.TotalValue).Error; err != nil {
+		return nil, err
+	}
+	if err := r.db.Model(&domain.PurchaseOrder{}).Select("COALESCE(SUM(paid_amount), 0)").Scan(&stats.TotalPaid).Error; err != nil {
+		return nil, err
+	}
 	stats.TotalUnpaid = stats.TotalValue - stats.TotalPaid
 
-	return map[string]interface{}{
-		"totalOrders":   stats.TotalOrders,
-		"pendingOrders": stats.PendingOrders,
-		"totalValue":    stats.TotalValue,
-		"totalPaid":     stats.TotalPaid,
-		"totalUnpaid":   stats.TotalUnpaid,
-	}, nil
+	return &stats, nil
 }

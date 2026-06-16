@@ -2,14 +2,14 @@ package domain
 
 // ChartDataResult holds chart data from database queries
 type ChartDataResult struct {
-	DateKey string  `json:"date_key"`
-	Total   float64 `json:"total"`
+	DateKey string `json:"date_key"`
+	Total   Amount `json:"total"`
 }
 
 type ChartDataPoint struct {
-	Label          string  `json:"label"`
-	Value          float64 `json:"value"`
-	FormattedValue string  `json:"formattedValue"`
+	Label          string `json:"label"`
+	Value          Amount `json:"value"`
+	FormattedValue string `json:"formattedValue"`
 }
 
 type TopProduct struct {
@@ -18,34 +18,34 @@ type TopProduct struct {
 }
 
 type TopCustomer struct {
-	Name  string  `json:"name"`
-	Total float64 `json:"total"`
+	Name  string `json:"name"`
+	Total Amount `json:"total"`
 }
 
 type DashboardStats struct {
-	TotalRevenue     float64          `json:"totalRevenue"`
+	TotalRevenue     Amount           `json:"totalRevenue"`
 	TotalOrders      int64            `json:"totalOrders"`
-	DailyRevenue     float64          `json:"dailyRevenue"`
+	DailyRevenue     Amount           `json:"dailyRevenue"`
 	DailyOrders      int64            `json:"dailyOrders"`
 	ChartData        []ChartDataPoint `json:"chartData"`
 	TopSelling       []TopProduct     `json:"topSelling"`
 	RecentSales      []Sale           `json:"recentSales"`
 	LowStockCount    int64            `json:"lowStockCount"`
 	TotalProducts    int64            `json:"totalProducts"`
-	NetProfit        float64          `json:"netProfit"`
-	GrossProfit      float64          `json:"grossProfit"`
-	TotalExpenses    float64          `json:"totalExpenses"`
+	NetProfit        Amount           `json:"netProfit"`
+	GrossProfit      Amount           `json:"grossProfit"`
+	TotalExpenses    Amount           `json:"totalExpenses"`
 	ExpenseBreakdown []ChartDataPoint `json:"expenseBreakdown"`
 	TopCustomers     []TopCustomer    `json:"topCustomers"`
 }
 
 type MonthData struct {
-	Label     string  `json:"label"`
-	Revenue   float64 `json:"revenue"`
-	Orders    int64   `json:"orders"`
-	NetProfit float64 `json:"netProfit"`
-	AvgOrder  float64 `json:"avgOrder"`
-	Expenses  float64 `json:"expenses"`
+	Label     string `json:"label"`
+	Revenue   Amount `json:"revenue"`
+	Orders    int64  `json:"orders"`
+	NetProfit Amount `json:"netProfit"`
+	AvgOrder  Amount `json:"avgOrder"`
+	Expenses  Amount `json:"expenses"`
 }
 
 type MonthlyComparison struct {
@@ -55,3 +55,4 @@ type MonthlyComparison struct {
 	OrdersChange  float64   `json:"ordersChange"`
 	ProfitChange  float64   `json:"profitChange"`
 }
+

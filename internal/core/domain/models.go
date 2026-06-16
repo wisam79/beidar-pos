@@ -321,3 +321,12 @@ type Discount struct {
 	Active      bool     `json:"active"`
 	CreatedAt   int64    `json:"createdAt"`
 }
+
+type PurchaseOrderStats struct {
+	TotalOrders   int64  `json:"totalOrders"`
+	PendingOrders int64  `json:"pendingOrders"`
+	TotalValue    Amount `json:"totalValue"`
+	TotalPaid     Amount `json:"totalPaid"`
+	TotalUnpaid   Amount `json:"totalUnpaid"`
+}
+

@@ -169,18 +169,18 @@ type PurchaseOrderRepository interface {
 	UpdateItemReceivedQty(itemID uint, newReceivedQty float64) error
 	GetOrderItem(orderID string, productID string) (*PurchaseOrderItem, error)
 	GetOrderItems(orderID string) ([]PurchaseOrderItem, error)
-	GetPurchaseOrderStats() (map[string]interface{}, error)
+	GetPurchaseOrderStats() (*PurchaseOrderStats, error)
 }
 
 // StatsRepository defines database operations for statistics
 type StatsRepository interface {
-	GetBasicStats(today string) (totalRevenue float64, totalOrders int64, dailyRevenue float64, dailyOrders int64, totalProducts int64, lowStockCount int64, err error)
+	GetBasicStats(today string) (totalRevenue Amount, totalOrders int64, dailyRevenue Amount, dailyOrders int64, totalProducts int64, lowStockCount int64, err error)
 	GetRecentSales(limit int) ([]Sale, error)
 	GetTopSellingProducts(limit int) ([]TopProduct, error)
-	GetProfitAndExpenses() (totalCOGS float64, totalExpenses float64, expenseBreakdown []ChartDataPoint, err error)
+	GetProfitAndExpenses() (totalCOGS Amount, totalExpenses Amount, expenseBreakdown []ChartDataPoint, err error)
 	GetTopCustomers(limit int) ([]TopCustomer, error)
 	GetChartData(startDate string, dateFormat string) ([]ChartDataResult, error)
-	GetMonthStats(startDate, endDate string) (revenue float64, orders int64, expenses float64, cogs float64, err error)
+	GetMonthStats(startDate, endDate string) (revenue Amount, orders int64, expenses Amount, cogs Amount, err error)
 }
 
 // BackupRepository defines database operations for backup
@@ -252,6 +252,7 @@ type PaymentService interface {
 	GetCustomerInstallments(customerID string) ([]Sale, error)
 	GetInstallmentSummary(saleID string) (total int, paid int, remaining Amount, err error)
 	CalculateInstallmentPlan(total, downPayment Amount, months int) (*InstallmentPlan, error)
+	GetInstallmentAlertSummary() (*InstallmentAlertSummary, error)
 }
 
 // FinanceService defines the business logic for finance, expenses, categories, and POs
@@ -286,7 +287,7 @@ type FinanceService interface {
 	CancelPurchaseOrder(id string) error
 	ReceivePurchaseOrder(orderID string, items []PurchaseOrderItem) error
 	PayPurchaseOrder(orderID string, amount Amount, method string) error
-	GetPurchaseOrderStats() (map[string]interface{}, error)
+	GetPurchaseOrderStats() (*PurchaseOrderStats, error)
 }
 
 // CRMService defines the business logic for customers and suppliers
@@ -396,3 +397,10 @@ type DiscountService interface {
 	ApplyDiscount(id string) error
 	CalculateDiscountAmount(discountID string, subtotal Amount, itemsCount int) (Amount, error)
 }
+
+// AIService defines the business logic for AI content generation and streaming
+type AIService interface {
+	GenerateStream(prompt string, onChunk func(string), onError func(string), onComplete func()) error
+	CancelStream()
+}
+

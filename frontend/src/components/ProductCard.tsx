@@ -64,14 +64,21 @@ export const ProductCard = memo(({ product, onClick, isJustAdded, onPrint, curre
                     </div>
                 )}
                 {onPrint && (
-                    <button
-                        type="button"
+                    <div
+                        role="button"
+                        tabIndex={0}
                         onClick={(e) => { e.stopPropagation(); onPrint(e); }}
-                        className="absolute left-2 top-2 z-20 h-7 w-7 rounded-lg border border-border/30 bg-surface/90 text-text-muted hover:text-text-main opacity-0 group-hover:opacity-100 transition-opacity touch-target"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.stopPropagation();
+                                onPrint(e as any);
+                            }
+                        }}
+                        className="absolute left-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-lg border border-border/30 bg-surface/90 text-text-muted hover:text-text-main opacity-0 group-hover:opacity-100 transition-opacity touch-target cursor-pointer"
                         title="طباعة"
                     >
                         <Printer size={13} />
-                    </button>
+                    </div>
                 )}
                 <div className="absolute right-2 top-2 z-20">
                     {isOut ? (

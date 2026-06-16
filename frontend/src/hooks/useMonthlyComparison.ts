@@ -92,6 +92,21 @@ export function useMonthlyComparison(): UseMonthlyComparisonReturn {
         queryFn: async () => {
             // استدعاء API المقارنة الشهرية من الباكند
             const result = await api.stats.getMonthlyComparison();
+            if (result) {
+                // Convert cents to standard currency units (divide by 100)
+                if (result.currentMonth) {
+                    result.currentMonth.revenue = (result.currentMonth.revenue || 0) / 100;
+                    result.currentMonth.netProfit = (result.currentMonth.netProfit || 0) / 100;
+                    result.currentMonth.avgOrder = (result.currentMonth.avgOrder || 0) / 100;
+                    result.currentMonth.expenses = (result.currentMonth.expenses || 0) / 100;
+                }
+                if (result.previousMonth) {
+                    result.previousMonth.revenue = (result.previousMonth.revenue || 0) / 100;
+                    result.previousMonth.netProfit = (result.previousMonth.netProfit || 0) / 100;
+                    result.previousMonth.avgOrder = (result.previousMonth.avgOrder || 0) / 100;
+                    result.previousMonth.expenses = (result.previousMonth.expenses || 0) / 100;
+                }
+            }
             return result as MonthlyComparisonData;
         },
         // البيانات تبقى صالحة لمدة 60 ثانية (لأنها لا تتغير كثيراً)

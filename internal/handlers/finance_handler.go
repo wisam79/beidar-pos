@@ -212,7 +212,7 @@ func (h *FinanceHandler) PayPurchaseOrder(orderID string, amount float64, method
 	return h.financeService.PayPurchaseOrder(orderID, domain.NewAmount(amount), method)
 }
 
-func (h *FinanceHandler) GetPurchaseOrderStats() (map[string]interface{}, error) {
+func (h *FinanceHandler) GetPurchaseOrderStats() (*domain.PurchaseOrderStats, error) {
 	if err := auth.Require(); err != nil {
 		return nil, err
 	}

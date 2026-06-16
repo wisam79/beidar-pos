@@ -8,6 +8,7 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
+	"beidar-desktop/pkg/errors"
 
 	"github.com/glebarez/sqlite"
 	"github.com/google/uuid"
@@ -494,42 +495,42 @@ func TestSaleService_ExtraCoverage(t *testing.T) {
 	saleService, _, db, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	// 1. Error constructors & SalesError.Error()
+	// 1. Error constructors & AppError.Error()
 	errStock := service.ErrSalesInsufficientStock("Product A", 10.0, 15.0)
-	if errStock.Code != service.ErrCodeSalesInsufficientStock {
-		t.Errorf("Expected code %s, got %s", service.ErrCodeSalesInsufficientStock, errStock.Code)
+	if errStock.Code != "SALES_INSUFFICIENT_STOCK" {
+		t.Errorf("Expected code SALES_INSUFFICIENT_STOCK, got %s", errStock.Code)
 	}
 	if errStock.Error() == "" {
 		t.Error("Expected error message to be non-empty")
 	}
 
-	errNoHint := &service.SalesError{
-		Code:    service.ErrCodeInvalidPayment,
+	errNoHint := &errors.AppError{
+		Code:    "INVALID_PAYMENT",
 		Message: "Error without hint",
 	}
 	if errNoHint.Error() != "Error without hint" {
 		t.Errorf("Expected 'Error without hint', got %s", errNoHint.Error())
 	}
 
-	if service.ErrInvalidPayment().Code != service.ErrCodeInvalidPayment {
+	if service.ErrInvalidPayment().Code != "INVALID_PAYMENT" {
 		t.Error("ErrInvalidPayment failed")
 	}
-	if service.ErrEmptyCart().Code != service.ErrCodeEmptyCart {
+	if service.ErrEmptyCart().Code != "EMPTY_CART" {
 		t.Error("ErrEmptyCart failed")
 	}
-	if service.ErrSalesNotFound("123").Code != service.ErrCodeSaleNotFound {
+	if service.ErrSalesNotFound("123").Code != "SALE_NOT_FOUND" {
 		t.Error("ErrSalesNotFound failed")
 	}
-	if service.ErrAlreadyReturned().Code != service.ErrCodeAlreadyReturned {
+	if service.ErrAlreadyReturned().Code != "ALREADY_RETURNED" {
 		t.Error("ErrAlreadyReturned failed")
 	}
-	if service.ErrSalesProductNotFound("id").Code != service.ErrCodeSalesProductNotFound {
+	if service.ErrSalesProductNotFound("id").Code != "SALES_PRODUCT_NOT_FOUND" {
 		t.Error("ErrSalesProductNotFound failed")
 	}
-	if service.ErrSalesInvalidQuantity().Code != service.ErrCodeSalesInvalidQuantity {
+	if service.ErrSalesInvalidQuantity().Code != "SALES_INVALID_QUANTITY" {
 		t.Error("ErrSalesInvalidQuantity failed")
 	}
-	if service.ErrPriceMismatch("P", domain.NewAmount(10), domain.NewAmount(20)).Code != service.ErrCodePriceMismatch {
+	if service.ErrPriceMismatch("P", domain.NewAmount(10), domain.NewAmount(20)).Code != "PRICE_MISMATCH" {
 		t.Error("ErrPriceMismatch failed")
 	}
 

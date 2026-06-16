@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	pkgerrors "beidar-desktop/pkg/errors"
 	"beidar-desktop/pkg/i18n"
 	"beidar-desktop/pkg/logger"
-
 )
 
 type paymentService struct {
@@ -382,6 +382,132 @@ func (s *paymentService) CalculateInstallmentPlan(total, downPayment domain.Amou
 		Months:      months,
 		StartDate:   time.Now().Format("2006-01-02"),
 		Schedule:    schedule,
+	}, nil
+}
+
+func (s *paymentService) GetInstallmentAlertSummary() (*domain.InstallmentAlertSummary, error) {
+	customers, err := s.customerRepo.GetAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch customers: %w", err)
+	}
+	customerMap := make(map[string]domain.Customer)
+	for _, c := range customers {
+		customerMap[c.ID] = c
+	}
+
+	sales, err := s.saleRepo.GetInstallmentSales()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch installment sales: %w", err)
+	}
+
+	var totalOverdue int64
+	var totalAmount domain.Amount
+	byDay := map[string]int64{
+		"1-7":  0,
+		"8-30": 0,
+		"30+":  0,
+	}
+
+	alerts := []domain.InstallmentAlert{}
+	customerOverdueDebt := make(map[string]domain.Amount)
+	customerOverdueCount := make(map[string]int)
+
+	today := time.Now().Truncate(24 * time.Hour)
+
+	for _, sale := range sales {
+		if sale.InstallmentPlan == nil {
+			continue
+		}
+
+		var totalDueForSale domain.Amount
+		for _, inst := range sale.InstallmentPlan.Schedule {
+			if inst.Status != "paid" {
+				totalDueForSale = totalDueForSale.Add(inst.Amount)
+			}
+		}
+
+		for _, inst := range sale.InstallmentPlan.Schedule {
+			if inst.Status == "paid" {
+				continue
+			}
+
+			dueTime, err := time.Parse("2006-01-02", inst.DueDate)
+			if err != nil {
+				continue
+			}
+
+			if dueTime.Before(today) {
+				daysOverdue := int(today.Sub(dueTime).Hours() / 24)
+				if daysOverdue <= 0 {
+					continue
+				}
+
+				totalOverdue++
+				totalAmount = totalAmount.Add(inst.Amount)
+
+				if daysOverdue <= 7 {
+					byDay["1-7"]++
+				} else if daysOverdue <= 30 {
+					byDay["8-30"]++
+				} else {
+					byDay["30+"]++
+				}
+
+				phone := ""
+				custName := sale.CustomerName
+				if c, ok := customerMap[sale.CustomerID]; ok {
+					phone = c.Phone
+					if custName == "" {
+						custName = c.Name
+					}
+				}
+
+				alerts = append(alerts, domain.InstallmentAlert{
+					SaleID:        sale.ID,
+					CustomerID:    sale.CustomerID,
+					CustomerName:  custName,
+					CustomerPhone: phone,
+					InstNumber:    inst.Number,
+					DueDate:       inst.DueDate,
+					Amount:        inst.Amount,
+					DaysOverdue:   daysOverdue,
+					TotalDue:      totalDueForSale,
+				})
+
+				customerOverdueDebt[sale.CustomerID] = customerOverdueDebt[sale.CustomerID].Add(inst.Amount)
+				customerOverdueCount[sale.CustomerID]++
+			}
+		}
+	}
+
+	topCustomers := []domain.OverdueCustomer{}
+	for cID, debt := range customerOverdueDebt {
+		name := ""
+		if c, ok := customerMap[cID]; ok {
+			name = c.Name
+		}
+		topCustomers = append(topCustomers, domain.OverdueCustomer{
+			CustomerID:   cID,
+			CustomerName: name,
+			TotalDebt:    debt,
+			OverdueCount: customerOverdueCount[cID],
+		})
+	}
+
+	sort.Slice(topCustomers, func(i, j int) bool {
+		return topCustomers[i].TotalDebt > topCustomers[j].TotalDebt
+	})
+
+	if len(topCustomers) > 5 {
+		topCustomers = topCustomers[:5]
+	}
+
+	return &domain.InstallmentAlertSummary{
+		TotalOverdue: totalOverdue,
+		TotalAmount:  totalAmount,
+		ByDay:        byDay,
+		TopCustomers: topCustomers,
+		Alerts:       alerts,
 	}, nil
 }
 

@@ -42,7 +42,7 @@ func (s *statsService) GetDashboardStats(timeRange string) (stats *domain.Dashbo
 	var wg sync.WaitGroup
 	var errs []error
 	var mu sync.Mutex
-	var totalCOGS float64
+	var totalCOGS domain.Amount
 
 	appendErr := func(e error) {
 		if e != nil {
@@ -109,8 +109,8 @@ func (s *statsService) GetDashboardStats(timeRange string) (stats *domain.Dashbo
 		mu.Lock()
 		totalCOGS = cogs
 		stats.TotalExpenses = totalExpenses
-		stats.GrossProfit = stats.TotalRevenue - cogs
-		stats.NetProfit = stats.GrossProfit - totalExpenses
+		stats.GrossProfit = stats.TotalRevenue.Sub(cogs)
+		stats.NetProfit = stats.GrossProfit.Sub(totalExpenses)
 		stats.ExpenseBreakdown = expenseBreakdown
 		mu.Unlock()
 	}()
@@ -138,8 +138,8 @@ func (s *statsService) GetDashboardStats(timeRange string) (stats *domain.Dashbo
 
 	wg.Wait()
 
-	stats.GrossProfit = stats.TotalRevenue - totalCOGS
-	stats.NetProfit = stats.GrossProfit - stats.TotalExpenses
+	stats.GrossProfit = stats.TotalRevenue.Sub(totalCOGS)
+	stats.NetProfit = stats.GrossProfit.Sub(stats.TotalExpenses)
 
 	if len(errs) > 0 {
 		return nil, errs[0]
@@ -183,7 +183,7 @@ func (s *statsService) getChartDataPoints(timeRange string) []domain.ChartDataPo
 		return []domain.ChartDataPoint{}
 	}
 
-	valueMap := make(map[string]float64)
+	valueMap := make(map[string]domain.Amount)
 	for _, r := range results {
 		valueMap[r.DateKey] = r.Total
 	}
@@ -289,22 +289,22 @@ func (s *statsService) GetMonthlyComparison() (*domain.MonthlyComparison, error)
 
 	// Calculate percentage changes
 	if comparison.PreviousMonth.Revenue > 0 {
-		comparison.RevenueChange = ((comparison.CurrentMonth.Revenue - comparison.PreviousMonth.Revenue) / comparison.PreviousMonth.Revenue) * 100
+		comparison.RevenueChange = ((comparison.CurrentMonth.Revenue.Float() - comparison.PreviousMonth.Revenue.Float()) / comparison.PreviousMonth.Revenue.Float()) * 100
 	}
 	if comparison.PreviousMonth.Orders > 0 {
 		comparison.OrdersChange = ((float64(comparison.CurrentMonth.Orders) - float64(comparison.PreviousMonth.Orders)) / float64(comparison.PreviousMonth.Orders)) * 100
 	}
 	if comparison.PreviousMonth.NetProfit != 0 {
-		comparison.ProfitChange = ((comparison.CurrentMonth.NetProfit - comparison.PreviousMonth.NetProfit) / math.Abs(comparison.PreviousMonth.NetProfit)) * 100
+		comparison.ProfitChange = ((comparison.CurrentMonth.NetProfit.Float() - comparison.PreviousMonth.NetProfit.Float()) / math.Abs(comparison.PreviousMonth.NetProfit.Float())) * 100
 	}
 
 	return comparison, nil
 }
 
-func (s *statsService) buildMonthData(revenue float64, orders int64, expenses float64, cogs float64, label string) domain.MonthData {
-	avgOrder := 0.0
+func (s *statsService) buildMonthData(revenue domain.Amount, orders int64, expenses domain.Amount, cogs domain.Amount, label string) domain.MonthData {
+	avgOrder := domain.Zero()
 	if orders > 0 {
-		avgOrder = revenue / float64(orders)
+		avgOrder = revenue.Div(orders)
 	}
 
 	return domain.MonthData{
@@ -313,6 +313,6 @@ func (s *statsService) buildMonthData(revenue float64, orders int64, expenses fl
 		Orders:    orders,
 		Expenses:  expenses,
 		AvgOrder:  avgOrder,
-		NetProfit: revenue - cogs - expenses,
+		NetProfit: revenue.Sub(cogs).Sub(expenses),
 	}
 }

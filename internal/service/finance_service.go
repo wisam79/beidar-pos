@@ -573,6 +573,6 @@ func (s *financeService) PayPurchaseOrder(orderID string, amount domain.Amount, 
 	})
 }
 
-func (s *financeService) GetPurchaseOrderStats() (map[string]interface{}, error) {
+func (s *financeService) GetPurchaseOrderStats() (*domain.PurchaseOrderStats, error) {
 	return s.purchaseRepo.GetPurchaseOrderStats()
 }

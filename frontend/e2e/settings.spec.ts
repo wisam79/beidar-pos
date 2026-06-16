@@ -1,100 +1,125 @@
 import { test, expect } from '@playwright/test';
+import { mockWails } from './mock-wails';
 
-/**
- * E2E Tests: Settings Page
- * Tests the settings page structure and interactions
- */
+test.setTimeout(90000);
 
-test.describe('Settings Page Structure', () => {
+test.describe('Settings & Staff Scenario', () => {
     test.beforeEach(async ({ page }) => {
+        await mockWails(page);
         await page.goto('/#/settings');
         await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1500);
+
+        // Handle pin-login if needed
+        const selectAccountText = page.locator('h2').filter({ hasText: /اختر حسابك|اختر الحساب|Select your account/i }).first();
+        if (await selectAccountText.isVisible().catch(() => false)) {
+            const adminButton = page.locator('button').filter({ hasText: /Admin|admin/i }).first();
+            if (await adminButton.isVisible().catch(() => false)) {
+                await adminButton.click();
+                await page.waitForTimeout(800);
+
+                const zeroButton = page.locator('button').filter({ hasText: /^0$/ }).first();
+                if (await zeroButton.isVisible().catch(() => false)) {
+                    await zeroButton.click();
+                    await page.waitForTimeout(150);
+                    await zeroButton.click();
+                    await page.waitForTimeout(150);
+                    await zeroButton.click();
+                    await page.waitForTimeout(150);
+                    await zeroButton.click();
+                    await page.waitForTimeout(4000); // Wait for login animation and redirection to settings
+                }
+            }
+        }
     });
 
-    test('should load settings page', async ({ page }) => {
-        expect(page.url()).toContain('settings');
-        await expect(page.locator('#root')).toBeVisible();
-    });
+    test('should modify store preferences and manage staff accounts', async ({ page }) => {
+        // 1. Assert we are on the settings URL
+        await expect(page).toHaveURL(/.*settings/);
 
-    test('should display settings tabs/sections', async ({ page }) => {
-        // Settings page should have multiple sections
-        const buttons = page.locator('button');
-        const count = await buttons.count();
+        // 2. Modify Store Preferences (Store Name)
+        const storeNameInput = page.locator('input[placeholder="مثال: سوبرماركت الأمل"]').first();
+        await expect(storeNameInput).toBeVisible();
+        await storeNameInput.fill('بيدر برو Beidar Pro');
 
-        // Settings has many tabs/buttons
-        expect(count).toBeGreaterThan(3);
-    });
+        // Verify save button becomes active (hasChanges is true)
+        const saveChangesBtn = page.locator('button').filter({ hasText: /حفظ التغييرات/i }).first();
+        await expect(saveChangesBtn).toBeVisible();
+        await expect(saveChangesBtn).toBeEnabled();
 
-    test('should have form inputs', async ({ page }) => {
-        // Settings has various input fields
-        const inputs = page.locator('input');
-        const count = await inputs.count();
-
-        expect(count).toBeGreaterThan(0);
-    });
-});
-
-test.describe('Settings Theme Toggle', () => {
-    test('should have theme toggle option', async ({ page }) => {
-        await page.goto('/#/settings');
-        await page.waitForTimeout(2000);
-
-        // Look for theme-related elements
-        const body = page.locator('body');
-        const hasDataTheme = await page.locator('html').getAttribute('data-theme');
-
-        // Should have a theme attribute (dark or light)
-        expect(hasDataTheme === 'dark' || hasDataTheme === 'light' || hasDataTheme === null).toBeTruthy();
-    });
-});
-
-test.describe('Settings Store Configuration', () => {
-    test('should display store name input', async ({ page }) => {
-        await page.goto('/#/settings');
+        // Click save button and verify it becomes inactive after success ("محفوظ")
+        await saveChangesBtn.click();
         await page.waitForTimeout(2000);
 
-        // Look for store name input
-        const inputs = page.locator('input');
-        const count = await inputs.count();
+        const savedBtn = page.locator('button').filter({ hasText: /محفوظ/i }).first();
+        await expect(savedBtn).toBeVisible();
 
-        // At least one input should exist
-        expect(count).toBeGreaterThan(0);
-    });
+        // 3. Switch to Security Tab ("الأمان")
+        const securityTabBtn = page.locator('button').filter({ hasText: /^الأمان$/ }).first();
+        await expect(securityTabBtn).toBeVisible();
+        await securityTabBtn.click();
+        await page.waitForTimeout(1000);
 
-    test('should display currency selector', async ({ page }) => {
-        await page.goto('/#/settings');
+        // Click "إدارة الموظفين" button to open Staff Manager
+        const manageStaffBtn = page.locator('button').filter({ hasText: /إدارة الموظفين/i }).first();
+        await expect(manageStaffBtn).toBeVisible();
+        await manageStaffBtn.click();
+        await page.waitForTimeout(1500);
+
+        // Verify StaffManager Modal is open
+        const modalTitle = page.locator('h2').filter({ hasText: /إدارة الموظفين/i }).first();
+        await expect(modalTitle).toBeVisible();
+
+        // Click "إضافة موظف" button to open the form
+        const addStaffBtn = page.locator('button').filter({ hasText: /إضافة موظف/i }).first();
+        await expect(addStaffBtn).toBeVisible();
+        await addStaffBtn.click();
+        await page.waitForTimeout(1000);
+
+        // Fill out staff details
+        const fullNameInput = page.locator('input[title="الاسم الكامل"]').first();
+        await expect(fullNameInput).toBeVisible();
+        await fullNameInput.fill('كاشير جديد E2E');
+
+        const usernameInput = page.locator('input[title="اسم المستخدم"]').first();
+        await expect(usernameInput).toBeVisible();
+        await usernameInput.fill('cashier_e2e');
+
+        const pinInput = page.locator('input[title="رمز PIN"]').first();
+        await expect(pinInput).toBeVisible();
+        await pinInput.fill('1111');
+
+        const phoneInput = page.locator('input[title="رقم الهاتف"]').first();
+        await expect(phoneInput).toBeVisible();
+        await phoneInput.fill('07701234567');
+
+        const emailInput = page.locator('input[title="البريد الإلكتروني"]').first();
+        await expect(emailInput).toBeVisible();
+        await emailInput.fill('cashier@e2e.com');
+
+        // Select Role: Cashier ("كاشير")
+        const roleSelect = page.locator('select[title="صلاحية الموظف"]').first();
+        await expect(roleSelect).toBeVisible();
+        await roleSelect.selectOption('cashier');
+
+        // Submit the form
+        const submitBtn = page.locator('button').filter({ hasText: /^إضافة الموظف$/ }).first();
+        await expect(submitBtn).toBeVisible();
+        await submitBtn.click();
         await page.waitForTimeout(2000);
 
-        // Look for select elements
-        const selects = page.locator('select');
-        const count = await selects.count();
+        // Verify the new staff member is listed in the Staff list
+        const newStaffCard = page.locator('h4').filter({ hasText: /كاشير جديد E2E/i }).first();
+        await expect(newStaffCard).toBeVisible();
 
-        // Should have some select dropdowns
-        expect(count).toBeGreaterThanOrEqual(0);
-    });
-});
+        // Close the modal
+        const staffManagerModal = page.locator('div.fixed').filter({ hasText: 'إدارة الموظفين' });
+        const closeBtn = staffManagerModal.locator('button[title="إغلاق"]').first();
+        await expect(closeBtn).toBeVisible();
+        await closeBtn.click();
+        await page.waitForTimeout(1000);
 
-test.describe('Settings Accessibility', () => {
-    test('should have proper heading structure', async ({ page }) => {
-        await page.goto('/#/settings');
-        await page.waitForTimeout(2000);
-
-        // Check for headings
-        const headings = page.locator('h1, h2, h3, h4');
-        const count = await headings.count();
-
-        expect(count).toBeGreaterThan(0);
-    });
-
-    test('should have labeled form fields', async ({ page }) => {
-        await page.goto('/#/settings');
-        await page.waitForTimeout(2000);
-
-        // Check for labels
-        const labels = page.locator('label');
-        const count = await labels.count();
-
-        expect(count).toBeGreaterThanOrEqual(0);
+        // Verify modal is closed
+        await expect(modalTitle).not.toBeVisible();
     });
 });
