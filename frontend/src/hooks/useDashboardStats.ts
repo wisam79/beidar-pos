@@ -42,8 +42,8 @@ export function useDashboardStats(timeRange: string = 'week'): UseDashboardStats
                 data.grossProfit = (data.grossProfit || 0) / 100;
                 data.totalExpenses = (data.totalExpenses || 0) / 100;
                 if (data.chartData) {
-                    data.chartData = data.chartData.map((d: unknown) => {
-                        const item = d as Record<string, unknown>;
+                    data.chartData = data.chartData.map((d: typeof data.chartData[number]) => {
+                        const item = d as unknown as Record<string, unknown>;
                         return {
                             ...item,
                             value: (Number(item.value) || 0) / 100,
@@ -51,8 +51,8 @@ export function useDashboardStats(timeRange: string = 'week'): UseDashboardStats
                     });
                 }
                 if (data.expenseBreakdown) {
-                    data.expenseBreakdown = data.expenseBreakdown.map((d: unknown) => {
-                        const item = d as Record<string, unknown>;
+                    data.expenseBreakdown = data.expenseBreakdown.map((d: typeof data.expenseBreakdown[number]) => {
+                        const item = d as unknown as Record<string, unknown>;
                         return {
                             ...item,
                             value: (Number(item.value) || 0) / 100,
@@ -60,8 +60,8 @@ export function useDashboardStats(timeRange: string = 'week'): UseDashboardStats
                     });
                 }
                 if (data.topCustomers) {
-                    data.topCustomers = data.topCustomers.map((c: unknown) => {
-                        const item = c as Record<string, unknown>;
+                    data.topCustomers = data.topCustomers.map((c: typeof data.topCustomers[number]) => {
+                        const item = c as unknown as Record<string, unknown>;
                         return {
                             ...item,
                             total: (Number(item.total) || 0) / 100,
@@ -69,8 +69,8 @@ export function useDashboardStats(timeRange: string = 'week'): UseDashboardStats
                     });
                 }
                 if (data.recentSales) {
-                    data.recentSales = data.recentSales.map((sale: unknown) => {
-                        const s = sale as Record<string, unknown>;
+                    data.recentSales = data.recentSales.map((sale: typeof data.recentSales[number]) => {
+                        const s = sale as unknown as Record<string, unknown>;
                         return {
                             ...s,
                             total: (Number(s.total) || 0) / 100,
