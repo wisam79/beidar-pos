@@ -6,7 +6,6 @@ import { ChangePasswordModal } from '../ChangePasswordModal';
 import { SessionTimeoutWarning } from '../SessionTimeoutWarning';
 import { CommandPalette } from '../CommandPalette';
 import { AIChatWindow } from '../AIChatWindow';
-import { ToastContainer } from '../ToastContainer';
 import { UtilitiesDock } from '../UtilitiesDock';
 import { ShortcutsModal } from '../ShortcutsModal';
 
@@ -32,8 +31,6 @@ const ChangePasswordModalWrapper = () => {
 };
 
 export const AppProviders = ({ children, aiContext, onNavigate, onLock }: AppProvidersProps) => {
-  const notifications = useAppStore((state) => state.notifications);
-  const removeNotification = useAppStore((state) => state.removeNotification);
   const isAiChatOpen = useAppStore((state) => state.isAiChatOpen);
   const setAiChatOpen = useAppStore((state) => state.setAiChatOpen);
   const isCommandPaletteOpen = useAppStore((state) => state.isCommandPaletteOpen);
@@ -48,7 +45,6 @@ export const AppProviders = ({ children, aiContext, onNavigate, onLock }: AppPro
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} onNavigate={onNavigate} />
       <AIChatWindow isOpen={isAiChatOpen} onClose={() => setAiChatOpen(false)} contextData={aiContext} />
       <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setShortcutsOpen(false)} />
-      <ToastContainer notifications={notifications} onRemove={removeNotification} />
       <UtilitiesDock onLock={onLock} />
       {children}
     </>

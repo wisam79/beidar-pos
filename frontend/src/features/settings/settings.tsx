@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Save, Store, Database, CreditCard, ShieldCheck, Palette, Monitor, Wifi, Terminal, Sparkles, Cloud } from 'lucide-react';
 import { PinModal } from '../../components/PinModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { useConfirmModal } from '../../hooks';
 import { DiscountManager } from './components/DiscountManager';
 import { StaffManager } from '../../components/StaffManager';
 import { LanSyncPanel } from '../../components/LanSyncPanel';
@@ -44,9 +45,7 @@ export const SettingsPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState('store');
     const [showDiscountManager, setShowDiscountManager] = useState(false);
     const [showStaffManager, setShowStaffManager] = useState(false);
-    const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; type?: 'confirm' | 'warning' | 'error' | 'info'; onConfirm: () => void }>({
-        open: false, title: '', message: '', onConfirm: () => { }
-    });
+    const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const logoInputRef = useRef<HTMLInputElement>(null);
@@ -135,13 +134,12 @@ export const SettingsPage: React.FC = () => {
     };
 
     const handleRestoreTrigger = async () => {
-        setConfirmModal({
-            open: true,
+        openConfirm({
             title: 'استعادة النسخة الاحتياطية',
             message: 'سيتم استبدال جميع البيانات الحالية. هل أنت متأكد؟',
             type: 'warning',
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
                 try {
                     const success = await window.go.main.App.ImportDatabaseBackupNative();
                     if (success) {
@@ -214,7 +212,7 @@ export const SettingsPage: React.FC = () => {
         <PageShell>
             {/* Modals */}
             <PinModal isOpen={showPinModal} onClose={() => setShowPinModal(false)} onSuccess={handlePinSuccess} title='تأكيد العملية' />
-            <ConfirmModal isOpen={confirmModal.open} title={confirmModal.title} message={confirmModal.message} type={confirmModal.type} onConfirm={confirmModal.onConfirm} onCancel={() => setConfirmModal(prev => ({ ...prev, open: false }))} />
+            <ConfirmModal isOpen={confirmState.open} title={confirmState.title} message={confirmState.message} type={confirmState.type} onConfirm={confirmState.onConfirm} onCancel={closeConfirm} />
             <DiscountManager isOpen={showDiscountManager} onClose={() => setShowDiscountManager(false)} notify={notify} />
             <StaffManager isOpen={showStaffManager} onClose={() => setShowStaffManager(false)} notify={notify} />
 

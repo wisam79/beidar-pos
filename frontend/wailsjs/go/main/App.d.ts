@@ -16,7 +16,7 @@ export function ExportProductsCSV():Promise<domain.CSVExportResult>;
 
 export function ExportProductsCSVNative():Promise<domain.CSVExportResult>;
 
-export function GetBackupConfig():Promise<Record<string, any>>;
+export function GetBackupConfig():Promise<domain.BackupConfig>;
 
 export function GetCSVTemplate():Promise<string>;
 

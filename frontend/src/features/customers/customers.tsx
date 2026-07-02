@@ -9,9 +9,10 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput } from '../../components/blocks';
 import { analyzeCustomerProfile } from '../../core/ai';
 import { api } from '../../core/api';
-import { useInvalidateCustomers } from '../../hooks';
+import { useInvalidateCustomers, useConfirmModal } from '../../hooks';
 import { ReceiptTemplate } from '../../components/ReceiptTemplate';
 import { Printer, Eye } from 'lucide-react';
+import { DataTable, ColumnDef } from '../../components/shared/DataTable';
 import { usePreferences } from '../../components/PreferencesContext';
 
 export const CustomersPage: React.FC = () => {
@@ -38,20 +39,7 @@ export const CustomersPage: React.FC = () => {
     const [analysisResult, setAnalysisResult] = useState<{ id: string, text: string } | null>(null);
     const [showOnlyDebt, setShowOnlyDebt] = useState(false);
     const [showStats, setShowStats] = useState(false); // Collapsible stats state
-    // Modified to use generic confirm modal state for flexible error handling
-    const [confirmModal, setConfirmModal] = useState<{
-        open: boolean;
-        title: string;
-        message: string;
-        type?: 'confirm' | 'warning' | 'error' | 'info';
-        confirmText?: string;
-        onConfirm: () => void;
-    }>({
-        open: false,
-        title: '',
-        message: '',
-        onConfirm: () => { },
-    });
+    const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
 
     // Load Data using API
     const loadData = async () => {
@@ -139,7 +127,7 @@ export const CustomersPage: React.FC = () => {
                 notify('تم الحذف', 'success');
                 invalidateCustomers();
                 loadData();
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
             } catch (err: unknown) {
                 // Try to parse the error as JSON (AppError)
                 let appError: unknown = null;
@@ -152,8 +140,7 @@ export const CustomersPage: React.FC = () => {
                 // Check for allowForce option
                 const appErr = appError as AppError | null;
                 if (appErr?.options?.allowForce) {
-                    setConfirmModal({
-                        open: true,
+                    openConfirm({
                         title: 'تعذر الحذف - مطلوب تأكيد إضافي',
                         message: `${appErr.message}\n\n${appErr.hint || ''}`,
                         type: 'warning',
@@ -165,12 +152,11 @@ export const CustomersPage: React.FC = () => {
 
                 const errorMsg = appErr?.message || errStr || 'خطأ في الحذف';
                 notify(errorMsg, 'error');
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
             }
         };
 
-        setConfirmModal({
-            open: true,
+        openConfirm({
             title: 'حذف العميل',
             message: 'هل أنت متأكد من حذف هذا العميل؟ سيتم حذف جميع البيانات المرتبطة به.',
             type: 'error',
@@ -242,6 +228,13 @@ export const CustomersPage: React.FC = () => {
         <PageShell>
             <PageHeader title="العملاء" icon={User} description="إدارة علاقات العملاء، سجل المشتريات، والديون المستحقة." actions={
                 <div className="flex items-center gap-2">
+                    <SearchInput value={search} onChange={setSearch} placeholder="ابحث باسم العميل أو رقم الهاتف..." />
+                    <button
+                        onClick={() => setShowOnlyDebt(!showOnlyDebt)}
+                        className={`h-10 px-4 rounded-xl font-bold text-xs flex items-center gap-2 transition-all border touch-target ${showOnlyDebt ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-surface text-text-muted border-border hover:text-text-main hover:border-text-muted'}`}
+                    >
+                        <Filter size={14} /> {showOnlyDebt ? 'المديونين فقط' : 'الكل'}
+                    </button>
                     <button
                         onClick={() => setShowStats(!showStats)}
                         className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
@@ -255,15 +248,6 @@ export const CustomersPage: React.FC = () => {
                     <button onClick={handleInitAdd} className="bg-primary text-primary-fg hover:brightness-110 h-10 px-4 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-95 text-xs border border-primary/20 touch-target"><Plus size={16} /> إضافة عميل جديد</button>
                 </div>
             }>
-                <div className="flex gap-3 items-center">
-                    <SearchInput value={search} onChange={setSearch} placeholder="ابحث باسم العميل أو رقم الهاتف..." />
-                    <button
-                        onClick={() => setShowOnlyDebt(!showOnlyDebt)}
-                        className={`h-10 px-4 rounded-xl font-bold text-xs flex items-center gap-2 transition-all border touch-target ${showOnlyDebt ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-surface text-text-muted border-border hover:text-text-main hover:border-text-muted'}`}
-                    >
-                        <Filter size={14} /> {showOnlyDebt ? 'المديونين فقط' : 'الكل'}
-                    </button>
-                </div>
             </PageHeader>
 
             {/* Premium Quick Stats CRM */}
@@ -279,135 +263,113 @@ export const CustomersPage: React.FC = () => {
             </StatsGrid>
 
             <div className="flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar pb-10">
-                {filtered.length === 0 ? (<EmptyState icon={User} title="لا يوجد عملاء" description={search ? "لا توجد نتائج مطابقة لبحثك." : "ابدأ بإضافة عملائك لتتبع مشترياتهم وديونهم."} action={!search && <button onClick={handleInitAdd} className="bg-surface text-text-main px-5 py-2 rounded-xl border border-border text-sm font-bold hover:bg-surface-hover">إضافة عميل</button>} />) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-                        {filtered.map(c => {
-                            const isVip = (c.totalPurchases || 0) > 1000000;
-                            const hasDebt = (c.debt || 0) + (c.installmentDebt || 0) > 0;
-                            return (
-                                <SpotlightCard key={c.id} className="bg-surface border border-border rounded-2xl p-5 relative overflow-hidden group flex flex-col h-full hover:border-primary/30 transition-all duration-200" spotlightColor="rgba(255,255,255,0.02)">
-                                    {/* VIP Badge */}
-                                    {isVip && (
-                                        <div className="absolute top-3 left-3 bg-primary/20 text-primary text-[9px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 border border-primary/30">
-                                            <Sparkles size={10} /> VIP
-                                        </div>
-                                    )}
-
-                                    {/* Header */}
-                                    <div className="flex justify-between items-start mb-5 relative z-10">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black ${isVip ? 'bg-primary text-white' : 'bg-primary/10 text-primary border border-primary/20'}`}>
-                                                {c.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-black text-text-main text-lg leading-tight mb-1.5">{c.name}</h3>
-                                                <p className="text-xs text-text-muted font-mono flex items-center gap-1.5"><Phone size={12} className="text-text-muted" /> {c.phone}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleInitEdit(c)} className="p-2.5 hover:bg-primary/10 rounded-xl text-text-muted hover:text-primary transition-colors touch-target" title="تعديل"><Edit size={16} /></button>
-                                            <button onClick={() => handleDelete(c.id)} className="p-2.5 hover:bg-red-500/10 rounded-xl text-text-muted hover:text-red-500 transition-colors touch-target" title="حذف"><Trash2 size={16} /></button>
-                                        </div>
-                                    </div>
-
-                                    {/* Stats - Redesigned */}
-                                    {(() => {
+                {filtered.length === 0 ? (
+                    <EmptyState
+                        icon={User}
+                        title="لا يوجد عملاء"
+                        description={search ? "لا توجد نتائج مطابقة لبحثك." : "ابدأ بإضافة عملائك لتتبع مشترياتهم وديونهم."}
+                        action={!search && <button onClick={handleInitAdd} className="bg-surface text-text-main px-5 py-2 rounded-xl border border-border text-sm font-bold hover:bg-surface-hover">إضافة عميل</button>}
+                    />
+                ) : (
+                    <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            <table className="w-full text-right text-sm border-collapse">
+                                <thead className="sticky top-0 z-10 bg-surface-hover border-b border-border text-text-muted text-xs">
+                                    <tr>
+                                        <th className="px-4 py-3 text-right">العميل</th>
+                                        <th className="px-4 py-3 text-right w-[150px]">المشتريات</th>
+                                        <th className="px-4 py-3 text-right w-[200px]">الديون المستحقة</th>
+                                        <th className="px-4 py-3 text-left w-[420px] pl-8">الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filtered.map((c) => {
+                                        const isVip = (c.totalPurchases || 0) > 1000000;
                                         const debt = c.debt || 0;
                                         const instDebt = c.installmentDebt || 0;
                                         const totalDebt = debt + instDebt;
                                         const hasAnyDebt = totalDebt > 0;
+                                        const healthColor = isVip ? 'bg-primary' : hasAnyDebt ? 'bg-red-500' : 'bg-emerald-500';
 
                                         return (
-                                            <div className="space-y-3 mb-5 flex-1">
-                                                {/* Total Purchases */}
-                                                <div className="bg-bg p-3 rounded-xl border border-border flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <TrendingUp size={14} className="text-primary" />
-                                                        <span className="text-xs text-text-muted font-bold">المشتريات</span>
-                                                    </div>
-                                                    <span className="text-primary font-black text-base font-mono">{formatCurrency(c.totalPurchases || 0, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</span>
-                                                </div>
-
-                                                {/* Debts Section */}
-                                                <div className={`p-3 rounded-xl border ${hasAnyDebt ? 'bg-red-500/5 border-red-500/20' : 'bg-bg border-border'}`}>
-                                                    {/* Total Debt Header */}
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-2">
-                                                            <Wallet size={14} className={hasAnyDebt ? 'text-red-500' : 'text-text-muted'} />
-                                                            <span className="text-xs text-text-muted font-bold">الديون</span>
+                                            <tr
+                                                key={c.id}
+                                                className={`border-b border-border/30 hover:bg-surface-hover/50 transition-colors group`}
+                                            >
+                                                <td className="px-4 py-3 relative">
+                                                    {/* Health indicator bar on the right in RTL */}
+                                                    <div className={`absolute right-0 top-2 bottom-2 w-1 rounded-l-full ${healthColor} shadow-[0_0_8px_currentColor] text-${isVip ? 'primary' : hasAnyDebt ? 'red' : 'emerald'}-500`} />
+                                                    
+                                                    <div className="flex items-center gap-3 pr-2">
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black ${isVip ? 'bg-primary text-white border border-primary/20 shadow-sm' : 'bg-primary/10 text-primary border border-primary/20'}`}>
+                                                            {c.name.charAt(0)}
                                                         </div>
-                                                        <span className={`font-black text-base font-mono ${hasAnyDebt ? 'text-red-500' : 'text-text-muted'}`}>
+                                                        <div>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <p className="font-bold text-text-main text-xs group-hover:text-primary transition-colors">{c.name}</p>
+                                                                {isVip && (
+                                                                    <span className="bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-primary/30">
+                                                                        <Sparkles size={8} className="inline mr-1" /> VIP
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-[10px] text-text-muted font-mono mt-0.5">{c.phone}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-right font-mono font-bold text-primary text-base">
+                                                    {formatCurrency(c.totalPurchases || 0, prefs?.currency).replace(prefs?.currency || 'IQD', '')}
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <div className="flex flex-col items-end">
+                                                        <span className={`font-mono font-black text-sm ${hasAnyDebt ? 'text-red-500' : 'text-text-muted'}`}>
                                                             {formatCurrency(totalDebt, prefs?.currency).replace(prefs?.currency || 'IQD', '')}
                                                         </span>
+                                                        {hasAnyDebt && (
+                                                            <span className="text-[9px] text-text-muted font-bold mt-0.5">
+                                                                آجل: {formatCurrency(debt, prefs?.currency).replace(prefs?.currency || 'IQD', '')} | أقساط: {formatCurrency(instDebt, prefs?.currency).replace(prefs?.currency || 'IQD', '')}
+                                                            </span>
+                                                        )}
                                                     </div>
-
-                                                    {/* Debt Breakdown */}
-                                                    {hasAnyDebt && (
-                                                        <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-border">
-                                                            <div className="flex items-center justify-between text-xs">
-                                                                <span className="text-text-muted">آجل</span>
-                                                                <span className="text-red-500/80 font-bold font-mono">{formatCurrency(debt, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</span>
-                                                            </div>
-                                                            <div className="flex items-center justify-between text-xs">
-                                                                <span className="text-text-muted">أقساط</span>
-                                                                <span className="text-red-500/80 font-bold font-mono">{formatCurrency(instDebt, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-left pl-8" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <button onClick={() => setHistoryModal(c.id)} className="px-2.5 py-1.5 hover:bg-surface-hover hover:text-text-main text-text-muted rounded-xl text-[10px] font-bold transition-all flex items-center gap-1 border border-border/40" title="عرض السجل"><History size={12} /> السجل</button>
+                                                        <button onClick={() => handleAnalyze(c)} className="px-2.5 py-1.5 hover:bg-primary/10 text-[10px] font-bold text-primary transition-all flex items-center gap-1 border border-primary/20 rounded-xl" title="تحليل AI"><BrainCircuit size={12} /> تحليل</button>
+                                                        {hasAnyDebt && (
+                                                            <>
+                                                                <button onClick={() => setInstallmentModal(c.id)} className="px-2.5 py-1.5 hover:bg-surface-hover hover:text-text-main text-text-muted rounded-xl text-[10px] font-bold transition-all flex items-center gap-1 border border-border/40" title="الأقساط"><Calculator size={12} /> أقساط</button>
+                                                                <button onClick={() => setPayDebtModal(c)} className="px-2.5 py-1.5 hover:bg-green-500/10 text-[10px] font-bold text-green-500 transition-all flex items-center gap-1 border border-green-500/20 rounded-xl" title="تسديد الدين"><Wallet size={12} /> تسديد</button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const phone = c.phone?.replace(/[^0-9]/g, '') || '';
+                                                                        const message = encodeURIComponent(
+                                                                            `*تذكير بالدين المستحق* 📋\n\nعزيزي العميل ${c.name}،\n\n` +
+                                                                            `نود تذكيرك بأن لديك دين مستحق بقيمة *${formatCurrency(c.debt || 0, prefs?.currency)}*.\n\n` +
+                                                                            `نرجو التواصل معنا في أقرب وقت.\n` +
+                                                                            `شكراً لتعاملكم معنا 🙏`
+                                                                        );
+                                                                        window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+                                                                        notify('تم فتح WhatsApp', 'success');
+                                                                    }}
+                                                                    className="px-2.5 py-1.5 hover:bg-green-500/10 text-[10px] font-bold text-green-500 transition-all flex items-center gap-1 border border-green-500/20 rounded-xl"
+                                                                    title="تذكير واتساب"
+                                                                >
+                                                                    <MessageSquare size={12} /> تذكير
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        <div className="w-px h-5 bg-border/60 mx-0.5"></div>
+                                                        <button onClick={() => handleInitEdit(c)} className="p-1.5 hover:bg-primary/10 rounded-xl text-text-muted hover:text-primary transition-all border border-border/40" title="تعديل"><Edit size={13} /></button>
+                                                        <button onClick={() => handleDelete(c.id)} className="p-1.5 hover:bg-red-500/10 rounded-xl text-text-muted hover:text-red-500 transition-all border border-border/40" title="حذف"><Trash2 size={13} /></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         );
-                                    })()}
-
-                                    {/* AI Analysis Result */}
-                                    {analysisResult && analysisResult.id === c.id && (
-                                        <div className="mb-3 bg-primary/5 border border-primary/20 p-3 rounded-xl text-xs text-text-main animate-in fade-in flex gap-2 items-start">
-                                            <Sparkles size={12} className="shrink-0 mt-0.5 text-primary" />
-                                            <span className="leading-relaxed">{analysisResult.text}</span>
-                                        </div>
-                                    )}
-
-                                    {/* Actions */}
-                                    <div className="space-y-2.5 mt-auto">
-                                        {/* Row 1: History + AI Analysis (always visible) */}
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button onClick={() => setHistoryModal(c.id)} className="py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-border bg-bg text-text-muted hover:text-text-main hover:border-primary/30 active:scale-95"><History size={14} /> السجل</button>
-                                            <button onClick={() => handleAnalyze(c)} className="py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 active:scale-95">
-                                                <BrainCircuit size={14} />
-                                                <span>تحليل AI</span>
-                                            </button>
-                                        </div>
-
-                                        {/* Row 2: Installments + Pay Debt (only if has debt) */}
-                                        {hasDebt && (
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <button onClick={() => setInstallmentModal(c.id)} className="py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-border bg-bg text-text-muted hover:border-primary/30 active:scale-95"><Calculator size={14} /> أقساط</button>
-                                                <button onClick={() => setPayDebtModal(c)} className="py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-primary text-white hover:bg-primary/90 active:scale-95"><Wallet size={14} /> تسديد</button>
-                                                {/* WhatsApp Reminder Button */}
-                                                <button
-                                                    onClick={() => {
-                                                        const phone = c.phone?.replace(/[^0-9]/g, '') || '';
-                                                        const message = encodeURIComponent(
-                                                            `*تذكير بالدين المستحق* 📋\n\n` +
-                                                            `عزيزي العميل ${c.name}،\n\n` +
-                                                            `نود تذكيرك بأن لديك دين مستحق بقيمة *${formatCurrency(c.debt || 0, prefs?.currency)}*.\n\n` +
-                                                            `نرجو التواصل معنا في أقرب وقت.\n` +
-                                                            `شكراً لتعاملكم معنا 🙏`
-                                                        );
-                                                        window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
-                                                        notify('تم فتح WhatsApp', 'success');
-                                                    }}
-                                                    className="py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-border bg-bg text-text-muted hover:border-green-500/30 hover:text-green-500 active:scale-95"
-                                                    title="إرسال تذكير WhatsApp"
-                                                >
-                                                    <MessageSquare size={14} /> تذكير
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </SpotlightCard>
-                            )
-                        })}
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>
@@ -546,44 +508,53 @@ export const CustomersPage: React.FC = () => {
             {
                 historyModal && <Modal title="سجل المشتريات" onClose={() => setHistoryModal(null)} size="lg">
                     <div className="bg-bg border border-border rounded-2xl overflow-hidden shadow-2xl">
-                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-                            <table className="w-full text-sm">
-                                <thead className="bg-surface-hover border-b border-border sticky top-0 z-10">
-                                    <tr>
-                                        <th className="text-right">التاريخ</th>
-                                        <th className="text-right">رقم الفاتورة</th>
-                                        <th className="text-left">المبلغ</th>
-                                        <th className="text-center">طريقة الدفع</th>
-                                        <th className="text-center">الحالة</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {selectedCustomerHistory.map(s => (
-                                        <tr key={s.id} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
-                                            <td className="text-text-muted font-mono text-right">{new Date(s.timestamp).toLocaleDateString('en-GB')}</td>
-                                            <td className="text-text-main font-mono text-right">{s.id}</td>
-                                            <td className="font-mono font-bold text-primary text-left">{formatCurrency(s.total, prefs?.currency)}</td>
-                                            <td className="text-center font-bold text-text-main">{t(`sales.${s.paymentMethod}`)}</td>
-                                            <td className="text-center"><Badge type={s.status === 'completed' ? 'success' : 'warning'} text={s.status} /></td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {selectedCustomerHistory.length === 0 && <div className="p-12 text-center text-text-muted text-xs font-bold">لا توجد سجلات شراء سابقة لهذا العميل.</div>}
+                        <div className="h-[400px]">
+                            <DataTable
+                                data={selectedCustomerHistory}
+                                columns={[
+                                    {
+                                        header: 'التاريخ',
+                                        accessorKey: 'timestamp',
+                                        cell: (info) => <span className="text-text-muted font-mono">{new Date(info.getValue() as number).toLocaleDateString('en-GB')}</span>,
+                                    },
+                                    {
+                                        header: 'رقم الفاتورة',
+                                        accessorKey: 'id',
+                                        cell: (info) => <span className="text-text-main font-mono font-bold">{info.getValue() as string}</span>,
+                                    },
+                                    {
+                                        header: 'المبلغ',
+                                        accessorKey: 'total',
+                                        cell: (info) => <span className="font-mono font-bold text-primary">{formatCurrency(info.getValue() as number, prefs?.currency)}</span>,
+                                    },
+                                    {
+                                        header: 'طريقة الدفع',
+                                        accessorKey: 'paymentMethod',
+                                        cell: (info) => <span className="font-bold text-text-main">{t(`sales.${info.getValue() as string}`)}</span>,
+                                    },
+                                    {
+                                        header: 'الحالة',
+                                        accessorKey: 'status',
+                                        cell: (info) => <Badge type={info.getValue() === 'completed' ? 'success' : 'warning'} text={info.getValue() as string} />,
+                                    },
+                                ]}
+                                emptyStateTitle="لا توجد سجلات"
+                                emptyStateDescription="لا توجد سجلات شراء سابقة لهذا العميل."
+                            />
                         </div>
                     </div>
                 </Modal>
             }
 
             <ConfirmModal
-                isOpen={confirmModal.open}
-                title={confirmModal.title}
-                message={confirmModal.message}
-                type={confirmModal.type}
-                confirmText={confirmModal.confirmText}
+                isOpen={confirmState.open}
+                title={confirmState.title}
+                message={confirmState.message}
+                type={confirmState.type}
+                confirmText={confirmState.confirmText}
                 cancelText="إلغاء"
-                onConfirm={confirmModal.onConfirm}
-                onCancel={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+                onConfirm={confirmState.onConfirm}
+                onCancel={closeConfirm}
             />
         </PageShell>
     );

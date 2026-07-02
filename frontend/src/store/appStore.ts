@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { View, Notification } from '../core/types';
+import { toast } from 'sonner';
 
 interface AppState {
     // Navigation
@@ -62,27 +63,18 @@ export const useAppStore = create<AppState>()(
             isShortcutsOpen: false,
             setShortcutsOpen: (open) => set({ isShortcutsOpen: open }),
 
-            // Notifications with deduplication
-            notifications: [],
+            // Notifications via sonner
+            notifications: [], // Keep for backwards compatibility if any component reads it
             notify: (message, type = 'info') => {
                 const now = Date.now();
-                // Prevent duplicate notifications within 2 seconds
-                if (lastNotify.message === message && now - lastNotify.time < 2000) {
-                    return;
-                }
+                if (lastNotify.message === message && now - lastNotify.time < 2000) return;
                 lastNotify = { message, time: now };
 
-                set((state) => ({
-                    notifications: [
-                        ...state.notifications.filter((n) => n.message !== message),
-                        { id: now, message, type },
-                    ].slice(-3),
-                }));
+                if (type === 'success') toast.success(message);
+                else if (type === 'error') toast.error(message);
+                else toast.info(message);
             },
-            removeNotification: (id) =>
-                set((state) => ({
-                    notifications: state.notifications.filter((n) => n.id !== id),
-                })),
+            removeNotification: (id) => {}, // No-op
 
             // Online Status
             onlineStatus: navigator.onLine,

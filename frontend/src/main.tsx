@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Toaster } from 'sonner';
 import { HashRouter, useNavigate, useLocation } from 'react-router-dom';
 import { AppRoutes } from './routes';
 import { useAppStore } from './store/appStore';
@@ -104,6 +105,23 @@ const App = () => {
     window.addEventListener('dragover', preventDragOver);
     window.addEventListener('drop', preventDrop);
 
+    // 6. Disable browser autocomplete, autocorrect, and spellcheck globally for native feel
+    const disableInputAssist = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        if (!target.hasAttribute('autocomplete')) {
+          target.setAttribute('autocomplete', 'off');
+        }
+        if (!target.hasAttribute('autocorrect')) {
+          target.setAttribute('autocorrect', 'off');
+        }
+        if (!target.hasAttribute('spellcheck')) {
+          target.setAttribute('spellcheck', 'false');
+        }
+      }
+    };
+    document.addEventListener('focusin', disableInputAssist);
+
     return () => {
       document.removeEventListener('contextmenu', preventContextMenu);
       document.removeEventListener('wheel', preventZoom);
@@ -111,6 +129,7 @@ const App = () => {
       window.removeEventListener('keydown', preventBackspace);
       window.removeEventListener('dragover', preventDragOver);
       window.removeEventListener('drop', preventDrop);
+      document.removeEventListener('focusin', disableInputAssist);
     };
   }, []);
 
@@ -224,6 +243,7 @@ const MainRoot = () => (
       <HashRouter>
         <AuthProvider>
           <TooltipProvider>
+            <Toaster position="top-center" richColors />
             <App />
           </TooltipProvider>
         </AuthProvider>

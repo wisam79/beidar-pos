@@ -519,13 +519,13 @@ interface SalesReportTabProps {
 }
 
 const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
-    const [page, setPage] = useState(0);
+    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
     const [filter, setFilter] = useState<'all' | 'completed' | 'pending' | 'returned'>('all');
     const [dateFilter, setDateFilter] = useState<string>('all');
 
     const { data, isLoading } = useQuery({
-        queryKey: ['reports', 'salesList', page, filter, dateFilter],
-        queryFn: () => api.sales.list(page, 20, '', filter === 'all' ? '' : filter, dateFilter),
+        queryKey: ['reports', 'salesList', pagination.pageIndex, filter, dateFilter],
+        queryFn: () => api.sales.list(pagination.pageIndex, pagination.pageSize, '', filter === 'all' ? '' : filter, dateFilter),
         placeholderData: keepPreviousData,
     });
 
@@ -547,6 +547,45 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
             console.error('Failed to fetch sales');
         }
     }, [isLoading, data]);
+
+    const columns: ColumnDef<any>[] = useMemo(() => [
+        {
+            header: 'رقم الفاتورة',
+            accessorKey: 'id',
+            cell: (info: any) => <span className="font-mono text-text-main font-bold">{info.getValue() as string}</span>,
+        },
+        {
+            header: 'التاريخ',
+            accessorKey: 'date',
+            cell: (info: any) => <span className="text-text-muted">{new Date(info.getValue() as string).toLocaleDateString('ar-IQ')}</span>,
+        },
+        {
+            header: 'العميل',
+            accessorKey: 'customer',
+            cell: (info: any) => <span className="text-text-main">{info.getValue() as string || 'زبون عام'}</span>,
+        },
+        {
+            header: 'الطريقة',
+            accessorKey: 'paymentMethod',
+            cell: (info: any) => {
+                const method = info.getValue() as string;
+                return <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${method === 'cash' ? 'bg-success-dim text-success' : method === 'card' ? 'bg-info-dim text-info' : 'bg-warning-dim text-warning'}`}>{method === 'cash' ? 'نقدي' : method === 'card' ? 'بطاقة' : 'آجل'}</span>;
+            },
+        },
+        {
+            header: 'الحالة',
+            accessorKey: 'status',
+            cell: (info: any) => {
+                const status = info.getValue() as string;
+                return <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${status === 'completed' ? 'bg-success-dim text-success' : status === 'pending' ? 'bg-warning-dim text-warning' : 'bg-danger-dim text-danger'}`}>{status === 'completed' ? 'مكتمل' : status === 'pending' ? 'معلق' : 'مرتجع'}</span>;
+            },
+        },
+        {
+            header: 'المبلغ',
+            accessorKey: 'total',
+            cell: (info: any) => <span className="font-mono font-black text-text-main">{formatCurrency(info.getValue() as number, currency)}</span>,
+        },
+    ], [currency]);
 
     return (
         <div className="h-full flex flex-col gap-4 animate-in fade-in duration-300">
@@ -585,13 +624,13 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
             <div className="flex gap-2 shrink-0 justify-between">
                 <div className="flex bg-bg p-1 rounded-xl border border-border">
                     {(['all', 'completed', 'pending', 'returned'] as const).map(f => (
-                        <button key={f} onClick={() => { setFilter(f); setPage(0); }} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${filter === f ? 'bg-primary text-primary-fg' : 'text-text-muted hover:text-text-main'}`}>
+                        <button key={f} onClick={() => { setFilter(f); setPagination(p => ({ ...p, pageIndex: 0 })); }} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${filter === f ? 'bg-primary text-primary-fg' : 'text-text-muted hover:text-text-main'}`}>
                             {f === 'all' ? 'الكل' : f === 'completed' ? 'مكتمل' : f === 'pending' ? 'معلق' : 'مرتجع'}
                         </button>
                     ))}
                 </div>
                 <div className="flex gap-2">
-                    <select value={dateFilter} onChange={e => { setDateFilter(e.target.value); setPage(0); }} className="bg-surface border border-border rounded-xl px-4 py-2 text-sm text-text-main" aria-label="تصفية حسب الفترة الزمنية">
+                    <select value={dateFilter} onChange={e => { setDateFilter(e.target.value); setPagination(p => ({ ...p, pageIndex: 0 })); }} className="bg-surface border border-border rounded-xl px-4 py-2 text-sm text-text-main" aria-label="تصفية حسب الفترة الزمنية">
                         <option value="all">كل الفترات</option>
                         <option value="today">اليوم</option>
                         <option value="week">هذا الأسبوع</option>
@@ -600,44 +639,20 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
             </div>
 
             {/* Sales Table */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar rounded-xl border border-border bg-surface relative">
+            <div className="flex-1 overflow-y-auto custom-scrollbar relative">
                 {isLoading && <div className="absolute inset-0 bg-surface/50 backdrop-blur-sm flex items-center justify-center z-10"><RefreshCw className="animate-spin text-primary" /></div>}
-                <table className="w-full text-sm">
-                    <thead className="bg-surface-hover border-b border-border sticky top-0 z-10">
-                        <tr>
-                            <th className="text-right">رقم الفاتورة</th>
-                            <th className="text-right">التاريخ</th>
-                            <th className="text-right">العميل</th>
-                            <th className="text-center">الطريقة</th>
-                            <th className="text-center">الحالة</th>
-                            <th className="text-left">المبلغ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {sales.map(sale => (
-                            <tr key={sale.id} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
-                                <td className="font-mono text-text-main font-bold text-right">{sale.id}</td>
-                                <td className="text-text-muted text-right">{new Date(sale.date).toLocaleDateString('ar-IQ')}</td>
-                                <td className="text-text-main text-right">{sale.customer || 'زبون عام'}</td>
-                                <td className="text-center"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${sale.paymentMethod === 'cash' ? 'bg-success-dim text-success' : sale.paymentMethod === 'card' ? 'bg-info-dim text-info' : 'bg-warning-dim text-warning'}`}>{sale.paymentMethod === 'cash' ? 'نقدي' : sale.paymentMethod === 'card' ? 'بطاقة' : 'آجل'}</span></td>
-                                <td className="text-center"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${sale.status === 'completed' ? 'bg-success-dim text-success' : sale.status === 'pending' ? 'bg-warning-dim text-warning' : 'bg-danger-dim text-danger'}`}>{sale.status === 'completed' ? 'مكتمل' : sale.status === 'pending' ? 'معلق' : 'مرتجع'}</span></td>
-                                <td className="text-left font-mono font-black text-text-main">{formatCurrency(sale.total, currency)}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {sales.length === 0 && !isLoading && (
-                    <div className="py-12 text-center text-text-muted">
-                        <Receipt size={32} className="mx-auto mb-2 opacity-30" />
-                        <p>لا توجد مبيعات</p>
-                    </div>
-                )}
-            </div>
-            {/* Pagination Controls */}
-            <div className="flex items-center justify-between p-2 border-t border-border bg-bg/50">
-                <button disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))} className="px-3 py-1 rounded-lg hover:bg-surface disabled:opacity-50 text-sm font-bold">السابق</button>
-                <span className="text-xs text-text-muted font-mono">صفحة {page + 1} من {totalPages}</span>
-                <button disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="px-3 py-1 rounded-lg hover:bg-surface disabled:opacity-50 text-sm font-bold">التالي</button>
+                <DataTable
+                    data={sales}
+                    columns={columns}
+                    emptyStateTitle="لا توجد مبيعات"
+                    emptyStateDescription="لم يتم العثور على مبيعات في هذه الفترة."
+                    emptyStateIcon={Receipt}
+                    manualPagination={true}
+                    pageCount={totalPages}
+                    pagination={pagination}
+                    onPaginationChange={setPagination}
+                    getRowColor={(row: any) => row.status === 'completed' ? 'emerald' : row.status === 'pending' ? 'orange' : 'red'}
+                />
             </div>
         </div>
     );
@@ -761,6 +776,8 @@ interface CustomersReportTabProps {
     currency: string;
 }
 
+import { DataTable, ColumnDef } from '../../components/shared/DataTable';
+
 const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sales, currency }) => {
     const customerStats = useMemo(() => {
         const stats = customers.map(c => {
@@ -774,6 +791,41 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
 
     const totalDebt = useMemo(() => customerStats.reduce((sum, c) => sum + c.pendingDebt, 0), [customerStats]);
     const totalSpent = useMemo(() => customerStats.reduce((sum, c) => sum + c.totalSpent, 0), [customerStats]);
+
+    const columns: ColumnDef<any>[] = useMemo(() => [
+        {
+            header: 'العميل',
+            accessorKey: 'name',
+            cell: (info: any) => <span className="font-bold text-text-main block min-w-[120px]">{info.getValue() as string}</span>,
+        },
+        {
+            header: 'الهاتف',
+            accessorKey: 'phone',
+            cell: (info: any) => <span className="text-text-muted font-mono">{info.getValue() as string || '-'}</span>,
+        },
+        {
+            header: 'عدد الطلبات',
+            accessorKey: 'orderCount',
+            cell: (info: any) => <span className="text-text-main font-mono">{info.getValue() as number}</span>,
+        },
+        {
+            header: 'إجمالي المشتريات',
+            accessorKey: 'totalSpent',
+            cell: (info: any) => <span className="text-success font-mono font-bold">{formatCurrency(info.getValue() as number, currency)}</span>,
+        },
+        {
+            header: 'الديون المستحقة',
+            accessorKey: 'pendingDebt',
+            cell: (info: any) => {
+                const val = info.getValue() as number;
+                return (
+                    <span className={`font-mono font-bold ${val > 0 ? 'text-danger' : 'text-text-muted'}`}>
+                        {val > 0 ? formatCurrency(val, currency) : '-'}
+                    </span>
+                );
+            },
+        },
+    ], [currency]);
 
     return (
         <div className="h-full flex flex-col gap-4">
@@ -803,33 +855,13 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
             </div>
 
             {/* Customer List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar rounded-xl border border-border bg-surface">
-                <table className="w-full text-sm">
-                    <thead className="bg-surface-hover border-b border-border sticky top-0 z-10">
-                        <tr>
-                            <th className="text-right">العميل</th>
-                            <th className="text-right">الهاتف</th>
-                            <th className="text-center">عدد الطلبات</th>
-                            <th className="text-left">إجمالي المشتريات</th>
-                            <th className="text-left">الديون المستحقة</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {customerStats.map(c => (
-                            <tr key={c.id} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
-                                <td className="font-bold text-text-main text-right">{c.name}</td>
-                                <td className="text-text-muted font-mono text-right">{c.phone || '-'}</td>
-                                <td className="text-text-main font-mono text-center">{c.orderCount}</td>
-                                <td className="text-success font-mono font-bold text-left">{formatCurrency(c.totalSpent, currency)}</td>
-                                <td className="text-left">
-                                    <span className={`font-mono font-bold ${c.pendingDebt > 0 ? 'text-danger' : 'text-text-muted'}`}>
-                                        {c.pendingDebt > 0 ? formatCurrency(c.pendingDebt, currency) : '-'}
-                                    </span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <DataTable 
+                    data={customerStats}
+                    columns={columns}
+                    emptyStateTitle="لا يوجد عملاء"
+                    emptyStateDescription="لم يتم العثور على أي بيانات للعملاء في هذه الفترة."
+                />
             </div>
         </div>
     );

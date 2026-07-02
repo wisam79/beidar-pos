@@ -11,6 +11,7 @@ import { desktopApi, PrinterInfo, UpdateInfo } from '../../../core/api';
 const useDesktopSettings = (notify: (msg: string, type: 'success' | 'error' | 'info') => void) => {
     // State
     const [autoStart, setAutoStart] = useState({ enabled: false, loading: false });
+    const [simulatePrint, setSimulatePrint] = useState(() => localStorage.getItem('beidar_simulate_print') === 'true');
     const [printers, setPrinters] = useState<{ list: PrinterInfo[], default: string, selected: string, loading: boolean }>({
         list: [], default: '', selected: '', loading: false
     });
@@ -191,9 +192,20 @@ const useDesktopSettings = (notify: (msg: string, type: 'success' | 'error' | 'i
         }
     };
 
+    const toggleSimulatePrint = useCallback(() => {
+        setSimulatePrint(prev => {
+            const next = !prev;
+            localStorage.setItem('beidar_simulate_print', String(next));
+            notify(next ? 'تم تفعيل وضع محاكاة الطباعة' : 'تم تعطيل وضع محاكاة الطباعة', 'success');
+            return next;
+        });
+    }, [notify]);
+
     return {
         autoStart,
         toggleAutoStart,
+        simulatePrint,
+        toggleSimulatePrint,
         printers,
         refreshPrinters,
         selectPrinter,
@@ -236,6 +248,34 @@ const AutoStartCard = React.memo(({ enabled, loading, onToggle }: { enabled: boo
         >
             {loading ? <Loader2 size={20} className="animate-spin" /> : <Power size={20} />}
             {enabled ? 'تعطيل التشغيل التلقائي' : 'تفعيل التشغيل التلقائي'}
+        </button>
+    </div>
+));
+
+const SimulatePrintCard = React.memo(({ enabled, onToggle }: { enabled: boolean, onToggle: () => void }) => (
+    <div className="group bg-surface/50 border border-border hover:border-blue-500/30 rounded-lg p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-blue-500/5">
+        <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-400 text-white rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-300">
+                <FileText size={24} className="text-white" />
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1 bg-surface-active rounded-full border border-border">
+                <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-blue-500 animate-pulse' : 'bg-gray-500'}`} />
+                <span className="text-xs font-bold text-text-muted">{enabled ? 'مفعل' : 'معطل'}</span>
+            </div>
+        </div>
+        <h3 className="text-xl font-bold text-text-main mb-2">وضع محاكاة الطباعة</h3>
+        <p className="text-sm text-text-muted mb-6 leading-relaxed">
+            عند تفعيله، يتم عرض الفاتورة على الشاشة لمعاينتها بدلاً من طباعتها فعلياً (مفيد للاختبار).
+        </p>
+        <button
+            onClick={onToggle}
+            className={`w-full py-4 rounded-lg font-bold flex items-center justify-center gap-3 transition-all duration-300 ${enabled
+                ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/25 border border-blue-500/20'
+                : 'bg-surface-active text-text-muted hover:bg-surface-hover/80 hover:text-text-main border border-border'
+                }`}
+        >
+            <FileText size={20} />
+            {enabled ? 'تعطيل وضع المحاكاة' : 'تفعيل وضع المحاكاة'}
         </button>
     </div>
 ));
@@ -287,6 +327,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
     // Logic extracted to custom hook
     const {
         autoStart, toggleAutoStart,
+        simulatePrint, toggleSimulatePrint,
         printers, refreshPrinters, selectPrinter, testPrinter, testingPrinter,
         update, checkForUpdates, downloadUpdate,
         crashReports, clearCrashReports
@@ -312,7 +353,10 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Auto-Start */}
-                <AutoStartCard enabled={autoStart.enabled} loading={autoStart.loading} onToggle={toggleAutoStart} />
+                <div className="flex flex-col gap-6">
+                    <AutoStartCard enabled={autoStart.enabled} loading={autoStart.loading} onToggle={toggleAutoStart} />
+                    <SimulatePrintCard enabled={simulatePrint} onToggle={toggleSimulatePrint} />
+                </div>
 
                 {/* Updates Section */}
                 <div className="relative overflow-hidden bg-surface/50 border border-border rounded-lg p-6 shadow-sm flex flex-col justify-between group hover:border-primary/30 transition-all duration-300">

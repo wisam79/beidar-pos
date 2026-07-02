@@ -6,6 +6,7 @@ export default {
       fontFamily: {
         sans: ['IBM Plex Sans Arabic', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
+        logo: ['Lemonada', 'cursive'],
       },
       borderRadius: {
         'none': '0px',

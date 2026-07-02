@@ -10,7 +10,7 @@ import { PinModal } from '../../components/PinModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { BarcodeScannerOverlay, ScanResult } from '../../components/BarcodeScannerOverlay';
 import { api } from '../../core/api';
-import { useInvalidateSales, useInvalidateProducts, useInvalidateCustomers } from '../../hooks';
+import { useInvalidateSales, useInvalidateProducts, useInvalidateCustomers, useInvoices } from '../../hooks';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
 
@@ -42,28 +42,10 @@ export const InvoicesPage: React.FC = () => {
     const pageSize = 50;
 
     // --- Server Data State ---
-    const [salesData, setSalesData] = useState<Sale[]>([]);
-    const [totalRecords, setTotalRecords] = useState(0);
-    const [stats, setStats] = useState({ count: 0, total: 0, pending: 0, returns: 0 });
-    const [loading, setLoading] = useState(true);
-
-    const loadData = async () => {
-        try {
-            setLoading(true);
-            const data = await api.sales.list(page, pageSize, search, statusFilter, dateFilter);
-            setSalesData(data.data);
-            setTotalRecords(data.total);
-            setStats(data.stats);
-        } catch (e) {
-            console.error(e);
-            notify("خطأ في تحميل المبيعات", "error");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Load data when dependencies change
-    useEffect(() => { loadData(); }, [page, search, statusFilter, dateFilter]);
+    const { data, isLoading: loading, refetch: loadData } = useInvoices(page, pageSize, search, statusFilter, dateFilter);
+    const salesData = data?.data || [];
+    const totalRecords = data?.total || 0;
+    const stats = data?.stats || { count: 0, total: 0, pending: 0, returns: 0 };
 
 
     // --- Actions ---
@@ -220,85 +202,88 @@ export const InvoicesPage: React.FC = () => {
                 <StatCard icon={CheckCircle2} label="صافي العمليات" value={stats.count - stats.returns} color="emerald" subtitle="• مكتملة" />
             </StatsGrid>
 
-            <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-2 pb-10">
-                {salesData.length === 0 ? (
-                    <EmptyState
-                        icon={FileText}
-                        title="لا توجد فواتير"
-                        description={search ? "لا توجد نتائج مطابقة لبحثك." : "لم يتم تسجيل أي عمليات بيع بعد."}
-                    />
-                ) : (
-                    <div className="space-y-2">
-                        <div className="hidden md:grid grid-cols-12 gap-3 px-6 py-2 text-[10px] font-bold text-text-muted uppercase tracking-wider">
-                            <div className="col-span-2">رقم الفاتورة</div>
-                            <div className="col-span-3">العميل</div>
-                            <div className="col-span-2">التاريخ</div>
-                            <div className="col-span-2">الإجمالي</div>
-                            <div className="col-span-2">الحالة</div>
-                            <div className="col-span-1 text-center">إجراءات</div>
-                        </div>
+            {/* Invoices Table - Standard Unified Style */}
+            <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    {salesData.length === 0 ? (
+                        <EmptyState
+                            icon={FileText}
+                            title="لا توجد فواتير"
+                            description={search ? "لا توجد نتائج مطابقة لبحثك." : "لم يتم تسجيل أي عمليات بيع بعد."}
+                        />
+                    ) : (
+                        <table className="w-full text-right text-sm border-collapse">
+                            <thead className="sticky top-0 z-10 bg-surface-hover border-b border-border text-text-muted text-xs">
+                                <tr>
+                                    <th className="px-4 py-3 text-right">رقم الفاتورة</th>
+                                    <th className="px-4 py-3 text-right">العميل</th>
+                                    <th className="px-4 py-3 text-center w-[150px]">التاريخ</th>
+                                    <th className="px-4 py-3 text-right w-[150px]">الإجمالي</th>
+                                    <th className="px-4 py-3 text-center w-[120px]">الحالة</th>
+                                    <th className="px-4 py-3 text-center w-[120px]">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {salesData.map((s: Sale) => {
+                                    const isReturned = s.status === 'returned';
+                                    const isPending = s.status === 'pending';
+                                    const isCompleted = s.status === 'completed';
+                                    const healthColor = isCompleted ? 'bg-emerald-500' : isReturned ? 'bg-red-500' : 'bg-orange-500';
 
-                        {salesData.map((s: Sale, index) => {
-                            const animStyle = { animationDelay: `${index * 50}ms` };
-                            return (
-                                <div
-                                    key={s.id}
-                                    onClick={() => { setSelectedInvoice(s); setIsPrinting(false); setPrintMode('a4'); }}
-                                    className={`
-                            group relative bg-surface/50 border border-border rounded-2xl p-4 cursor-pointer backdrop-blur-md
-                            transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1
-                            grid grid-cols-2 md:grid-cols-12 gap-3 items-center
-                            ${s.status === 'returned' ? 'opacity-60 grayscale-[0.5]' : ''}
-                        `}
-                                    style={animStyle}
-                                >
-                                    <div className={`absolute left-0 top-4 bottom-4 w-0.5 rounded-r-full shadow-[0_0_10px_currentColor] ${s.status === 'completed' ? 'bg-emerald-500 text-emerald-500' : s.status === 'returned' ? 'bg-red-500 text-red-500' : 'bg-orange-500 text-orange-500'}`}></div>
-
-                                    <div className="col-span-2 flex items-center gap-3 pl-2">
-                                        <div className="w-10 h-10 rounded-xl bg-bg border border-border flex items-center justify-center text-text-muted group-hover:text-primary transition-colors shadow-inner">
-                                            <FileText size={18} />
-                                        </div>
-                                        <div>
-                                            <p className="font-mono font-bold text-text-main text-xs group-hover:text-primary transition-colors">{s.id}</p>
-                                            <p className="text-[10px] text-text-muted font-medium">{s.itemsCount} مواد</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-span-3">
-                                        <p className="font-bold text-text-main text-sm truncate">{s.customer}</p>
-                                        <p className="text-[10px] text-text-muted flex items-center gap-1.5 mt-0.5">
-                                            {s.paymentMethod === 'cash' ? <DollarSign size={10} /> : <CreditCard size={10} />}
-                                            {t(`sales.${s.paymentMethod}`)}
-                                        </p>
-                                    </div>
-
-                                    <div className="col-span-2">
-                                        <div className="flex items-center gap-1.5 text-text-muted text-[10px] bg-bg px-2 py-1 rounded-lg w-fit border border-border">
-                                            <Calendar size={10} />
-                                            <span>{new Date(s.date).toLocaleDateString('en-GB')}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-span-2">
-                                        <span className="font-black text-text-main text-lg tracking-tight drop-shadow-sm">{formatCurrency(s.total, prefs.currency).replace(prefs.currency, '')} <span className="text-[9px] text-text-muted font-bold ml-0.5">{prefs.currency}</span></span>
-                                    </div>
-
-                                    <div className="col-span-2">
-                                        <Badge type={s.status === 'completed' ? 'success' : s.status === 'returned' ? 'error' : 'warning'} text={s.status === 'completed' ? 'مكتمل' : s.status === 'returned' ? 'مرتجع' : 'معلق'} />
-                                    </div>
-
-                                    <div className="col-span-1 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div className="bg-surface border border-border rounded-xl p-1 flex shadow-xl backdrop-blur-md">
-                                            <button onClick={(e) => { e.stopPropagation(); setSelectedInvoice(s); setIsPrinting(false); setPrintMode('a4'); }} className="p-2 hover:bg-surface-hover hover:text-primary text-text-muted rounded-lg transition-colors" title="طباعة الفاتورة"><Printer size={16} /></button>
-                                            <div className="w-px bg-border my-1"></div>
-                                            <button onClick={(e) => { e.stopPropagation(); setSelectedInvoice(s); setIsPrinting(false); setPrintMode('a4'); }} className="p-2 hover:bg-surface-hover hover:text-text-main text-text-muted rounded-lg transition-colors" title="عرض التفاصيل"><ArrowUpRight size={16} /></button>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
+                                    return (
+                                        <tr
+                                            key={s.id}
+                                            onClick={() => { setSelectedInvoice(s); setIsPrinting(false); setPrintMode('a4'); }}
+                                            className={`border-b border-border/30 hover:bg-surface-hover/50 transition-colors cursor-pointer group ${
+                                                isReturned ? 'opacity-60 grayscale-[0.5]' : ''
+                                            }`}
+                                        >
+                                            <td className="px-4 py-3 relative">
+                                                {/* Status indicator bar on the right in RTL */}
+                                                <div className={`absolute right-0 top-2 bottom-2 w-1 rounded-l-full ${healthColor} shadow-[0_0_8px_currentColor] text-${isCompleted ? 'emerald' : isReturned ? 'red' : 'orange'}-500`} />
+                                                
+                                                <div className="flex items-center gap-3 pr-2">
+                                                    <div className="w-10 h-10 rounded-xl bg-bg border border-border flex items-center justify-center text-text-muted group-hover:text-primary transition-colors shrink-0 shadow-inner">
+                                                        <FileText size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-mono font-bold text-text-main text-xs group-hover:text-primary transition-colors">{s.id}</p>
+                                                        <p className="text-[10px] text-text-muted font-medium">{s.itemsCount} مواد</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <p className="font-bold text-text-main text-sm truncate">{s.customer}</p>
+                                                <p className="text-[10px] text-text-muted flex items-center gap-1 mt-0.5">
+                                                    {s.paymentMethod === 'cash' ? <DollarSign size={10} className="inline mr-1" /> : <CreditCard size={10} className="inline mr-1" />}
+                                                    {t(`sales.${s.paymentMethod}`)}
+                                                </p>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <div className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-text-muted bg-bg px-2 py-1 rounded-lg border border-border">
+                                                    <Calendar size={10} className="inline mr-1" />
+                                                    <span>{new Date(s.date).toLocaleDateString('en-GB')}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-mono font-bold text-text-main text-base">
+                                                {formatCurrency(s.total, prefs.currency).replace(prefs.currency, '')}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <Badge type={isCompleted ? 'success' : isReturned ? 'error' : 'warning'} text={isCompleted ? 'مكتمل' : isReturned ? 'مرتجع' : 'معلق'} />
+                                            </td>
+                                            <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                                <div className="flex justify-center gap-1.5">
+                                                    <button onClick={() => { setSelectedInvoice(s); setIsPrinting(false); setPrintMode('a4'); }} className="p-1.5 hover:bg-primary/10 text-text-muted hover:text-primary rounded-xl border border-border/40 transition-colors" title="طباعة الفاتورة"><Printer size={13} /></button>
+                                                    <button onClick={() => { setSelectedInvoice(s); setIsPrinting(false); setPrintMode('a4'); }} className="p-1.5 hover:bg-surface-hover text-text-muted hover:text-text-main rounded-xl border border-border/40 transition-colors" title="عرض التفاصيل"><ArrowUpRight size={13} /></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
             </div>
 
             {/* Pagination */}

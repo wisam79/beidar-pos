@@ -12,7 +12,7 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { ImportExportModal } from '../../components/ImportExportModal';
 import { api, Supplier } from '../../core/api';
 import { generateProductDescription, improveText, suggestProductPrice, suggestProductEmoji } from '../../core/ai';
-import { useInvalidateProducts, useWindowSize, useUsbScannerDetection, useProducts } from '../../hooks';
+import { useInvalidateProducts, useWindowSize, useUsbScannerDetection, useProducts, useConfirmModal } from '../../hooks';
 import { usePreferences } from '../../components/PreferencesContext';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { validateProductInput } from '../../core/schemas/product.schema';
@@ -51,9 +51,7 @@ export const ProductsPage: React.FC = () => {
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
     const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
     const [scannerOpen, setScannerOpen] = useState(false);
-    const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; type?: 'confirm' | 'warning' | 'error' | 'info'; confirmText?: string; onConfirm: () => void }>({
-        open: false, title: '', message: '', onConfirm: () => { }
-    });
+    const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
     const [importExportOpen, setImportExportOpen] = useState(false);
 
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -319,7 +317,7 @@ export const ProductsPage: React.FC = () => {
                     notify(t('products.productDeleted'), 'success');
                     invalidateProducts();
                     refetchProducts();
-                    setConfirmModal(prev => ({ ...prev, open: false }));
+                    closeConfirm();
             } catch (err: unknown) {
                 // Try to parse the error as JSON (AppError)
                 let appError: unknown = null;
@@ -335,8 +333,7 @@ export const ProductsPage: React.FC = () => {
                 const appErr = appError as AppError | null;
                 if (appErr?.options?.allowForce) {
                     // Show Force Delete Dialog
-                    setConfirmModal({
-                        open: true,
+                    openConfirm({
                         title: 'تعذر الحذف - مطلوب تأكيد إضافي',
                         message: `${appErr.message}\n\n${appErr.hint || ''}`,
                         type: 'warning',
@@ -347,12 +344,11 @@ export const ProductsPage: React.FC = () => {
                 }
 
                 notify(t('errors.deleteFailed'), 'error');
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
             }
         };
 
-        setConfirmModal({
-            open: true,
+        openConfirm({
             title: t('confirm.deleteTitle'),
             message: t('confirm.deleteMessage'),
             type: 'error',
@@ -361,8 +357,7 @@ export const ProductsPage: React.FC = () => {
     };
 
     const handleBulkDelete = async () => {
-        setConfirmModal({
-            open: true,
+        openConfirm({
             title: 'حذف متعدد',
             message: `هل أنت متأكد من حذف ${selectedIds.length} منتجات؟ لا يمكن التراجع عن هذا الإجراء.`,
             type: 'error',
@@ -374,7 +369,7 @@ export const ProductsPage: React.FC = () => {
                     invalidateProducts();
                     refetchProducts();
                 } catch (_e) { notify('خطأ', 'error'); }
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
             }
         });
     };
@@ -452,7 +447,7 @@ export const ProductsPage: React.FC = () => {
                 await api.categories.delete(cat.id, force);
                 notify('تم حذف الفئة بنجاح', 'success');
                 refetchCategories(); refetchProducts();
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
                 setCategoryModalOpen(false); // Also close manager modal if open
             } catch (err: unknown) {
                 // Try to parse the error as JSON (AppError)
@@ -466,8 +461,7 @@ export const ProductsPage: React.FC = () => {
                 // Check for allowForce option
                 const appErr = appError as AppError | null;
                 if (appErr?.options?.allowForce) {
-                    setConfirmModal({
-                        open: true,
+                    openConfirm({
                         title: 'تعذر الحذف - مطلوب تأكيد إضافي',
                         message: `${appErr.message}\n\n${appErr.hint || ''}`,
                         type: 'warning',
@@ -479,12 +473,11 @@ export const ProductsPage: React.FC = () => {
 
                 const errorMsg = appErr?.message || errStr || 'خطأ في حذف الفئة';
                 notify(errorMsg, 'error');
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
             }
         };
 
-        setConfirmModal({
-            open: true,
+        openConfirm({
             title: 'حذف الفئة',
             message: `هل أنت متأكد من حذف فئة "${cat.name}"؟ منتجات هذه الفئة ستتحول إلى "غير مصنف".`,
             type: 'warning',
@@ -600,9 +593,9 @@ export const ProductsPage: React.FC = () => {
             {scannerOpen && <BarcodeScannerOverlay onClose={() => setScannerOpen(false)} onScan={handleScan} />}
 
             <ConfirmModal
-                isOpen={confirmModal.open} title={confirmModal.title} message={confirmModal.message}
-                type={confirmModal.type} confirmText={confirmModal.confirmText} onConfirm={confirmModal.onConfirm}
-                onCancel={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+                isOpen={confirmState.open} title={confirmState.title} message={confirmState.message}
+                type={confirmState.type} confirmText={confirmState.confirmText} onConfirm={confirmState.onConfirm}
+                onCancel={closeConfirm}
             />
 
             <ImportExportModal

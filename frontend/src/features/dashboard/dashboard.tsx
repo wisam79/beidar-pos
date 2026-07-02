@@ -65,23 +65,23 @@ export const Dashboard: React.FC = () => {
     };
 
     return (
-        <PageShell className="p-3 lg:p-4">
+        <PageShell className="p-0">
 
             {/* ═══════════════════════════════════════════════════════════════
                 1. HEADER BAR - Dribbble Profile & Filter
             ═══════════════════════════════════════════════════════════════ */}
-            <Card className="shrink-0 flex items-center justify-between gap-4 rounded-3xl px-6 py-4 bg-surface/90 backdrop-blur-md border border-border/80 shadow-xs">
+            <div className="shrink-0 flex items-center justify-between gap-4 px-2 select-none">
                 {/* Right: Welcome Profile */}
                 <div className="flex items-center gap-3">
-                    <div className="relative w-11 h-11 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 text-primary font-black text-sm flex items-center justify-center shadow-inner select-none transition-transform duration-300 hover:scale-105">
+                    <div className="relative w-10 h-10 rounded-full bg-primary/10 border border-primary/20 text-primary font-black text-sm flex items-center justify-center select-none">
                         {currentUser?.username?.substring(0, 2).toUpperCase() || 'US'}
-                        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-surface shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-bg shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
                     </div>
                     <div className="text-right">
-                        <h1 className="text-lg font-black text-text-main leading-tight tracking-tight">
+                        <h1 className="text-base font-black text-text-main leading-tight tracking-tight">
                             مرحباً، {currentUser?.username || 'المستخدم'} 👋
                         </h1>
-                        <p className="text-xs text-text-muted font-medium mt-0.5">مركز القيادة والتحكم</p>
+                        <p className="text-[10px] text-text-muted font-bold mt-0.5">مركز القيادة والتحكم</p>
                     </div>
                 </div>
 
@@ -95,12 +95,12 @@ export const Dashboard: React.FC = () => {
                 {/* Left: AI Button */}
                 <button
                     onClick={() => setView('reports')}
-                    className="flex items-center gap-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-full shadow-lg shadow-indigo-600/20 hover:shadow-xl hover:shadow-indigo-600/35 hover:scale-[1.02] active:scale-[0.98] hover:-translate-y-0.5 transition-all duration-300 font-bold text-xs"
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/95 text-primary-fg px-4 py-2 rounded-xl transition-all duration-200 font-bold text-xs shadow-sm shadow-primary/15"
                 >
-                    <Sparkles size={14} className="text-yellow-200 animate-pulse shrink-0" />
+                    <Sparkles size={13} className="text-primary-fg shrink-0" />
                     <span>المستشار الذكي</span>
                 </button>
-            </Card>
+            </div>
 
             {/* ═══════════════════════════════════════════════════════════════
                 2. STATS BAR - Compact Horizontal Pills
@@ -149,8 +149,8 @@ export const Dashboard: React.FC = () => {
                     </Card>
 
                     {/* Quick Actions Toolbar */}
-                    <Card className="shrink-0 flex items-center gap-2 p-2 shadow-sm">
-                        <span className="text-xs text-text-muted font-medium px-2">إجراءات سريعة:</span>
+                    <div className="shrink-0 flex items-center gap-2 p-1.5 bg-surface-active/10 border border-border rounded-xl">
+                        <span className="text-xs text-text-muted font-black px-2">إجراءات سريعة:</span>
                         <Button
                             onClick={() => handleQuickAction('sales')}
                             variant="primary"
@@ -183,7 +183,7 @@ export const Dashboard: React.FC = () => {
                         >
                             التقارير
                         </Button>
-                    </Card>
+                    </div>
                 </div>
 
                 {/* RIGHT: Widgets Column */}

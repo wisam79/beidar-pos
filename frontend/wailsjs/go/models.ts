@@ -128,6 +128,28 @@ export namespace domain {
 		    return a;
 		}
 	}
+	export class BackupConfig {
+	    enabled: boolean;
+	    frequency: string;
+	    retainDays: number;
+	    path: string;
+	    lastBackup: string;
+	    cloudAutoSync: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new BackupConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.enabled = source["enabled"];
+	        this.frequency = source["frequency"];
+	        this.retainDays = source["retainDays"];
+	        this.path = source["path"];
+	        this.lastBackup = source["lastBackup"];
+	        this.cloudAutoSync = source["cloudAutoSync"];
+	    }
+	}
 	export class BackupInfo {
 	    filename: string;
 	    path: string;
@@ -1247,6 +1269,26 @@ export namespace domain {
 	
 	
 	
+	export class PurchaseOrderStats {
+	    totalOrders: number;
+	    pendingOrders: number;
+	    totalValue: number;
+	    totalPaid: number;
+	    totalUnpaid: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PurchaseOrderStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.totalOrders = source["totalOrders"];
+	        this.pendingOrders = source["pendingOrders"];
+	        this.totalValue = source["totalValue"];
+	        this.totalPaid = source["totalPaid"];
+	        this.totalUnpaid = source["totalUnpaid"];
+	    }
+	}
 	export class ReceiptItem {
 	    name: string;
 	    qty: number;

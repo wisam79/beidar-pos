@@ -288,6 +288,7 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
     // Reference for silent print receipt capture
     const silentPrintRef = useRef<HTMLDivElement>(null);
     const [isSilentPrinting, setIsSilentPrinting] = React.useState(false);
+    const [simulatingSale, setSimulatingSale] = React.useState<Sale | null>(null);
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // 🖨️ SILENT BITMAP PRINTING - Captures receipt as image for Arabic support
@@ -295,13 +296,20 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
     const handleSilentBitmapPrint = useCallback(async () => {
         if (!silentPrintRef.current || !lastSaleForPrint || !prefs.autoPrint) return;
         if (prefs.autoPrintFormat !== 'thermal') return; // Only for thermal
-        if (!prefs.receiptPrinter?.trim()) {
+        if (!prefs.receiptPrinter?.trim() && localStorage.getItem('beidar_simulate_print') !== 'true') {
             notify('⚠️ لم يتم تحديد طابعة الإيصالات في الإعدادات', 'error');
             onAfterPrint();
             return;
         }
 
         try {
+            if (localStorage.getItem('beidar_simulate_print') === 'true') {
+                notify('✅ وضع المحاكاة: يتم عرض الفاتورة على الشاشة', 'info');
+                setSimulatingSale(lastSaleForPrint);
+                setIsSilentPrinting(false);
+                return; // Wait for user to close modal, then onAfterPrint
+            }
+
             setIsSilentPrinting(true);
 
             // Wait for fonts to load
@@ -639,6 +647,20 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
                 <PrintPortal onAfterPrint={onAfterPrint}>
                     <ReceiptTemplate sale={lastSaleForPrint} prefs={prefs} mode={(prefs.autoPrintFormat || 'a4') as 'thermal' | 'a4'} />
                 </PrintPortal>
+            )}
+
+            {/* Simulation Print Modal */}
+            {simulatingSale && (
+                <Modal title={`محاكاة الطباعة الحرارية - فاتورة #${simulatingSale.id}`} onClose={() => { setSimulatingSale(null); onAfterPrint(); }} size="lg">
+                    <div className="flex flex-col items-center bg-gray-200 p-8 rounded-2xl max-h-[70vh] overflow-y-auto">
+                        <div className="shadow-2xl">
+                            <ReceiptTemplate sale={simulatingSale} prefs={prefs} mode="thermal" />
+                        </div>
+                    </div>
+                    <div className="mt-4 flex justify-center gap-4">
+                        <button onClick={() => { setSimulatingSale(null); onAfterPrint(); }} className="px-8 py-3 bg-primary text-primary-fg font-bold rounded-xl shadow-lg hover:brightness-110 transition-all">إغلاق المحاكاة</button>
+                    </div>
+                </Modal>
             )}
 
             {/* Hidden container for silent thermal bitmap capture */}

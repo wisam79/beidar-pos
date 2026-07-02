@@ -153,7 +153,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                         </p>
                     </div>
                 </div>
-                <div className="flex gap-1.5">
+                <div className="flex shrink-0 gap-1.5">
                     {cart.length > 0 && (
                         <Button variant="icon" onClick={handleParkSale} title="تعليق البيع" aria-label="تعليق البيع">
                             <PauseCircle size={20} />
@@ -208,13 +208,13 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                             <>
                                 <input
                                     type="number"
-                                    className="h-10 flex-1 rounded-xl border bg-input-bg px-3 text-center text-sm font-bold text-text-main outline-none transition focus:border-primary"
+                                    className="h-10 flex-1 min-w-0 rounded-xl border bg-input-bg px-3 text-center text-sm font-bold text-text-main outline-none transition focus:border-primary"
                                     placeholder="المبلغ المستلم"
                                     value={receivedAmount > 0 ? receivedAmount : ''}
                                     onChange={(e) => setReceivedAmount(Number(e.target.value))}
                                 />
                                 {receivedAmount > 0 && (
-                                    <div className={`flex h-10 shrink-0 items-center gap-1 rounded-xl border px-3 text-sm font-bold ${change >= 0 ? 'border-success/30 bg-success-dim text-success' : 'border-danger/30 bg-danger-dim text-danger'}`}>
+                                    <div className={`flex h-10 shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border px-3 text-sm font-bold ${change >= 0 ? 'border-success/30 bg-success-dim text-success' : 'border-danger/30 bg-danger-dim text-danger'}`}>
                                         <span className="text-[10px] opacity-70">الباقي:</span>
                                         <span className="tabular-nums">{formatCurrency(Math.abs(change), '')}</span>
                                     </div>
@@ -238,25 +238,27 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                         </div>
                     )}
 
-                    <div className="flex items-center gap-2">
-                        <div className="flex h-14 flex-1 items-center justify-between rounded-xl border-2 border-primary/30 bg-primary-dim px-4">
-                            <span className="text-xs font-bold text-primary">الإجمالي</span>
-                            <div className="flex items-center gap-2">
-                                <span className="tabular-nums text-3xl font-black text-text-main">{formattedTotal}</span>
-                                <span className="rounded-lg bg-primary/20 px-2 py-1 text-sm font-bold text-primary">{prefs.currency}</span>
+                    <div className="flex shrink-0 items-center gap-2">
+                        <div className="flex h-14 flex-1 min-w-0 items-center justify-between rounded-xl border-2 border-primary/30 bg-primary-dim px-4">
+                            <span className="shrink-0 text-xs font-bold text-primary">الإجمالي</span>
+                            <div className="flex min-w-0 items-center gap-2">
+                                <span className="truncate tabular-nums text-3xl font-black text-text-main" title={formattedTotal}>{formattedTotal}</span>
+                                <span className="shrink-0 rounded-lg bg-primary/20 px-2 py-1 text-sm font-bold text-primary">{prefs.currency}</span>
                             </div>
                         </div>
-                        <Button variant="icon" onClick={() => setShowSplitModal(true)} title="دفع مجزأ">
-                            <Split size={18} />
-                        </Button>
-                        {selectedCustomer && (
-                            <Button variant="icon" onClick={() => { setInstConfig({ downPayment: 0, months: 3 }); setShowInstallmentModal(true); }} title="أقساط">
-                                <Calculator size={18} />
+                        <div className="flex shrink-0 items-center gap-2">
+                            <Button variant="icon" onClick={() => setShowSplitModal(true)} title="دفع مجزأ" className="shrink-0">
+                                <Split size={18} />
                             </Button>
-                        )}
-                        <Button variant="primary" onClick={handleCheckout} disabled={cart.length === 0 || isProcessing} className="w-32 h-14 text-sm">
-                            {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Check size={20} strokeWidth={3} /><span>{paymentMethod === 'credit' ? 'دين' : 'بيع'}</span></>}
-                        </Button>
+                            {selectedCustomer && (
+                                <Button variant="icon" onClick={() => { setInstConfig({ downPayment: 0, months: 3 }); setShowInstallmentModal(true); }} title="أقساط" className="shrink-0">
+                                    <Calculator size={18} />
+                                </Button>
+                            )}
+                            <Button variant="primary" onClick={handleCheckout} disabled={cart.length === 0 || isProcessing} className="h-14 w-32 shrink-0 whitespace-nowrap text-sm">
+                                {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Check size={20} strokeWidth={3} /><span>{paymentMethod === 'credit' ? 'دين' : 'بيع'}</span></>}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>

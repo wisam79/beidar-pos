@@ -450,7 +450,7 @@ func (s *saleService) ReturnSale(id string) error {
 				Note:       "استرجاع / Refund",
 			}
 			if err := txPaymentRepo.Create(&refundPayment); err != nil {
-				return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %v", err)
+				return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)
 			}
 		}
 

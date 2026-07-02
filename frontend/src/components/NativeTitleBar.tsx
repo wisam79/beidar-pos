@@ -41,50 +41,62 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
 
     return (
         <div
-            dir="ltr"
+            dir="rtl"
             className="title-bar-draggable h-9 bg-sidebar border-b border-border flex items-center justify-between select-none z-[50] shrink-0 w-full relative"
             onDoubleClick={handleMaximize}
         >
-            {/* Branding - Left Side with App Icon */}
+            {/* Branding - Right Side (RTL) */}
             <div className="px-4 flex items-center gap-3 h-full basis-1/4">
-                {/* App Name with subtle gradient */}
+                {/* App Name in Lemonada Arabic font */}
                 <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-text-main font-logo tracking-tight">Beidar</span>
+                    <span className="text-base font-black text-primary font-logo">بيدر</span>
                 </div>
             </div>
 
             {/* Center Info - Integrated Status (Premium Pill Badges) */}
-            <div className="flex items-center justify-center gap-2 h-full basis-1/2">
+            <div className="title-bar-controls flex items-center justify-center gap-2.5 h-full basis-1/2">
                 {/* User Info */}
                 {currentUser && (
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-muted hidden md:flex bg-surface-hover/80 border border-border/50 px-2.5 py-0.5 rounded-full shadow-xs">
-                        <User size={12} className="text-primary shrink-0" />
-                        <span className="text-text-main font-semibold">{currentUser.name}</span>
+                    <div 
+                        className="flex items-center gap-1.5 h-[22px] text-[11px] font-medium text-text-muted hover:text-text-main bg-surface-hover/60 dark:bg-neutral-800/40 border border-border/40 dark:border-neutral-700/50 px-2.5 rounded-full shadow-xs hover:bg-surface-hover dark:hover:bg-neutral-800/70 hover:border-border/80 dark:hover:border-neutral-600 transition-all duration-200 cursor-default group"
+                        title={`المستخدم الحالي: ${currentUser.name}`}
+                    >
+                        <User size={12} className="text-primary/75 dark:text-primary/90 shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="font-semibold text-text-main">{currentUser.name}</span>
                     </div>
                 )}
 
                 {/* Separator */}
-                {currentUser && <div className="w-px h-3 bg-border/60 hidden md:block" />}
+                {currentUser && <div className="w-px h-3 bg-gradient-to-b from-transparent via-border/50 to-transparent hidden md:block" />}
 
                 {/* Online Status */}
                 {onlineStatus !== undefined && (
-                    <div className={`flex items-center gap-1.5 text-[9px] font-bold px-2.5 py-0.5 rounded-full border shadow-xs ${
-                        onlineStatus 
-                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
-                            : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
-                    }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${onlineStatus ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-                        <span>{onlineStatus ? 'متصل' : 'غير متصل'}</span>
+                    <div 
+                        className={`flex items-center gap-1.5 h-[22px] text-[11px] font-medium px-2.5 rounded-full border shadow-xs transition-all duration-200 cursor-default ${
+                            onlineStatus 
+                                ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/20 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 dark:hover:bg-emerald-500/15 hover:border-emerald-500/30' 
+                                : 'bg-rose-500/5 dark:bg-rose-500/10 border-rose-500/20 dark:border-rose-500/25 text-rose-700 dark:text-rose-400 hover:bg-rose-500/10 dark:hover:bg-rose-500/15 hover:border-rose-500/30'
+                        }`}
+                        title={onlineStatus ? "متصل بالنظام والسحابة" : "غير متصل بالشبكة"}
+                    >
+                        <span className="relative flex h-1.5 w-1.5 shrink-0">
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${onlineStatus ? 'bg-emerald-400 dark:bg-emerald-500' : 'bg-rose-400 dark:bg-rose-500'}`} />
+                            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${onlineStatus ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        </span>
+                        <span className="font-semibold">{onlineStatus ? 'متصل' : 'غير متصل'}</span>
                     </div>
                 )}
 
                 {/* Separator */}
-                {appVersion && <div className="w-px h-3 bg-border/60 hidden md:block" />}
+                {appVersion && <div className="w-px h-3 bg-gradient-to-b from-transparent via-border/50 to-transparent hidden md:block" />}
 
                 {/* Version */}
                 {appVersion && (
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-muted hidden md:flex bg-surface-hover/80 border border-border/50 px-2.5 py-0.5 rounded-full shadow-xs">
-                        <Server size={11} className="text-text-muted/60 shrink-0" />
+                    <div 
+                        className="flex items-center gap-1.5 h-[22px] text-[11px] font-medium text-text-muted hover:text-text-main bg-surface-hover/60 dark:bg-neutral-800/40 border border-border/40 dark:border-neutral-700/50 px-2.5 rounded-full shadow-xs hover:bg-surface-hover dark:hover:bg-neutral-800/70 hover:border-border/80 dark:hover:border-neutral-600 transition-all duration-200 cursor-default group"
+                        title={`إصدار النظام: ${appVersion}`}
+                    >
+                        <Server size={11} className="text-text-muted/70 shrink-0 group-hover:scale-105 transition-transform duration-200" />
                         <span>v{appVersion}</span>
                     </div>
                 )}

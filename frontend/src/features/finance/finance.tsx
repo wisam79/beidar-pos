@@ -1,8 +1,9 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Landmark, TrendingDown, TrendingUp, Users, Plus, Search, Trash2, Sparkles, Building2, Wallet, PieChart, Minus, FileText, ShoppingCart, LayoutDashboard, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ColumnDef } from '@tanstack/react-table';
 import { formatCurrency, getLocalDateString } from '../../core/utils';
 import { Badge, Modal, PageHeader, SpotlightCard, EmptyState } from '../../components/ui';
+import { DataTable } from '../../components/shared/DataTable';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { DonutChart, SalesAreaChart } from '../../components/charts';
 import { categorizeExpense, writeRestockEmail } from '../../core/ai';
@@ -298,6 +299,33 @@ export const FinancePage: React.FC = () => {
     const filteredExpenses = expenses.filter(e => e.title.includes(search));
     const filteredSuppliers = suppliers.filter(s => s.name.includes(search) || s.companyName.includes(search));
 
+    const expenseColumns: ColumnDef<Expense, any>[] = [
+        { accessorKey: 'title', header: 'العنوان', size: 250, cell: (info) => <div className="font-bold text-text-main text-sm">{info.getValue()}</div> },
+        { accessorKey: 'date', header: 'التاريخ', size: 100, cell: (info) => <div className="text-text-muted font-mono text-xs">{info.getValue()}</div> },
+        {
+            accessorKey: 'category', header: 'الفئة', size: 100, cell: (info) => {
+                const c = info.getValue();
+                return <Badge type="info" text={c === 'rent' ? 'إيجار' : c === 'salary' ? 'رواتب' : c === 'bills' ? 'فواتير' : 'أخرى'} />;
+            }
+        },
+        {
+            accessorKey: 'amount', header: 'المبلغ', size: 120, cell: (info) => (
+                <div className="font-mono font-bold text-red-500 text-left">
+                    {formatCurrency(info.getValue(), prefs?.currency).replace(prefs?.currency || 'IQD', '')}
+                </div>
+            )
+        },
+        {
+            id: 'actions', header: 'إجراء', size: 60, cell: (info) => (
+                <div className="flex justify-end">
+                    <button title="حذف المصروف" onClick={(e) => { e.stopPropagation(); handleDeleteExpense(info.row.original.id); }} className="text-text-muted hover:text-red-500 p-2 rounded-lg bg-surface hover:bg-red-500/10 transition-colors">
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ];
+
     if (loading) return <LoadingState icon={Landmark} title="جاري تحميل البيانات المالية..." subtitle="يرجى الانتظار" />;
 
     return (
@@ -552,30 +580,16 @@ export const FinancePage: React.FC = () => {
                         <div className="space-y-4">
                             <SearchInput value={search} onChange={setSearch} placeholder="بحث في المصروفات..." className="max-w-md" />
                             {filteredExpenses.length === 0 ? <EmptyState icon={FileText} title="لا توجد مصروفات" /> : (
-                                <div className="border border-border rounded-xl overflow-hidden bg-surface">
-                                    <table className="w-full text-right text-sm">
-                                        <thead>
-                                            <tr className="border-b border-border bg-surface-hover text-text-muted">
-                                                <th className="text-right">العنوان</th>
-                                                <th className="text-right">التاريخ</th>
-                                                <th className="text-center">الفئة</th>
-                                                <th className="text-left">المبلغ</th>
-                                                <th className="text-center">إجراء</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {filteredExpenses.map(e => (
-                                                <tr key={e.id} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
-                                                    <td className="font-bold text-text-main">{e.title}</td>
-                                                    <td className="text-text-muted font-mono">{e.date}</td>
-                                                    <td className="text-center"><Badge type="info" text={e.category === 'rent' ? 'إيجار' : e.category === 'salary' ? 'رواتب' : e.category === 'bills' ? 'فواتير' : 'أخرى'} /></td>
-                                                    <td className="font-mono font-bold text-danger text-left">{formatCurrency(e.amount, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</td>
-                                                    <td className="text-center"><button title="حذف المصروف" onClick={() => handleDeleteExpense(e.id)} className="text-text-muted hover:text-danger"><Trash2 size={16} /></button></td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <DataTable 
+                                    columns={expenseColumns} 
+                                    data={filteredExpenses} 
+                                    searchQuery={search} 
+                                    getRowColor={() => 'red'}
+                                    onRowClick={(row) => {
+                                        setExpenseForm({ ...row, amount: row.amount.toString() } as any);
+                                        setExpenseModal(true);
+                                    }}
+                                />
                             )}
                         </div>
                     )}
@@ -584,27 +598,49 @@ export const FinancePage: React.FC = () => {
                         <div className="space-y-4">
                             <SearchInput value={search} onChange={setSearch} placeholder="بحث عن مورد..." className="max-w-md" />
                             {filteredSuppliers.length === 0 ? <EmptyState icon={Users} title="لا يوجد موردين" /> : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                                    {filteredSuppliers.map(s => (
-                                        <SpotlightCard key={s.id} className="bg-surface/50 border border-white/10 p-4 rounded-2xl relative group backdrop-blur-sm hover:border-primary/30 transition-all">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h4 className="font-bold text-text-main">{s.name}</h4>
-                                                    <p className="text-xs text-text-muted">{s.companyName}</p>
-                                                </div>
-                                                <div className="p-2 bg-surface rounded-lg text-text-muted"><Building2 size={18} /></div>
-                                            </div>
-                                            <div className="mb-3">
-                                                <p className="text-[10px] text-text-muted uppercase font-bold">الرصيد (له)</p>
-                                                <p className="text-xl font-black text-text-main font-mono">{formatCurrency(s.balance, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</p>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => { setSupplierForm(s); setSupplierModal(true); }} className="flex-1 py-2 bg-surface border border-border rounded-lg text-xs font-bold hover:bg-surface-hover">تعديل</button>
-                                                <button onClick={() => handleGenerateEmail(s)} className="flex-1 py-2 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg text-xs font-bold hover:bg-purple-500 hover:text-white flex items-center justify-center gap-1"><Sparkles size={12} /> ايميل طلبية</button>
-                                                <button onClick={() => handleDeleteSupplier(s.id)} className="p-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500 hover:text-white transition-colors" title="حذف المورد"><Trash2 size={16} /></button>
-                                            </div>
-                                        </SpotlightCard>
-                                    ))}
+                                <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                                        <table className="w-full text-right text-sm border-collapse">
+                                            <thead className="sticky top-0 z-10 bg-surface-hover border-b border-border text-text-muted text-xs">
+                                                <tr>
+                                                    <th className="px-4 py-3 text-right">المورد</th>
+                                                    <th className="px-4 py-3 text-right w-[200px]">الرصيد (له)</th>
+                                                    <th className="px-4 py-3 text-left w-[300px] pl-8">الإجراءات</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredSuppliers.map((s) => (
+                                                    <tr
+                                                        key={s.id}
+                                                        className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors group"
+                                                    >
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-xl bg-bg border border-border flex items-center justify-center text-text-muted group-hover:text-primary transition-colors shrink-0 shadow-inner">
+                                                                    <Building2 size={18} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-text-main text-xs group-hover:text-primary transition-colors">{s.name}</p>
+                                                                    <p className="text-[10px] text-text-muted">{s.companyName}</p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right font-mono font-bold text-text-main text-base">
+                                                            {formatCurrency(s.balance, prefs?.currency).replace(prefs?.currency || 'IQD', '')}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-left pl-8" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="flex items-center justify-end gap-1.5">
+                                                                <button onClick={() => { setSupplierForm(s); setSupplierModal(true); }} className="px-2.5 py-1.5 hover:bg-surface-hover hover:text-text-main text-text-muted rounded-xl text-[10px] font-bold border border-border/40 transition-colors">تعديل</button>
+                                                                <button onClick={() => handleGenerateEmail(s)} className="px-2.5 py-1.5 hover:bg-purple-500/10 text-purple-400 hover:text-purple-500 rounded-xl text-[10px] font-bold border border-purple-500/20 transition-colors flex items-center gap-1"><Sparkles size={10} className="inline mr-1" /> ايميل طلبية</button>
+                                                                <div className="w-px h-5 bg-border/60 mx-0.5"></div>
+                                                                <button onClick={() => handleDeleteSupplier(s.id)} className="p-1.5 hover:bg-red-500/10 rounded-xl text-text-muted hover:text-red-500 border border-border/40 transition-colors" title="حذف المورد"><Trash2 size={13} /></button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             )}
                         </div>

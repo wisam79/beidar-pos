@@ -91,7 +91,7 @@ func (s *settingsService) GetDeviceID() (string, error) {
 
 	// Write to file
 	if err := os.WriteFile(deviceIDFile, []byte(newID), 0644); err != nil {
-		return "", fmt.Errorf("failed to save device ID: %v", err)
+		return "", fmt.Errorf("failed to save device ID: %w", err)
 	}
 
 	return newID, nil
@@ -227,14 +227,20 @@ func (s *settingsService) SaveGlobalAIKeys(keys []string, userToken string) erro
 	url := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys", sbURL)
 
 	config := aiKeysConfig{GeminiKeys: keys}
-	configJson, _ := json.Marshal(config)
+	configJson, err := json.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("failed to marshal AI keys config: %w", err)
+	}
 
 	payload := map[string]interface{}{
 		"value":      json.RawMessage(configJson),
 		"updated_at": time.Now().UTC().Format(time.RFC3339),
 	}
 
-	jsonBody, _ := json.Marshal(payload)
+	jsonBody, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request payload: %w", err)
+	}
 	req, err := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return err

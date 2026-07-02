@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../../../core/utils';
 import { validateDiscountInput } from '../../../core/schemas/discount.schema';
+import { useDiscounts } from '../../../hooks';
 
 interface DiscountManagerProps {
     isOpen: boolean;
@@ -36,27 +37,11 @@ const emptyDiscount: Partial<Discount> = {
 };
 
 export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClose, notify }) => {
-    const [discounts, setDiscounts] = useState<Discount[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: discounts = [], isLoading: loading, refetch: loadDiscounts } = useDiscounts(isOpen);
     const [showForm, setShowForm] = useState(false);
     const [editingDiscount, setEditingDiscount] = useState<Partial<Discount> | null>(null);
     const [form, setForm] = useState<Partial<Discount>>(emptyDiscount);
     const [errors, setErrors] = useState<Record<string, string>>({});
-
-    useEffect(() => {
-        if (isOpen) loadDiscounts();
-    }, [isOpen]);
-
-    const loadDiscounts = async () => {
-        setLoading(true);
-        try {
-            const data = await api.discounts.list();
-            setDiscounts(data || []);
-        } catch (e) {
-            console.error('Failed to load discounts', e);
-        }
-        setLoading(false);
-    };
 
     const handleSave = async () => {
         // Validate form

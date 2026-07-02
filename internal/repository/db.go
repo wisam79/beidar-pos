@@ -111,6 +111,10 @@ func InitDB() (*gorm.DB, error) {
 	_, _ = sqlDB.Exec("PRAGMA busy_timeout=5000;") // 5 seconds wait on lock
 	_, _ = sqlDB.Exec("PRAGMA foreign_keys=ON;")   // Enable foreign key constraints
 
+	// SQLite only supports one concurrent writer. Limit connections to 1 to avoid 'database is locked' issues,
+	// especially when serving multiple LAN clients.
+	sqlDB.SetMaxOpenConns(1)
+
 	// Auto Migrate Domain Models
 	err = db.AutoMigrate(
 		&domain.Product{},

@@ -59,8 +59,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                         onLogout={onLogout}
                     />
 
-                    <main className={`flex-1 flex flex-col h-[calc(100%-24px)] relative overflow-hidden bg-bg border border-border shadow-sm mr-3 my-3 ml-3 transition-all duration-200 ${activeView === 'sales' ? 'rounded-none m-0 border-none h-full' : 'rounded-[24px]'}`}>
-                        <div className={`w-full h-full animate-fade-in flex flex-col ${activeView === 'sales' ? 'max-w-none p-0' : 'max-w-[1920px] mx-auto p-2'}`}>
+                    <main className="flex-1 flex flex-col h-full relative overflow-hidden bg-bg transition-all duration-200">
+                        <div className={`w-full h-full animate-fade-in flex flex-col ${activeView === 'sales' ? 'p-0' : 'p-6 max-w-[1920px] mx-auto'}`}>
                             {children}
                         </div>
                     </main>

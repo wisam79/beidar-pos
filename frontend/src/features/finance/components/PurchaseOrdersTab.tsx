@@ -4,6 +4,7 @@ import { formatCurrency } from '../../../core/utils';
 import { Modal, Badge, EmptyState, SpotlightCard } from '../../../components/ui';
 import { ConfirmModal } from '../../../components/ConfirmModal';
 import { api, PurchaseOrder, PurchaseOrderItem, ReceiveOrderItem, Supplier, Product } from '../../../core/api';
+import { useConfirmModal, usePurchaseOrders, useInventoryProducts } from '../../../hooks';
 
 interface PurchaseOrdersTabProps {
     notify: (msg: string, type: 'success' | 'error') => void;
@@ -13,10 +14,12 @@ interface PurchaseOrdersTabProps {
 }
 
 export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, currency, suppliers, onRefresh }) => {
-    const [orders, setOrders] = useState<PurchaseOrder[]>([]);
-    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    
+    const { data: orders = [], isLoading: loading, refetch: loadOrders } = usePurchaseOrders(statusFilter === 'all' ? '' : statusFilter);
+    const { data: productsData } = useInventoryProducts(0, 1000, '', 'all', 'all', 'all');
+    const products = productsData?.products || [];
 
     // Modals
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -33,7 +36,6 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
     }>({ supplierId: '', note: '', items: [] });
 
     // Products for selection
-    const [products, setProducts] = useState<Product[]>([]);
     const [productSearch, setProductSearch] = useState('');
 
     // Receive form
@@ -44,35 +46,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
     const [payMethod, setPayMethod] = useState('cash');
 
     // Confirm modal
-    const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; onConfirm: () => void }>({
-        open: false, title: '', message: '', onConfirm: () => { }
-    });
-
-    // Load orders
-    const loadOrders = async () => {
-        try {
-            setLoading(true);
-            const data = await api.purchaseOrders.list(statusFilter === 'all' ? '' : statusFilter);
-            setOrders(data || []);
-        } catch (err) {
-            console.error(err);
-            notify('فشل تحميل أوامر الشراء', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Load products
-    const loadProducts = async () => {
-        try {
-            const result = await api.products.list(0, 1000, '', '', '', '');
-            setProducts(result?.data || []);
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    useEffect(() => { loadOrders(); loadProducts(); }, [statusFilter]);
+    const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
 
     // Filter orders
     const filteredOrders = useMemo(() => {
@@ -189,10 +163,10 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
 
     // Cancel order
     const handleCancelOrder = (order: PurchaseOrder) => {
-        setConfirmModal({
-            open: true,
+        openConfirm({
             title: 'إلغاء أمر الشراء',
             message: `هل أنت متأكد من إلغاء أمر الشراء #${order.id}؟`,
+            type: 'warning',
             onConfirm: async () => {
                 try {
                     await api.purchaseOrders.cancel(order.id!);
@@ -202,17 +176,17 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                     const msg = err instanceof Error ? err.message : 'فشل الإلغاء';
                     notify(msg, 'error');
                 }
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
             }
         });
     };
 
     // Delete order
     const handleDeleteOrder = (order: PurchaseOrder) => {
-        setConfirmModal({
-            open: true,
+        openConfirm({
             title: 'حذف أمر الشراء',
             message: `هل أنت متأكد من حذف أمر الشراء #${order.id}؟ هذا الإجراء لا يمكن التراجع عنه.`,
+            type: 'error',
             onConfirm: async () => {
                 try {
                     await api.purchaseOrders.delete(order.id!);
@@ -222,7 +196,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                     const msg = err instanceof Error ? err.message : 'فشل الحذف';
                     notify(msg, 'error');
                 }
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
             }
         });
     };
@@ -599,12 +573,12 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
 
             {/* Confirm Modal */}
             <ConfirmModal
-                isOpen={confirmModal.open}
-                title={confirmModal.title}
-                message={confirmModal.message}
-                type="warning"
-                onConfirm={confirmModal.onConfirm}
-                onCancel={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+                isOpen={confirmState.open}
+                title={confirmState.title}
+                message={confirmState.message}
+                type={confirmState.type || "warning"}
+                onConfirm={confirmState.onConfirm}
+                onCancel={closeConfirm}
             />
         </div>
     );

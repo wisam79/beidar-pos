@@ -27,7 +27,7 @@ export function GetPreferences():Promise<domain.AppPreferences>;
 
 export function GetPurchaseOrder(arg1:string):Promise<domain.PurchaseOrder>;
 
-export function GetPurchaseOrderStats():Promise<Record<string, any>>;
+export function GetPurchaseOrderStats():Promise<domain.PurchaseOrderStats>;
 
 export function GetPurchaseOrders(arg1:string,arg2:string):Promise<Array<domain.PurchaseOrder>>;
 

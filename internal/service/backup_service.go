@@ -73,11 +73,13 @@ func (s *backupService) CreateBackup() (*domain.BackupResult, error) {
 		return result, nil
 	}
 
-	info, _ := os.Stat(backupPath)
+	info, err := os.Stat(backupPath)
 
 	result.Success = true
 	result.Path = backupPath
-	result.Size = info.Size()
+	if err == nil {
+		result.Size = info.Size()
+	}
 	result.Duration = time.Since(start).Milliseconds()
 
 	return result, nil
@@ -123,16 +125,16 @@ func (s *backupService) ListBackups() ([]domain.BackupInfo, error) {
 func (s *backupService) RestoreBackup(backupPath string) error {
 	data, err := os.ReadFile(backupPath)
 	if err != nil {
-		return fmt.Errorf("فشل قراءة ملف النسخة: %v", err)
+		return fmt.Errorf("فشل قراءة ملف النسخة: %w", err)
 	}
 
 	var dbExport domain.DatabaseExport
 	if err := json.Unmarshal(data, &dbExport); err != nil {
-		return fmt.Errorf("فشل تحليل البيانات: %v", err)
+		return fmt.Errorf("فشل تحليل البيانات: %w", err)
 	}
 
 	if err := s.backupRepo.Import(dbExport); err != nil {
-		return fmt.Errorf("فشل استيراد البيانات: %v", err)
+		return fmt.Errorf("فشل استيراد البيانات: %w", err)
 	}
 
 	return nil
@@ -333,7 +335,7 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 		}
 	}
 
-	_ = s.productRepo.Transaction(func(tx domain.Tx) error {
+	if txErr := s.productRepo.Transaction(func(tx domain.Tx) error {
 		txRepo := s.productRepo.WithTx(tx)
 
 		for i, record := range dataRows {
@@ -439,7 +441,9 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 			}
 		}
 		return nil
-	})
+	}); txErr != nil {
+		result.Errors = append(result.Errors, fmt.Sprintf("فشل عملية الاستيراد: %v", txErr))
+	}
 
 	result.Success = len(result.Errors) == 0 || (result.Imported+result.Updated) > 0
 	return result, nil

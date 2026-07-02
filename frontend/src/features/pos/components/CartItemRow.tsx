@@ -49,14 +49,14 @@ export const CartItemRow = memo(({ item, onUpdateQty, onRemove, onEdit, onQtyCli
                 </div>
             </div>
 
-            <div className="flex items-center gap-1.5 rounded-2xl border bg-bg p-1.5" onClick={(e) => e.stopPropagation()}>
-                <Button variant="icon" onClick={() => onUpdateQty(item.id, Math.max(1, Math.ceil(item.qty)) - 1 - item.qty)} title="إنقاص 1">
+            <div className="flex shrink-0 items-center gap-1.5 rounded-2xl border bg-bg p-1.5" onClick={(e) => e.stopPropagation()}>
+                <Button variant="icon" onClick={() => onUpdateQty(item.id, Math.max(1, Math.ceil(item.qty)) - 1 - item.qty)} title="إنقاص 1" className="shrink-0">
                     <Minus size={18} strokeWidth={3} />
                 </Button>
                 <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onQtyClick?.(item); }}
-                    className="min-w-11 h-11 rounded-xl border border-primary/20 bg-primary-dim px-2 text-center font-black text-lg font-mono text-text-main transition hover:bg-primary/15"
+                    className="min-w-[44px] shrink-0 h-11 rounded-xl border border-primary/20 bg-primary-dim px-2 text-center font-black text-lg font-mono text-text-main transition hover:bg-primary/15"
                     title="تعديل الكمية"
                 >
                     {qty}
@@ -66,8 +66,8 @@ export const CartItemRow = memo(({ item, onUpdateQty, onRemove, onEdit, onQtyCli
                 </Button>
             </div>
 
-            <div className="min-w-[72px] shrink-0 pl-2 text-right">
-                <p className="text-sm font-black tracking-tight text-text-main">{formatCurrency(total, currency).replace(currency, '')}</p>
+            <div className="min-w-[85px] shrink-0 pl-2 text-right">
+                <p className="truncate text-sm font-black tracking-tight text-text-main" title={formatCurrency(total, currency).replace(currency, '')}>{formatCurrency(total, currency).replace(currency, '')}</p>
                 <p className="text-[9px] font-bold text-text-muted">الإجمالي</p>
             </div>
 

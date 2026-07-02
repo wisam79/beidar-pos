@@ -7,46 +7,24 @@ import { logger } from '../../core/logger';
 import { formatCurrency } from '../../core/utils';
 import { ShiftManager } from '../../components/ShiftManager';
 import { useAuth } from '../../core/AuthContext';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, Modal, Badge } from '../../components/ui';
 import { PageShell, StatsGrid, StatCard, SectionCard } from '../../components/blocks';
-import { Modal } from '../../components/ds/Modal';
 import { usePreferences } from '../../components/PreferencesContext';
+import { useShiftsHistory, useShiftMovements } from '../../hooks';
 
 export const ShiftsPage: React.FC = () => {
     const { prefs, notify } = usePreferences();
     const { t: _t } = useTranslation();
     const { currentUser } = useAuth();
 
-    const [shifts, setShifts] = useState<Shift[]>([]);
-    const [loading, setLoading] = useState(true);
     const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
-    const [movements, setMovements] = useState<CashMovement[]>([]);
     const [showStats, setShowStats] = useState(false);
 
-    useEffect(() => {
-        fetchShifts();
-    }, []);
+    const { data: shifts = [], isLoading: loading, refetch: fetchShifts } = useShiftsHistory(50);
+    const { data: movements = [], isLoading: movementsLoading } = useShiftMovements(selectedShift?.id || null);
 
-    const fetchShifts = async () => {
-        try {
-            setLoading(true);
-            const history = await api.shift.getHistory(50);
-            setShifts(history || []);
-        } catch (e) {
-            logger.error('Failed to fetch shifts', e, 'Shifts');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleViewDetails = async (shift: Shift) => {
+    const handleViewDetails = (shift: Shift) => {
         setSelectedShift(shift);
-        try {
-            const movs = await api.shift.getMovements(shift.id);
-            setMovements(movs || []);
-        } catch (e) {
-            logger.error('Failed to fetch movements', e, 'Shifts');
-        }
     };
 
     const formatDate = (timestamp: number) => {
@@ -213,62 +191,80 @@ export const ShiftsPage: React.FC = () => {
                                 </div>
                             </div>
                         ) : (
-                            shifts.map((shift) => (
-                                <div
-                                    key={shift.id}
-                                    className={`
-                                        p-5 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden mb-2
-                                        ${shift.variance === 0
-                                            ? 'bg-surface hover:border-emerald-500/30 border-border hover:shadow-md hover:shadow-emerald-500/5'
-                                            : shift.variance > 0
-                                                ? 'bg-blue-500/[0.02] border-blue-500/10 hover:border-blue-500/30 hover:shadow-md hover:shadow-blue-500/5'
-                                                : 'bg-red-500/[0.02] border-red-500/10 hover:border-red-500/30 hover:shadow-md hover:shadow-red-500/5'
-                                        }
-                                    `}
-                                    onClick={() => handleViewDetails(shift)}
-                                >
-                                    <div className="flex items-center justify-between relative z-10">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-transform group-hover:scale-110 ${getVarianceClass(shift.variance)}`}>
-                                                {shift.variance === 0 ? <CheckCircle size={20} /> :
-                                                    shift.variance > 0 ? <ArrowUpRight size={20} /> : <AlertTriangle size={20} />}
-                                            </div>
-                                            <div>
-                                                <span className="block text-lg font-bold text-text-main mb-1">{shift.staffName}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-mono font-medium text-text-muted flex items-center gap-1.5 bg-surface-active/50 px-2.5 py-1 rounded-lg w-fit">
-                                                        <Calendar size={12} className="opacity-70" />
-                                                        {formatDate(shift.openTime)}
-                                                    </span>
-                                                    {shift.closeTime && (
-                                                        <span className="text-[10px] font-bold text-text-muted border border-border px-2 py-0.5 rounded-lg">
-                                                            مغلق
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-left flex flex-col items-end gap-1.5">
+                            <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+                                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                                    <table className="w-full text-right text-sm border-collapse">
+                                        <thead className="sticky top-0 z-10 bg-surface-hover border-b border-border text-text-muted text-xs">
+                                            <tr>
+                                                <th className="px-4 py-3 text-right">الموظف</th>
+                                                <th className="px-4 py-3 text-right">تاريخ البدء</th>
+                                                <th className="px-4 py-3 text-left w-[140px]">إجمالي المبيعات</th>
+                                                <th className="px-4 py-3 text-center w-[140px]">الفروقات</th>
+                                                <th className="px-4 py-3 text-center w-[80px]">الحالة</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {shifts.map((shift) => {
+                                                const hasVariance = shift.variance !== 0;
+                                                const isDeficit = shift.variance < 0;
+                                                const healthColor = !hasVariance ? 'bg-emerald-500' : isDeficit ? 'bg-red-500' : 'bg-blue-500';
 
-                                            <span className="block text-xl font-black font-mono text-text-main tracking-tight">
-                                                {formatCurrency(shift.totalSales, prefs.currency)}
-                                            </span>
-
-                                            {shift.variance !== 0 && (
-                                                <span className={`text-xs font-bold px-2.5 py-1 rounded-lg flex items-center justify-end gap-1.5 w-fit ${shift.variance > 0 ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
-                                                    {shift.variance > 0 ? '+' : ''}{formatCurrency(shift.variance, prefs.currency)}
-                                                </span>
-                                            )}
-                                            {shift.variance === 0 && (
-                                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg flex items-center justify-end gap-1.5">
-                                                    <CheckCircle size={12} /> متطابق
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
+                                                return (
+                                                    <tr
+                                                        key={shift.id}
+                                                        onClick={() => handleViewDetails(shift)}
+                                                        className={`border-b border-border/30 hover:bg-surface-hover/50 transition-colors cursor-pointer group`}
+                                                    >
+                                                        <td className="px-4 py-3 relative">
+                                                            {/* Health indicator bar on the right in RTL */}
+                                                            <div className={`absolute right-0 top-2 bottom-2 w-1 rounded-l-full ${healthColor} shadow-[0_0_8px_currentColor] text-${!hasVariance ? 'emerald' : isDeficit ? 'red' : 'blue'}-500`} />
+                                                            
+                                                            <div className="flex items-center gap-3 pr-2">
+                                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-transform group-hover:scale-105 ${getVarianceClass(shift.variance)}`}>
+                                                                    {shift.variance === 0 ? <CheckCircle size={18} /> :
+                                                                        shift.variance > 0 ? <ArrowUpRight size={18} /> : <AlertTriangle size={18} />}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-bold text-text-main text-xs group-hover:text-primary transition-colors">{shift.staffName}</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <span className="text-xs font-mono font-medium text-text-muted flex items-center gap-1.5">
+                                                                <Calendar size={12} className="opacity-70 inline mr-1" />
+                                                                {formatDate(shift.openTime)}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-left font-mono font-bold text-text-main text-base">
+                                                            {formatCurrency(shift.totalSales, prefs.currency).replace(prefs.currency || 'IQD', '')}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            {shift.variance !== 0 ? (
+                                                                <span className={`text-xs font-bold px-2.5 py-1 rounded-lg font-mono inline-block ${shift.variance > 0 ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
+                                                                    {shift.variance > 0 ? '+' : ''}{formatCurrency(shift.variance, prefs.currency).replace(prefs.currency || 'IQD', '')}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg font-mono inline-block">
+                                                                    0.00
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            {shift.closeTime ? (
+                                                                <Badge type="default" text="مغلق" />
+                                                            ) : (
+                                                                <Badge type="success" text="نشط" />
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 </div>
-                            ))
-                        )}
+                            </div>
+                        )
+                    }
                     </div>
                 </SectionCard>
             </div>
@@ -373,7 +369,10 @@ export const ShiftsPage: React.FC = () => {
                                             </div>
                                             سجل حركات النقد
                                         </h4>
-                                        <div className="space-y-2.5">
+                                        {movementsLoading ? (
+                                            <div className="flex justify-center p-4"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
+                                        ) : (
+                                            <div className="space-y-2.5">
                                             {movements.map((mov) => (
                                                 <div key={mov.id} className="flex justify-between items-center bg-surface-active/30 p-3 rounded-2xl border border-border/50 hover:border-border transition-colors">
                                                     <div className="flex items-center gap-3">
@@ -390,7 +389,8 @@ export const ShiftsPage: React.FC = () => {
                                                     </span>
                                                 </div>
                                             ))}
-                                        </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                     </>

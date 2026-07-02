@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Cloud, Check, AlertCircle, Loader2, Info, Database, RefreshCw, User, LogIn, LogOut, Download, Trash2 } from 'lucide-react';
 import { ConfirmModal } from '../../../components/ConfirmModal';
+import { useConfirmModal } from '../../../hooks';
 import * as CloudHandler from '../../../../wailsjs/go/handlers/CloudHandler';
 
 // Types
@@ -46,20 +47,7 @@ export function CloudBackupSettings() {
 
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-    // Confirm modal state
-    const [confirmModal, setConfirmModal] = useState<{
-        open: boolean;
-        title: string;
-        message: string;
-        type?: 'confirm' | 'warning' | 'error' | 'info';
-        onConfirm: () => void;
-    }>({
-        open: false,
-        title: '',
-        message: '',
-        type: 'warning',
-        onConfirm: () => { },
-    });
+    const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
 
     useEffect(() => {
         checkLoginStatus();
@@ -190,13 +178,12 @@ export function CloudBackupSettings() {
     };
 
     const confirmRestore = (backupId: string) => {
-        setConfirmModal({
-            open: true,
+        openConfirm({
             title: 'استعادة النسخة الاحتياطية',
             message: 'هل أنت متأكد من استعادة هذه النسخة؟ سيتم استبدال جميع البيانات الحالية.',
             type: 'warning',
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
                 setRestoreLoading(backupId);
                 try {
                     await CloudHandler.RestoreCloudBackup(backupId);
@@ -214,13 +201,12 @@ export function CloudBackupSettings() {
     };
 
     const confirmDelete = (backupId: string) => {
-        setConfirmModal({
-            open: true,
-            title: 'حذف النسخة الاحتياطية',
-            message: 'هل أنت متأكد من حذف هذه النسخة الاحتياطية؟ لا يمكن التراجع عن هذا الإجراء.',
+        openConfirm({
+            title: 'تأكيد الحذف',
+            message: `هل أنت متأكد أنك تريد حذف هذه النسخة الاحتياطية نهائياً؟`,
             type: 'error',
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, open: false }));
+                closeConfirm();
                 try {
                     await CloudHandler.DeleteCloudBackup(backupId);
                     setMessage({ type: 'success', text: 'تم حذف النسخة الاحتياطية' });
@@ -253,12 +239,12 @@ export function CloudBackupSettings() {
         <div className="space-y-5 animate-in fade-in duration-500 pb-10">
             {/* Confirm Modal */}
             <ConfirmModal
-                isOpen={confirmModal.open}
-                title={confirmModal.title}
-                message={confirmModal.message}
-                type={confirmModal.type}
-                onConfirm={confirmModal.onConfirm}
-                onCancel={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+                isOpen={confirmState.open}
+                title={confirmState.title}
+                message={confirmState.message}
+                type={confirmState.type}
+                onConfirm={confirmState.onConfirm}
+                onCancel={closeConfirm}
             />
 
             {/* Hero Header - Ultra Compact */}

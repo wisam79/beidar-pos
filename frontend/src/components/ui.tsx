@@ -29,10 +29,14 @@ interface EmptyStateProps {
 }
 
 interface ModalProps {
-    title: string;
+    title?: React.ReactNode;
+    description?: React.ReactNode;
     onClose: () => void;
     children: React.ReactNode;
-    size?: 'sm' | 'md' | 'lg' | 'xl';
+    footer?: React.ReactNode;
+    open?: boolean;
+    size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+    className?: string;
 }
 
 type BadgeType = 'success' | 'error' | 'warning' | 'info' | 'default' | 'completed' | 'returned' | 'pending';
@@ -151,14 +155,17 @@ export const EmptyState = memo(({ icon: Icon, title, description, action }: Empt
 ));
 EmptyState.displayName = 'EmptyState';
 
-export const Modal = memo(({ title, onClose, children, size = 'md' }: ModalProps) => {
-    const maxWidth = size === 'sm' ? 'max-w-md' : size === 'lg' ? 'max-w-4xl' : size === 'xl' ? 'max-w-6xl' : 'max-w-2xl';
+export const Modal = memo(({ title, description, onClose, children, footer, open, size = 'md', className = '' }: ModalProps) => {
+    const maxWidth = size === 'sm' ? 'max-w-md' : size === 'lg' ? 'max-w-4xl' : size === 'xl' ? 'max-w-6xl' : size === 'full' ? 'max-w-[92vw]' : 'max-w-2xl';
 
     useEffect(() => {
+        if (open === false) return;
         const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [onClose]);
+    }, [open, onClose]);
+
+    if (open === false) return null;
 
     return createPortal(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
@@ -171,18 +178,25 @@ export const Modal = memo(({ title, onClose, children, size = 'md' }: ModalProps
                     flex flex-col max-h-[90vh] 
                     animate-scale-in
                     overflow-hidden
+                    ${className}
                 `}
                 style={{ boxShadow: 'var(--shadow-xl)' }}
                 onClick={e => e.stopPropagation()}
             >
-                <div className="px-8 py-6 border-b border-border/80 flex justify-between items-center shrink-0 bg-surface/98">
-                    <h2 className="text-lg font-black text-text-main tracking-tight">{title}</h2>
-                    <div className="flex items-center gap-3">
-                        <Kbd>ESC</Kbd>
-                        <button onClick={onClose} title="إغلاق" aria-label="إغلاق" className="hover:bg-bg rounded-full p-2 text-text-muted hover:text-text-main transition-colors"><X size={20} /></button>
+                {(title || description) && (
+                    <div className="px-8 py-6 border-b border-border/80 flex justify-between items-center shrink-0 bg-surface/98">
+                        <div>
+                            {title && <h2 className="text-lg font-black text-text-main tracking-tight">{title}</h2>}
+                            {description && <p className="mt-1 text-sm text-text-muted">{description}</p>}
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Kbd>ESC</Kbd>
+                            <button onClick={onClose} title="إغلاق" aria-label="إغلاق" className="hover:bg-bg rounded-full p-2 text-text-muted hover:text-text-main transition-colors"><X size={20} /></button>
+                        </div>
                     </div>
-                </div>
+                )}
                 <div className="p-8 overflow-y-auto custom-scrollbar flex-1">{children}</div>
+                {footer && <div className="flex justify-end gap-2 border-t border-border/80 p-6 bg-surface/98">{footer}</div>}
             </div>
         </div>,
         document.body

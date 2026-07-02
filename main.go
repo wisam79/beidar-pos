@@ -148,6 +148,25 @@ func main() {
 			}
 			_ = saveWindowState(state)
 		},
+		OnBeforeClose: func(ctx context.Context) (prevent bool) {
+			dialogOptions := wailsruntime.MessageDialogOptions{
+				Type:          wailsruntime.QuestionDialog,
+				Title:         "تأكيد إغلاق النظام",
+				Message:       "تحذير: إغلاق التطبيق الرئيسي سيؤدي إلى انقطاع الشبكة عن جميع أجهزة الكاشير وتوقفها عن العمل.\n\nهل أنت متأكد من رغبتك في الإغلاق النهائي؟\n\n(اختر 'لا' لإبقاء النظام يعمل بتصغير النافذة)",
+				Buttons:       []string{"نعم، إغلاق نهائي", "لا، تصغير النافذة"},
+				DefaultButton: "لا، تصغير النافذة",
+				CancelButton:  "لا، تصغير النافذة",
+			}
+
+			result, _ := wailsruntime.MessageDialog(ctx, dialogOptions)
+			if result == "نعم، إغلاق نهائي" {
+				return false // Allow close
+			}
+
+			// Prevent close and minimize instead
+			wailsruntime.WindowMinimise(ctx)
+			return true
+		},
 		Frameless:        true,
 		Windows: &windows.Options{
 			WebviewIsTransparent:              true,          // Transparency for glassmorphism

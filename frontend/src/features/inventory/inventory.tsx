@@ -6,7 +6,7 @@ import { formatCurrency } from '../../core/utils';
 import { Badge, PageHeader, EmptyState } from '../../components/ui';
 import { analyzeInventoryRisk } from '../../core/ai';
 import { api, ProductStats } from '../../core/api';
-import { useInvalidateProducts } from '../../hooks';
+import { useInvalidateProducts, useDashboardStats, useInventoryProducts, useInventoryMetadata, useInventoryMovements } from '../../hooks';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
 
@@ -49,101 +49,25 @@ export const InventoryPage: React.FC = () => {
     // Pagination State
     const [page, setPage] = useState(0);
     const [pageSize] = useState(50);
-    const [totalPages, setTotalPages] = useState(0);
-    const [totalItems, setTotalItems] = useState(0);
 
     // Data State
-    const [products, setProducts] = useState<Product[]>([]);
-    const [stats, setStats] = useState<ProductStats>({ totalStock: 0, totalValue: 0, totalCost: 0, profit: 0 });
-    const [globalCounts, setGlobalCounts] = useState({ low: 0, out: 0 });
-
-    // Metadata for filters
-    const [categories, setCategories] = useState<{ id: string, name: string }[]>([]);
-    const [suppliers, setSuppliers] = useState<{ id: string, companyName: string }[]>([]);
-
-    const [movements, setMovements] = useState<StockMovement[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    // --- Data Loading ---
-    const fetchMetadata = async () => {
-        try {
-            const [cats, sups] = await Promise.all([
-                api.categories.list().catch(() => []),
-                api.suppliers.list().catch(() => [])
-            ]);
-
-            // Safe mapping in case of unexpected API response structure
-            const mappedCats = (Array.isArray(cats) ? cats : []).map((c: { name: string }) => ({ id: c.name, name: c.name }));
-            const mappedSups = (Array.isArray(sups) ? sups : []).map((s) => ({ id: s.id || '', companyName: s.companyName || '' }));
-
-            setCategories(mappedCats);
-            setSuppliers(mappedSups);
-        } catch (e) { console.error("Metadata load failed", e); }
+    const { stats: dashboardStats } = useDashboardStats('week');
+    const globalCounts = {
+        low: dashboardStats?.lowStockCount || 0,
+        out: 0
     };
 
-    const loadProducts = useCallback(async () => {
-        try {
-            setLoading(true);
-            const dbCategory = categoryFilter === 'all' ? '' : categoryFilter;
-            const dbSupplier = supplierFilter === 'all' ? '' : supplierFilter;
+    const { data: metaData } = useInventoryMetadata();
+    const categories = metaData?.categories || [];
+    const suppliers = metaData?.suppliers || [];
 
-            // Fetch Products
-            const response = await api.products.list(
-                page + 1, // API is 1-based
-                pageSize,
-                debouncedSearch,
-                dbCategory,
-                dbSupplier,
-                filterType
-            );
+    const { data: productsData, isLoading: loading, refetch: loadProducts } = useInventoryProducts(page, pageSize, debouncedSearch, categoryFilter, supplierFilter, filterType);
+    const products = productsData?.products || [];
+    const stats = productsData?.stats || { totalStock: 0, totalValue: 0, totalCost: 0, profit: 0 };
+    const totalItems = productsData?.totalItems || 0;
+    const totalPages = productsData?.totalPages || 0;
 
-            if (response) {
-                setProducts(response.data || []);
-                setTotalItems(response.total || 0);
-                setTotalPages(response.totalPages || 0);
-                if (response.stats) {
-                    setStats(response.stats);
-                }
-            }
-
-            // Fetch Counts (Dashboard Stats) for the status cards
-            api.stats.getDashboard('week').then(d => {
-                setGlobalCounts({
-                    low: d.lowStockCount || 0,
-                    out: 0 // Note: outOfStockCount not available in DashboardStats
-                });
-            });
-
-        } catch (_e) {
-            notify("خطأ في تحميل البيانات", "error");
-        } finally {
-            setLoading(false);
-        }
-    }, [page, pageSize, debouncedSearch, categoryFilter, supplierFilter, filterType, notify]);
-
-    // Load Stock Movements
-    const loadMovements = useCallback(async () => {
-        try {
-            const data = await api.stock.movements();
-            // Cast to local type - backend returns compatible structure
-            setMovements((data || []) as StockMovement[]);
-        } catch (e) {
-            console.error("Failed to load movements", e);
-        }
-    }, []);
-
-    // Initial Metadata Load
-    useEffect(() => { fetchMetadata(); }, []);
-
-    // Load Data on Change
-    useEffect(() => { loadProducts(); }, [loadProducts]);
-
-    // Load Movements when tab changes to movements
-    useEffect(() => {
-        if (activeTab === 'movements') {
-            loadMovements();
-        }
-    }, [activeTab, loadMovements]);
+    const { data: movements = [], refetch: loadMovements } = useInventoryMovements(activeTab === 'movements');
 
     // Reset page when filters change
     useEffect(() => { setPage(0); }, [debouncedSearch, categoryFilter, supplierFilter, filterType]);
@@ -206,8 +130,7 @@ export const InventoryPage: React.FC = () => {
 
     const updateStock = async (p: Product, change: number) => {
         const newStock = Math.max(0, p.stock + change);
-        // Optimistic update locally
-        setProducts(prev => prev.map(prod => prod.id === p.id ? { ...prod, stock: newStock } : prod));
+        // No manual setProducts needed, handled by invalidateProducts
 
         try {
             if (p.id) {
@@ -385,87 +308,88 @@ export const InventoryPage: React.FC = () => {
                 {activeTab === 'products' ? (
                     <>
 
-                        {/* Products List - Card Style matching Invoices exactly */}
-                        <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-2 pb-10 relative">
-                            {products.length === 0 ? (
-                                <EmptyState icon={Package} title="لا توجد منتجات" description={search ? "لا توجد نتائج مطابقة لبحثك." : "لم تتم إضافة أي منتجات بعد."} />
-                            ) : (
-                                <div className="space-y-2">
-                                    {products.map((p, index) => {
-                                        const isLow = p.stock <= (p.minStock || 5);
-                                        const isOut = p.stock === 0;
-                                        const healthPercent = Math.min(100, (p.stock / ((p.minStock || 5) * 4)) * 100);
-                                        const barColor = isOut ? 'bg-red-500' : isLow ? 'bg-orange-500' : healthPercent < 50 ? 'bg-yellow-500' : 'bg-emerald-500';
-                                        const productVal = p.stock * p.price;
-                                        const abcClass = getABCClass(productVal);
-                                        const animStyle = { animationDelay: `${index * 50}ms` };
+                        {/* Products Table - Standard Unified Style */}
+                        <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+                            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                                {products.length === 0 ? (
+                                    <EmptyState icon={Package} title="لا توجد منتجات" description={search ? "لا توجد نتائج مطابقة لبحثك." : "لم تتم إضافة أي منتجات بعد."} />
+                                ) : (
+                                    <table className="w-full text-right text-sm border-collapse">
+                                        <thead className="sticky top-0 z-10 bg-surface-hover border-b border-border text-text-muted text-xs">
+                                            <tr>
+                                                <th className="px-4 py-3 text-right">المنتج</th>
+                                                <th className="px-4 py-3 text-right">المورد / الفئة</th>
+                                                <th className="px-4 py-3 text-center w-[120px]">المخزون</th>
+                                                <th className="px-4 py-3 text-right w-[150px]">القيمة السوقية</th>
+                                                <th className="px-4 py-3 text-center w-[100px]">ABC</th>
+                                                <th className="px-4 py-3 text-center w-[100px]">الإجراءات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {products.map((p) => {
+                                                const isLow = p.stock <= (p.minStock || 5);
+                                                const isOut = p.stock === 0;
+                                                const productVal = p.stock * p.price;
+                                                const abcClass = getABCClass(productVal);
+                                                const healthColor = isOut ? 'bg-red-500' : isLow ? 'bg-orange-500' : 'bg-emerald-500';
 
-                                        return (
-                                            <div
-                                                key={p.id}
-                                                className={`
-                                                    group relative bg-surface border border-border rounded-2xl p-4 cursor-pointer backdrop-blur-md
-                                                    transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1
-                                                    grid grid-cols-2 md:grid-cols-12 gap-3 items-center
-                                                    ${isOut ? 'opacity-60 grayscale-[0.5]' : ''}
-                                                `}
-                                                style={animStyle}
-                                            >
-                                                {/* Status Indicator Bar - matching Invoices */}
-                                                <div className={`absolute left-0 top-4 bottom-4 w-0.5 rounded-r-full shadow-[0_0_10px_currentColor] ${isOut ? 'bg-red-500 text-red-500' : isLow ? 'bg-orange-500 text-orange-500' : 'bg-emerald-500 text-emerald-500'}`}></div>
-
-                                                {/* Product Info - col-span-2 like Invoice ID */}
-                                                <div className="col-span-2 flex items-center gap-3 pl-2">
-                                                    <div className="w-10 h-10 rounded-xl bg-bg border border-border flex items-center justify-center text-text-muted group-hover:text-primary transition-colors shadow-inner">
-                                                        {p.image.startsWith('data') ? <img src={p.image} alt={p.name} className="w-full h-full object-cover rounded-xl" /> : <Package size={18} />}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-mono font-bold text-text-main text-xs group-hover:text-primary transition-colors">{p.name}</p>
-                                                        <p className="text-[10px] text-text-muted font-medium">{p.barcode}</p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Supplier - col-span-3 like Customer */}
-                                                <div className="col-span-3">
-                                                    <p className="font-bold text-text-main text-sm truncate">{p.supplier || '-'}</p>
-                                                    <p className="text-[10px] text-text-muted flex items-center gap-1.5 mt-0.5">
-                                                        <Layers size={10} />
-                                                        {p.category}
-                                                    </p>
-                                                </div>
-
-                                                {/* Stock + Health - col-span-2 like Date */}
-                                                <div className="col-span-2">
-                                                    <div className="flex items-center gap-1.5 text-text-muted text-[10px] bg-bg px-2 py-1 rounded-lg w-fit border border-border">
-                                                        <Package size={10} />
-                                                        <span className={`font-bold ${isOut ? 'text-red-500' : isLow ? 'text-orange-500' : 'text-text-main'}`}>{p.stock}</span>
-                                                        <span className="text-text-muted/50">قطعة</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Value - col-span-2 like Total */}
-                                                <div className="col-span-2">
-                                                    <span className="font-black text-text-main text-lg tracking-tight drop-shadow-sm">{formatCurrency(productVal, prefs?.currency).replace(prefs?.currency || 'IQD', '')} <span className="text-[9px] text-text-muted font-bold ml-0.5">{prefs?.currency || 'IQD'}</span></span>
-                                                </div>
-
-                                                {/* ABC Badge - col-span-2 like Status */}
-                                                <div className="col-span-2">
-                                                    <Badge type={abcClass === 'A' ? 'success' : abcClass === 'B' ? 'info' : 'default'} text={`تصنيف ${abcClass}`} />
-                                                </div>
-
-                                                {/* Quick Actions - col-span-1 */}
-                                                <div className="col-span-1 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <div className="bg-surface border border-border rounded-xl p-1 flex shadow-xl backdrop-blur-md">
-                                                        <button onClick={(e) => { e.stopPropagation(); updateStock(p, -1); }} className="p-2 hover:bg-surface-hover hover:text-red-400 text-text-muted rounded-lg transition-colors" title="إنقاص المخزون"><Minus size={16} /></button>
-                                                        <div className="w-px bg-border my-1"></div>
-                                                        <button onClick={(e) => { e.stopPropagation(); updateStock(p, 1); }} className="p-2 hover:bg-surface-hover hover:text-emerald-400 text-text-muted rounded-lg transition-colors" title="زيادة المخزون"><Plus size={16} /></button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                                                return (
+                                                    <tr
+                                                        key={p.id}
+                                                        className={`border-b border-border/30 hover:bg-surface-hover/50 transition-colors group ${
+                                                            isOut ? 'opacity-60 grayscale-[0.5]' : ''
+                                                        }`}
+                                                    >
+                                                        <td className="px-4 py-3 relative">
+                                                            {/* Health indicator bar on the right in RTL */}
+                                                            <div className={`absolute right-0 top-2 bottom-2 w-1 rounded-l-full ${healthColor} shadow-[0_0_8px_currentColor] text-${isOut ? 'red' : isLow ? 'orange' : 'emerald'}-500`} />
+                                                            
+                                                            <div className="flex items-center gap-3 pr-2">
+                                                                <div className="w-10 h-10 rounded-xl bg-bg border border-border flex items-center justify-center text-text-muted group-hover:text-primary transition-colors shrink-0 overflow-hidden shadow-inner">
+                                                                    {p.image?.startsWith('data') ? (
+                                                                        <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <Package size={18} />
+                                                                    )}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-text-main text-xs group-hover:text-primary transition-colors">{p.name}</p>
+                                                                    <p className="text-[10px] text-text-muted font-mono">{p.barcode}</p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-xs font-bold text-text-muted">
+                                                            {p.supplier || '-'}<br />
+                                                            <span className="text-[9px] opacity-75 font-normal flex items-center gap-1 mt-0.5">
+                                                                <Layers size={10} className="inline mr-1" />
+                                                                {p.category}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            <div className="flex items-center justify-center gap-1.5 text-xs bg-bg px-2.5 py-1 rounded-lg border border-border w-fit mx-auto">
+                                                                <span className={`font-bold ${isOut ? 'text-red-500' : isLow ? 'text-orange-500' : 'text-text-main'}`}>{p.stock}</span>
+                                                                <span className="text-text-muted/70 font-bold">قطعة</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right font-mono font-bold text-text-main">
+                                                            {formatCurrency(productVal, prefs?.currency).replace(prefs?.currency || 'IQD', '')}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            <Badge type={abcClass === 'A' ? 'success' : abcClass === 'B' ? 'info' : 'default'} text={`تصنيف ${abcClass}`} />
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="flex justify-center gap-1.5">
+                                                                <button onClick={() => updateStock(p, -1)} className="p-1.5 hover:bg-red-500/10 hover:text-red-500 text-text-muted rounded-xl border border-border/40 transition-colors" title="إنقاص المخزون"><Minus size={13} /></button>
+                                                                <button onClick={() => updateStock(p, 1)} className="p-1.5 hover:bg-emerald-500/10 hover:text-emerald-500 text-text-muted rounded-xl border border-border/40 transition-colors" title="زيادة المخزون"><Plus size={13} /></button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
                         </div>
 
                         {/* Pagination Controls - Matching Invoices */}
