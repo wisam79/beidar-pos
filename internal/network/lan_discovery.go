@@ -47,8 +47,12 @@ func GetLocalIP() (string, error) {
 	return "127.0.0.1", nil
 }
 
-func isPrivateIP(ip string) bool {
-	return len(ip) > 0 && (ip[:3] == "192" || ip[:2] == "10" || ip[:3] == "172")
+func isPrivateIP(ipStr string) bool {
+	parsedIP := net.ParseIP(ipStr)
+	if parsedIP == nil {
+		return false
+	}
+	return parsedIP.IsPrivate() || parsedIP.IsLoopback()
 }
 
 // StartBroadcasting begins UDP broadcast for server discovery

@@ -3,6 +3,8 @@ package integration
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -25,6 +27,7 @@ const (
 var (
 	googleOauthConfig *oauth2.Config
 	authCodeChan      chan string
+	oauthStateToken   string
 )
 
 // initOAuthConfig sets up the Google OAuth configuration using the provided
@@ -71,7 +74,21 @@ func (s *cloudService) InitGoogleAuth() (string, error) {
 	authCodeChan = make(chan string)
 	server := &http.Server{Addr: ":" + AuthPort}
 
+	// Generate secure state token
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err == nil {
+		oauthStateToken = hex.EncodeToString(b)
+	} else {
+		oauthStateToken = "fallback-secure-state-" + fmt.Sprintf("%d", time.Now().UnixNano())
+	}
+
 	http.HandleFunc("/auth/callback", func(w http.ResponseWriter, r *http.Request) {
+		state := r.URL.Query().Get("state")
+		if state == "" || state != oauthStateToken {
+			http.Error(w, "State mismatch (CSRF warning)", http.StatusBadRequest)
+			return
+		}
+
 		code := r.URL.Query().Get("code")
 		if code == "" {
 			http.Error(w, "Code not found", http.StatusBadRequest)
@@ -103,7 +120,7 @@ func (s *cloudService) InitGoogleAuth() (string, error) {
 		}
 	}()
 
-	url := googleOauthConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+	url := googleOauthConfig.AuthCodeURL(oauthStateToken, oauth2.AccessTypeOffline)
 	return url, nil
 }
 

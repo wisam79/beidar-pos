@@ -549,14 +549,14 @@ func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 		}
 	}
 
-	// Fallback: search all active staff
+	// Fallback: search active staff who do not have a FastPIN set yet
 	activeStaff, err := s.staffRepo.GetActive()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, st := range activeStaff {
-		if st.PasswordHash != "" {
+		if st.FastPIN == "" && st.PasswordHash != "" {
 			if err := bcrypt.CompareHashAndPassword([]byte(st.PasswordHash), []byte(pin)); err == nil {
 				// Lazy Migration: save FastPIN
 				st.FastPIN = hashedInput

@@ -708,6 +708,7 @@ func (s *lanService) handlePreferences(w http.ResponseWriter, r *http.Request) {
 		prefs.AdminPin = ""
 		prefs.GeminiAPIKey = ""
 		prefs.GeminiAPIKeys = nil
+		prefs.GroqAPIKey = ""
 		_ = json.NewEncoder(w).Encode(prefs)
 
 	case "POST":

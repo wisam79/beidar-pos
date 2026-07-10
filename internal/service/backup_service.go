@@ -122,8 +122,37 @@ func (s *backupService) ListBackups() ([]domain.BackupInfo, error) {
 	return backups, nil
 }
 
+func validateBackupPath(backupPath string) (string, error) {
+	backupDir, err := GetBackupDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get backup directory: %w", err)
+	}
+
+	absBackupDir, err := filepath.Abs(backupDir)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve absolute backup directory: %w", err)
+	}
+
+	absBackupPath, err := filepath.Abs(backupPath)
+	if err != nil {
+		return "", fmt.Errorf("invalid path format: %w", err)
+	}
+
+	rel, err := filepath.Rel(absBackupDir, absBackupPath)
+	if err != nil || strings.HasPrefix(rel, "..") || filepath.IsAbs(rel) {
+		return "", fmt.Errorf("access denied: path traversal attempt detected")
+	}
+
+	return absBackupPath, nil
+}
+
 func (s *backupService) RestoreBackup(backupPath string) error {
-	data, err := os.ReadFile(backupPath)
+	validatedPath, err := validateBackupPath(backupPath)
+	if err != nil {
+		return err
+	}
+
+	data, err := os.ReadFile(validatedPath)
 	if err != nil {
 		return fmt.Errorf("فشل قراءة ملف النسخة: %w", err)
 	}
@@ -141,7 +170,11 @@ func (s *backupService) RestoreBackup(backupPath string) error {
 }
 
 func (s *backupService) DeleteBackup(backupPath string) error {
-	return os.Remove(backupPath)
+	validatedPath, err := validateBackupPath(backupPath)
+	if err != nil {
+		return err
+	}
+	return os.Remove(validatedPath)
 }
 
 func (s *backupService) CleanOldBackups(retainDays int) (int, error) {
