@@ -69,32 +69,68 @@ func TestAmountJSON(t *testing.T) {
 		Value Amount `json:"value"`
 	}
 
-	// Serialize
+	// Serialize — now emits currency units, not cents
 	w := Wrapper{Value: NewAmount(12.5)}
 	b, err := json.Marshal(w)
 	if err != nil {
 		t.Fatalf("Marshal failed: %v", err)
 	}
-	if string(b) != `{"value":1250}` {
-		t.Errorf("Marshal = %s; want {\"value\":1250}", string(b))
+	if string(b) != `{"value":12.50}` {
+		t.Errorf("Marshal = %s; want {\"value\":12.50}", string(b))
 	}
 
-	// Deserialize from number (cents)
+	// Deserialize from float (currency units)
 	var w1 Wrapper
-	if err := json.Unmarshal([]byte(`{"value":1250}`), &w1); err != nil {
-		t.Fatalf("Unmarshal number failed: %v", err)
+	if err := json.Unmarshal([]byte(`{"value":12.50}`), &w1); err != nil {
+		t.Fatalf("Unmarshal float failed: %v", err)
 	}
 	if w1.Value != NewAmount(12.5) {
-		t.Errorf("Unmarshal number = %s; want 12.50", w1.Value)
+		t.Errorf("Unmarshal float = %s; want 12.50", w1.Value)
 	}
 
-	// Deserialize from float string (legacy compatibility)
+	// Deserialize from bare integer (currency units)
 	var w2 Wrapper
-	if err := json.Unmarshal([]byte(`{"value":"12.50"}`), &w2); err != nil {
+	if err := json.Unmarshal([]byte(`{"value":12}`), &w2); err != nil {
+		t.Fatalf("Unmarshal integer failed: %v", err)
+	}
+	if w2.Value != NewAmount(12) {
+		t.Errorf("Unmarshal integer = %s; want 12.00", w2.Value)
+	}
+
+	// Deserialize from float string
+	var w3 Wrapper
+	if err := json.Unmarshal([]byte(`{"value":"12.50"}`), &w3); err != nil {
 		t.Fatalf("Unmarshal float string failed: %v", err)
 	}
-	if w2.Value != NewAmount(12.5) {
-		t.Errorf("Unmarshal float string = %s; want 12.50", w2.Value)
+	if w3.Value != NewAmount(12.5) {
+		t.Errorf("Unmarshal float string = %s; want 12.50", w3.Value)
+	}
+
+	// Deserialize zero
+	var w4 Wrapper
+	if err := json.Unmarshal([]byte(`{"value":0}`), &w4); err != nil {
+		t.Fatalf("Unmarshal zero failed: %v", err)
+	}
+	if w4.Value != Zero() {
+		t.Errorf("Unmarshal zero = %s; want 0.00", w4.Value)
+	}
+
+	// Deserialize large value
+	var w5 Wrapper
+	if err := json.Unmarshal([]byte(`{"value":1000000}`), &w5); err != nil {
+		t.Fatalf("Unmarshal large failed: %v", err)
+	}
+	if w5.Value != NewAmount(1000000) {
+		t.Errorf("Unmarshal large = %s; want 1000000.00", w5.Value)
+	}
+
+	// Negative
+	var w6 Wrapper
+	if err := json.Unmarshal([]byte(`{"value":-5.99}`), &w6); err != nil {
+		t.Fatalf("Unmarshal negative failed: %v", err)
+	}
+	if w6.Value != NewAmount(-5.99) {
+		t.Errorf("Unmarshal negative = %s; want -5.99", w6.Value)
 	}
 }
 

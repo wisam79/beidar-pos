@@ -1,35 +1,35 @@
-# Build Directory
+# Build Directory — Beidar Desktop
 
-The build directory is used to house all the build files and assets for your application. 
+هذا المجلد يحتوي على ملفات البناء والتجميع الخاصة بتطبيق **Beidar**.
 
-The structure is:
+## الهيكل (Structure)
 
-* bin - Output directory
-* darwin - macOS specific files
-* windows - Windows specific files
+```
+build/
+├── bin/                    # مخرج التجميع (ملفات exe + installer)
+│   └── beidar-desktop.exe  # الملف التنفيذي بعد wails build
+├── darwin/                 # ملفات خاصة بـ macOS (Info.plist)
+├── windows/                # ملفات خاصة بـ Windows
+│   ├── icon.ico            # أيقونة التطبيق
+│   ├── installer/          # ملفات NSIS للمثبت
+│   ├── info.json           # معلومات التطبيق (حقوق، إصدار)
+│   └── wails.exe.manifest  # Manifest file
+└── appicon.png             # أيقونة المصدر (يُستخدم لإنشاء icon.ico)
+```
 
-## Mac
+## أوامر البناء
 
-The `darwin` directory holds files specific to Mac builds.
-These may be customised and used as part of the build. To return these files to the default state, simply delete them
-and
-build with `wails build`.
+```bash
+# بناء عادي
+wails build -clean -platform windows/amd64
 
-The directory contains the following files:
+# بناء مع مثبت NSIS
+wails build -clean -platform windows/amd64 -nsis
+```
 
-- `Info.plist` - the main plist file used for Mac builds. It is used when building using `wails build`.
-- `Info.dev.plist` - same as the main plist file but used when building using `wails dev`.
+## مخرج البناء
 
-## Windows
-
-The `windows` directory contains the manifest and rc files used when building with `wails build`.
-These may be customised for your application. To return these files to the default state, simply delete them and
-build with `wails build`.
-
-- `icon.ico` - The icon used for the application. This is used when building using `wails build`. If you wish to
-  use a different icon, simply replace this file with your own. If it is missing, a new `icon.ico` file
-  will be created using the `appicon.png` file in the build directory.
-- `installer/*` - The files used to create the Windows installer. These are used when building using `wails build`.
-- `info.json` - Application details used for Windows builds. The data here will be used by the Windows installer,
-  as well as the application itself (right click the exe -> properties -> details)
-- `wails.exe.manifest` - The main application manifest file.
+| الملف | المسار |
+|-------|--------|
+| ملف تنفيذي | `build/bin/beidar-desktop.exe` |
+| مثبت Windows | `build/bin/beidar-desktop-amd64-installer.exe` |

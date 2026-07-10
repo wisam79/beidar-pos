@@ -8,8 +8,10 @@ import {
   flexRender,
   ColumnDef,
   SortingState,
+  OnChangeFn,
+  PaginationState,
 } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight, ArrowDown, ArrowUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowDown, ArrowUp, LucideIcon } from 'lucide-react';
 import { EmptyState } from '../ui';
 export { type ColumnDef };
 
@@ -19,13 +21,13 @@ interface DataTableProps<TData, TValue> {
   searchQuery?: string;
   emptyStateTitle?: string;
   emptyStateDescription?: string;
-  emptyStateIcon?: React.ElementType;
+  emptyStateIcon?: LucideIcon;
   getRowColor?: (row: TData) => string; // e.g. "emerald", "orange", "red"
   onRowClick?: (row: TData) => void;
   manualPagination?: boolean;
   pageCount?: number;
   pagination?: { pageIndex: number; pageSize: number };
-  onPaginationChange?: (updater: any) => void;
+  onPaginationChange?: OnChangeFn<PaginationState>;
 }
 
 export function DataTable<TData, TValue>({
@@ -65,7 +67,7 @@ export function DataTable<TData, TValue>({
 
   if (data.length === 0) {
     if (Icon) {
-      return <EmptyState icon={Icon as any} title={emptyStateTitle} description={emptyStateDescription} />;
+      return <EmptyState icon={Icon} title={emptyStateTitle} description={emptyStateDescription} />;
     }
     return (
       <div className="flex flex-col items-center justify-center p-10 text-text-muted">

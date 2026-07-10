@@ -24,6 +24,8 @@ import {
   LogOut,
   Sun,
   Moon,
+  CreditCard,
+  Download,
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { useToast, StatCard, TabButton, FilterButton } from './components';
@@ -126,6 +128,33 @@ const DetailsModalContent: React.FC<{
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const downloadBackup = async (backupId: string) => {
+    setDownloadingId(backupId);
+    try {
+      const { data, error } = await supabase.storage
+        .from('backups')
+        .download(backupId);
+
+      if (error) throw error;
+
+      const url = window.URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', backupId.split('/').pop() || 'backup.sql');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      showToast('تم تنزيل النسخة الاحتياطية بنجاح', 'success');
+    } catch (err: any) {
+      console.error('Failed to download backup:', err);
+      showToast('فشل تنزيل النسخة الاحتياطية: ' + (err.message || ''), 'error');
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
@@ -463,6 +492,18 @@ const DetailsModalContent: React.FC<{
                                   <span className="text-text-muted font-mono">
                                     {new Date(b.created_at).toLocaleDateString('ar-IQ')}
                                   </span>
+                                  <button
+                                    onClick={() => downloadBackup(b.backup_id)}
+                                    disabled={downloadingId !== null}
+                                    className="p-1 rounded-lg hover:bg-blue-500/10 text-slate-400 hover:text-blue-500 transition-colors flex items-center justify-center disabled:opacity-50"
+                                    title="تنزيل ملف النسخة الاحتياطية"
+                                  >
+                                    {downloadingId === b.backup_id ? (
+                                      <RefreshCw size={12} className="animate-spin text-blue-500" />
+                                    ) : (
+                                      <Download size={12} />
+                                    )}
+                                  </button>
                                 </div>
                               </div>
                             ))
@@ -618,6 +659,48 @@ export default function App() {
 
   // AI keys states
   const [newKey, setNewKey] = useState('');
+  const [groqKeys, setGroqKeys] = useState<string[]>([]);
+  const [newGroqKey, setNewGroqKey] = useState('');
+
+  const [keyStatuses, setKeyStatuses] = useState<Record<string, 'checking' | 'active' | 'error'>>({});
+
+  const maskKey = (key: string) => {
+    if (key.length <= 12) return key;
+    return `${key.slice(0, 8)}...${key.slice(-6)}`;
+  };
+
+  const checkKeyHealth = async (key: string, provider: 'gemini' | 'groq') => {
+    setKeyStatuses((prev) => ({ ...prev, [key]: 'checking' }));
+    try {
+      let url = '';
+      let options: RequestInit = {};
+
+      if (provider === 'gemini') {
+        url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
+        options = { method: 'GET' };
+      } else {
+        url = 'https://api.groq.com/openai/v1/models';
+        options = {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${key}`
+          }
+        };
+      }
+
+      const resp = await fetch(url, options);
+      if (resp.status === 200) {
+        setKeyStatuses((prev) => ({ ...prev, [key]: 'active' }));
+        showToast('مفتاح الذكاء الاصطناعي صالح ونشط!', 'success');
+      } else {
+        setKeyStatuses((prev) => ({ ...prev, [key]: 'error' }));
+        showToast('فشل التحقق: المفتاح غير صالح أو منتهي!', 'error');
+      }
+    } catch (err) {
+      setKeyStatuses((prev) => ({ ...prev, [key]: 'error' }));
+      showToast('خطأ في الاتصال أثناء التحقق!', 'error');
+    }
+  };
 
   const { showToast, ToastComponent } = useToast();
 
@@ -763,7 +846,14 @@ export default function App() {
         .maybeSingle();
 
       if (error) throw error;
-      setApiKeys(data?.value || []);
+      const val = data?.value;
+      if (val && !Array.isArray(val) && typeof val === 'object') {
+        setApiKeys(val.gemini_keys || []);
+        setGroqKeys(val.groq_keys || []);
+      } else {
+        setApiKeys(Array.isArray(val) ? val : []);
+        setGroqKeys([]);
+      }
     } catch (err: any) {
       showToast('خطأ في تحميل مفاتيح الذكاء الاصطناعي: ' + (err.message || ''), 'error');
     } finally {
@@ -1005,7 +1095,7 @@ export default function App() {
   };
 
   // AI keys updates
-  const saveAIKeys = async (keys: string[]) => {
+  const saveAIKeys = async (gemini: string[], groq: string[]) => {
     try {
       // check if row exists
       const { data, error: fetchErr } = await supabase
@@ -1016,23 +1106,33 @@ export default function App() {
 
       if (fetchErr) throw fetchErr;
 
+      const newValue = {
+        gemini_keys: gemini,
+        groq_keys: groq,
+      };
+
       let error;
       if (data) {
         ({ error } = await supabase
           .from('global_settings')
-          .update({ value: keys, updated_at: new Date().toISOString() })
+          .update({ value: newValue, updated_at: new Date().toISOString() })
           .eq('key', 'ai_keys'));
       } else {
         ({ error } = await supabase.from('global_settings').insert({
           key: 'ai_keys',
-          value: keys,
+          value: newValue,
         }));
       }
 
       if (error) throw error;
 
-      await logAdminAction('AI_KEYS_UPDATE', 'GLOBAL_SETTINGS', `تم تعديل مفاتيح Gemini (العدد: ${keys.length})`);
-      setApiKeys(keys);
+      await logAdminAction(
+        'AI_KEYS_UPDATE',
+        'GLOBAL_SETTINGS',
+        `تم تعديل مفاتيح الذكاء الاصطناعي (Gemini: ${gemini.length}، Groq: ${groq.length})`
+      );
+      setApiKeys(gemini);
+      setGroqKeys(groq);
       showToast('تم حفظ المفاتيح في السحابة بنجاح', 'success');
     } catch (err: any) {
       showToast('فشل تعديل المفاتيح: ' + (err.message || ''), 'error');
@@ -1043,13 +1143,26 @@ export default function App() {
     if (!newKey.trim()) return;
     const updated = [...apiKeys, newKey.trim()];
     setNewKey('');
-    saveAIKeys(updated);
+    saveAIKeys(updated, groqKeys);
   };
 
   const removeAIKey = (index: number) => {
     if (!confirm('هل أنت متأكد من حذف هذا المفتاح؟')) return;
     const updated = apiKeys.filter((_, i) => i !== index);
-    saveAIKeys(updated);
+    saveAIKeys(updated, groqKeys);
+  };
+
+  const addGroqKey = () => {
+    if (!newGroqKey.trim()) return;
+    const updated = [...groqKeys, newGroqKey.trim()];
+    setNewGroqKey('');
+    saveAIKeys(apiKeys, updated);
+  };
+
+  const removeGroqKey = (index: number) => {
+    if (!confirm('هل أنت متأكد من حذف هذا المفتاح؟')) return;
+    const updated = groqKeys.filter((_, i) => i !== index);
+    saveAIKeys(apiKeys, updated);
   };
 
   // 4. Computed stats & filters
@@ -1062,7 +1175,32 @@ export default function App() {
     const expired = licenses.filter(
       (l) => l.status !== 'banned' && new Date(l.expires_at) < new Date()
     ).length;
-    return { total, active, banned, expired };
+
+    // Premium Analytics
+    const paidCount = licenses.filter(l => l.is_paid).length;
+    const unpaidCount = total - paidCount;
+
+    const activeAI = licenses.filter(l => l.features?.ai_features).length;
+    const activeCloud = licenses.filter(l => l.features?.cloud_sync).length;
+    const activeWhatsApp = licenses.filter(l => l.features?.whatsapp_integration).length;
+
+    // Estimate total subscription value (assuming 250,000 IQD per year/paid license)
+    const estimatedValue = paidCount * 250000;
+    const unpaidValue = unpaidCount * 250000;
+
+    return {
+      total,
+      active,
+      banned,
+      expired,
+      paidCount,
+      unpaidCount,
+      activeAI,
+      activeCloud,
+      activeWhatsApp,
+      estimatedValue,
+      unpaidValue
+    };
   }, [licenses]);
 
   const filteredLicenses = useMemo(() => {
@@ -1222,10 +1360,10 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-black text-base tracking-wide text-text-main">
-                بيدر للاتصالات
+                نظام بيدر POS
               </h1>
               <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">
-                لوحة المسؤولين V3
+                لوحة التحكم السحابية
               </p>
             </div>
           </div>
@@ -1247,7 +1385,7 @@ export default function App() {
             <TabButton
               active={activeView === 'keys'}
               icon={<Key size={18} />}
-              label="مفاتيح Gemini"
+              label="مفاتيح الذكاء الاصطناعي"
               onClick={() => setActiveView('keys')}
             />
             <TabButton
@@ -1341,6 +1479,101 @@ export default function App() {
                 value={stats.banned}
                 color="bg-red-500/10"
               />
+            </div>
+          )}
+
+          {activeView === 'list' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in text-right">
+              {/* Financial & Subscription Analytics */}
+              <div className="bg-surface border border-border rounded-3xl p-6 shadow-md relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl" />
+                <h4 className="text-sm font-black text-text-main mb-4 flex items-center gap-2">
+                  <CreditCard className="text-emerald-500" size={16} />
+                  إحصائيات الاشتراكات والدفع السحابي
+                </h4>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-text-muted">التراخيص المدفوعة:</span>
+                    <span className="font-mono font-bold text-emerald-500">{stats.paidCount} / {stats.total}</span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${stats.total > 0 ? (stats.paidCount / stats.total) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-border">
+                      <p className="text-[10px] text-text-muted font-bold mb-1">الإيرادات المقدرة (IQD)</p>
+                      <p className="text-sm font-black text-emerald-500 tabular-nums">
+                        {stats.estimatedValue.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-border">
+                      <p className="text-[10px] text-text-muted font-bold mb-1">المستحقات المعلقة (IQD)</p>
+                      <p className="text-sm font-black text-amber-500 tabular-nums">
+                        {stats.unpaidValue.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Core Features Adoption */}
+              <div className="bg-surface border border-border rounded-3xl p-6 shadow-md relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl" />
+                <h4 className="text-sm font-black text-text-main mb-4 flex items-center gap-2">
+                  <Zap className="text-blue-500" size={16} />
+                  معدل اعتماد وتفعيل الميزات الإضافية
+                </h4>
+                <div className="space-y-3.5">
+                  {/* AI Features Adoption */}
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-text-muted font-semibold">ميزات الذكاء الاصطناعي (AI Features):</span>
+                      <span className="font-mono font-bold text-blue-500">
+                        {stats.total > 0 ? Math.round((stats.activeAI / stats.total) * 100) : 0}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-blue-500 h-full rounded-full transition-all duration-500"
+                        style={{ width: `${stats.total > 0 ? (stats.activeAI / stats.total) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  {/* Cloud Sync Adoption */}
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-text-muted font-semibold">النسخ السحابي (Cloud Sync / LAN):</span>
+                      <span className="font-mono font-bold text-violet-500">
+                        {stats.total > 0 ? Math.round((stats.activeCloud / stats.total) * 100) : 0}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-violet-500 h-full rounded-full transition-all duration-500"
+                        style={{ width: `${stats.total > 0 ? (stats.activeCloud / stats.total) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  {/* WhatsApp Integration Adoption */}
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-text-muted font-semibold">إشعارات الواتساب (WhatsApp Notification):</span>
+                      <span className="font-mono font-bold text-teal-500">
+                        {stats.total > 0 ? Math.round((stats.activeWhatsApp / stats.total) * 100) : 0}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-teal-500 h-full rounded-full transition-all duration-500"
+                        style={{ width: `${stats.total > 0 ? (stats.activeWhatsApp / stats.total) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1547,69 +1780,176 @@ export default function App() {
 
           {/* AI SETTINGS VIEW */}
           {activeView === 'keys' && (
-            <div className="max-w-xl mx-auto bg-surface border border-border p-8 rounded-3xl shadow-lg animate-fade-in text-right">
-              <h3 className="text-xl font-black mb-2 text-text-main">مفاتيح Google Gemini API</h3>
-              <p className="text-xs text-text-muted mb-6">
-                يتم توزيع وإدارة هذه المفاتيح بشكل دوري ومؤمن لتشغيل محرك الذكاء الاصطناعي لجميع المشتركين الفاعلين.
-              </p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto animate-fade-in text-right">
+              {/* Gemini Panel */}
+              <div className="bg-surface border border-border p-8 rounded-3xl shadow-lg">
+                <h3 className="text-xl font-black mb-2 text-text-main">مفاتيح Google Gemini API</h3>
+                <p className="text-xs text-text-muted mb-6">
+                  يتم توزيع وإدارة هذه المفاتيح لتشغيل نموذج gemma-4 لجميع المشتركين الفاعلين.
+                </p>
 
-              <div className="space-y-6">
-                {/* Input form */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={addAIKey}
-                    className="px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all shadow-md text-xs"
-                  >
-                    إضافة مفتاح
-                  </button>
-                  <input
-                    type="password"
-                    placeholder="AIzaSy..."
-                    className="flex-1 bg-slate-50 dark:bg-slate-900 border border-border rounded-xl px-4 py-3 text-xs text-text-main outline-none focus:border-blue-500/50 transition-all font-mono text-left"
-                    value={newKey}
-                    onChange={(e) => setNewKey(e.target.value)}
-                  />
-                </div>
+                <div className="space-y-6">
+                  {/* Input form */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={addAIKey}
+                      className="px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all shadow-md text-xs whitespace-nowrap"
+                    >
+                      إضافة مفتاح
+                    </button>
+                    <input
+                      type="password"
+                      placeholder="AIzaSy..."
+                      className="flex-1 bg-slate-50 dark:bg-slate-900 border border-border rounded-xl px-4 py-3 text-xs text-text-main outline-none focus:border-blue-500/50 transition-all font-mono text-left"
+                      value={newKey}
+                      onChange={(e) => setNewKey(e.target.value)}
+                    />
+                  </div>
 
-                {/* Key list */}
-                <div>
-                  <label className="block text-xs font-bold text-text-muted mb-3">
-                    المفاتيح النشطة في السحابة ({apiKeys.length})
-                  </label>
-                  {apiKeys.length === 0 ? (
-                    <div className="bg-slate-50 dark:bg-slate-900/30 border border-dashed border-border rounded-2xl p-6 text-center text-text-muted text-xs">
-                      لا توجد مفاتيح محفوظة حالياً.
-                    </div>
-                  ) : (
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                      {apiKeys.map((k, index) => (
-                        <div
-                          key={index}
-                          className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 border border-border rounded-xl p-3"
-                        >
-                          <button
-                            onClick={() => removeAIKey(index)}
-                            className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors"
-                            title="حذف المفتاح"
+                  {/* Key list */}
+                  <div>
+                    <label className="block text-xs font-bold text-text-muted mb-3">
+                      المفاتيح النشطة في السحابة ({apiKeys.length})
+                    </label>
+                    {apiKeys.length === 0 ? (
+                      <div className="bg-slate-50 dark:bg-slate-900/30 border border-dashed border-border rounded-2xl p-6 text-center text-text-muted text-xs">
+                        لا توجد مفاتيح محفوظة حالياً.
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                        {apiKeys.map((k, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 border border-border rounded-xl p-3"
                           >
-                            <Trash2 size={14} />
-                          </button>
-                          <div className="flex items-center gap-3 min-w-0 flex-1 justify-end">
-                            <span className="font-mono text-xs text-text-main truncate max-w-[250px]">
-                              {k}
-                            </span>
-                            <button
-                              onClick={() => copyText(k)}
-                              className="text-slate-400 hover:text-text-main p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-                              title="نسخ"
-                            >
-                              <Copy size={12} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => removeAIKey(index)}
+                                className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors shrink-0"
+                                title="حذف المفتاح"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                              <button
+                                onClick={() => checkKeyHealth(k, 'gemini')}
+                                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition-all flex items-center gap-1 shrink-0"
+                                disabled={keyStatuses[k] === 'checking'}
+                              >
+                                {keyStatuses[k] === 'checking' ? (
+                                  <RefreshCw size={10} className="animate-spin" />
+                                ) : null}
+                                <span>فحص</span>
+                              </button>
+                              {keyStatuses[k] === 'active' && (
+                                <span className="text-[10px] font-bold text-emerald-500 px-2 py-0.5 bg-emerald-500/10 rounded-full shrink-0">نشط</span>
+                              )}
+                              {keyStatuses[k] === 'error' && (
+                                <span className="text-[10px] font-bold text-red-500 px-2 py-0.5 bg-red-500/10 rounded-full shrink-0">معطل</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 min-w-0 flex-1 justify-end">
+                              <span className="font-mono text-xs text-text-main truncate max-w-[150px]" title={k}>
+                                {maskKey(k)}
+                              </span>
+                              <button
+                                onClick={() => copyText(k)}
+                                className="text-slate-400 hover:text-text-main p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shrink-0"
+                                title="نسخ"
+                              >
+                                <Copy size={12} />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Groq Panel */}
+              <div className="bg-surface border border-border p-8 rounded-3xl shadow-lg">
+                <h3 className="text-xl font-black mb-2 text-text-main">مفاتيح Groq / Grok API</h3>
+                <p className="text-xs text-text-muted mb-6">
+                  إدارة مفاتيح Groq السحابية لتشغيل الموديلات البديلة مثل Llama و Allam.
+                </p>
+
+                <div className="space-y-6">
+                  {/* Input form */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={addGroqKey}
+                      className="px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold transition-all shadow-md text-xs whitespace-nowrap"
+                    >
+                      إضافة مفتاح
+                    </button>
+                    <input
+                      type="password"
+                      placeholder="gsk_..."
+                      className="flex-1 bg-slate-50 dark:bg-slate-900 border border-border rounded-xl px-4 py-3 text-xs text-text-main outline-none focus:border-violet-500/50 transition-all font-mono text-left"
+                      value={newGroqKey}
+                      onChange={(e) => setNewGroqKey(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Key list */}
+                  <div>
+                    <label className="block text-xs font-bold text-text-muted mb-3">
+                      المفاتيح النشطة في السحابة ({groqKeys.length})
+                    </label>
+                    {groqKeys.length === 0 ? (
+                      <div className="bg-slate-50 dark:bg-slate-900/30 border border-dashed border-border rounded-2xl p-6 text-center text-text-muted text-xs">
+                        لا توجد مفاتيح محفوظة حالياً.
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                        {groqKeys.map((k, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 border border-border rounded-xl p-3"
+                          >
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => removeGroqKey(index)}
+                                className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors shrink-0"
+                                title="حذف المفتاح"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                              <button
+                                onClick={() => checkKeyHealth(k, 'groq')}
+                                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-violet-600/10 text-violet-600 dark:text-violet-400 hover:bg-violet-600/20 transition-all flex items-center gap-1 shrink-0"
+                                disabled={keyStatuses[k] === 'checking'}
+                              >
+                                {keyStatuses[k] === 'checking' ? (
+                                  <RefreshCw size={10} className="animate-spin" />
+                                ) : null}
+                                <span>فحص</span>
+                              </button>
+                              {keyStatuses[k] === 'active' && (
+                                <span className="text-[10px] font-bold text-emerald-500 px-2 py-0.5 bg-emerald-500/10 rounded-full shrink-0">نشط</span>
+                              )}
+                              {keyStatuses[k] === 'error' && (
+                                <span className="text-[10px] font-bold text-red-500 px-2 py-0.5 bg-red-500/10 rounded-full shrink-0">معطل</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 min-w-0 flex-1 justify-end">
+                              <span className="font-mono text-xs text-text-main truncate max-w-[150px]" title={k}>
+                                {maskKey(k)}
+                              </span>
+                              <button
+                                onClick={() => copyText(k)}
+                                className="text-slate-400 hover:text-text-main p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shrink-0"
+                                title="نسخ"
+                              >
+                                <Copy size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

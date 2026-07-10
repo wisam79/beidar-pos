@@ -375,7 +375,17 @@ export const InventoryPage: React.FC = () => {
                                                             {formatCurrency(productVal, prefs?.currency).replace(prefs?.currency || 'IQD', '')}
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
-                                                            <Badge type={abcClass === 'A' ? 'success' : abcClass === 'B' ? 'info' : 'default'} text={`تصنيف ${abcClass}`} />
+                                                            <div className="flex justify-center">
+                                                                <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-lg text-xs font-black font-mono border select-none ${
+                                                                    abcClass === 'A' 
+                                                                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_2px_8px_rgba(16,185,129,0.06)]' 
+                                                                        : abcClass === 'B' 
+                                                                        ? 'bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_2px_8px_rgba(59,130,246,0.06)]' 
+                                                                        : 'bg-text-muted/10 text-text-muted border-border/40'
+                                                                }`}>
+                                                                    {abcClass}
+                                                                </span>
+                                                            </div>
                                                         </td>
                                                         <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                                                             <div className="flex justify-center gap-1.5">

@@ -5,31 +5,31 @@
 @tailwind utilities;
 
 :root {
-  --color-bg: #f8fafc; /* Slate-50: Clean, light web background */
+  --color-bg: #f1f5f9; /* Slate-100: Clean, stable background with excellent contrast */
   --color-sidebar: #ffffff;
   --color-sidebar-navy: #0b1329;
   --color-sidebar-navy-border: rgba(30, 41, 59, 0.4);
   --color-sidebar-navy-hover: rgba(30, 41, 59, 0.6);
   --color-sidebar-navy-text: #94a3b8;
   --color-sidebar-navy-text-hover: #f8fafc;
-  --color-surface: #ffffff;
-  --color-surface-hover: #f1f5f9;
+  --color-surface: #ffffff; /* Solid white: Maximum contrast against background */
+  --color-surface-hover: #f8fafc;
   --color-surface-active: #e2e8f0;
-  --color-border: #e2e8f0;
-  --color-text-main: #0f172a;
-  --color-text-muted: #64748b;
+  --color-border: #cbd5e1; /* Slate-300: High-contrast, clean, formal borders */
+  --color-text-main: #0f172a; /* Slate-900: Deep and authoritative */
+  --color-text-muted: #475569; /* Slate-600: Highly readable */
   --color-input-bg: #ffffff;
-  --color-primary: #2563eb; /* Blue-600 */
+  --color-primary: #1e40af; /* Blue-800: Classic royal blue */
   --color-primary-fg: #ffffff;
-  --color-primary-dim: rgba(37, 99, 235, 0.08);
-  --color-danger: #ef4444; /* Red-500 */
-  --color-danger-dim: rgba(239, 68, 68, 0.08);
-  --color-success: #10b981; /* Emerald-500 */
-  --color-success-dim: rgba(16, 185, 129, 0.08);
-  --color-warning: #f59e0b; /* Amber-500 */
-  --color-warning-dim: rgba(245, 158, 11, 0.08);
-  --color-info: #06b6d4; /* Cyan-500 */
-  --color-info-dim: rgba(6, 182, 212, 0.08);
+  --color-primary-dim: rgba(30, 64, 175, 0.08);
+  --color-danger: #b91c1c; /* Red-700: Formal danger red */
+  --color-danger-dim: rgba(185, 28, 28, 0.08);
+  --color-success: #047857; /* Emerald-700: Formal success green */
+  --color-success-dim: rgba(4, 120, 87, 0.08);
+  --color-warning: #b45309; /* Amber-700: Formal warning orange */
+  --color-warning-dim: rgba(180, 83, 9, 0.08);
+  --color-info: #1d4ed8;
+  --color-info-dim: rgba(29, 78, 216, 0.08);
   
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -40,24 +40,24 @@
 }
 
 [data-theme='dark'] {
-  --color-bg: #090d16; /* Deep space dark */
-  --color-sidebar: #0f172a; /* Dark slate */
-  --color-sidebar-navy: #090d16;
-  --color-sidebar-navy-border: #1e293b;
-  --color-sidebar-navy-hover: #1e293b;
-  --color-sidebar-navy-text: #64748b;
+  --color-bg: #141414; /* Antigravity deep charcoal background */
+  --color-sidebar: #1e1e1e; /* Antigravity clean editor surface */
+  --color-sidebar-navy: #141414;
+  --color-sidebar-navy-border: #2d2d2d; /* Subtle dark panel borders */
+  --color-sidebar-navy-hover: #262626;
+  --color-sidebar-navy-text: #8e8e8e;
   --color-sidebar-navy-text-hover: #ffffff;
-  --color-surface: #0f172a; /* Slate 900 */
-  --color-surface-hover: #1e293b;
-  --color-surface-active: #334155;
-  --color-border: #1e293b;
-  --color-text-main: #f8fafc;
-  --color-text-muted: #94a3b8;
-  --color-input-bg: #1e293b;
-  --color-primary: #3b82f6; /* Bright Blue */
+  --color-surface: #1e1e1e; /* Antigravity card/editor panel background */
+  --color-surface-hover: #262626;
+  --color-surface-active: #2d2d2d;
+  --color-border: #2d2d2d; /* Subtle, stable panel borders */
+  --color-text-main: #f3f4f6; /* High contrast text */
+  --color-text-muted: #8e8e8e; /* Muted gray text */
+  --color-input-bg: #181818;
+  --color-primary: #3b82f6; /* Antigravity signature blue accent */
   --color-primary-dim: rgba(59, 130, 246, 0.12);
-  --color-danger: #f87171;
-  --color-success: #34d399;
+  --color-danger: #ef4444;
+  --color-success: #10b981;
   --color-warning: #fbbf24;
   
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.6);

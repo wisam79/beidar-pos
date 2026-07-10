@@ -11,10 +11,14 @@ import (
 
 // Secrets holds all sensitive configuration values.
 type Secrets struct {
-	SupabaseURL    string   `json:"supabase_url,omitempty"`
-	SupabaseAnonKey string  `json:"supabase_anon_key,omitempty"`
-	GeminiAPIKeys  []string `json:"gemini_api_keys,omitempty"`
-	LicenseMasterKey string `json:"license_master_key,omitempty"`
+	SupabaseURL           string   `json:"supabase_url,omitempty"`
+	SupabaseAnonKey       string   `json:"supabase_anon_key,omitempty"`
+	GoogleOAuthClientID   string   `json:"google_oauth_client_id,omitempty"`
+	GoogleOAuthClientSecret string `json:"google_oauth_client_secret,omitempty"`
+	GeminiAPIKey          string   `json:"gemini_api_key,omitempty"`
+	GeminiAPIKeys         []string `json:"gemini_api_keys,omitempty"`
+	LicenseMasterKey      string   `json:"license_master_key,omitempty"`
+	GroqAPIKey            string   `json:"groq_api_key,omitempty"`
 }
 
 var (
@@ -143,6 +147,85 @@ func GetSupabaseKey() (string, error) {
 		return "", fmt.Errorf("Supabase Key غير مضبوط. قم بتعيين BEIDAR_SUPABASE_KEY في متغيرات البيئة أو من شاشة الإعدادات")
 	}
 	return s.SupabaseAnonKey, nil
+}
+
+// GetGoogleOAuthClientID returns the stored Google OAuth client ID.
+func GetGoogleOAuthClientID() string {
+	s, err := Load()
+	if err != nil || s == nil {
+		return os.Getenv("GOOGLE_OAUTH_CLIENT_ID")
+	}
+	if s.GoogleOAuthClientID == "" {
+		return os.Getenv("GOOGLE_OAUTH_CLIENT_ID")
+	}
+	return s.GoogleOAuthClientID
+}
+
+// GetGoogleOAuthClientSecret returns the stored Google OAuth client secret.
+func GetGoogleOAuthClientSecret() string {
+	s, err := Load()
+	if err != nil || s == nil {
+		return os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+	}
+	if s.GoogleOAuthClientSecret == "" {
+		return os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+	}
+	return s.GoogleOAuthClientSecret
+}
+
+// GetGeminiAPIKey returns the stored Gemini API key.
+func GetGeminiAPIKey() string {
+	s, err := Load()
+	if err != nil || s == nil {
+		return os.Getenv("GEMINI_API_KEY")
+	}
+	if s.GeminiAPIKey == "" {
+		return os.Getenv("GEMINI_API_KEY")
+	}
+	return s.GeminiAPIKey
+}
+
+// SetGeminiAPIKey stores a Gemini API key in the encrypted config.
+func SetGeminiAPIKey(key string) error {
+	s, err := Load()
+	if err != nil {
+		s = &Secrets{}
+	}
+	s.GeminiAPIKey = key
+	return Save(s)
+}
+
+// SetGoogleOAuthSecrets stores Google OAuth credentials in the encrypted config.
+func SetGoogleOAuthSecrets(clientID, clientSecret string) error {
+	s, err := Load()
+	if err != nil {
+		s = &Secrets{}
+	}
+	s.GoogleOAuthClientID = clientID
+	s.GoogleOAuthClientSecret = clientSecret
+	return Save(s)
+}
+
+// GetGroqAPIKey returns the stored Groq API key.
+func GetGroqAPIKey() string {
+	s, err := Load()
+	if err != nil || s == nil {
+		return os.Getenv("grok")
+	}
+	if s.GroqAPIKey == "" {
+		return os.Getenv("grok")
+	}
+	return s.GroqAPIKey
+}
+
+// SetGroqAPIKey stores a Groq API key in the encrypted config.
+func SetGroqAPIKey(key string) error {
+	s, err := Load()
+	if err != nil {
+		s = &Secrets{}
+	}
+	s.GroqAPIKey = key
+	return Save(s)
 }
 
 // deriveMachineKey creates a device-bound encryption key using hostname + machine ID.

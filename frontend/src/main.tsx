@@ -27,6 +27,7 @@ import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { useGlobalKeyboardShortcuts } from './hooks/useGlobalKeyboardShortcuts';
 import { useAutoBackup } from './hooks/useAutoBackup';
 import { useAppInitialization } from './hooks/useAppInitialization';
+import { AppCloseDialog } from './components/AppCloseDialog';
 
 const App = () => {
   const appState = useAppStore((s) => s.appState);
@@ -244,6 +245,7 @@ const MainRoot = () => (
         <AuthProvider>
           <TooltipProvider>
             <Toaster position="top-center" richColors />
+            <AppCloseDialog />
             <App />
           </TooltipProvider>
         </AuthProvider>

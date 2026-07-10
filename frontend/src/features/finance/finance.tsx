@@ -299,19 +299,19 @@ export const FinancePage: React.FC = () => {
     const filteredExpenses = expenses.filter(e => e.title.includes(search));
     const filteredSuppliers = suppliers.filter(s => s.name.includes(search) || s.companyName.includes(search));
 
-    const expenseColumns: ColumnDef<Expense, any>[] = [
-        { accessorKey: 'title', header: 'العنوان', size: 250, cell: (info) => <div className="font-bold text-text-main text-sm">{info.getValue()}</div> },
-        { accessorKey: 'date', header: 'التاريخ', size: 100, cell: (info) => <div className="text-text-muted font-mono text-xs">{info.getValue()}</div> },
+    const expenseColumns: ColumnDef<Expense, string | number>[] = [
+        { accessorKey: 'title', header: 'العنوان', size: 250, cell: (info) => <div className="font-bold text-text-main text-sm">{info.getValue() as string}</div> },
+        { accessorKey: 'date', header: 'التاريخ', size: 100, cell: (info) => <div className="text-text-muted font-mono text-xs">{info.getValue() as string}</div> },
         {
             accessorKey: 'category', header: 'الفئة', size: 100, cell: (info) => {
-                const c = info.getValue();
+                const c = info.getValue() as string;
                 return <Badge type="info" text={c === 'rent' ? 'إيجار' : c === 'salary' ? 'رواتب' : c === 'bills' ? 'فواتير' : 'أخرى'} />;
             }
         },
         {
             accessorKey: 'amount', header: 'المبلغ', size: 120, cell: (info) => (
                 <div className="font-mono font-bold text-red-500 text-left">
-                    {formatCurrency(info.getValue(), prefs?.currency).replace(prefs?.currency || 'IQD', '')}
+                    {formatCurrency(info.getValue() as number, prefs?.currency).replace(prefs?.currency || 'IQD', '')}
                 </div>
             )
         },
@@ -586,7 +586,7 @@ export const FinancePage: React.FC = () => {
                                     searchQuery={search} 
                                     getRowColor={() => 'red'}
                                     onRowClick={(row) => {
-                                        setExpenseForm({ ...row, amount: row.amount.toString() } as any);
+                                        setExpenseForm(row);
                                         setExpenseModal(true);
                                     }}
                                 />

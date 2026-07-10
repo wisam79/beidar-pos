@@ -43,6 +43,7 @@ type App struct {
 	productRepo     domain.ProductRepository
 	productService  domain.ProductService
 	paymentService  domain.PaymentService
+	ForceClose      bool
 }
 
 type appRepositories struct {
@@ -198,7 +199,7 @@ func initHandlers(services *appServices, repos *appRepositories) *App {
 		PaymentHandler:  handlers.NewPaymentHandler(services.payment),
 		FinanceHandler:  handlers.NewFinanceHandler(services.finance, services.lan),
 		CRMHandler:      handlers.NewCRMHandler(services.crm, services.lan),
-		StaffHandler:    handlers.NewStaffHandler(services.staff),
+		StaffHandler:    handlers.NewStaffHandler(services.staff, services.cloud),
 		StatsHandler:    handlers.NewStatsHandler(services.stats, services.lan),
 		PrintHandler:    handlers.NewPrintHandler(services.print),
 		BackupHandler:   handlers.NewBackupHandler(services.backup),
@@ -261,6 +262,9 @@ func (a *App) startup(ctx context.Context) {
 			fmt.Printf("✅ Migrated %d images to filesystem\n", migrated)
 		}
 	}()
+
+	// ⚡ Trigger Supabase Keep-Alive ping to prevent project suspension
+	go a.CloudHandler.KeepAliveSupabase()
 }
 
 // GetCSVTemplate returns a template string for CSV product import
@@ -593,4 +597,15 @@ func (a *App) AI_GenerateStream(prompt string) error {
 // AI_CancelStream cancels the current AI generation stream (backward-compatible proxy)
 func (a *App) AI_CancelStream() {
 	a.AIHandler.AI_CancelStream()
+}
+
+// ForceQuit forces the application to close bypassing the custom dialog
+func (a *App) ForceQuit() {
+	a.ForceClose = true
+	runtime.Quit(a.ctx)
+}
+
+// MinimizeWindow minimizes the application window
+func (a *App) MinimizeWindow() {
+	runtime.WindowMinimise(a.ctx)
 }

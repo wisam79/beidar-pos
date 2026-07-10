@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/internal/integration"
 	"beidar-desktop/pkg/auth"
 	"context"
 )
@@ -9,11 +10,13 @@ import (
 type StaffHandler struct {
 	ctx          context.Context
 	staffService domain.StaffService
+	cloudService integration.CloudService
 }
 
-func NewStaffHandler(staffService domain.StaffService) *StaffHandler {
+func NewStaffHandler(staffService domain.StaffService, cloudService integration.CloudService) *StaffHandler {
 	return &StaffHandler{
 		staffService: staffService,
+		cloudService: cloudService,
 	}
 }
 
@@ -87,6 +90,7 @@ func (h *StaffHandler) AuthenticateByUsername(username, password string) (*domai
 		// Activate the backend session so subsequent handler calls are authorized.
 		staff := result.Staff
 		auth.Set(&staff, result.Permissions)
+		h.cloudService.KeepAliveSupabase()
 	}
 	return result, nil
 }
@@ -101,6 +105,7 @@ func (h *StaffHandler) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 	if result.Success && result.Staff.ID != "" {
 		staff := result.Staff
 		auth.Set(&staff, result.Permissions)
+		h.cloudService.KeepAliveSupabase()
 	}
 	return result, nil
 }

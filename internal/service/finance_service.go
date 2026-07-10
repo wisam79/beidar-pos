@@ -185,7 +185,7 @@ func (s *financeService) VerifyAdminPin(pin string) (bool, error) {
 	}
 
 	if prefs.AdminPin == "" {
-		return true, nil
+		return false, nil
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(prefs.AdminPin), []byte(pin))

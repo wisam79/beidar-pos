@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"beidar-desktop/pkg/secureconfig"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
@@ -17,10 +18,8 @@ import (
 )
 
 const (
-	GoogleClientID     = "827359049818-m7q3nk9ren35rkq0niv2c7h887mr528k.apps.googleusercontent.com"
-	GoogleClientSecret = "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"
-	AuthPort           = "10999"
-	RedirectURL        = "http://localhost:" + AuthPort + "/auth/callback"
+	AuthPort    = "10999"
+	RedirectURL = "http://localhost:" + AuthPort + "/auth/callback"
 )
 
 var (
@@ -28,16 +27,30 @@ var (
 	authCodeChan      chan string
 )
 
-func init() {
+// initOAuthConfig sets up the Google OAuth configuration using the provided
+// credentials. These should be loaded from secureconfig or environment variables.
+func initOAuthConfig(clientID, clientSecret string) {
+	if clientID == "" || clientSecret == "" {
+		return
+	}
 	googleOauthConfig = &oauth2.Config{
 		RedirectURL:  RedirectURL,
-		ClientID:     GoogleClientID,
-		ClientSecret: GoogleClientSecret,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
 		Scopes: []string{
 			"https://www.googleapis.com/auth/drive.file",
 		},
 		Endpoint: google.Endpoint,
 	}
+}
+
+// InitGoogleSecrets stores Google OAuth credentials in secureconfig and
+// initializes the OAuth config. Called from app.go startup.
+func (s *cloudService) InitGoogleSecrets(clientID, clientSecret string) {
+	if clientID != "" && clientSecret != "" {
+		_ = secureconfig.SetGoogleOAuthSecrets(clientID, clientSecret)
+	}
+	initOAuthConfig(secureconfig.GetGoogleOAuthClientID(), secureconfig.GetGoogleOAuthClientSecret())
 }
 
 type TokenStore struct {

@@ -25,6 +25,8 @@ coverage/
 # Test leftovers
 ci_logs.txt
 internal/service/test_*.db
+test_dialog.go
+uncommitted_changes.diff
 
 # IDE
 .idea/
@@ -43,3 +45,5 @@ supabase/.temp/
 # Env
 .env
 .env.local
+.kilo/
+

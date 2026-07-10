@@ -66,6 +66,10 @@ export function IsLoggedIn() {
   return window['go']['handlers']['CloudHandler']['IsLoggedIn']();
 }
 
+export function KeepAliveSupabase() {
+  return window['go']['handlers']['CloudHandler']['KeepAliveSupabase']();
+}
+
 export function ListCloudBackupsForUser() {
   return window['go']['handlers']['CloudHandler']['ListCloudBackupsForUser']();
 }

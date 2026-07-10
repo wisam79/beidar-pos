@@ -16,6 +16,8 @@ export function ExportProductsCSV():Promise<domain.CSVExportResult>;
 
 export function ExportProductsCSVNative():Promise<domain.CSVExportResult>;
 
+export function ForceQuit():Promise<void>;
+
 export function GetBackupConfig():Promise<domain.BackupConfig>;
 
 export function GetCSVTemplate():Promise<string>;
@@ -27,5 +29,7 @@ export function ImportDatabaseBackupNative():Promise<boolean>;
 export function ImportProductsCSV(arg1:string,arg2:boolean):Promise<domain.CSVImportResult>;
 
 export function ImportProductsCSVNative(arg1:boolean):Promise<domain.CSVImportResult>;
+
+export function MinimizeWindow():Promise<void>;
 
 export function SetCloudAutoSync(arg1:boolean):Promise<void>;

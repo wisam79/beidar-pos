@@ -180,6 +180,10 @@ export interface AppPreferences {
   requireShift: boolean;   // If true, sales require an active shift
   autoBackup: boolean;      // Automatically backup database daily
   cloudAutoSync: boolean;
+  aiProvider: string;
+  aiModel: string;
+  aiRotationMode: string;
+  groqApiKey: string;
 }
 
 export interface CategoryField {

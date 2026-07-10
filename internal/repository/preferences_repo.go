@@ -49,6 +49,12 @@ func encryptPrefs(prefs *domain.AppPreferences) {
 		}
 	}
 
+	if prefs.GroqAPIKey != "" {
+		if enc, err := crypto.Encrypt([]byte(prefs.GroqAPIKey), key); err == nil {
+			prefs.GroqAPIKey = enc
+		}
+	}
+
 	if len(prefs.GeminiAPIKeys) > 0 {
 		encrypted := make([]string, 0, len(prefs.GeminiAPIKeys))
 		for _, k := range prefs.GeminiAPIKeys {
@@ -68,6 +74,12 @@ func decryptPrefs(prefs *domain.AppPreferences) {
 	if prefs.GeminiAPIKey != "" {
 		if dec, err := crypto.Decrypt(prefs.GeminiAPIKey, key); err == nil {
 			prefs.GeminiAPIKey = string(dec)
+		}
+	}
+
+	if prefs.GroqAPIKey != "" {
+		if dec, err := crypto.Decrypt(prefs.GroqAPIKey, key); err == nil {
+			prefs.GroqAPIKey = string(dec)
 		}
 	}
 

@@ -50,8 +50,9 @@ const CartItemsList: React.FC<CartItemsListProps> = ({ cart, prefs, updateQty, r
     const virtualizer = useVirtualizer({
         count: cart.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => 112,
+        estimateSize: () => 88,
         overscan: 3,
+        gap: 12,
     });
 
     if (cart.length === 0) {
@@ -76,7 +77,7 @@ const CartItemsList: React.FC<CartItemsListProps> = ({ cart, prefs, updateQty, r
                     return (
                         <div
                             key={item.id}
-                            className="absolute left-0 top-0 w-full pb-3"
+                            className="absolute left-0 top-0 w-full"
                             style={{ height: `${virtualItem.size}px`, transform: `translateY(${virtualItem.start}px)` }}
                         >
                             <Row

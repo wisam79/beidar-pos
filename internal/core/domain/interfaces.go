@@ -381,7 +381,9 @@ type SettingsService interface {
 
 	// Supabase global settings
 	FetchGlobalAIKeys() ([]string, error)
+	FetchGlobalGroqKeys() ([]string, error)
 	SaveGlobalAIKeys(keys []string, userToken string) error
+	SaveGlobalGroqKeys(keys []string, userToken string) error
 }
 
 // DiscountService defines the business logic for sales discounts

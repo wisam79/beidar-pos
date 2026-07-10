@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"sort"
 	"strings"
 	"time"
@@ -346,13 +345,15 @@ func (s *paymentService) CalculateInstallmentPlan(total, downPayment domain.Amou
 		return nil, fmt.Errorf("عدد الأشهر يجب أن يكون أكبر من صفر")
 	}
 
-	remainingF := total.Float() - downPayment.Float()
-	if remainingF < 0 {
+	if downPayment > total {
 		return nil, fmt.Errorf("الدفعة المقدمة أكبر من الإجمالي")
 	}
 
-	rawAmountPerMonth := remainingF / float64(months)
-	roundedBaseAmount := math.Floor(rawAmountPerMonth/250) * 250
+	remaining := total - downPayment // cents
+	unit := domain.Amount(25000)     // 250 IQD in cents
+
+	rawPerMonth := remaining / domain.Amount(months)         // integer division (truncates toward zero)
+	roundedBase := rawPerMonth.RoundToNearest(unit)          // floor to nearest 25000 cents
 
 	schedule := make([]domain.Installment, months)
 
@@ -360,18 +361,18 @@ func (s *paymentService) CalculateInstallmentPlan(total, downPayment domain.Amou
 		now := time.Now()
 		dueDate := now.AddDate(0, i+1, 0).Format("2006-01-02")
 
-		var amountF float64
+		var amount domain.Amount
 		if i == months-1 {
-			previousTotal := roundedBaseAmount * float64(months-1)
-			amountF = remainingF - previousTotal
+			// Last installment gets the remainder so the sum equals remaining
+			amount = remaining - roundedBase*domain.Amount(months-1)
 		} else {
-			amountF = roundedBaseAmount
+			amount = roundedBase
 		}
 
 		schedule[i] = domain.Installment{
 			Number:  i + 1,
 			DueDate: dueDate,
-			Amount:  domain.NewAmount(amountF),
+			Amount:  amount,
 			Status:  "pending",
 		}
 	}

@@ -13,6 +13,10 @@ export const settingsSchema = z.object({
     storeAddress: z.string().optional(),
     receiptFooter: z.string().optional(),
     geminiApiKey: z.string().optional(),
+    aiProvider: z.string().optional(),
+    aiModel: z.string().optional(),
+    aiRotationMode: z.string().optional(),
+    groqApiKey: z.string().optional(),
     // Enums (less critical for form input validation as they use Select usually, but good for data integrity)
     fontSize: z.enum(['normal', 'large', 'xl']).optional(),
     language: z.string().optional(),

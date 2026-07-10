@@ -548,42 +548,42 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
         }
     }, [isLoading, data]);
 
-    const columns: ColumnDef<any>[] = useMemo(() => [
+    const columns: ColumnDef<Sale>[] = useMemo(() => [
         {
             header: 'رقم الفاتورة',
             accessorKey: 'id',
-            cell: (info: any) => <span className="font-mono text-text-main font-bold">{info.getValue() as string}</span>,
+            cell: ({ getValue }) => <span className="font-mono text-text-main font-bold">{String(getValue())}</span>,
         },
         {
             header: 'التاريخ',
             accessorKey: 'date',
-            cell: (info: any) => <span className="text-text-muted">{new Date(info.getValue() as string).toLocaleDateString('ar-IQ')}</span>,
+            cell: ({ getValue }) => <span className="text-text-muted">{new Date(String(getValue())).toLocaleDateString('ar-IQ')}</span>,
         },
         {
             header: 'العميل',
             accessorKey: 'customer',
-            cell: (info: any) => <span className="text-text-main">{info.getValue() as string || 'زبون عام'}</span>,
+            cell: ({ getValue }) => <span className="text-text-main">{(getValue() as string) || 'زبون عام'}</span>,
         },
         {
             header: 'الطريقة',
             accessorKey: 'paymentMethod',
-            cell: (info: any) => {
-                const method = info.getValue() as string;
+            cell: ({ getValue }) => {
+                const method = getValue() as string;
                 return <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${method === 'cash' ? 'bg-success-dim text-success' : method === 'card' ? 'bg-info-dim text-info' : 'bg-warning-dim text-warning'}`}>{method === 'cash' ? 'نقدي' : method === 'card' ? 'بطاقة' : 'آجل'}</span>;
             },
         },
         {
             header: 'الحالة',
             accessorKey: 'status',
-            cell: (info: any) => {
-                const status = info.getValue() as string;
+            cell: ({ getValue }) => {
+                const status = getValue() as string;
                 return <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${status === 'completed' ? 'bg-success-dim text-success' : status === 'pending' ? 'bg-warning-dim text-warning' : 'bg-danger-dim text-danger'}`}>{status === 'completed' ? 'مكتمل' : status === 'pending' ? 'معلق' : 'مرتجع'}</span>;
             },
         },
         {
             header: 'المبلغ',
             accessorKey: 'total',
-            cell: (info: any) => <span className="font-mono font-black text-text-main">{formatCurrency(info.getValue() as number, currency)}</span>,
+            cell: ({ getValue }) => <span className="font-mono font-black text-text-main">{formatCurrency(Number(getValue()), currency)}</span>,
         },
     ], [currency]);
 
@@ -651,7 +651,7 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
                     pageCount={totalPages}
                     pagination={pagination}
                     onPaginationChange={setPagination}
-                    getRowColor={(row: any) => row.status === 'completed' ? 'emerald' : row.status === 'pending' ? 'orange' : 'red'}
+                    getRowColor={(row: Sale) => row.status === 'completed' ? 'emerald' : row.status === 'pending' ? 'orange' : 'red'}
                 />
             </div>
         </div>
@@ -792,32 +792,38 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
     const totalDebt = useMemo(() => customerStats.reduce((sum, c) => sum + c.pendingDebt, 0), [customerStats]);
     const totalSpent = useMemo(() => customerStats.reduce((sum, c) => sum + c.totalSpent, 0), [customerStats]);
 
-    const columns: ColumnDef<any>[] = useMemo(() => [
+    interface CustomerStat extends Customer {
+        totalSpent: number;
+        pendingDebt: number;
+        orderCount: number;
+    }
+
+    const columns: ColumnDef<CustomerStat>[] = useMemo(() => [
         {
             header: 'العميل',
             accessorKey: 'name',
-            cell: (info: any) => <span className="font-bold text-text-main block min-w-[120px]">{info.getValue() as string}</span>,
+            cell: ({ getValue }) => <span className="font-bold text-text-main block min-w-[120px]">{String(getValue())}</span>,
         },
         {
             header: 'الهاتف',
             accessorKey: 'phone',
-            cell: (info: any) => <span className="text-text-muted font-mono">{info.getValue() as string || '-'}</span>,
+            cell: ({ getValue }) => <span className="text-text-muted font-mono">{(getValue() as string) || '-'}</span>,
         },
         {
             header: 'عدد الطلبات',
             accessorKey: 'orderCount',
-            cell: (info: any) => <span className="text-text-main font-mono">{info.getValue() as number}</span>,
+            cell: ({ getValue }) => <span className="text-text-main font-mono">{Number(getValue())}</span>,
         },
         {
             header: 'إجمالي المشتريات',
             accessorKey: 'totalSpent',
-            cell: (info: any) => <span className="text-success font-mono font-bold">{formatCurrency(info.getValue() as number, currency)}</span>,
+            cell: ({ getValue }) => <span className="text-success font-mono font-bold">{formatCurrency(Number(getValue()), currency)}</span>,
         },
         {
             header: 'الديون المستحقة',
             accessorKey: 'pendingDebt',
-            cell: (info: any) => {
-                const val = info.getValue() as number;
+            cell: ({ getValue }) => {
+                const val = Number(getValue());
                 return (
                     <span className={`font-mono font-bold ${val > 0 ? 'text-danger' : 'text-text-muted'}`}>
                         {val > 0 ? formatCurrency(val, currency) : '-'}

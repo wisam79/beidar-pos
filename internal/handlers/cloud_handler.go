@@ -158,4 +158,8 @@ func (h *CloudHandler) GetUserLicenseStatus() (*domain.LicenseResult, error) {
 	return h.cloudService.GetUserLicenseStatus()
 }
 
+func (h *CloudHandler) KeepAliveSupabase() {
+	h.cloudService.KeepAliveSupabase()
+}
+
 

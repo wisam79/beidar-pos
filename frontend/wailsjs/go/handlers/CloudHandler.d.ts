@@ -35,6 +35,8 @@ export function IsGoogleConnected():Promise<boolean>;
 
 export function IsLoggedIn():Promise<boolean>;
 
+export function KeepAliveSupabase():Promise<void>;
+
 export function ListCloudBackupsForUser():Promise<Array<domain.CloudBackup>>;
 
 export function Login(arg1:string,arg2:string):Promise<domain.SupabaseAuthResult>;

@@ -24,6 +24,10 @@ export namespace domain {
 	    cloudAutoSync: boolean;
 	    receiptPrinter: string;
 	    labelPrinter: string;
+	    aiProvider: string;
+	    aiModel: string;
+	    aiRotationMode: string;
+	    groqApiKey: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppPreferences(source);
@@ -54,6 +58,10 @@ export namespace domain {
 	        this.cloudAutoSync = source["cloudAutoSync"];
 	        this.receiptPrinter = source["receiptPrinter"];
 	        this.labelPrinter = source["labelPrinter"];
+	        this.aiProvider = source["aiProvider"];
+	        this.aiModel = source["aiModel"];
+	        this.aiRotationMode = source["aiRotationMode"];
+	        this.groqApiKey = source["groqApiKey"];
 	    }
 	}
 	export class Staff {

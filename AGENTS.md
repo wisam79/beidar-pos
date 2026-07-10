@@ -1,8 +1,8 @@
 # Beidar - دليل المطورين والـ AI Agents
 
-> **تاريخ الإنشاء**: 2026-06-11
-> **الإصدار**: 3.0.0 (نسخة العمارة النظيفة - Clean Architecture)
-> **الحالة**: 🚀 قيد التأسيس 
+> **آخر تحديث**: 2026-07-10
+> **إصدار المنتج**: 2.0.8 | **إصمارة العمارة**: Clean Architecture v3
+> **الحالة**: 🟢 قيد التطوير المستمر (تحسين وتثبيت الميزات الحالية)
 
 ---
 
@@ -10,38 +10,47 @@
 
 ### 1.1 ما هو Beidar؟
 
-**Beidar (بيدر)** هو نظام حاسوبي متكامل لسطح المكتب (Desktop Application) يعمل كنظام ERP/POS لخدمة نقاط البيع، إدارة المخزون، الشؤون المالية، وشؤون الموظفين. يعتمد التطبيق على تقنيات الويب في الواجهة الأمامية ولغة Go للواجهة الخلفية لضمان أعلى مستويات الأداء.
+**Beidar (بيدر)** هو نظام حاسوبي متكامل لسطح المكتب (Desktop Application) يعمل كنظام ERP/POS لخدمة نقاط البيع، إدارة المخزون، الشؤون المالية، وشؤون الموظفين. يعتمد التطبيق على **Go 1.25 + Wails v2.12** في الواجهة الخلفية و **React 18 + Vite 8** في الواجهة الأمامية، مع أكثر من **25** وحدة برمجية تشمل POS، إدارة المنتجات، المالية، التقارير، التكامل السحابي، وشبكة LAN المحلية.
 
 ### 1.2 أولويات التطوير (Development Priorities) ⚠️
 
 > **القاعدة الحاكمة**: "الأولوية القصوى والدائمة للمشروع هي **تحسين وتطوير الميزات الحالية** ورفع كفاءتها ومتانتها الأمنية والتشغيلية، بدلاً من التسرع في إضافة ميزات جديدة. التركيز يكمن في تحسين جودة الأداء، وسد الثغرات، وزيادة متانة النظام الحالي."
->
+
 > **توجيه حالي هام**: لا يُطلب إضافة أي ميزات أو إضافات جديدة في الوقت الحالي، بل ينصب كامل التركيز والجهد على تطوير وتحسين وتثبيت الميزات الحالية المتاحة في النظام لضمان أعلى مستويات الأداء والاستقرار.
 
-### 1.3 التقنيات الأساسية 
+### 1.3 التقنيات الأساسية (Tech Stack)
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│                  Beidar - Architecture                   │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  🖥️ Frontend (React + Vite)                              │
-│     ├─ Zustand (State Management)                        │
-│     ├─ React Query (Server State & Caching)              │
-│     ├─ Tailwind CSS (Styling)                            │
-│     ├─ Wails JS Bindings (Auto-generated API)            │
-│     └─ React Router (Navigation)                         │
-│                │                                         │
-│          [ Wails IPC Bridge ]                            │
-│                ▼                                         │
-│  ⚙️ Backend (Go + Wails)                                  │
-│     ├─ Wails v2 (Desktop framework)                      │
-│     ├─ Gorm + SQLite (Local Database)                    │
-│     ├─ Clean Architecture (Domain, Repo, Service)        │
-│     ├─ Supabase (Cloud Sync / Auth)                      │
-│     └─ Zoho Integration / LAN Server                     │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                       Beidar - Architecture                       │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  🖥️ Frontend (React 18 + Vite 8)                                  │
+│     ├─ Zustand 5.0 (State Management)                              │
+│     ├─ @tanstack/react-query 5.101 (Server State & Caching)       │
+│     ├─ @tanstack/react-table 8.21 (Data Tables)                   │
+│     ├─ @tanstack/react-virtual 3.14 (Virtual Scrolling)           │
+│     ├─ Tailwind CSS 3.4 (Styling) + Radix UI 1.5 (Primitives)     │
+│     ├─ Wails JS Bindings (Auto-generated TypeScript API)          │
+│     ├─ React Router 7.17 (Navigation)                             │
+│     ├─ Recharts 3.8 (Charts) + Zod 3.23 (Validation)              │
+│     ├─ i18next 26.3 (Internationalization / العربية)              │
+│     └─ jsbarcode + qrcode (Barcode & QR Generation)               │
+│                │                                                  │
+│          [ Wails IPC Bridge ]                                     │
+│                ▼                                                  │
+│  ⚙️ Backend (Go 1.25 + Wails v2.12)                                │
+│     ├─ GORM 1.31 + SQLite (Local Database, glebarez pure Go)      │
+│     ├─ Clean Architecture (Domain → Repo → Service → Handlers)    │
+│     ├─ Supabase (Cloud Sync / Auth / License)                     │
+│     ├─ Zoho Books Integration                                     │
+│     ├─ Google Drive Backup (OAuth 2.0)                            │
+│     ├─ Gemini AI Streaming API                                    │
+│     ├─ LAN Server (net/http + UDP Discovery + gRPC)               │
+│     ├─ gofpdf (PDF Generation) + go-qrcode                        │
+│     └─ Secure Config (Encrypted API Keys)                         │
+│                                                                   │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### 1.4 الهيكل التنظيمي للمشروع (Monorepo)
@@ -51,23 +60,36 @@ beidar/
 ├── build/                 # إعدادات Wails وأيقونات التطبيق
 ├── frontend/              # الواجهة الأمامية بالكامل (Vite)
 │   ├── src/
-│   │   ├── api/           # Wails Bindings
-│   │   ├── components/    # UI Components (أزرار، حقول إدخال) المشتركة
-│   │   ├── features/      # تقسيم الواجهة حسب الميزة (Sales, Finance...)
+│   │   ├── core/api/      # استدعاءات Wails مصنفة (10+ ملف)
+│   │   ├── core/schemas/  # Zod validation schemas
+│   │   ├── components/    # UI Components مشتركة (ds/, blocks/, charts)
+│   │   ├── features/      # 10 وحدات (pos, finance, inventory...)
+│   │   ├── hooks/         # 23 hook مشارك
 │   │   ├── store/         # Zustand stores
-│   │   ├── utils/         # دوال المساعدة للواجهة
-│   │   └── App.tsx        # نقطة البداية للواجهة
+│   │   ├── i18n/          # ترجمة عربية/إنجليزية
+│   │   ├── routes/        # توجيه الصفحات (lazy-loaded)
+│   │   └── App.tsx        # نقطة البداية
 │   └── package.json
-├── internal/              # الواجهة الخلفية (Go) المعزولة ⚠️ (نواة التطبيق)
-│   ├── core/domain/       # النماذج والواجهات النقية (Interfaces & Structs)
-│   ├── repository/        # التخاطب حصرياً مع Gorm و SQLite
-│   ├── service/           # منطق الأعمال الحقيقي (Business Logic)
-│   ├── handlers/          # تخاطب Wails (Exposed Functions)
-│   ├── network/           # خادم LAN والعملاء
-│   └── integration/       # Supabase, Zoho
-├── pkg/                   # حزم مساعدة (PDF, Barcode, Logger)
-├── app.go                 # إعداد تطبيق Wails (تهيئة وحقن التبعيات)
-└── main.go                # نقطة الانطلاق
+├── internal/              # الواجهة الخلفية (Go) — نواة التطبيق ⚠️
+│   ├── core/domain/       # النماذج والواجهات النقية (13 ملف)
+│   ├── repository/        # التخاطب مع Gorm/SQLite (17 ملف)
+│   ├── service/           # منطق الأعمال + اختبارات (24 ملف: 12 خدمة + 11 اختبار)
+│   ├── handlers/          # دوال Wails المصدرة (14 ملف)
+│   ├── network/           # خادم LAN + عملاء + اكتشاف (5 ملفات)
+│   └── integration/       # Supabase, Zoho, Google, License (6 ملفات)
+├── pkg/                   # حزم مساعدة (12 حزمة)
+│   ├── auth/              # التحقق من الصلاحيات
+│   ├── secureconfig/      # تخزين مشفر للمفاتيح
+│   ├── crypto/            # تشفير وفك تشفير
+│   ├── print/             # طباعة حرارية
+│   ├── updater/           # تحديث تلقائي
+│   ├── imagestore/        # خادم صور المنتجات
+│   ├── logger/            # تسجيل الأحداث
+│   └── ...
+├── app.go                 # إعداد Wails وتهيئة وحقن التبعيات (DI)
+├── main.go                # نقطة الانطلاق (تضمين، إعدادات Wails)
+├── single_instance_windows.go  # منع تشغيل نسختين
+└── wails.json              # إعدادات مشروع Wails v2
 ```
 
 ---
@@ -85,11 +107,13 @@ beidar/
 
 | ❌ لا تكتب | ✅ البديل الصحيح | السبب |
 |-----------|-----------------|------|
-| `db.Where(...)` داخل `handlers` أو `service` | `repo.FindCustomer(...)` | تلوث طبقة منطق العمل بكود قواعد البيانات. |
-| استدعاء Wails Context داخل `repository` | إرجاع خطأ إلى `handlers` وهو يتعامل مع Wails | فصل الاهتمامات (Separation of Concerns). |
-| وضع منطق حساب الضرائب في React | كتابته في `service` (Go) واستدعاؤه عبر Wails | الأمان وتوحيد الحسابات وسهولة الاختبار (Unit Tests). |
-| تكرار Gorm Structs في كل مكان | وضع النماذج الأساسية في `internal/core/domain` | تجنب الاعتماديات الدائرية (Circular Dependencies). |
-| تجاهل الأخطاء `_ , err` | معالجة الخطأ وإعادته كـ `fmt.Errorf("...: %w", err)` | سهولة تتبع المشاكل (Traceability). |
+| `db.Where(...)` داخل `handlers` أو `service` | `repo.FindCustomer(...)` | تلوث طبقة منطق العمل بكود قواعد البيانات |
+| استدعاء Wails Context داخل `repository` | إرجاع خطأ إلى `handlers` وهو يتعامل مع Wails | فصل الاهتمامات (Separation of Concerns) |
+| وضع منطق حساب الضرائب في React | كتابته في `service` (Go) واستدعاؤه عبر Wails | الأمان وتوحيد الحسابات وسهولة الاختبار (Unit Tests) |
+| تكرار Gorm Structs في كل مكان | وضع النماذج الأساسية في `internal/core/domain` | تجنب الاعتماديات الدائرية (Circular Dependencies) |
+| تجاهل الأخطاء `_ , err` | معالجة الخطأ وإعادته كـ `fmt.Errorf("...: %w", err)` | سهولة تتبع المشاكل (Traceability) |
+| استخدام `float64` للمبالغ المالية | استخدام `domain.Amount` (int64 cents) | أخطاء التقريب في الفاصلة العائمة |
+| تخزين مفاتيح API كنص صريح | استخدام `secureconfig` للتخزين المشفر | تسرب بيانات حساسة |
 
 ---
 
@@ -98,120 +122,139 @@ beidar/
 ### 3.1 مكتبات Go المعتمدة (Backend)
 - ❌ لا تبتكر منشئ PDF ➔ ✅ استخدم `jung-kurt/gofpdf`.
 - ❌ لا تبتكر نظام إنشاء Barcode/QR ➔ ✅ استخدم `skip2/go-qrcode` و `jsbarcode` في الواجهة.
-- ❌ لا تبتكر نظام التوجيه للشبكة (LAN) من الصفر ➔ ✅ اعتمد على مكتبات الـ `net/http` وإطارات الويب مثل `gin` أو `echo` إن لزم الأمر للـ LAN Server.
-- ❌ لا تكتب استعلامات SQL معقدة يدوياً للعمليات البسيطة ➔ ✅ استخدم قدرات `Gorm` المتقدمة.
+- ❌ لا تبتكر خادم LAN من الصفر ➔ ✅ استخدم `net/http` المدمجة مع `io` و `sync`.
+- ❌ لا تكتب استعلامات SQL معقدة يدوياً ➔ ✅ استخدم قدرات GORM المتقدمة.
+- ❌ لا تبتكر نظام تشفير ➔ ✅ استخدم `golang.org/x/crypto`.
+- ❌ لا تستخدم sqlite3 مع CGO ➔ ✅ استخدم `github.com/glebarez/sqlite` (نقي Go).
 
 ### 3.2 مكتبات React المعتمدة (Frontend)
-- ❌ لا تستخدم `useState` مفرط للحالة العامة ➔ ✅ استخدم `Zustand`.
-- ❌ لا تكتب دوال `fetch` يدوية أو إدارة Loading/Error يدوية لطلبات Wails المعقدة ➔ ✅ استخدم `@tanstack/react-query`.
-- ❌ لا تبتكر تصميم الجداول من الصفر ➔ ✅ استخدم `@tanstack/react-table`.
-- ❌ لا تبتكر CSS Classes ➔ ✅ استخدم `Tailwind CSS`.
-- ❌ لا تستخدم أي مكتبات واجهة (UI Kit) ضخمة (MUI, AntD) ➔ ✅ ابنِ مكوناتك بـ `Tailwind` + `Radix UI` أو `shadcn/ui` لتجربة مخصصة وأداء خارق.
+- ❌ لا تستخدم `useState` مفرط للحالة العامة ➔ ✅ استخدم Zustand.
+- ❌ لا تكتب دوال fetch يدوية ➔ ✅ استخدم `@tanstack/react-query`.
+- ❌ لا تبتكر جداول من الصفر ➔ ✅ استخدم `@tanstack/react-table`.
+- ❌ لا تبتكر CSS Classes مخصصة ➔ ✅ استخدم Tailwind CSS.
+- ❌ لا تستخدم مكتبات واجهة ضخمة (MUI, AntD) ➔ ✅ استخدم Tailwind + Radix UI.
+- ❌ لا تكتب دوال تحقق من الصحة يدوياً ➔ ✅ استخدم Zod schemas.
 
 ---
 
 ## 4. معايير الكود والأمان (Code & Security Standards)
 
 ### 4.1 إدارة الأخطاء (Error Handling)
-- كل دالة (Handler) مُصدرة لـ Wails يجب أن تُرجع إما النتيجة أو `error`. الواجهة الأمامية ستستقبل الخطأ كـ `Promise.reject`.
-- في React، استخدم `try/catch` دائماً مع إظهار `Toast` للمستخدم بحالة الفشل.
+- كل دالة Handler مُصدرة لـ Wails يجب أن تُرجع إما النتيجة أو `error`. الواجهة الأمامية ستستقبل الخطأ كـ `Promise.reject`.
+- في React، استخدم `try/catch` دائماً مع إظهار Toast للمستخدم بحالة الفشل.
+- استخدم `fmt.Errorf("context: %w", err)` لإضافة سياق للخطأ مع الحفاظ على الخطأ الأصلي.
+- لا تترك `_ , err` بدون معالجة — قم بتسجيل الخطأ على الأقل.
 
 ```go
-// ✅ صحيح: إرجاع الخطأ ليتم التعامل معه في الواجهة
-func (h *SalesHandler) CreateInvoice(req CreateInvoiceReq) (*Invoice, error) {
+// ✅ صحيح
+func (h *SalesHandler) ProcessSale(req CreateSaleReq) (*domain.Sale, error) {
     if req.Amount <= 0 {
         return nil, errors.New("يجب أن يكون المبلغ أكبر من صفر")
     }
-    return h.salesService.ProcessInvoice(req)
+    return h.saleService.ProcessSale(req)
 }
 ```
 
 ### 4.2 Type Safety في TypeScript
-- يُمنع تماماً استخدام `any` في الـ Frontend.
-- استفد من الـ Models التي يُولدها `Wails` تلقائياً داخل `frontend/wailsjs/go/models.ts`. لا تقم بكتابة واجهات (Interfaces) مكررة.
+- يُمنع تماماً استخدام `any` في Frontend.
+- استفد من الـ Models التي يُولدها Wails تلقائياً داخل `frontend/wailsjs/go/models.ts`.
+- استخدم Zod للتحقق من صحة المدخلات (forms, API responses).
 
 ### 4.3 الأمان (Security)
-- أرقام وحسابات الخزينة (Finance) يجب أن تُحسب بـ `decimal` أو كأرقام صحيحة (Cents/Fils) في Go لتجنب أخطاء الفاصلة العائمة (Floating Point Issues).
-- الاتصال مع Supabase والـ API الخارجي يجب أن يكون بـ HTTPS. المفاتيح (Keys) لا يتم حرقها في الواجهة الأمامية، بل تكون في Go Environment Variables أو يتم جلبها بشكل مشفر.
+- كل الحسابات المالية تتم في Go عبر `domain.Amount` (int64 يمثل أصغر وحدة نقدية — فلس/سنت).
+- مفاتيح API تُخزّن مشفرة في SQLite عبر `pkg/secureconfig` — لا تُحرق أبداً في الكود المصدري.
+- الاتصال مع Supabase والخدمات الخارجية يكون عبر HTTPS مع Certificate Pinning.
+- صلاحيات الوصول تُفحص في كل Handler عبر `auth.RequirePermission()`.
 
 ---
 
-## 5. دليل تقسيم الميزات (Feature Structure)
+## 5. دليل إضافة ميزات جديدة (Feature Structure)
 
-عند إضافة أي ميزة جديدة (مثلاً: المخزون - Inventory)، يجب اتباع هذا الهيكل:
+### في الخلفية (Go):
+1. `internal/core/domain/<feature>.go` — تعريف Structs و Interfaces
+2. `internal/repository/<feature>_repo.go` — أوامر GORM
+3. `internal/service/<feature>_service.go` — منطق الأعمال
+4. `internal/handlers/<feature>_handler.go` — ربط مع Wails
 
-**في الخلفية (Go):**
-- `internal/core/domain/inventory.go` (تعريف الهيكل Structs و Interfaces).
-- `internal/repository/inventory_repo.go` (أوامر Gorm).
-- `internal/service/inventory_service.go` (منطق المخزون، الحسابات).
-- `internal/handlers/inventory_handler.go` (ربط مع Wails).
+### في الواجهة الأمامية (React):
+1. `src/features/<feature>/` — مجلد الميزة
+2. `src/features/<feature>/components/` — مكونات الواجهة
+3. `src/core/api/<feature>.ts` — استدعاءات Wails عبر React Query
+4. دمج التوجيه في `src/routes/index.tsx`
 
-**في الواجهة الأمامية (React):**
-- `src/features/inventory/components/` (شاشات وأزرار تخص المخزون).
-- `src/features/inventory/api/` (استدعاء دوال Wails بواسطة React Query).
-- `src/features/inventory/store/` (حالة Zustand للمخزون إن لزم).
+### التسجيل في التطبيق:
+- إضافة الـ Handler في `app.go` ضمن `initHandlers()`
+- إضافة Binding في `main.go` ضمن `wails.Run()`
+
+---
 
 ## 6. قواعد الاختبار (Testing)
 
 ### 6.1 اختبارات الوحدة الخلفية (Go Unit Tests)
-- **مجلد `service`**: كتابة اختبارات وحدة شاملة هي أمر إلزامي ولا يمكن التغاضي عنه لجميع الخدمات.
-- **التغطية المستهدفة (Code Coverage)**: يجب ألا تقل نسبة تغطية الأكواد عن **70%** لطبقة الأعمال (`internal/service`).
-- **استخدام SQLite للاختبار**: يتم استخدام قاعدة بيانات SQLite حقيقية ومؤقتة في الذاكرة أو الملفات أثناء الاختبار لضمان تطابق الاستعلامات مع الشيما، بدلاً من الموك المعقد.
-- **فحص التزامن**: يجب تشغيل الاختبارات للتأكد من خلو التطبيق من الـ Race Conditions عبر:
+- **مجلد `service`**: اختبارات شاملة إلزامية لكل الخدمات.
+- **التغطية المستهدفة**: لا تقل عن **70%** لطبقة `internal/service/`.
+- **SQLite للاختبار**: قاعدة SQLite مؤقتة في الذاكرة — تطابق الشيما الحقيقية، لا mock معقد.
+- **Race Detector**: إجباري لتأكيد سلامة التزامن:
   ```bash
   go test -race ./...
   ```
+- **اختبارات `internal/core/domain/`**: اختبارات `Amount`، `money.go`، التحقق من JSON marshaling.
 
 ### 6.2 اختبارات الواجهة الأمامية (Vitest & Component Testing)
-- **منع ازدواجية الكود (No Duplication)**: يُمنع منعاً باتاً كتابة أو تكرار تعريف الدوال البرمجية الحقيقية داخل ملفات التست (مثل ملفات `utils.test.ts`). يجب استيراد الدوال الفعلية من مجلد `core/` أو `utils/` واختبارها مباشرة.
-- **اختبار المكونات (Component Rendering)**: كتابة اختبارات رندرة وتفاعل للمكونات المشتركة الحساسة للتحقق من سلوكها في حالات التحميل (Loading)، الخطأ (Error)، والنجاح (Success).
+- **لا تكرار**: استيراد الدوال الفعلية من `core/` — لا نسخ تعريفات داخل ملفات التست.
+- **اختبار المكونات**: اختبار rendering للمكونات الحساسة في حالات Loading/Error/Success.
+- **اختبار الـ Zustand stores**: التحقق من حالات الـ store بعد الإجراءات.
 
-### 6.3 اختبارات النهاية إلى النهاية (Playwright E2E Tests)
-- **تدفقات المستخدم النشطة (Active Flows)**: يجب ألا تقتصر اختبارات E2E على فحص ظهور الصفحات أو وجود الأزرار بشكل خامل.
-- **سيناريوهات المبيعات**: يجب كتابة سيناريو واحد متكامل على الأقل يحاكي دورة بيع كاملة في الـ POS (البحث عن منتج، الإضافة للسلة، إتمام الدفع، التحقق من خصم المخزون والمالية).
+### 6.3 اختبارات E2E (Playwright)
+- **سيناريوهات نشطة**: محاكاة دورة بيع كاملة (بحث ← إضافة إلى السلة ← دفع ← التحقق من المخزون والمالية).
+- **التغطية**: تغطية مسارات المستخدم الحرجة (Login, POS, Finance, Inventory).
 
 ---
 
 ## 7. هجرات قواعد البيانات والتلقيم (Migrations & Seeding)
 
-### 7.1 هجرة الشيما (Database Migrations)
-- نعتمد على نظام الهجرة الآلي الخاص بـ GORM عبر `db.AutoMigrate` في مرحلة التأسيس.
-- عند حدوث تغييرات هيكلية كبرى (مثل حذف حقول أو تغيير أنواع البيانات)، يجب كتابة كود هجرة آمن يتفادى فقدان بيانات المستخدمين المحليين.
+### 7.1 هجرة الشيما (Migrations)
+- هجرة آلية عبر `db.AutoMigrate()` عند بدء التطبيق.
+- للتغييرات الكبرى (حذف/تعديل حقول): هجرة برمجية يدوية تحافظ على بيانات المستخدمين.
 
-### 7.2 تلقيم البيانات الأساسية (Data Seeding)
-- يجب أن يحتوي النظام على منطق تلقيم آلي (Auto-Seeding) لتوفير البيانات التشغيلية عند أول تشغيل للتطبيق (مثل: تهيئة عملة النظام الافتراضية، إعدادات الخزينة، وإنشاء حساب المدير الافتراضي `admin` في حال عدم وجود أي موظف).
-
----
-
-## 8. إدارة التزامن ومعاملات قواعد البيانات (Concurrency & Transactions)
-
-### 8.1 بيئة خادم الشبكة المحلية (LAN Server)
-- نظراً لأن التطبيق يعمل كخادم LAN ويستقبل طلبات متزامنة من كاشيرية متعددين، يجب تأمين العمليات الحساسة ضد الـ Race Conditions.
-
-### 8.2 استخدام الـ DB Transactions
-- يجب تنفيذ عمليات البيع (`ProcessSale`) وعمليات الإرجاع (`ReturnSale`) وإضافة الأقساط وحركات النقدية داخل **معاملة برمجية موحدة (Database Transaction)** عبر `db.Transaction(func(tx *gorm.DB) error { ... })`.
-- في حال فشل أي جزء من العملية (مثلاً: عدم كفاية المخزون لأحد العناصر)، يجب عمل تراجع تلقائي (Rollback) لكافة التغييرات المالية والسلعية لضمان اتساق البيانات.
+### 7.2 تلقيم البيانات الأساسية (Seeding)
+- **التفضيلات الافتراضية**: StoreName="متجر بيدر", Currency="IQD", Theme="dark", Language="ar"
+- **المدير الافتراضي**: username=`admin`, PIN=`0000`, `MustChangePin=true` (يتم إنشاؤه فقط إذا كان جدول الموظفين فارغاً)
 
 ---
 
-## 9. إدارة التكوين والمتغيرات المحلية (Configuration & AppData)
+## 8. إدارة التزامن والمعاملات (Concurrency & Transactions)
+
+### 8.1 بيئة LAN
+- جميع العمليات الحساسة في بيئة LAN يجب أن تكون ضمن معاملات (Transactions).
+- `SetMaxOpenConns(1)` يضمن ترتيب عمليات الكتابة.
+
+### 8.2 DB Transactions
+- عمليات البيع (`ProcessSale`)، الإرجاع (`ReturnSale`)، الأقساط، والحركات النقدية — كلها ضمن `db.Transaction(func(tx *gorm.DB) error { ... })`.
+- Fail → Rollback تلقائي لضمان اتساق البيانات.
+
+---
+
+## 9. إدارة التكوين والبيانات المحلية (Configuration & AppData)
 
 ### 9.1 تخزين الإعدادات
-- بما أن التطبيق يعمل كبرنامج سطح مكتب محلي (Desktop App), يُمنع الاعتماد الحصري على متغيرات البيئة الخاصة بنظام التشغيل (OS Env Variables) للمفاتيح والإعدادات العامة.
-- يجب تخزين التفضيلات والتكوينات المحلية (مثل اسم المتجر، إعدادات الطابعة، والاتصال) داخل مجلد البيانات الخاص بالتطبيق (`AppData`) في ملفات مهيأة مثل JSON أو SQLite.
+- التفضيلات المخزنة في SQLite (`AppPreferences`) — وصول آمن عبر `SettingsService`.
+- `%AppData%/BeidarPOS_V3/`: قاعدة البيانات (`beidar_v3.db`)، صور المنتجات، window state، webview cache.
 
 ### 9.2 تشفير البيانات الحساسة
-- مفاتيح الـ API الخاصة بالذكاء الاصطناعي (AI Keys) أو كلمات مرور الربط الخارجي يجب أن تُخزن بشكل مشفر محلياً ولا يتم كتابتها بنصوص صريحة (Plain Text).
+- مفاتيح API (Gemini, Google OAuth) مخزنة مشفرة عبر `pkg/secureconfig`.
+- كلمات المرور مهشّدة بـ bcrypt (golang.org/x/crypto/bcrypt).
 
 ---
 
 ## 10. نظام النقاش المتعدد (Multi-Agent System)
 
-لضمان الدقة في اتخاذ القرارات، يتوفر هذا المشروع على أوامر للوكلاء:
-- `@product-manager` : لتخطيط الميزات الجديدة وتحليل متطلبات واجهة المستخدم.
-- `@developer` : لهندسة الكود وبنائه.
-- `@qa-reviewer` : لمراجعة الكود، اكتشاف الثغرات، واقتراح Unit Tests.
+| الوكيل | الاختصار | المسؤولية |
+|--------|----------|-----------|
+| 📋 Product Manager | `@product-manager` | تخطيط الميزات، تحليل متطلبات واجهة المستخدم |
+| 👨‍💻 Developer | `@developer` | هندسة الكود، البناء، التنفيذ |
+| 🧪 QA Reviewer | `@qa-reviewer` | مراجعة الكود، اكتشاف الثغرات، اقتراح Unit Tests |
 
 ---
 
-> **الخلاصة للـ Agent**: اقرأ هذا الملف جيداً. لا تقم بالقفز على المعمارية مهما كان السبب، واحرص على فصل الاهتمامات دائماً والتأكد من اتساق البيانات وتغطية الاختبارات.
+> **الخلاصة للـ Agent**: اقرأ هذا الملف جيداً. لا تقم بالقفز على المعمارية مهما كان السبب. احرص على فصل الاهتمامات دائماً، استخدم `domain.Amount` للمبالغ المالية، تأكد من اتساق البيانات عبر Transactions، ولا تنس الـ Race Detector قبل الـ commit. راجع [docs/](docs/) للحصول على تفاصيل أكثر.

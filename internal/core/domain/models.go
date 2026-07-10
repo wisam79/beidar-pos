@@ -158,6 +158,10 @@ type AppPreferences struct {
 	CloudAutoSync    bool     `json:"cloudAutoSync" gorm:"default:false"`
 	ReceiptPrinter   string   `json:"receiptPrinter"`
 	LabelPrinter     string   `json:"labelPrinter"`
+	AIProvider       string   `json:"aiProvider" gorm:"default:'gemini'"`
+	AIModel          string   `json:"aiModel" gorm:"default:'gemma-4-31b-it'"`
+	AIRotationMode   string   `json:"aiRotationMode" gorm:"default:'failover'"`
+	GroqAPIKey       string   `json:"groqApiKey"`
 }
 
 type ParkedSale struct {

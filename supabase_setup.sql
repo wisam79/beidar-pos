@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS public.licenses (
     last_check_in timestamptz,
     app_version varchar(20),
     notes text,
+    is_paid boolean DEFAULT false,
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now()
 );

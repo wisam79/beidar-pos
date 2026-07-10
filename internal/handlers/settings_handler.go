@@ -124,3 +124,17 @@ func (h *SettingsHandler) SaveGlobalAIKeys(keys []string, userToken string) erro
 	}
 	return h.settingsService.SaveGlobalAIKeys(keys, userToken)
 }
+
+func (h *SettingsHandler) FetchGlobalGroqKeys() ([]string, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
+	return h.settingsService.FetchGlobalGroqKeys()
+}
+
+func (h *SettingsHandler) SaveGlobalGroqKeys(keys []string, userToken string) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
+	return h.settingsService.SaveGlobalGroqKeys(keys, userToken)
+}

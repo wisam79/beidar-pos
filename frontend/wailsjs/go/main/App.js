@@ -30,6 +30,10 @@ export function ExportProductsCSVNative() {
   return window['go']['main']['App']['ExportProductsCSVNative']();
 }
 
+export function ForceQuit() {
+  return window['go']['main']['App']['ForceQuit']();
+}
+
 export function GetBackupConfig() {
   return window['go']['main']['App']['GetBackupConfig']();
 }
@@ -52,6 +56,10 @@ export function ImportProductsCSV(arg1, arg2) {
 
 export function ImportProductsCSVNative(arg1) {
   return window['go']['main']['App']['ImportProductsCSVNative'](arg1);
+}
+
+export function MinimizeWindow() {
+  return window['go']['main']['App']['MinimizeWindow']();
 }
 
 export function SetCloudAutoSync(arg1) {

@@ -1,24 +1,22 @@
 package auth
 
-// Permission constants. These mirror the values defined in
-// internal/service/staff_service.go (Perm*). They are re-declared here so the
+import "beidar-desktop/internal/core/domain"
+
+// Permission constants. These are imported from internal/core/domain so that
 // handlers can reference them via the auth package without importing the
-// service layer (which would create an import cycle: service does not depend on
-// handlers, and handlers must not depend on service's internal constants).
-//
-// Keep these in sync with service.RolePermissions.
+// service layer (which would create an import cycle).
 const (
-	PermSales       = "sales"
-	PermProducts    = "products"
-	PermInventory   = "inventory"
-	PermCustomers   = "customers"
-	PermInvoices    = "invoices"
-	PermReports     = "reports"
-	PermFinance     = "finance"
-	PermSettings    = "settings"
-	PermStaffManage = "staff_manage"
-	PermDiscounts   = "discounts"
-	PermDeleteSales = "delete_sales"
-	PermEditPrices  = "edit_prices"
-	PermExportData  = "export_data"
+	PermSales       = domain.PermSales
+	PermProducts    = domain.PermProducts
+	PermInventory   = domain.PermInventory
+	PermCustomers   = domain.PermCustomers
+	PermInvoices    = domain.PermInvoices
+	PermReports     = domain.PermReports
+	PermFinance     = domain.PermFinance
+	PermSettings    = domain.PermSettings
+	PermStaffManage = domain.PermStaffManage
+	PermDiscounts   = domain.PermDiscounts
+	PermDeleteSales = domain.PermDeleteSales
+	PermEditPrices  = domain.PermEditPrices
+	PermExportData  = domain.PermExportData
 )

@@ -85,6 +85,8 @@ func (s *cloudService) InitSecrets() {
 	if supabaseURL != "" {
 		functionsURL = supabaseURL + "/functions/v1"
 	}
+	// Load Google OAuth from secureconfig + env vars
+	initOAuthConfig(secureconfig.GetGoogleOAuthClientID(), secureconfig.GetGoogleOAuthClientSecret())
 	initCertPinning()
 }
 
@@ -922,4 +924,37 @@ func getInt64(m map[string]interface{}, key string) int64 {
 		return int64(v)
 	}
 	return 0
+}
+
+func (s *cloudService) KeepAliveSupabase() {
+	if supabaseURL == "" || supabaseKey == "" {
+		return
+	}
+
+	go func() {
+		url := supabaseURL + "/rest/v1/licenses?select=id&limit=1"
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return
+		}
+		req.Header.Set("apikey", supabaseKey)
+
+		s.loadSessionFromCache()
+		currentSessionLock.RLock()
+		session := currentSession
+		currentSessionLock.RUnlock()
+		if session != nil && session.AccessToken != "" {
+			req.Header.Set("Authorization", "Bearer "+session.AccessToken)
+		}
+
+		client := &http.Client{Timeout: 5 * time.Second}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Printf("⚠️ [KeepAlive] Supabase connection ping failed: %v\n", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		fmt.Printf("⚡ [KeepAlive] Supabase ping succeeded with status: %s\n", resp.Status)
+	}()
 }

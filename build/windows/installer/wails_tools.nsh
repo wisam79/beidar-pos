@@ -14,10 +14,10 @@
     !define INFO_PRODUCTNAME "Beidar Desktop"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "2.0.4"
+    !define INFO_PRODUCTVERSION "2.0.8"
 !endif
 !ifndef INFO_COPYRIGHT
-    !define INFO_COPYRIGHT "Copyright 2025"
+    !define INFO_COPYRIGHT "Copyright 2026"
 !endif
 !ifndef PRODUCT_EXECUTABLE
     !define PRODUCT_EXECUTABLE "${INFO_PROJECTNAME}.exe"

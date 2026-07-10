@@ -30,7 +30,53 @@ func NewSettingsService(preferencesRepo domain.PreferencesRepository) domain.Set
 }
 
 func (s *settingsService) GetPreferences() (*domain.AppPreferences, error) {
-	return s.preferencesRepo.Get()
+	prefs, err := s.preferencesRepo.Get()
+	if err != nil {
+		return nil, err
+	}
+	// Restore Gemini API key from secureconfig (encrypted storage)
+	hasPlaceholder := prefs.GeminiAPIKey == "********" || prefs.GeminiAPIKey == ""
+	if hasPlaceholder {
+		if key := secureconfig.GetGeminiAPIKey(); key != "" {
+			prefs.GeminiAPIKey = key
+		}
+	}
+
+	// Restore GeminiAPIKeys slice — if ANY element is a placeholder, attempt recovery
+	needsRecovery := false
+	for _, k := range prefs.GeminiAPIKeys {
+		if k == "********" || k == "" {
+			needsRecovery = true
+			break
+		}
+	}
+	if needsRecovery {
+		if key := secureconfig.GetGeminiAPIKey(); key != "" {
+			prefs.GeminiAPIKeys = []string{key}
+		}
+	}
+
+	// Final fallback: if still no key, try environment variable
+	if prefs.GeminiAPIKey == "" || prefs.GeminiAPIKey == "********" {
+		if envKey := os.Getenv("GEMINI_API_KEY"); envKey != "" {
+			prefs.GeminiAPIKey = envKey
+			prefs.GeminiAPIKeys = []string{envKey}
+		}
+	}
+
+	// Restore Grok API key from secureconfig (encrypted storage)
+	if prefs.GroqAPIKey == "********" || prefs.GroqAPIKey == "" {
+		if key := secureconfig.GetGroqAPIKey(); key != "" {
+			prefs.GroqAPIKey = key
+		}
+	}
+	if prefs.GroqAPIKey == "" || prefs.GroqAPIKey == "********" {
+		if envKey := os.Getenv("grok"); envKey != "" {
+			prefs.GroqAPIKey = envKey
+		}
+	}
+
+	return prefs, nil
 }
 
 func (s *settingsService) UpdatePreferences(prefs domain.AppPreferences) error {
@@ -49,6 +95,32 @@ func (s *settingsService) UpdatePreferences(prefs domain.AppPreferences) error {
 	} else if prefs.AdminPin == "" || prefs.AdminPin == "********" {
 		prefs.AdminPin = currentPrefs.AdminPin
 	}
+
+	// Persist Gemini API key to secureconfig (encrypted), store placeholder in DB
+	if prefs.GeminiAPIKey != "" && prefs.GeminiAPIKey != "********" {
+		if err := secureconfig.SetGeminiAPIKey(prefs.GeminiAPIKey); err != nil {
+			return fmt.Errorf("failed to encrypt Gemini API key: %w", err)
+		}
+	}
+	prefs.GeminiAPIKey = "********"
+
+	// Handle GeminiAPIKeys slice the same way
+	if len(prefs.GeminiAPIKeys) > 0 && prefs.GeminiAPIKeys[0] != "********" {
+		for _, k := range prefs.GeminiAPIKeys {
+			if k != "" {
+				_ = secureconfig.SetGeminiAPIKey(k) // stores the last non-empty key
+			}
+		}
+	}
+	prefs.GeminiAPIKeys = []string{"********"}
+
+	// Persist Groq API key to secureconfig (encrypted), store placeholder in DB
+	if prefs.GroqAPIKey != "" && prefs.GroqAPIKey != "********" {
+		if err := secureconfig.SetGroqAPIKey(prefs.GroqAPIKey); err != nil {
+			return fmt.Errorf("failed to encrypt Groq API key: %w", err)
+		}
+	}
+	prefs.GroqAPIKey = "********"
 
 	return s.preferencesRepo.Save(&prefs)
 }
@@ -151,6 +223,7 @@ type globalSettings struct {
 
 type aiKeysConfig struct {
 	GeminiKeys []string `json:"gemini_keys"`
+	GroqKeys   []string `json:"groq_keys"`
 }
 
 func getSupabaseURL() string {
@@ -206,10 +279,60 @@ func (s *settingsService) FetchGlobalAIKeys() ([]string, error) {
 
 	var config aiKeysConfig
 	if err := json.Unmarshal(results[0].Value, &config); err != nil {
+		// Fallback: Try parsing as a plain JSON array of strings
+		var plainKeys []string
+		if errArray := json.Unmarshal(results[0].Value, &plainKeys); errArray == nil {
+			return plainKeys, nil
+		}
 		return nil, err
 	}
 
 	return config.GeminiKeys, nil
+}
+
+func (s *settingsService) FetchGlobalGroqKeys() ([]string, error) {
+	sbURL := getSupabaseURL()
+	sbKey := getSupabaseKey()
+
+	if sbURL == "" || sbKey == "" {
+		return nil, fmt.Errorf("supabase not configured")
+	}
+
+	url := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys&select=value", sbURL)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("apikey", sbKey)
+	req.Header.Set("Authorization", "Bearer "+sbKey)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch settings: %d", resp.StatusCode)
+	}
+
+	var results []globalSettings
+	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+		return nil, err
+	}
+
+	if len(results) == 0 {
+		return []string{}, nil
+	}
+
+	var config aiKeysConfig
+	if err := json.Unmarshal(results[0].Value, &config); err != nil {
+		return nil, err
+	}
+
+	return config.GroqKeys, nil
 }
 
 func (s *settingsService) SaveGlobalAIKeys(keys []string, userToken string) error {
@@ -224,12 +347,100 @@ func (s *settingsService) SaveGlobalAIKeys(keys []string, userToken string) erro
 		return fmt.Errorf("يجب تسجيل الدخول أولاً")
 	}
 
-	url := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys", sbURL)
+	// 1. Fetch current config first to preserve Groq keys
+	var currentConfig aiKeysConfig
+	urlGet := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys&select=value", sbURL)
+	reqGet, err := http.NewRequest("GET", urlGet, nil)
+	if err == nil {
+		reqGet.Header.Set("apikey", sbKey)
+		reqGet.Header.Set("Authorization", "Bearer "+sbKey)
+		client := &http.Client{Timeout: 10 * time.Second}
+		if respGet, errGet := client.Do(reqGet); errGet == nil && respGet.StatusCode == http.StatusOK {
+			var results []globalSettings
+			if errDec := json.NewDecoder(respGet.Body).Decode(&results); errDec == nil && len(results) > 0 {
+				_ = json.Unmarshal(results[0].Value, &currentConfig)
+			}
+			respGet.Body.Close()
+		}
+	}
 
-	config := aiKeysConfig{GeminiKeys: keys}
-	configJson, err := json.Marshal(config)
+	// 2. Update Gemini keys
+	currentConfig.GeminiKeys = keys
+
+	url := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys", sbURL)
+	configJson, err := json.Marshal(currentConfig)
 	if err != nil {
 		return fmt.Errorf("failed to marshal AI keys config: %w", err)
+	}
+
+	payload := map[string]interface{}{
+		"value":      json.RawMessage(configJson),
+		"updated_at": time.Now().UTC().Format(time.RFC3339),
+	}
+
+	jsonBody, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request payload: %w", err)
+	}
+	req, err := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("apikey", sbKey)
+	req.Header.Set("Authorization", "Bearer "+userToken)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("failed to update settings: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+func (s *settingsService) SaveGlobalGroqKeys(keys []string, userToken string) error {
+	sbURL := getSupabaseURL()
+	sbKey := getSupabaseKey()
+
+	if sbURL == "" || sbKey == "" {
+		return fmt.Errorf("supabase not configured")
+	}
+
+	if userToken == "" {
+		return fmt.Errorf("يجب تسجيل الدخول أولاً")
+	}
+
+	// 1. Fetch current config first to preserve Gemini keys
+	var currentConfig aiKeysConfig
+	urlGet := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys&select=value", sbURL)
+	reqGet, err := http.NewRequest("GET", urlGet, nil)
+	if err == nil {
+		reqGet.Header.Set("apikey", sbKey)
+		reqGet.Header.Set("Authorization", "Bearer "+sbKey)
+		client := &http.Client{Timeout: 10 * time.Second}
+		if respGet, errGet := client.Do(reqGet); errGet == nil && respGet.StatusCode == http.StatusOK {
+			var results []globalSettings
+			if errDec := json.NewDecoder(respGet.Body).Decode(&results); errDec == nil && len(results) > 0 {
+				_ = json.Unmarshal(results[0].Value, &currentConfig)
+			}
+			respGet.Body.Close()
+		}
+	}
+
+	// 2. Update Groq keys
+	currentConfig.GroqKeys = keys
+
+	url := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys", sbURL)
+	configJson, err := json.Marshal(currentConfig)
+	if err != nil {
+		return fmt.Errorf("failed to marshal Groq keys config: %w", err)
 	}
 
 	payload := map[string]interface{}{

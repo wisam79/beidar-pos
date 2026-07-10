@@ -38,7 +38,7 @@ test.describe('CRM: Debts & Installments Scenario', () => {
         await expect(page).toHaveURL(/.*customers/);
 
         // 2. Verify customer card exists
-        const customerCard = page.locator('h3:has-text("عميل تجريبي")').first();
+        const customerCard = page.locator('p:has-text("عميل تجريبي")').first();
         await expect(customerCard).toBeVisible();
 
         // 3. Pay general debt

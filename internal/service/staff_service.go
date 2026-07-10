@@ -16,36 +16,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Permission constants
-const (
-	PermSales       = "sales"
-	PermProducts    = "products"
-	PermInventory   = "inventory"
-	PermCustomers   = "customers"
-	PermInvoices    = "invoices"
-	PermReports     = "reports"
-	PermFinance     = "finance"
-	PermSettings    = "settings"
-	PermStaffManage = "staff_manage"
-	PermDiscounts   = "discounts"
-	PermDeleteSales = "delete_sales"
-	PermEditPrices  = "edit_prices"
-	PermExportData  = "export_data"
-)
-
-// RolePermissions defines default permissions for each role
+// RolePermissions defines default permissions for each role.
+// Permission strings are defined in domain — do not redeclare duplicates here.
 var RolePermissions = map[domain.Role][]string{
 	domain.RoleAdmin: {
-		PermSales, PermProducts, PermInventory, PermCustomers, PermInvoices,
-		PermReports, PermFinance, PermSettings, PermStaffManage, PermDiscounts,
-		PermDeleteSales, PermEditPrices, PermExportData,
+		domain.PermSales, domain.PermProducts, domain.PermInventory, domain.PermCustomers, domain.PermInvoices,
+		domain.PermReports, domain.PermFinance, domain.PermSettings, domain.PermStaffManage, domain.PermDiscounts,
+		domain.PermDeleteSales, domain.PermEditPrices, domain.PermExportData,
 	},
 	domain.RoleManager: {
-		PermSales, PermProducts, PermInventory, PermCustomers, PermInvoices,
-		PermReports, PermFinance, PermDiscounts, PermDeleteSales, PermEditPrices,
+		domain.PermSales, domain.PermProducts, domain.PermInventory, domain.PermCustomers, domain.PermInvoices,
+		domain.PermReports, domain.PermFinance, domain.PermDiscounts, domain.PermDeleteSales, domain.PermEditPrices,
 	},
 	domain.RoleCashier: {
-		PermSales, PermCustomers, PermInvoices,
+		domain.PermSales, domain.PermCustomers, domain.PermInvoices,
 	},
 	domain.RoleViewer: {
 		// Read-only
@@ -649,8 +633,9 @@ func (s *staffService) SeedDefaultAdmin() error {
 }
 
 // Utilities
+var emailRegex = regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+
 func (s *staffService) isValidEmail(email string) bool {
-	emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 	return emailRegex.MatchString(strings.ToLower(email))
 }
 

@@ -109,7 +109,7 @@ test.describe('Finance & Treasury (Shifts) Scenario', () => {
         await page.waitForTimeout(1000);
 
         // Verify Supplier card
-        const supplierCardName = page.locator('h4').filter({ hasText: /مورد تجريبي/i }).first();
+        const supplierCardName = page.locator('p').filter({ hasText: /مورد تجريبي/i }).first();
         await expect(supplierCardName).toBeVisible();
 
         // Open "إدارة الموردين" modal

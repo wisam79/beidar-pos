@@ -12,6 +12,9 @@ type CloudService interface {
 	DisconnectGoogle() error
 	UploadBackupToDrive(filename string, content string) (string, error)
 
+	// Google OAuth Secrets Management
+	InitGoogleSecrets(clientID, clientSecret string)
+
 	// Supabase Auth
 	Register(email, password, storeName string) (*domain.SupabaseAuthResult, error)
 	Login(email, password string) (*domain.SupabaseAuthResult, error)
@@ -41,6 +44,7 @@ type CloudService interface {
 	GetCachedLicense() (*domain.LicenseResult, error)
 	GetStoredLicenseKey() string
 	GetUserLicenseStatus() (*domain.LicenseResult, error)
+	KeepAliveSupabase()
 }
 
 type cloudService struct {

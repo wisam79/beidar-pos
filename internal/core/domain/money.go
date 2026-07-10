@@ -105,6 +105,16 @@ func roundDiv(a, b int64) int64 {
 	return q
 }
 
+// RoundToNearest rounds the amount down to the nearest multiple of unit.
+// For example, 129_999.RoundToNearest(25_000) = 125_000.
+// Uses floor division (truncation toward zero) to match the legacy float64 behavior.
+func (a Amount) RoundToNearest(unit Amount) Amount {
+	if unit <= 0 {
+		return a
+	}
+	return (a / unit) * unit
+}
+
 // IsZero returns true if the amount is zero.
 func (a Amount) IsZero() bool {
 	return a == 0
@@ -135,14 +145,16 @@ func (a Amount) String() string {
 	return fmt.Sprintf("%s%d.%02d", sign, dollars, c)
 }
 
-// MarshalJSON serializes the amount as a JSON number (cents).
-// This preserves precision and is safe for JavaScript (up to 2^53).
+// MarshalJSON serializes the amount as a JSON number (currency units, e.g., 12.5).
+// This eliminates the ambiguity between cents and currency-unit integers.
 func (a Amount) MarshalJSON() ([]byte, error) {
-	return strconv.AppendInt(nil, int64(a), 10), nil
+	return []byte(fmt.Sprintf("%.2f", a.Float())), nil
 }
 
-// UnmarshalJSON accepts either a number (cents) or a string/float number.
-// Flexibility for data migration and API compatibility.
+// UnmarshalJSON parses a JSON number (currency units, e.g., 12.5 or 12) or a
+// string into an Amount by multiplying by 100. The old fast path that treated
+// bare integers as cents has been removed because it corrupts values like 12
+// (12 IQD → 1200 fils) into 12 fils.
 func (a *Amount) UnmarshalJSON(data []byte) error {
 	if len(data) == 0 {
 		*a = Zero()
@@ -152,16 +164,9 @@ func (a *Amount) UnmarshalJSON(data []byte) error {
 	if data[0] == '"' && data[len(data)-1] == '"' {
 		data = data[1 : len(data)-1]
 	}
-	s := string(data)
-	// Try integer first (fast path)
-	if i, err := strconv.ParseInt(s, 10, 64); err == nil {
-		*a = Amount(i)
-		return nil
-	}
-	// Fallback to float parsing for legacy data
-	v, err := strconv.ParseFloat(s, 64)
+	v, err := strconv.ParseFloat(string(data), 64)
 	if err != nil {
-		return fmt.Errorf("invalid amount JSON: %s: %w", s, err)
+		return fmt.Errorf("invalid amount JSON: %s: %w", string(data), err)
 	}
 	*a = NewAmount(v)
 	return nil

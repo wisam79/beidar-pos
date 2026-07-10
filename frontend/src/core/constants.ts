@@ -42,4 +42,8 @@ export const DEFAULT_PREFS: AppPreferences = {
     requireShift: false, // Default: shift not required (simpler experience)
     autoBackup: false,    // Default: auto backup disabled
     cloudAutoSync: false,
+    aiProvider: 'gemini',
+    aiModel: 'gemma-4-31b-it',
+    aiRotationMode: 'failover',
+    groqApiKey: '',
 };

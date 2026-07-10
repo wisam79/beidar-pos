@@ -1,9 +1,6 @@
-
 import React from 'react';
-import { Sparkles, Type, Target, DollarSign, Brain, Lightbulb, MessageCircle, ExternalLink, Key, Star } from 'lucide-react';
+import { Sparkles, Type, Target, DollarSign, Brain, Lightbulb, MessageCircle, Star } from 'lucide-react';
 import { AppPreferences } from '../../../core/types';
-import { desktopApi } from '../../../core/api';
-import { SettingInput } from './SettingsUI';
 
 interface AISettingsProps {
     prefs: AppPreferences;
@@ -26,7 +23,6 @@ const AIFeatureCard = ({ icon: Icon, title, description }: {
 export const AISettings = ({ prefs, handleChange }: AISettingsProps) => {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            {/* Hero Header */}
             {/* Hero Header - Ultra Compact */}
             <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 text-text-main shadow-sm">
                 <div className="absolute top-0 right-0 p-1 opacity-10">
@@ -38,7 +34,7 @@ export const AISettings = ({ prefs, handleChange }: AISettingsProps) => {
                     </div>
                     <div>
                         <h2 className="text-base font-bold tracking-tight">الذكاء الاصطناعي</h2>
-                        <p className="text-text-muted text-[10px] opacity-90">ميزات ذكية مدعومة بواسطة Google Gemini</p>
+                        <p className="text-text-muted text-[10px] opacity-90">ميزات ذكية مدمجة لإدارة المتجر والمبيعات تلقائياً</p>
                     </div>
                 </div>
             </div>
@@ -50,11 +46,13 @@ export const AISettings = ({ prefs, handleChange }: AISettingsProps) => {
                         <Brain className="text-primary" size={20} />
                         محرك الذكاء الاصطناعي
                     </h3>
-                    <p className="text-xs text-text-muted mt-1">Gemini Pro 1.5 • متصل وجاهز للعمل</p>
+                    <p className="text-xs text-text-muted mt-1">
+                        النظام متصل بالخادم السحابي وجاهز لمعالجة الطلبات
+                    </p>
                 </div>
                 <div className="px-4 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-full font-bold text-xs border border-emerald-500/20 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Active
+                    متصل (Active)
                 </div>
             </div>
 
@@ -62,7 +60,7 @@ export const AISettings = ({ prefs, handleChange }: AISettingsProps) => {
             <div>
                 <h4 className="text-sm font-bold text-text-muted mb-4 flex items-center gap-2 px-1">
                     <Star size={14} className="text-primary" />
-                    الميزات النشطة
+                    الميزات الذكية النشطة
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <AIFeatureCard

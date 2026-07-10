@@ -128,12 +128,12 @@ func TestStaffPermissions(t *testing.T) {
 	}
 	created, _ := s.CreateStaff(cashier, "9999")
 
-	hasSales, _ := s.HasPermission(created.ID, service.PermSales)
+	hasSales, _ := s.HasPermission(created.ID, domain.PermSales)
 	if !hasSales {
 		t.Error("Cashier should have sales permission")
 	}
 
-	hasSettings, _ := s.HasPermission(created.ID, service.PermSettings)
+	hasSettings, _ := s.HasPermission(created.ID, domain.PermSettings)
 	if hasSettings {
 		t.Error("Cashier should NOT have settings permission")
 	}

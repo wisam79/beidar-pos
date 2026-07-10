@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"embed"
 	"encoding/json"
@@ -72,6 +73,8 @@ func getWebviewCacheDir() string {
 }
 
 func main() {
+	loadEnv()
+
 	// 🔒 Single Instance Lock
 	cleanup, err := checkSingleInstance()
 	if err != nil {
@@ -149,23 +152,13 @@ func main() {
 			_ = saveWindowState(state)
 		},
 		OnBeforeClose: func(ctx context.Context) (prevent bool) {
-			dialogOptions := wailsruntime.MessageDialogOptions{
-				Type:          wailsruntime.QuestionDialog,
-				Title:         "تأكيد إغلاق النظام",
-				Message:       "تحذير: إغلاق التطبيق الرئيسي سيؤدي إلى انقطاع الشبكة عن جميع أجهزة الكاشير وتوقفها عن العمل.\n\nهل أنت متأكد من رغبتك في الإغلاق النهائي؟\n\n(اختر 'لا' لإبقاء النظام يعمل بتصغير النافذة)",
-				Buttons:       []string{"نعم، إغلاق نهائي", "لا، تصغير النافذة"},
-				DefaultButton: "لا، تصغير النافذة",
-				CancelButton:  "لا، تصغير النافذة",
-			}
-
-			result, _ := wailsruntime.MessageDialog(ctx, dialogOptions)
-			if result == "نعم، إغلاق نهائي" {
+			if app.ForceClose {
 				return false // Allow close
 			}
 
-			// Prevent close and minimize instead
-			wailsruntime.WindowMinimise(ctx)
-			return true
+			// Tell frontend to show custom dialog
+			wailsruntime.EventsEmit(ctx, "app-close-requested")
+			return true // Prevent default close
 		},
 		Frameless:        true,
 		Windows: &windows.Options{
@@ -211,6 +204,39 @@ func main() {
 
 	if err != nil {
 		println("Error:", err.Error())
+	}
+}
+
+func loadEnv() {
+	paths := []string{".env", "frontend/.env"}
+	for _, path := range paths {
+		file, err := os.Open(path)
+		if err != nil {
+			continue
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) != 2 {
+				continue
+			}
+
+			key := strings.TrimSpace(parts[0])
+			val := strings.TrimSpace(parts[1])
+
+			val = strings.Trim(val, `"'`)
+
+			if key != "" && val != "" {
+				_ = os.Setenv(key, val)
+			}
+		}
 	}
 }
 

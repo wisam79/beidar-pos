@@ -227,7 +227,7 @@ test.describe('Master Simulation: Full E2E Business Flow', () => {
             await page.waitForTimeout(1000);
 
             // Verify customer card exists
-            const customerCard = page.locator('h3:has-text("عميل تجريبي")').first();
+            const customerCard = page.locator('p:has-text("عميل تجريبي")').first();
             await expect(customerCard).toBeVisible();
 
             // Pay general debt
