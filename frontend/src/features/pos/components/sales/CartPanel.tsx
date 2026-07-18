@@ -43,9 +43,10 @@ interface CartItemsListProps {
     removeFromCart: (id: string) => void;
     cartEndRef: React.RefObject<HTMLDivElement>;
     onQtyClick?: (item: CartItem) => void;
+    isZenMode?: boolean;
 }
 
-const CartItemsList: React.FC<CartItemsListProps> = ({ cart, prefs, updateQty, removeFromCart, cartEndRef, onQtyClick }) => {
+const CartItemsList: React.FC<CartItemsListProps> = ({ cart, prefs, updateQty, removeFromCart, cartEndRef, onQtyClick, isZenMode }) => {
     const parentRef = useRef<HTMLDivElement>(null);
     const virtualizer = useVirtualizer({
         count: cart.length,
@@ -59,7 +60,7 @@ const CartItemsList: React.FC<CartItemsListProps> = ({ cart, prefs, updateQty, r
         return (
             <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-3 custom-scrollbar">
                 <div className="text-center">
-                    <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border bg-surface">
+                    <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-surface-hover">
                         <Package size={36} className="text-text-muted" />
                     </div>
                     <p className="mb-1 text-base font-bold text-text-muted">السلة فارغة</p>
@@ -70,7 +71,7 @@ const CartItemsList: React.FC<CartItemsListProps> = ({ cart, prefs, updateQty, r
     }
 
     return (
-        <div ref={parentRef} className="flex-1 overflow-y-auto px-4 py-3 custom-scrollbar">
+        <div ref={parentRef} className={`flex-1 overflow-y-auto px-4 py-3 custom-scrollbar ${isZenMode ? 'max-w-4xl mx-auto w-full' : ''}`}>
             <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
                 {virtualizer.getVirtualItems().map((virtualItem) => {
                     const item = cart[virtualItem.index];
@@ -141,31 +142,51 @@ export const CartPanel: React.FC<CartPanelProps> = ({
 
     return (
         <>
-            <div className="z-20 flex shrink-0 items-center justify-between border-b bg-surface px-4 py-4">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border bg-primary/10 text-primary">
-                        <ShoppingCart size={22} />
+            <div className="z-20 flex shrink-0 items-center border-b bg-surface px-4 py-4">
+                <div className={`flex flex-1 items-center justify-between ${isZenMode ? 'max-w-4xl mx-auto w-full' : ''}`}>
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm">
+                            <ShoppingCart size={22} />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-bold text-text-main">سلة المشتريات</h2>
+                            <p className="text-xs text-text-muted">
+                                <span className="font-mono font-bold text-primary">{quantity}</span> منتج
+                                {selectedCustomer && <span> • {selectedCustomer.name}</span>}
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-base font-bold text-text-main">سلة المشتريات</h2>
-                        <p className="text-xs text-text-muted">
-                            <span className="font-mono font-bold text-primary">{quantity}</span> منتج
-                            {selectedCustomer && <span> • {selectedCustomer.name}</span>}
-                        </p>
-                    </div>
-                </div>
-                <div className="flex shrink-0 gap-1.5">
-                    {cart.length > 0 && (
-                        <Button variant="icon" onClick={handleParkSale} title="تعليق البيع" aria-label="تعليق البيع">
-                            <PauseCircle size={20} />
+                    <div className="flex shrink-0 gap-1.5">
+                        {cart.length > 0 && (
+                            <Button 
+                                variant="icon" 
+                                onClick={handleParkSale} 
+                                className="bg-background/50 border-border/50 text-text-muted hover:text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/20 transition-all duration-200"
+                                title="تعليق البيع" 
+                                aria-label="تعليق البيع"
+                            >
+                                <PauseCircle size={20} />
+                            </Button>
+                        )}
+                        <Button 
+                            variant={isZenMode ? 'primary' : 'icon'} 
+                            onClick={() => setIsZenMode(!isZenMode)} 
+                            className={isZenMode ? "" : "bg-background/50 border-border/50 text-text-muted hover:text-primary hover:bg-primary/10 hover:border-primary/20 transition-all duration-200"}
+                            title={isZenMode ? 'تصغير' : 'تكبير'} 
+                            aria-label={isZenMode ? 'تصغير' : 'تكبير'}
+                        >
+                            {isZenMode ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
                         </Button>
-                    )}
-                    <Button variant={isZenMode ? 'primary' : 'icon'} onClick={() => setIsZenMode(!isZenMode)} title={isZenMode ? 'تصغير' : 'تكبير'} aria-label={isZenMode ? 'تصغير' : 'تكبير'}>
-                        {isZenMode ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-                    </Button>
-                    <Button variant="icon" onClick={() => { setCart([]); setReceivedAmount(0); }} title="إفراغ السلة" aria-label="إفراغ السلة">
-                        <Trash2 size={20} />
-                    </Button>
+                        <Button 
+                            variant="icon" 
+                            onClick={() => { setCart([]); setReceivedAmount(0); }} 
+                            className="bg-background/50 border-border/50 text-text-muted hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/20 transition-all duration-200"
+                            title="إفراغ السلة" 
+                            aria-label="إفراغ السلة"
+                        >
+                            <Trash2 size={20} />
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -176,10 +197,11 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                 removeFromCart={removeFromCart}
                 onQtyClick={onQtyClick}
                 cartEndRef={cartEndRef}
+                isZenMode={isZenMode}
             />
 
             <div className="z-30 relative shrink-0 border-t bg-surface px-4 py-3">
-                <div className="space-y-3">
+                <div className={`space-y-3 ${isZenMode ? 'max-w-4xl mx-auto w-full' : ''}`}>
                     <div className="grid grid-cols-3 gap-1 rounded-xl border bg-bg p-1">
                         {(['cash', 'card', 'credit'] as const).map((method) => (
                             <button

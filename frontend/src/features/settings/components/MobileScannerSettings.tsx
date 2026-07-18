@@ -133,7 +133,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
                         </div>
                     </div>
 
-                    <div className="bg-surface/50 rounded-lg p-6 border border-border">
+                    <div className="bg-surface rounded-lg p-6 border border-border">
                         <h4 className="font-bold flex items-center gap-2 mb-4">
                             <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs">1</span>
                             خطوات الربط

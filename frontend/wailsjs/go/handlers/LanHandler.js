@@ -6,8 +6,8 @@ export function BlockLanDevice(arg1, arg2, arg3) {
   return window['go']['handlers']['LanHandler']['BlockLanDevice'](arg1, arg2, arg3);
 }
 
-export function ConnectToLanServer(arg1, arg2) {
-  return window['go']['handlers']['LanHandler']['ConnectToLanServer'](arg1, arg2);
+export function ConnectToLanServer(arg1, arg2, arg3) {
+  return window['go']['handlers']['LanHandler']['ConnectToLanServer'](arg1, arg2, arg3);
 }
 
 export function DisconnectFromLanServer() {

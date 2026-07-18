@@ -4,37 +4,19 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
-	"os"
+	"beidar-desktop/internal/testutil"
 	"testing"
 
-	"github.com/glebarez/sqlite"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 func setupProductTestDB(t *testing.T) (service.ProductService, *gorm.DB, func()) {
-	dbFileName := "test_prod_" + uuid.New().String()[:8] + ".db"
-	os.Remove(dbFileName)
-
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to open test DB: %v", err)
-	}
-
-	if err := db.AutoMigrate(&domain.Product{}, &domain.StockMovement{}); err != nil {
-		t.Fatalf("Failed to migrate test DB: %v", err)
-	}
+	db, cleanup := testutil.SetupDB(t, &domain.Product{}, &domain.StockMovement{})
 
 	productRepo := repository.NewProductRepository(db)
 	productService := service.NewProductService(productRepo)
 
-	return productService, db, func() {
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
-		os.Remove(dbFileName)
-	}
+	return productService, db, cleanup
 }
 
 func TestCreateProduct(t *testing.T) {

@@ -44,7 +44,7 @@ func (s *lanService) saveLanConfig() error {
 	return os.WriteFile(configPath, data, 0600)
 }
 
-func (s *lanService) ConnectToServer(serverIP string, port int) error {
+func (s *lanService) ConnectToServer(serverIP string, port int, secret string) error {
 	s.clientMutex.Lock()
 	defer s.clientMutex.Unlock()
 
@@ -73,6 +73,7 @@ func (s *lanService) ConnectToServer(serverIP string, port int) error {
 	connectReq := map[string]string{
 		"deviceId":   deviceID,
 		"deviceName": hostname,
+		"secret":     secret,
 	}
 	jsonData, _ := json.Marshal(connectReq)
 

@@ -4,6 +4,7 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
+	"beidar-desktop/internal/testutil"
 	"beidar-desktop/pkg/print"
 	"net"
 	"os"
@@ -11,26 +12,14 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/glebarez/sqlite"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 func setupPrintTestDB(t *testing.T) (service.PrintService, *gorm.DB, func()) {
-	dbFileName := "test_print_" + uuid.New().String()[:8] + ".db"
-	os.Remove(dbFileName)
-
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to open test DB: %v", err)
-	}
-
-	if err := db.AutoMigrate(
+	db, cleanup := testutil.SetupDB(t,
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Customer{}, &domain.Payment{},
 		&domain.AppPreferences{},
-	); err != nil {
-		t.Fatalf("Failed to migrate test DB: %v", err)
-	}
+	)
 
 	// Create default preferences
 	db.Create(&domain.AppPreferences{
@@ -45,13 +34,7 @@ func setupPrintTestDB(t *testing.T) (service.PrintService, *gorm.DB, func()) {
 	preferencesRepo := repository.NewPreferencesRepository(db)
 	printService := service.NewPrintService(saleRepo, preferencesRepo)
 
-	return printService, db, func() {
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
-		os.Remove(dbFileName)
-	}
+	return printService, db, cleanup
 }
 
 func TestGenerateQRCode(t *testing.T) {

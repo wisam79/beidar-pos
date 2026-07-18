@@ -38,7 +38,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || isLoading}
         className={cn(
           'inline-flex select-none items-center justify-center gap-2 rounded-xl border font-black transition-[background-color,border-color,color,transform,box-shadow] duration-120 ease-out active:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45',
-          iconOnly ? 'w-11 p-0' : sizes[size],
+          iconOnly 
+            ? (size === 'sm' ? 'w-9 h-9 p-0' : size === 'lg' ? 'w-12 h-12 p-0' : 'w-11 h-11 p-0') 
+            : sizes[size],
           variants[variant],
           block && 'w-full',
           className,

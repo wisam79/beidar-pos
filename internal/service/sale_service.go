@@ -187,11 +187,11 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		}
 	}
 
-	// Snapshot the shift-required preference BEFORE opening the transaction so
-	// the value is fixed for the whole sale and we avoid a read inside the tx.
 	requireShiftPref := false
+	vatRate := float64(0)
 	if prefs, err := s.preferencesRepo.Get(); err == nil {
 		requireShiftPref = prefs.RequireShift
+		vatRate = prefs.TaxRate
 	}
 
 	err := s.saleRepo.Transaction(func(tx domain.Tx) error {
@@ -270,7 +270,15 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		if sale.Discount > calculatedTotal {
 			return errors.New(i18n.GetMessage("DISCOUNT_EXCEEDS_TOTAL"))
 		}
-		sale.Total = calculatedTotal.Sub(sale.Discount)
+		
+		taxableTotal := calculatedTotal.Sub(sale.Discount)
+		if vatRate > 0 {
+			sale.VAT = taxableTotal.Percentage(vatRate)
+		} else {
+			sale.VAT = domain.Zero()
+		}
+		
+		sale.Total = taxableTotal.Add(sale.VAT)
 
 		if sale.CustomerID != "" {
 			sale.PointsAwarded = int(sale.Total.Div(1000).Cents())
@@ -317,6 +325,20 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		}
 
 		if sale.PaymentMethod == "split" && sale.SplitDetails != nil {
+			var splitSum domain.Amount
+			for _, amount := range sale.SplitDetails {
+				splitSum = splitSum.Add(amount)
+			}
+			if splitSum != sale.Total {
+				return pkgerrors.NewAppError(
+					pkgerrors.ModuleSales,
+					"INVALID_PAYMENT",
+					fmt.Sprintf("مجموع الدفعات المقسمة (%s) لا يساوي إجمالي الفاتورة (%s)", splitSum.String(), sale.Total.String()),
+					"يرجى مراجعة الدفعات المقسمة",
+					"split",
+				)
+			}
+			
 			for method, amount := range sale.SplitDetails {
 				if amount > 0 {
 					payment := domain.Payment{
@@ -386,16 +408,27 @@ func (s *saleService) ReturnSale(id string) error {
 			return ErrAlreadyReturned()
 		}
 
+		productIDs := make([]string, len(sale.Items))
+		for i, item := range sale.Items {
+			productIDs[i] = item.ProductID
+		}
+		products, err := txProductRepo.GetByIDs(productIDs)
+		productMap := make(map[string]domain.Product)
+		if err == nil {
+			for _, prod := range products {
+				productMap[prod.ID] = prod
+			}
+		}
+
 		for _, item := range sale.Items {
 			err = txProductRepo.UpdateStock(item.ProductID, item.Quantity)
 			if err != nil {
 				return err
 			}
 
-			product, err := txProductRepo.GetByID(item.ProductID)
 			productName := item.Name
-			if err == nil {
-				productName = product.Name
+			if prod, exists := productMap[item.ProductID]; exists {
+				productName = prod.Name
 			}
 
 			movement := domain.StockMovement{
@@ -515,9 +548,24 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 			return err
 		}
 
+		allItems, err := txSaleRepo.GetSaleItems(saleID)
+		if err != nil {
+			return err
+		}
+
+		var sumItemTotals domain.Amount
+		for _, i := range allItems {
+			sumItemTotals = sumItemTotals.Add(i.Total)
+		}
+
 		var refundAmount domain.Amount
 		if item.Quantity > 0 {
-			refundAmount = item.Total.MulFloat(qtyToReturn / item.Quantity)
+			returnedValue := item.Total.MulFloat(qtyToReturn / item.Quantity)
+			if sumItemTotals > 0 {
+				refundAmount = returnedValue.MulFloat(sale.Total.Float() / sumItemTotals.Float())
+			} else {
+				refundAmount = domain.Zero()
+			}
 		}
 
 		if sale.CustomerID != "" {
@@ -558,11 +606,7 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 			return err
 		}
 
-		allItems, err := txSaleRepo.GetSaleItems(saleID)
-		if err != nil {
-			return err
-		}
-
+		// allItems already fetched above
 		allReturned := true
 		for _, i := range allItems {
 			if i.ReturnedQty < i.Quantity {

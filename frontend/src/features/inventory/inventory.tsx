@@ -336,7 +336,7 @@ export const InventoryPage: React.FC = () => {
                                                 return (
                                                     <tr
                                                         key={p.id}
-                                                        className={`border-b border-border/30 hover:bg-surface-hover/50 transition-colors group ${
+                                                        className={`border-b border-border/30 hover:bg-surface-hover transition-colors group ${
                                                             isOut ? 'opacity-60 grayscale-[0.5]' : ''
                                                         }`}
                                                     >

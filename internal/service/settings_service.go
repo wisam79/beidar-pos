@@ -51,7 +51,9 @@ func (s *settingsService) GetPreferences() (*domain.AppPreferences, error) {
 		}
 	}
 	if needsRecovery {
-		if key := secureconfig.GetGeminiAPIKey(); key != "" {
+		if keys := secureconfig.GetGeminiAPIKeys(); len(keys) > 0 {
+			prefs.GeminiAPIKeys = keys
+		} else if key := secureconfig.GetGeminiAPIKey(); key != "" {
 			prefs.GeminiAPIKeys = []string{key}
 		}
 	}
@@ -106,10 +108,15 @@ func (s *settingsService) UpdatePreferences(prefs domain.AppPreferences) error {
 
 	// Handle GeminiAPIKeys slice the same way
 	if len(prefs.GeminiAPIKeys) > 0 && prefs.GeminiAPIKeys[0] != "********" {
+		var keysToSave []string
 		for _, k := range prefs.GeminiAPIKeys {
 			if k != "" {
-				_ = secureconfig.SetGeminiAPIKey(k) // stores the last non-empty key
+				keysToSave = append(keysToSave, k)
 			}
+		}
+		if len(keysToSave) > 0 {
+			_ = secureconfig.SetGeminiAPIKeys(keysToSave)
+			_ = secureconfig.SetGeminiAPIKey(keysToSave[0]) // Backwards compatibility for singular key
 		}
 	}
 	prefs.GeminiAPIKeys = []string{"********"}
@@ -193,12 +200,57 @@ func (s *settingsService) ClearCrashReports() error {
 	return crashreporter.ClearCrashReports()
 }
 
-func (s *settingsService) CheckForUpdates() (*updater.UpdateInfo, error) {
-	return updater.CheckForUpdates()
+func (s *settingsService) CheckForUpdates() (*domain.UpdateInfo, error) {
+	info, err := updater.CheckForUpdates()
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, nil
+	}
+	return &domain.UpdateInfo{
+		Version:         info.Version,
+		DownloadURL:     info.DownloadURL,
+		ReleaseNotes:    info.ReleaseNotes,
+		Mandatory:       info.Mandatory,
+		Size:            info.Size,
+		SizeFormatted:   info.SizeFormatted,
+		Checksum:        info.Checksum,
+		ReleaseDate:     info.ReleaseDate,
+		UpdateAvailable: info.UpdateAvailable,
+		IsPrerelease:    info.IsPrerelease,
+	}, nil
 }
 
-func (s *settingsService) GetUpdateStatus() updater.UpdateStatus {
-	return updater.GetUpdateStatus()
+func (s *settingsService) GetUpdateStatus() domain.UpdateStatus {
+	status := updater.GetUpdateStatus()
+	var info *domain.UpdateInfo
+	if status.Info != nil {
+		info = &domain.UpdateInfo{
+			Version:         status.Info.Version,
+			DownloadURL:     status.Info.DownloadURL,
+			ReleaseNotes:    status.Info.ReleaseNotes,
+			Mandatory:       status.Info.Mandatory,
+			Size:            status.Info.Size,
+			SizeFormatted:   status.Info.SizeFormatted,
+			Checksum:        status.Info.Checksum,
+			ReleaseDate:     status.Info.ReleaseDate,
+			UpdateAvailable: status.Info.UpdateAvailable,
+			IsPrerelease:    status.Info.IsPrerelease,
+		}
+	}
+	return domain.UpdateStatus{
+		Checking:        status.Checking,
+		Downloading:     status.Downloading,
+		Installing:      status.Installing,
+		Progress:        status.Progress,
+		Speed:           status.Speed,
+		ETA:             status.ETA,
+		Error:           status.Error,
+		Stage:           status.Stage,
+		UpdateAvailable: status.UpdateAvailable,
+		Info:            info,
+	}
 }
 
 func (s *settingsService) DownloadUpdate(url, expectedChecksum string) (string, error) {

@@ -21,7 +21,7 @@ export function GetActiveShift():Promise<domain.Shift>;
 
 export function GetCategories():Promise<Array<domain.Category>>;
 
-export function GetExpenses():Promise<Array<domain.Expense>>;
+export function GetExpenses(arg1:string):Promise<Array<domain.Expense>>;
 
 export function GetPreferences():Promise<domain.AppPreferences>;
 

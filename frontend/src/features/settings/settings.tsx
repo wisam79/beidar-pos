@@ -234,7 +234,7 @@ export const SettingsPage: React.FC = () => {
                         disabled={!hasChanges}
                         className={`w-full mb-4 px-3 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all duration-300 text-xs shadow-md ${hasChanges
                             ? 'bg-gradient-to-r from-primary to-emerald-400 text-black hover:scale-[1.02] active:scale-95 shadow-primary/30'
-                            : 'bg-surface/50 text-text-muted border border-border cursor-not-allowed opacity-70'
+                            : 'bg-surface text-text-muted border border-border cursor-not-allowed opacity-70'
                             }`}
                     >
                         <Save size={16} className={hasChanges ? 'animate-pulse' : ''} />

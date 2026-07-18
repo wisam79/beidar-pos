@@ -156,7 +156,7 @@ export const ShiftsPage: React.FC = () => {
 
                                 {/* Interactive Steps Grid */}
                                 <div className="w-full max-w-xl grid grid-cols-1 md:grid-cols-3 gap-4 text-right">
-                                    <div className="bg-surface/60 border border-border/80 backdrop-blur-sm p-4 rounded-2xl relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+                                    <div className="bg-surface border border-border/80  p-4 rounded-2xl relative overflow-hidden group hover:border-emerald-500/30 transition-all">
                                         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center font-black text-xs mb-3">
                                             ١
                                         </div>
@@ -167,7 +167,7 @@ export const ShiftsPage: React.FC = () => {
                                         <p className="text-xs text-text-muted leading-relaxed">ابدأ بفتح شفت جديد وحدد الرصيد الافتتاحي للنقد في درج الصندوق.</p>
                                     </div>
 
-                                    <div className="bg-surface/60 border border-border/80 backdrop-blur-sm p-4 rounded-2xl relative overflow-hidden group hover:border-blue-500/30 transition-all">
+                                    <div className="bg-surface border border-border/80  p-4 rounded-2xl relative overflow-hidden group hover:border-blue-500/30 transition-all">
                                         <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-500 flex items-center justify-center font-black text-xs mb-3">
                                             ٢
                                         </div>
@@ -178,7 +178,7 @@ export const ShiftsPage: React.FC = () => {
                                         <p className="text-xs text-text-muted leading-relaxed">تُحسب جميع الفواتير والمقبوضات تلقائياً تحت مظلة هذا الشفت.</p>
                                     </div>
 
-                                    <div className="bg-surface/60 border border-border/80 backdrop-blur-sm p-4 rounded-2xl relative overflow-hidden group hover:border-primary/30 transition-all">
+                                    <div className="bg-surface border border-border/80  p-4 rounded-2xl relative overflow-hidden group hover:border-primary/30 transition-all">
                                         <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-black text-xs mb-3">
                                             ٣
                                         </div>
@@ -213,7 +213,7 @@ export const ShiftsPage: React.FC = () => {
                                                     <tr
                                                         key={shift.id}
                                                         onClick={() => handleViewDetails(shift)}
-                                                        className={`border-b border-border/30 hover:bg-surface-hover/50 transition-colors cursor-pointer group`}
+                                                        className={`border-b border-border/30 hover:bg-surface-hover transition-colors cursor-pointer group`}
                                                     >
                                                         <td className="px-4 py-3 relative">
                                                             {/* Health indicator bar on the right in RTL */}
@@ -292,7 +292,7 @@ export const ShiftsPage: React.FC = () => {
                                                 <p className="text-xs font-bold text-text-muted mt-0.5">مسؤول الشفت</p>
                                             </div>
                                         </div>
-                                        <div className="text-left bg-white dark:bg-surface/50 border border-border/50 rounded-xl px-3 py-1.5 backdrop-blur-sm">
+                                        <div className="text-left bg-white dark:bg-surface border border-border/50 rounded-xl px-3 py-1.5 ">
                                             <p className="font-bold text-text-main text-sm text-center">{formatDate(selectedShift.openTime).split(' ')[0]}</p>
                                             <div className={`text-[10px] font-black uppercase text-center mt-0.5 px-1.5 py-0.5 rounded flex items-center justify-center gap-1 ${selectedShift.closeTime ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'}`}>
                                                 <div className={`w-1.5 h-1.5 rounded-full ${selectedShift.closeTime ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`} />

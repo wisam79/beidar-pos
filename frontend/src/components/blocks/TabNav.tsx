@@ -20,7 +20,7 @@ export const TabNav = memo(<T extends string>({
     onChange,
     className = '',
 }: TabNavProps<T>) => (
-    <div className={`flex border-b border-border bg-surface-hover/10 px-6 h-12 w-full select-none ${className}`}>
+    <div className={`flex border-b border-border bg-surface-hover px-6 h-12 w-full select-none ${className}`}>
         <div className="flex gap-6 h-full items-center">
             {tabs.map(tab => {
                 const Icon = tab.icon;

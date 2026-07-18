@@ -114,7 +114,7 @@ export const UtilitiesDock = ({ onLock }: UtilitiesDockProps) => {
             {/* Expanded Dock Panel */}
             <div className={`
                 flex items-center
-                bg-surface/95 backdrop-blur-xl border border-white/10 rounded-r-2xl shadow-2xl
+                bg-surface  border border-white/10 rounded-r-2xl shadow-2xl
                 transition-all duration-300 origin-left overflow-hidden
                 ${isExpanded ? 'w-auto opacity-100 p-3' : 'w-0 opacity-0 p-0'}
             `}>
@@ -182,7 +182,7 @@ export const UtilitiesDock = ({ onLock }: UtilitiesDockProps) => {
                 ${activeTool ? 'left-[260px] scale-100 opacity-100' : 'left-48 scale-90 opacity-0 pointer-events-none'}
             `}>
                 {activeTool && (
-                    <div className="bg-surface/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-left-4 duration-200">
+                    <div className="bg-surface  border border-white/10 shadow-2xl rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-left-4 duration-200">
                         {/* Header */}
                         <div className="flex items-center justify-between p-3 border-b border-white/5 bg-black/10">
                             <div className="flex items-center gap-2">

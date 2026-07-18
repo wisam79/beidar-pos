@@ -244,7 +244,7 @@ const MainRoot = () => (
       <HashRouter>
         <AuthProvider>
           <TooltipProvider>
-            <Toaster position="top-center" richColors />
+            <Toaster position="top-center" dir="rtl" />
             <AppCloseDialog />
             <App />
           </TooltipProvider>

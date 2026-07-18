@@ -1435,33 +1435,6 @@ export namespace domain {
 	
 	
 	
-	
-
-}
-
-export namespace handlers {
-	
-	export class InstallmentSummaryResult {
-	    total: number;
-	    paid: number;
-	    remaining: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new InstallmentSummaryResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.total = source["total"];
-	        this.paid = source["paid"];
-	        this.remaining = source["remaining"];
-	    }
-	}
-
-}
-
-export namespace updater {
-	
 	export class UpdateInfo {
 	    version: string;
 	    download_url: string;
@@ -1539,6 +1512,28 @@ export namespace updater {
 		    }
 		    return a;
 		}
+	}
+	
+
+}
+
+export namespace handlers {
+	
+	export class InstallmentSummaryResult {
+	    total: number;
+	    paid: number;
+	    remaining: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new InstallmentSummaryResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.total = source["total"];
+	        this.paid = source["paid"];
+	        this.remaining = source["remaining"];
+	    }
 	}
 
 }

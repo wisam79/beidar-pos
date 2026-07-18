@@ -213,6 +213,18 @@ func (s *staffService) CreateStaff(staff domain.Staff, password string) (*domain
 	staff.CreatedAt = time.Now().Unix()
 	staff.Active = true
 
+	fastPIN := s.generateFastPIN(password)
+	existingPIN, _ := s.staffRepo.GetByFastPIN(fastPIN)
+	if existingPIN != nil {
+		return nil, pkgerrors.NewAppError(
+			pkgerrors.ModuleStaff,
+			"DUPLICATE_PIN",
+			i18n.GetMessage("DUPLICATE_PIN"),
+			i18n.GetHint("DUPLICATE_PIN"),
+			"password",
+		)
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, pkgerrors.NewAppError(
@@ -323,6 +335,19 @@ func (s *staffService) UpdateStaff(staff domain.Staff) error {
 	}
 
 	// Fetch current to maintain hashed password, etc.
+	if staff.Active && !current.Active && current.FastPIN != "" {
+		existingPIN, _ := s.staffRepo.GetByFastPIN(current.FastPIN)
+		if existingPIN != nil && existingPIN.ID != current.ID {
+			return pkgerrors.NewAppError(
+				pkgerrors.ModuleStaff,
+				"DUPLICATE_PIN",
+				i18n.GetMessage("DUPLICATE_PIN"),
+				i18n.GetHint("DUPLICATE_PIN"),
+				"active",
+			)
+		}
+	}
+
 	current.Name = staff.Name
 	current.Username = staff.Username
 	current.Role = staff.Role
@@ -392,13 +417,25 @@ func (s *staffService) UpdateStaffPassword(id string, newPassword string) error 
 		}
 	}
 
+	fastPIN := s.generateFastPIN(newPassword)
+	existingPIN, _ := s.staffRepo.GetByFastPIN(fastPIN)
+	if existingPIN != nil && existingPIN.ID != id {
+		return pkgerrors.NewAppError(
+			pkgerrors.ModuleStaff,
+			"DUPLICATE_PIN",
+			i18n.GetMessage("DUPLICATE_PIN"),
+			i18n.GetHint("DUPLICATE_PIN"),
+			"password",
+		)
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
 	staff.PasswordHash = string(hash)
-	staff.FastPIN = s.generateFastPIN(newPassword)
+	staff.FastPIN = fastPIN
 	staff.MustChangePin = false
 
 	return s.staffRepo.Update(staff)

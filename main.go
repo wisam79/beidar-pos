@@ -110,9 +110,18 @@ func main() {
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if strings.HasPrefix(r.URL.Path, "/local-image/") {
 					filename := strings.TrimPrefix(r.URL.Path, "/local-image/")
+					cleaned := filepath.Clean(filename)
+					if strings.Contains(cleaned, "..") || filepath.IsAbs(cleaned) {
+						http.NotFound(w, r)
+						return
+					}
 					dir, err := imagestore.GetImageStoreDir()
 					if err == nil {
-						filePath := filepath.Join(dir, filename)
+						filePath := filepath.Join(dir, cleaned)
+						if !strings.HasPrefix(filepath.Clean(filePath), filepath.Clean(dir)) {
+							http.NotFound(w, r)
+							return
+						}
 						http.ServeFile(w, r, filePath)
 						return
 					}
@@ -120,7 +129,7 @@ func main() {
 				http.NotFound(w, r)
 			}),
 		},
-		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0}, // Set to transparent for Mica effect
+		BackgroundColour: &options.RGBA{R: 20, G: 20, B: 20, A: 255}, // Opaque background for Windows 10 compatibility
 		OnStartup: func(ctx context.Context) {
 			// Restore position and maximize state
 			if state, err := loadWindowState(); err == nil {
@@ -162,9 +171,9 @@ func main() {
 		},
 		Frameless:        true,
 		Windows: &windows.Options{
-			WebviewIsTransparent:              true,          // Transparency for glassmorphism
-			WindowIsTranslucent:               true,          // Enable translucent window
-			BackdropType:                      windows.Mica,  // Mica backdrop on Windows 11
+			WebviewIsTransparent:              false,         // Disabled for Windows 10 compatibility
+			WindowIsTranslucent:               false,         // Disabled for Windows 10 compatibility
+			BackdropType:                      windows.None,  // Disabled for Windows 10 compatibility
 			DisableFramelessWindowDecorations: false,         // Keep rounded corners and shadows
 			WebviewUserDataPath:              getWebviewCacheDir(), // WebView2 cache path
 			DisableWindowIcon:                 false,

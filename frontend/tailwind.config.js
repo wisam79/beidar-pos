@@ -8,6 +8,17 @@ export default {
         mono: ['JetBrains Mono', 'monospace'],
         logo: ['Lemonada', 'cursive'],
       },
+      fontSize: {
+        'xs': ['1.0rem', { lineHeight: '1.4rem' }],
+        'sm': ['1.15rem', { lineHeight: '1.6rem' }],
+        'base': ['1.35rem', { lineHeight: '1.9rem' }],
+        'lg': ['1.5rem', { lineHeight: '2.1rem' }],
+        'xl': ['1.7rem', { lineHeight: '2.3rem' }],
+        '2xl': ['2.05rem', { lineHeight: '2.6rem' }],
+        '3xl': ['2.5rem', { lineHeight: '3.1rem' }],
+        '4xl': ['3.0rem', { lineHeight: '3.6rem' }],
+        '5xl': ['4.0rem', { lineHeight: '1' }],
+      },
       borderRadius: {
         'none': '0px',
         'sm': '0.125rem',
@@ -53,6 +64,9 @@ export default {
           900: '#022c22',
           950: '#011510',
         },
+      },
+      borderColor: {
+        DEFAULT: 'var(--color-border)',
       },
       boxShadow: {
         xs: 'var(--shadow-xs)',

@@ -148,3 +148,25 @@ func TestParseAmount(t *testing.T) {
 		t.Error("ParseAmount should fail for invalid input")
 	}
 }
+
+func TestAmountDivNegative(t *testing.T) {
+	tests := []struct {
+		val      float64
+		div      int64
+		expected float64
+	}{
+		{0.03, 2, 0.02},
+		{-0.03, 2, -0.02},
+		{0.03, -2, -0.02},
+		{-0.03, -2, 0.02},
+		{0.05, 3, 0.02},
+		{-0.05, 3, -0.02},
+	}
+	for _, tt := range tests {
+		got := NewAmount(tt.val).Div(tt.div)
+		want := NewAmount(tt.expected)
+		if got != want {
+			t.Errorf("NewAmount(%v).Div(%d) = %s; want %s", tt.val, tt.div, got, want)
+		}
+	}
+}

@@ -43,8 +43,8 @@ func NewFinanceService(
 	}
 }
 
-func (s *financeService) GetExpenses() ([]domain.Expense, error) {
-	return s.expenseRepo.GetExpenses()
+func (s *financeService) GetExpenses(month string) ([]domain.Expense, error) {
+	return s.expenseRepo.GetExpenses(month)
 }
 
 func (s *financeService) SaveExpense(e domain.Expense) error {
@@ -193,25 +193,31 @@ func (s *financeService) VerifyAdminPin(pin string) (bool, error) {
 }
 
 func (s *financeService) OpenShift(staffID, staffName string, openingBalance domain.Amount) (*domain.Shift, error) {
-	existing, err := s.shiftRepo.GetActiveShift()
+	var shift domain.Shift
+	err := s.shiftRepo.Transaction(func(tx domain.Tx) error {
+		txShiftRepo := s.shiftRepo.WithTx(tx)
+		existing, err := txShiftRepo.GetActiveShift()
+		if err != nil {
+			return err
+		}
+		if existing != nil {
+			return fmt.Errorf("يوجد شفت مفتوح بالفعل للموظف %s", existing.StaffName)
+		}
+
+		shift = domain.Shift{
+			ID:              uuid.New().String(),
+			StaffID:         staffID,
+			StaffName:       staffName,
+			OpenTime:        time.Now().UnixMilli(),
+			OpeningBalance:  openingBalance,
+			ExpectedBalance: openingBalance,
+			Status:          "open",
+		}
+
+		return txShiftRepo.Save(&shift)
+	})
+
 	if err != nil {
-		return nil, err
-	}
-	if existing != nil {
-		return nil, fmt.Errorf("يوجد شفت مفتوح بالفعل للموظف %s", existing.StaffName)
-	}
-
-	shift := domain.Shift{
-		ID:              uuid.New().String(),
-		StaffID:         staffID,
-		StaffName:       staffName,
-		OpenTime:        time.Now().UnixMilli(),
-		OpeningBalance:  openingBalance,
-		ExpectedBalance: openingBalance,
-		Status:          "open",
-	}
-
-	if err := s.shiftRepo.Save(&shift); err != nil {
 		return nil, err
 	}
 
@@ -455,13 +461,37 @@ func (s *financeService) ReceivePurchaseOrder(orderID string, items []domain.Pur
 
 		allReceived := true
 
+		orderItems, err := txPurchaseRepo.GetOrderItems(orderID)
+		if err != nil {
+			return err
+		}
+
+		orderItemMap := make(map[string]*domain.PurchaseOrderItem)
+		for i := range orderItems {
+			orderItemMap[orderItems[i].ProductID] = &orderItems[i]
+		}
+
+		productIDs := make([]string, 0, len(items))
+		for _, receiveItem := range items {
+			if receiveItem.ReceivedQty > 0 {
+				productIDs = append(productIDs, receiveItem.ProductID)
+			}
+		}
+		products, err := txProductRepo.GetByIDs(productIDs)
+		productMap := make(map[string]domain.Product)
+		if err == nil {
+			for _, prod := range products {
+				productMap[prod.ID] = prod
+			}
+		}
+
 		for _, receiveItem := range items {
 			if receiveItem.ReceivedQty <= 0 {
 				continue
 			}
 
-			orderItem, err := txPurchaseRepo.GetOrderItem(orderID, receiveItem.ProductID)
-			if err != nil {
+			orderItem, exists := orderItemMap[receiveItem.ProductID]
+			if !exists {
 				continue
 			}
 
@@ -482,14 +512,16 @@ func (s *financeService) ReceivePurchaseOrder(orderID string, items []domain.Pur
 				return err
 			}
 
+			// Update in memory so that the final checks use the updated value
+			orderItem.ReceivedQty = newReceivedQty
+
 			if err := txProductRepo.UpdateStock(receiveItem.ProductID, toReceive); err != nil {
 				return err
 			}
 
-			product, err := txProductRepo.GetByID(receiveItem.ProductID)
 			productName := orderItem.ProductName
-			if err == nil {
-				productName = product.Name
+			if prod, exists := productMap[receiveItem.ProductID]; exists {
+				productName = prod.Name
 			}
 
 			movement := domain.StockMovement{
@@ -507,11 +539,6 @@ func (s *financeService) ReceivePurchaseOrder(orderID string, items []domain.Pur
 			if newReceivedQty < orderItem.Quantity {
 				allReceived = false
 			}
-		}
-
-		orderItems, err := txPurchaseRepo.GetOrderItems(orderID)
-		if err != nil {
-			return err
 		}
 
 		partiallyReceived := false

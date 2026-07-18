@@ -38,8 +38,8 @@ export function GetCategories() {
   return window['go']['handlers']['FinanceHandler']['GetCategories']();
 }
 
-export function GetExpenses() {
-  return window['go']['handlers']['FinanceHandler']['GetExpenses']();
+export function GetExpenses(arg1) {
+  return window['go']['handlers']['FinanceHandler']['GetExpenses'](arg1);
 }
 
 export function GetPreferences() {

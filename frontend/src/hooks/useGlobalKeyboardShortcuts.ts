@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
 type View = 'dashboard' | 'sales' | 'products' | 'inventory' | 'reports' | 'settings' | 'invoices' | 'customers' | 'finance' | 'shifts';
 
@@ -21,6 +21,16 @@ export function useGlobalKeyboardShortcuts(
   onToggleShortcuts: () => void,
   onNavigate: (view: View) => void,
 ) {
+  const onToggleCommandPaletteRef = useRef(onToggleCommandPalette);
+  const onToggleShortcutsRef = useRef(onToggleShortcuts);
+  const onNavigateRef = useRef(onNavigate);
+
+  useEffect(() => {
+    onToggleCommandPaletteRef.current = onToggleCommandPalette;
+    onToggleShortcutsRef.current = onToggleShortcuts;
+    onNavigateRef.current = onNavigate;
+  }); // runs on every render
+
   useEffect(() => {
     if (appState !== 'app') return;
 
@@ -35,7 +45,7 @@ export function useGlobalKeyboardShortcuts(
       }
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        onToggleCommandPalette();
+        onToggleCommandPaletteRef.current();
         return;
       }
       if (
@@ -45,17 +55,17 @@ export function useGlobalKeyboardShortcuts(
         !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)
       ) {
         e.preventDefault();
-        onToggleShortcuts();
+        onToggleShortcutsRef.current();
         return;
       }
       const view = VIEW_MAP[e.key];
       if (view) {
         e.preventDefault();
-        onNavigate(view);
+        onNavigateRef.current(view);
       }
     };
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [appState, isCommandPaletteOpen, isShortcutsOpen, onToggleCommandPalette, onToggleShortcuts, onNavigate]);
+  }, [appState]);
 }

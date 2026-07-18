@@ -19,7 +19,7 @@ interface SearchInputProps {
 export const SearchInput = memo(({ value, onChange, placeholder = 'بحث...', className = '' }: SearchInputProps) => (
     <div className={`relative group flex-1 min-w-[200px] ${className}`}>
         <input
-            className="w-full h-10 bg-input-bg text-text-main border border-border rounded-full pl-12 pr-5 outline-none focus:border-primary transition-all text-sm font-black placeholder:text-text-muted focus:shadow-[0_0_0_4px_rgba(var(--color-primary-rgb),0.15)] touch-target"
+            className="w-full h-10 bg-input-bg text-text-main border border-border rounded-xl pl-12 pr-5 outline-none focus:border-primary transition-all text-sm font-black placeholder:text-text-muted focus:shadow-[0_0_0_4px_rgba(var(--color-primary-rgb),0.15)] touch-target"
             placeholder={placeholder}
             value={value}
             onChange={e => onChange(e.target.value)}
@@ -59,7 +59,7 @@ export const SegmentedControl = memo(<T extends string>({
                 className={`px-5 py-2.5 rounded-full font-black text-xs whitespace-nowrap transition-all duration-300 ease-[var(--ease-spring)] touch-target active:scale-95 ${
                     value === opt.id
                         ? 'bg-primary text-primary-fg shadow-sm'
-                        : 'text-text-muted hover:text-text-main hover:bg-surface-hover/80'
+                        : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                 }`}
             >
                 {opt.label}

@@ -4,13 +4,12 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"fmt"
 	"math"
-	"sync"
 	"time"
 )
 
 var arabicDays = map[string]string{
-	"Sunday": "أحد", "Monday": "إثن", "Tuesday": "ثلا",
-	"Wednesday": "أرب", "Thursday": "خمي", "Friday": "جمع", "Saturday": "سبت",
+	"Sunday": "الأحد", "Monday": "الاثنين", "Tuesday": "الثلاثاء",
+	"Wednesday": "الأربعاء", "Thursday": "الخميس", "Friday": "الجمعة", "Saturday": "السبت",
 }
 
 var arabicMonthAbbr = map[string]string{
@@ -39,111 +38,53 @@ func (s *statsService) GetDashboardStats(timeRange string) (stats *domain.Dashbo
 	stats = &domain.DashboardStats{}
 	today := time.Now().Format("2006-01-02")
 
-	var wg sync.WaitGroup
-	var errs []error
-	var mu sync.Mutex
-	var totalCOGS domain.Amount
-
-	appendErr := func(e error) {
-		if e != nil {
-			mu.Lock()
-			errs = append(errs, e)
-			mu.Unlock()
-		}
-	}
-
-	wg.Add(6)
-
 	// 1. Basic Stats
-	go func() {
-		defer wg.Done()
-		totalRevenue, totalOrders, dailyRevenue, dailyOrders, totalProducts, lowStockCount, e := s.statsRepo.GetBasicStats(today)
-		if e != nil {
-			appendErr(e)
-			return
-		}
-		mu.Lock()
-		stats.TotalRevenue = totalRevenue
-		stats.TotalOrders = totalOrders
-		stats.DailyRevenue = dailyRevenue
-		stats.DailyOrders = dailyOrders
-		stats.TotalProducts = totalProducts
-		stats.LowStockCount = lowStockCount
-		mu.Unlock()
-	}()
+	totalRevenue, totalOrders, dailyRevenue, dailyOrders, totalProducts, lowStockCount, err := s.statsRepo.GetBasicStats(today)
+	if err != nil {
+		return nil, err
+	}
+	stats.TotalRevenue = totalRevenue
+	stats.TotalOrders = totalOrders
+	stats.DailyRevenue = dailyRevenue
+	stats.DailyOrders = dailyOrders
+	stats.TotalProducts = totalProducts
+	stats.LowStockCount = lowStockCount
 
 	// 2. Recent Sales
-	go func() {
-		defer wg.Done()
-		recentSales, e := s.statsRepo.GetRecentSales(5)
-		if e != nil {
-			appendErr(e)
-			return
-		}
-		mu.Lock()
-		stats.RecentSales = recentSales
-		mu.Unlock()
-	}()
+	recentSales, err := s.statsRepo.GetRecentSales(5)
+	if err != nil {
+		return nil, err
+	}
+	stats.RecentSales = recentSales
 
 	// 3. Top Selling
-	go func() {
-		defer wg.Done()
-		topSelling, e := s.statsRepo.GetTopSellingProducts(5)
-		if e != nil {
-			appendErr(e)
-			return
-		}
-		mu.Lock()
-		stats.TopSelling = topSelling
-		mu.Unlock()
-	}()
+	topSelling, err := s.statsRepo.GetTopSellingProducts(5)
+	if err != nil {
+		return nil, err
+	}
+	stats.TopSelling = topSelling
 
 	// 4. Profit & Expenses
-	go func() {
-		defer wg.Done()
-		cogs, totalExpenses, expenseBreakdown, e := s.statsRepo.GetProfitAndExpenses()
-		if e != nil {
-			appendErr(e)
-			return
-		}
-		mu.Lock()
-		totalCOGS = cogs
-		stats.TotalExpenses = totalExpenses
-		stats.GrossProfit = stats.TotalRevenue.Sub(cogs)
-		stats.NetProfit = stats.GrossProfit.Sub(totalExpenses)
-		stats.ExpenseBreakdown = expenseBreakdown
-		mu.Unlock()
-	}()
+	cogs, totalExpenses, expenseBreakdown, err := s.statsRepo.GetProfitAndExpenses()
+	if err != nil {
+		return nil, err
+	}
+	stats.TotalExpenses = totalExpenses
+	stats.ExpenseBreakdown = expenseBreakdown
 
-	// 5. Top Customers
-	go func() {
-		defer wg.Done()
-		topCustomers, e := s.statsRepo.GetTopCustomers(5)
-		if e != nil {
-			appendErr(e)
-			return
-		}
-		mu.Lock()
-		stats.TopCustomers = topCustomers
-		mu.Unlock()
-	}()
-
-	// 6. Chart Data
-	go func() {
-		defer wg.Done()
-		mu.Lock()
-		stats.ChartData = s.getChartDataPoints(timeRange)
-		mu.Unlock()
-	}()
-
-	wg.Wait()
-
-	stats.GrossProfit = stats.TotalRevenue.Sub(totalCOGS)
+	// Compute profits
+	stats.GrossProfit = stats.TotalRevenue.Sub(cogs)
 	stats.NetProfit = stats.GrossProfit.Sub(stats.TotalExpenses)
 
-	if len(errs) > 0 {
-		return nil, errs[0]
+	// 5. Top Customers
+	topCustomers, err := s.statsRepo.GetTopCustomers(5)
+	if err != nil {
+		return nil, err
 	}
+	stats.TopCustomers = topCustomers
+
+	// 6. Chart Data
+	stats.ChartData = s.getChartDataPoints(timeRange)
 
 	if stats.TopSelling == nil {
 		stats.TopSelling = []domain.TopProduct{}
@@ -242,50 +183,31 @@ func (s *statsService) GetMonthlyComparison() (*domain.MonthlyComparison, error)
 
 	comparison := &domain.MonthlyComparison{}
 
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var queryErr error
-
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		rev, ord, exp, cogs, e := s.statsRepo.GetMonthStats(
-			currentMonthStart.Format("2006-01-02"),
-			currentMonthEnd.Format("2006-01-02"),
-		)
-		mu.Lock()
-		if e != nil {
-			queryErr = e
-		} else {
-			comparison.CurrentMonth = s.buildMonthData(
-				rev, ord, exp, cogs,
-				arabicMonths[now.Month()-1]+" "+fmt.Sprintf("%d", now.Year()),
-			)
-		}
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		rev, ord, exp, cogs, e := s.statsRepo.GetMonthStats(
-			prevMonthStart.Format("2006-01-02"),
-			prevMonthEnd.Format("2006-01-02"),
-		)
-		mu.Lock()
-		if e != nil {
-			queryErr = e
-		} else {
-			comparison.PreviousMonth = s.buildMonthData(
-				rev, ord, exp, cogs,
-				arabicMonths[prevMonthStart.Month()-1]+" "+fmt.Sprintf("%d", prevMonthStart.Year()),
-			)
-		}
-		mu.Unlock()
-	}()
-	wg.Wait()
-
-	if queryErr != nil {
-		return nil, queryErr
+	// 1. Current Month Stats
+	revCurr, ordCurr, expCurr, cogsCurr, err := s.statsRepo.GetMonthStats(
+		currentMonthStart.Format("2006-01-02"),
+		currentMonthEnd.Format("2006-01-02"),
+	)
+	if err != nil {
+		return nil, err
 	}
+	comparison.CurrentMonth = s.buildMonthData(
+		revCurr, ordCurr, expCurr, cogsCurr,
+		arabicMonths[now.Month()-1]+" "+fmt.Sprintf("%d", now.Year()),
+	)
+
+	// 2. Previous Month Stats
+	revPrev, ordPrev, expPrev, cogsPrev, err := s.statsRepo.GetMonthStats(
+		prevMonthStart.Format("2006-01-02"),
+		prevMonthEnd.Format("2006-01-02"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	comparison.PreviousMonth = s.buildMonthData(
+		revPrev, ordPrev, expPrev, cogsPrev,
+		arabicMonths[prevMonthStart.Month()-1]+" "+fmt.Sprintf("%d", prevMonthStart.Year()),
+	)
 
 	// Calculate percentage changes
 	if comparison.PreviousMonth.Revenue > 0 {

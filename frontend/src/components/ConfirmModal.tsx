@@ -64,13 +64,13 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         >
             {/* Backdrop */}
             <div 
-                className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-200" 
+                className="absolute inset-0 bg-black/60  animate-in fade-in duration-200" 
                 onClick={onCancel}
             />
 
             {/* Modal */}
             <div
-                className="relative w-full max-w-md bg-surface backdrop-blur-xl border border-border/80 rounded-3xl shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+                className="relative w-full max-w-md bg-surface  border border-border/80 rounded-3xl shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Content */}

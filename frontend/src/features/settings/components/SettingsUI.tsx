@@ -64,7 +64,7 @@ export const SidebarItem = memo(({ active, icon: Icon, label, onClick, badge }: 
             border relative overflow-hidden
             ${active
                 ? 'bg-gradient-to-r from-primary to-emerald-500 text-black shadow-md shadow-primary/20 border-primary'
-                : 'bg-surface/60 text-text-muted border-transparent hover:border-primary/20 hover:bg-surface-hover hover:text-text-main active:scale-[0.98]'
+                : 'bg-surface text-text-muted border-transparent hover:border-primary/20 hover:bg-surface-hover hover:text-text-main active:scale-[0.98]'
             }
         `}
     >
@@ -159,7 +159,7 @@ export const SettingToggle = memo(({ label, description, value, onChange, icon: 
             active:scale-[0.98] touch-target
             ${value
                 ? 'bg-primary/5 border-primary/40 shadow-lg shadow-primary/10'
-                : 'bg-surface/50 border-border hover:border-primary/30 hover:bg-surface-hover'
+                : 'bg-surface border-border hover:border-primary/30 hover:bg-surface-hover'
             }
         `}
         onClick={() => onChange(!value)}
@@ -212,7 +212,7 @@ export const SettingToggle = memo(({ label, description, value, onChange, icon: 
 SettingToggle.displayName = 'SettingToggle';
 
 export const FeatureCard = memo(({ icon: Icon, title }: FeatureCardProps) => (
-    <div className="bg-surface/50 border border-border p-5 rounded-lg text-center hover:scale-105 hover:border-primary/30 transition-all cursor-default group">
+    <div className="bg-surface border border-border p-5 rounded-lg text-center hover:scale-105 hover:border-primary/30 transition-all cursor-default group">
         <Icon size={28} className="text-primary mx-auto mb-2 group-hover:animate-bounce" />
         <h6 className="font-bold text-text-main text-xs">{title}</h6>
     </div>

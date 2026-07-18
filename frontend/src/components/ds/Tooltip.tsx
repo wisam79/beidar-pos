@@ -70,7 +70,7 @@ export const Tooltip = ({ children, content, side = 'top', className }: TooltipP
             }}
             className="pointer-events-none"
           >
-            <span className="relative block whitespace-nowrap rounded-lg border border-border/80 bg-surface/95 backdrop-blur-sm px-2.5 py-1.5 text-xs font-semibold text-text-main shadow-md animate-in fade-in zoom-in-95 duration-100">
+            <span className="relative block whitespace-nowrap rounded-lg border border-border/80 bg-surface  px-2.5 py-1.5 text-xs font-semibold text-text-main shadow-md animate-in fade-in zoom-in-95 duration-100">
               {content}
               <span
                 style={{

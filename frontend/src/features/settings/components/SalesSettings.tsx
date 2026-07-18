@@ -34,7 +34,7 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* General Sales Behavior */}
-                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
+                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Zap size={24} />
@@ -67,7 +67,7 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
                 </div>
 
                 {/* Print Configuration */}
-                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm md:row-span-2">
+                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm md:row-span-2">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Printer size={24} />
@@ -154,7 +154,7 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
                 </div>
 
                 {/* Printer Assignment */}
-                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
+                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Tag size={24} />
@@ -190,7 +190,7 @@ export const SalesSettings = ({ prefs, handleChange, errors, setShowDiscountMana
             {/* Discounts Banner */}
             <div
                 onClick={() => setShowDiscountManager(true)}
-                className="group relative overflow-hidden bg-surface/50 border border-border hover:border-primary/30 rounded-lg p-6 text-text-main cursor-pointer shadow-sm transform hover:scale-[1.01] transition-all duration-300 hover:bg-surface-hover"
+                className="group relative overflow-hidden bg-surface border border-border hover:border-primary/30 rounded-lg p-6 text-text-main cursor-pointer shadow-sm transform hover:scale-[1.01] transition-all duration-300 hover:bg-surface-hover"
             >
                 <div className="absolute top-0 left-0 p-4 opacity-10">
                     <Tag size={120} className="text-primary" />

@@ -117,7 +117,7 @@ export function DataTable<TData, TValue>({
                     <tr
                       key={row.id}
                       onClick={() => onRowClick?.(row.original)}
-                      className={`border-b border-border/30 hover:bg-surface-hover/50 transition-colors group ${
+                      className={`border-b border-border/30 hover:bg-surface-hover transition-colors group ${
                         onRowClick ? 'cursor-pointer' : ''
                       }`}
                     >
@@ -153,7 +153,7 @@ export function DataTable<TData, TValue>({
       </div>
       
       {/* Pagination */}
-      <div className="flex items-center justify-between px-4 py-3 bg-surface/50 border border-border rounded-xl">
+      <div className="flex items-center justify-between px-4 py-3 bg-surface border border-border rounded-xl">
         <div className="flex items-center gap-2">
           <button
             className="p-1 rounded-lg hover:bg-primary/10 text-text-muted hover:text-primary transition-colors disabled:opacity-50"

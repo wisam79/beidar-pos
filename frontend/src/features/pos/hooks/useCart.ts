@@ -14,6 +14,7 @@ const PAYMENT_METHOD_STORAGE_KEY = 'beidar_pos_payment_method';
 const ZEN_MODE_STORAGE_KEY = 'beidar_pos_zen_mode';
 
 interface UseCartOptions {
+    taxRate?: number;
     onCartRestored?: () => void;
 }
 
@@ -28,6 +29,7 @@ interface UseCartReturn {
 
     // Computed
     subtotal: number;
+    vat: number;
     total: number;
     change: number;
     itemsCount: number;
@@ -74,7 +76,12 @@ export function useCart(options: UseCartOptions = {}): UseCartReturn {
 
     // Clamp discount to never exceed subtotal
     const effectiveDiscount = useMemo(() => Math.min(discount, subtotal), [discount, subtotal]);
-    const total = useMemo(() => Math.round(Math.max(0, subtotal - effectiveDiscount)), [subtotal, effectiveDiscount]);
+    const taxableTotal = useMemo(() => Math.max(0, subtotal - effectiveDiscount), [subtotal, effectiveDiscount]);
+    
+    const vatRate = options.taxRate || 0;
+    const vat = useMemo(() => Math.round(taxableTotal * (vatRate / 100)), [taxableTotal, vatRate]);
+    
+    const total = useMemo(() => Math.round(taxableTotal + vat), [taxableTotal, vat]);
     const change = useMemo(() => Math.round(Math.max(0, receivedAmount - total)), [receivedAmount, total]);
     const itemsCount = useMemo(() => cart.reduce((sum, item) => sum + item.qty, 0), [cart]);
 
@@ -210,6 +217,7 @@ export function useCart(options: UseCartOptions = {}): UseCartReturn {
 
         // Computed
         subtotal,
+        vat,
         total,
         change,
         itemsCount,

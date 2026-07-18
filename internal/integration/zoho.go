@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/pkg/crypto"
 )
 
 var (
@@ -43,13 +44,27 @@ func (s *cloudService) LoadZohoConfig() (*domain.ZohoConfig, error) {
 		return nil, err
 	}
 
+	key := deriveZohoKey()
+	decrypted, err := crypto.Decrypt(string(data), key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt Zoho config: %w", err)
+	}
+
 	var config domain.ZohoConfig
-	if err := json.Unmarshal(data, &config); err != nil {
+	if err := json.Unmarshal(decrypted, &config); err != nil {
 		return nil, err
 	}
 
 	zohoConfig = &config
 	return zohoConfig, nil
+}
+
+func deriveZohoKey() []byte {
+	host, err := os.Hostname()
+	if err != nil {
+		host = "beidar-zoho-default"
+	}
+	return crypto.DeriveKey(fmt.Sprintf("beidar-zoho-key-%s", host))
 }
 
 func (s *cloudService) SaveZohoConfig(config *domain.ZohoConfig) error {
@@ -62,13 +77,19 @@ func (s *cloudService) SaveZohoConfig(config *domain.ZohoConfig) error {
 		return err
 	}
 
-	data, err := json.MarshalIndent(config, "", "  ")
+	data, err := json.Marshal(config)
 	if err != nil {
 		return err
 	}
 
+	key := deriveZohoKey()
+	encrypted, err := crypto.Encrypt(data, key)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt Zoho config: %w", err)
+	}
+
 	zohoConfig = config
-	return os.WriteFile(path, data, 0600)
+	return os.WriteFile(path, []byte(encrypted), 0600)
 }
 
 func (s *cloudService) IsZohoEnabled() bool {

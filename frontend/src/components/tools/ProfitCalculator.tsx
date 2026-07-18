@@ -133,13 +133,13 @@ export const ProfitCalculator = () => {
                                 </span>
                             </div>
                             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-dashed border-emerald-500/10">
-                                <div className="bg-surface/80 rounded-2xl p-2.5 text-center">
+                                <div className="bg-surface rounded-2xl p-2.5 text-center">
                                     <div className="text-[10px] font-bold text-text-muted mb-1">هامش الربح</div>
                                     <div className={`font-mono font-bold text-lg ${profitMargin >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
                                         {profitMargin.toFixed(1)}%
                                     </div>
                                 </div>
-                                <div className="bg-surface/80 rounded-2xl p-2.5 text-center">
+                                <div className="bg-surface rounded-2xl p-2.5 text-center">
                                     <div className="text-[10px] font-bold text-text-muted mb-1">Markup</div>
                                     <div className="font-mono font-bold text-lg text-purple-500">
                                         {markup.toFixed(1)}%

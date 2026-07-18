@@ -31,7 +31,7 @@ func (r *productRepository) Transaction(fn func(tx domain.Tx) error) error {
 
 func (r *productRepository) GetAll() ([]domain.Product, error) {
 	var products []domain.Product
-	if err := r.db.Find(&products).Error; err != nil {
+	if err := r.db.Select("id, name, barcode, price, cost, stock, min_stock, category, CASE WHEN length(image) > 500 THEN '' ELSE image END as image, supplier, wholesale_price, description, custom_details").Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil
@@ -50,7 +50,7 @@ func (r *productRepository) GetByIDs(ids []string) ([]domain.Product, error) {
 		return []domain.Product{}, nil
 	}
 	var products []domain.Product
-	if err := r.db.Where("id IN ?", ids).Find(&products).Error; err != nil {
+	if err := r.db.Select("id, name, barcode, price, cost, stock, min_stock, category, CASE WHEN length(image) > 500 THEN '' ELSE image END as image, supplier, wholesale_price, description, custom_details").Where("id IN ?", ids).Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil
@@ -70,7 +70,7 @@ func (r *productRepository) Delete(id string) error {
 
 func (r *productRepository) Search(query string) ([]domain.Product, error) {
 	var products []domain.Product
-	if err := r.db.Where("name LIKE ? OR barcode LIKE ?", "%"+query+"%", "%"+query+"%").Find(&products).Error; err != nil {
+	if err := r.db.Select("id, name, barcode, price, cost, stock, min_stock, category, CASE WHEN length(image) > 500 THEN '' ELSE image END as image, supplier, wholesale_price, description, custom_details").Where("name LIKE ? OR barcode LIKE ?", "%"+query+"%", "%"+query+"%").Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil

@@ -115,9 +115,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
     if (!isOpen) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-start justify-center pt-[15vh] animate-in fade-in duration-200" onClick={onClose}>
+        <div className="fixed inset-0 z-[200] bg-black/70  flex items-start justify-center pt-[15vh] animate-in fade-in duration-200" onClick={onClose}>
             <div
-                className="w-full max-w-2xl bg-surface backdrop-blur-2xl border border-border rounded-2xl overflow-hidden flex flex-col ring-1 ring-white/5 animate-scale-in"
+                className="w-full max-w-2xl bg-surface  border border-border rounded-2xl overflow-hidden flex flex-col ring-1 ring-white/5 animate-scale-in"
                 style={{ boxShadow: 'var(--shadow-xl)' }}
                 onClick={e => e.stopPropagation()}
             >

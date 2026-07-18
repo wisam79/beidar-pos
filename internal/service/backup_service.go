@@ -530,21 +530,27 @@ func (s *backupService) MigrateImagesToFilesystem() (int, error) {
 	fmt.Printf("🔄 Migrating %d product images to filesystem...\n", len(products))
 
 	migrated := 0
-	for _, p := range products {
-		filename, err := imagestore.SaveImageFromBase64(p.Image, p.ID)
-		if err != nil {
-			fmt.Printf("⚠️ Failed to migrate image for product %s: %v\n", p.ID, err)
-			continue
-		}
-
-		if filename != "" && filename != p.Image {
-			p.Image = filename
-			if err := s.productRepo.Update(&p); err != nil {
-				fmt.Printf("⚠️ Failed to update product %s in DB: %v\n", p.ID, err)
+	err = s.productRepo.Transaction(func(tx domain.Tx) error {
+		txRepo := s.productRepo.WithTx(tx)
+		for _, p := range products {
+			filename, err := imagestore.SaveImageFromBase64(p.Image, p.ID)
+			if err != nil {
+				fmt.Printf("⚠️ Failed to migrate image for product %s: %v\n", p.ID, err)
 				continue
 			}
-			migrated++
+
+			if filename != "" && filename != p.Image {
+				p.Image = filename
+				if err := txRepo.Update(&p); err != nil {
+					return fmt.Errorf("failed to update product %s in DB: %w", p.ID, err)
+				}
+				migrated++
+			}
 		}
+		return nil
+	})
+	if err != nil {
+		return migrated, err
 	}
 
 	if migrated > 0 {

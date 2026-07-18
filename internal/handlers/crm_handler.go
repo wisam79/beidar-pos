@@ -5,6 +5,7 @@ import (
 	"beidar-desktop/internal/network"
 	"beidar-desktop/pkg/auth"
 	"context"
+	"strings"
 )
 
 type CRMHandler struct {
@@ -40,15 +41,22 @@ func (h *CRMHandler) SearchCustomers(query string) ([]domain.Customer, error) {
 	if err := auth.Require(); err != nil {
 		return nil, err
 	}
-	// Remote server doesn't have a search customer endpoint, so search locally or filter
+	// Remote server doesn't have a search customer endpoint, so filter the list locally
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		customers, err := h.GetCustomers()
 		if err != nil {
 			return nil, err
 		}
-		// Basic client side filter
+		
 		var filtered []domain.Customer
-		filtered = append(filtered, customers...)
+		queryLower := strings.ToLower(query)
+		for _, c := range customers {
+			if strings.Contains(strings.ToLower(c.Name), queryLower) ||
+				strings.Contains(strings.ToLower(c.Phone), queryLower) ||
+				strings.Contains(strings.ToLower(c.Notes), queryLower) {
+				filtered = append(filtered, c)
+			}
+		}
 		return filtered, nil
 	}
 	return h.crmService.SearchCustomers(query)

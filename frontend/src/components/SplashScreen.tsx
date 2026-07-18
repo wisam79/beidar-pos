@@ -25,7 +25,7 @@ export const SplashScreen = () => {
           BEIDAR <span className="text-primary font-mono text-4xl bg-primary/10 px-3 py-1 rounded-xl border border-primary/20">OS</span>
         </h1>
 
-        <div className="mt-10 flex items-center gap-3 px-5 py-2.5 bg-surface/50 rounded-full border border-border backdrop-blur-md">
+        <div className="mt-10 flex items-center gap-3 px-5 py-2.5 bg-surface rounded-full border border-border ">
           <div className="w-2.5 h-2.5 bg-primary rounded-full animate-bounce-subtle" />
           <span className="text-sm text-text-muted font-medium">جاري تهيئة النظام...</span>
         </div>

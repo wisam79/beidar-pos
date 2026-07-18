@@ -46,6 +46,24 @@
     }
   </script>
 
+  <script>
+    // Global fallback for Wails bindings (browser/dev/E2E environment fallback)
+    if (typeof window !== 'undefined' && !window.go) {
+      const recursiveHandler = {
+        get(target, prop) {
+          if (prop === 'then') return undefined; // Prevent promise-like chaining traps
+          if (typeof target[prop] === 'undefined') {
+            const fn = function() { return Promise.resolve(null); };
+            target[prop] = new Proxy(fn, recursiveHandler);
+          }
+          return target[prop];
+        }
+      };
+      window.go = new Proxy({}, recursiveHandler);
+      window.runtime = new Proxy({}, recursiveHandler);
+    }
+  </script>
+
   <!-- External Libraries (Loaded Locally for Offline Support) -->
   <!-- Tailwind is handled by Vite build, so no script tag needed here for main app -->
   <script src="/libs/JsBarcode.all.min.js"></script>

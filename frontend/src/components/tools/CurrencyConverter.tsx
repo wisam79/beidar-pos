@@ -216,7 +216,7 @@ export const CurrencyConverter = () => {
 
             {/* Conversion Rate */}
             {result > 0 && (
-                <div className="text-center text-[10px] text-text-muted bg-surface/50 rounded-lg py-1">
+                <div className="text-center text-[10px] text-text-muted bg-surface rounded-lg py-1">
                     1 {fromCurr.code} = {(rates[fromCurrency] / rates[toCurrency]).toLocaleString('en-US', { maximumFractionDigits: 4 })} {toCurr.code}
                 </div>
             )}

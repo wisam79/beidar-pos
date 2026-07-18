@@ -54,7 +54,7 @@ export const AppCloseDialog = () => {
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4  animate-in fade-in duration-200">
             <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl animate-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between border-b border-border bg-bg p-4">
                     <div className="flex items-center gap-2 text-danger">

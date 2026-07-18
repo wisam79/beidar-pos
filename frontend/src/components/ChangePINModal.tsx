@@ -94,7 +94,7 @@ export const ChangePINModal: React.FC<ChangePINModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70  animate-in fade-in">
             <div className="bg-surface border border-border rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in zoom-in-95">
                 {/* Header */}
                 <div className={`p-6 text-center ${isForced ? 'bg-amber-500/10 border-b border-amber-500/20' : 'bg-primary/10 border-b border-primary/20'}`}>

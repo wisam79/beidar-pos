@@ -5,7 +5,7 @@ export const lan = {
     startServer: () => LanHandler.StartLanServer(),
     stopServer: () => LanHandler.StopLanServer(),
     getServerStatus: () => LanHandler.GetLanServerStatus(),
-    connect: (ip: string, port: number = 0) => LanHandler.ConnectToLanServer(ip, port),
+    connect: (ip: string, port: number = 0, secret: string = '') => LanHandler.ConnectToLanServer(ip, port, secret),
     disconnect: () => LanHandler.DisconnectFromLanServer(),
     getClientStatus: () => LanHandler.GetLanClientStatus(),
     getLocalIP: () => LanHandler.GetLocalIP(),

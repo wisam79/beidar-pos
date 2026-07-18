@@ -95,9 +95,9 @@ export const Dashboard: React.FC = () => {
                 {/* Left: AI Button */}
                 <button
                     onClick={() => setView('reports')}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/95 text-primary-fg px-4 py-2 rounded-xl transition-all duration-200 font-bold text-xs shadow-sm shadow-primary/15"
+                    className="flex items-center gap-2 bg-gradient-to-r from-primary to-emerald-500 hover:brightness-105 text-black px-4 py-2 rounded-xl transition-all duration-200 font-black text-xs shadow-md shadow-primary/20 hover:scale-105 active:scale-95 touch-target"
                 >
-                    <Sparkles size={13} className="text-primary-fg shrink-0" />
+                    <Sparkles size={13} className="text-black shrink-0" />
                     <span>المستشار الذكي</span>
                 </button>
             </div>
@@ -228,8 +228,11 @@ export const Dashboard: React.FC = () => {
                                     stats.topSelling.slice(0, 3).map((item, i) => (
                                         <div key={i} className="flex items-center justify-between text-xs">
                                             <div className="flex items-center gap-2">
-                                                <span className={`w-5 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-gray-400' : 'bg-orange-700'
-                                                    }`}>{i + 1}</span>
+                                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm ${
+                                                    i === 0 ? 'bg-amber-500 shadow-amber-500/20' : 
+                                                    i === 1 ? 'bg-gray-400 shadow-gray-400/20' : 
+                                                    'bg-orange-700 shadow-orange-700/20'
+                                                }`}>{i + 1}</span>
                                                 <span className="text-text-main font-medium truncate max-w-[80px]">{item.label}</span>
                                             </div>
                                             <span className="font-mono font-bold text-primary">{item.value}</span>
@@ -252,8 +255,11 @@ export const Dashboard: React.FC = () => {
                                     stats.topCustomers.slice(0, 3).map((customer, i) => (
                                         <div key={i} className="flex items-center justify-between text-xs">
                                             <div className="flex items-center gap-2">
-                                                <span className={`w-5 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold ${i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-blue-400' : 'bg-blue-300'
-                                                    }`}>{i + 1}</span>
+                                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm ${
+                                                    i === 0 ? 'bg-blue-500 shadow-blue-500/20' : 
+                                                    i === 1 ? 'bg-blue-400 shadow-blue-400/20' : 
+                                                    'bg-blue-300 shadow-blue-300/20'
+                                                }`}>{i + 1}</span>
                                                 <span className="text-text-main font-medium truncate max-w-[80px]">{customer.name}</span>
                                             </div>
                                             <span className="font-mono font-bold text-emerald-500">{formatCurrency(customer.total, currency)}</span>

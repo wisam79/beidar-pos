@@ -32,13 +32,13 @@ export const StoreSettings = ({ prefs, handleChange, errors, logoInputRef, handl
             </div>
 
             {/* Store Identity Card */}
-            <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm overflow-hidden relative group hover:border-primary/30 transition-all duration-300">
+            <div className="bg-surface border border-border rounded-lg p-6 shadow-sm overflow-hidden relative group hover:border-primary/30 transition-all duration-300">
                 <div className="flex flex-col md:flex-row items-start gap-8">
                     {/* Logo Upload - Premium Look */}
                     <div className="relative shrink-0">
                         <div
                             className={`relative w-40 h-40 rounded-lg border-2 border-dashed transition-all overflow-hidden cursor-pointer flex items-center justify-center shadow-inner ${prefs.storeLogo
-                                ? 'border-primary/30 bg-surface/80'
+                                ? 'border-primary/30 bg-surface'
                                 : 'border-border hover:border-primary/50 hover:bg-surface-active'
                                 }`}
                             onClick={() => logoInputRef.current?.click()}
@@ -46,7 +46,7 @@ export const StoreSettings = ({ prefs, handleChange, errors, logoInputRef, handl
                             {prefs.storeLogo ? (
                                 <>
                                     <img src={prefs.storeLogo} alt="شعار المتجر" className="w-full h-full object-contain p-4" />
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all backdrop-blur-sm">
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all ">
                                         <Upload size={28} className="text-white mb-2" />
                                         <span className="text-white text-xs font-bold px-3 py-1 bg-white/20 rounded-full border border-white/10">تغيير الصورة</span>
                                     </div>
@@ -135,7 +135,7 @@ export const StoreSettings = ({ prefs, handleChange, errors, logoInputRef, handl
             </div>
 
             {/* Form Fields */}
-            <div className="bg-surface/50 border border-border rounded-lg p-8 shadow-sm">
+            <div className="bg-surface border border-border rounded-lg p-8 shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-3 bg-primary/10 rounded-lg text-primary">
                         <FileText size={24} />

@@ -94,9 +94,19 @@ func roundDiv(a, b int64) int64 {
 	}
 	q := a / b
 	r := a % b
-	// Round half away from zero.
-	if (b > 0 && r*2 >= b) || (b < 0 && r*2 <= b) {
-		if (a < 0) == (b < 0) {
+
+	absR := r
+	if absR < 0 {
+		absR = -absR
+	}
+	absB := b
+	if absB < 0 {
+		absB = -absB
+	}
+
+	if absR*2 >= absB {
+		sameSign := (a < 0) == (b < 0)
+		if sameSign {
 			q++
 		} else {
 			q--

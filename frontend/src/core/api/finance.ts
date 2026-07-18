@@ -4,7 +4,7 @@ import * as Models from '../../../wailsjs/go/models';
 import { Expense, Payment, PurchaseOrder, ReceiveOrderItem } from './types';
 
 export const expenses = {
-    list: () => FinanceHandler.GetExpenses(),
+    list: (month: string = '') => FinanceHandler.GetExpenses(month),
     save: (e: Expense) => FinanceHandler.SaveExpense(e),
     delete: (id: string) => FinanceHandler.DeleteExpense(id),
 };

@@ -298,7 +298,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
             ) : (
                 <div className="space-y-3">
                     {filteredOrders.map(order => (
-                        <SpotlightCard key={order.id} className="bg-surface/50 border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-all">
+                        <SpotlightCard key={order.id} className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-all">
                             {/* Order Header */}
                             <div
                                 className="p-4 flex items-center justify-between cursor-pointer"
@@ -346,7 +346,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                                             </thead>
                                             <tbody>
                                                 {order.items.map((item, idx) => (
-                                                    <tr key={idx} className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors">
+                                                    <tr key={idx} className="border-b border-border/30 hover:bg-surface-hover transition-colors">
                                                         <td className="font-bold text-text-main">{item.productName}</td>
                                                         <td className="text-center font-mono text-text-muted">{item.quantity}</td>
                                                         <td className="text-center font-mono font-bold">
@@ -445,7 +445,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                         {createForm.items.length > 0 && (
                             <div className="bg-bg border border-border rounded-xl p-3 space-y-2 max-h-48 overflow-y-auto">
                                 {createForm.items.map(item => (
-                                    <div key={item.productId} className="flex items-center justify-between gap-2 bg-surface/50 p-2 rounded-lg">
+                                    <div key={item.productId} className="flex items-center justify-between gap-2 bg-surface p-2 rounded-lg">
                                         <span className="font-bold text-sm flex-1">{item.productName}</span>
                                         <input
                                             type="number"

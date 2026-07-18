@@ -77,10 +77,16 @@ func Load() (*Secrets, error) {
 	// 2. Environment variables override everything
 	if v := os.Getenv("BEIDAR_SUPABASE_URL"); v != "" {
 		s.SupabaseURL = v
+	} else if v := os.Getenv("VITE_SUPABASE_URL"); v != "" {
+		s.SupabaseURL = v
 	}
+
 	if v := os.Getenv("BEIDAR_SUPABASE_KEY"); v != "" {
 		s.SupabaseAnonKey = v
+	} else if v := os.Getenv("VITE_SUPABASE_ANON_KEY"); v != "" {
+		s.SupabaseAnonKey = v
 	}
+
 	if v := os.Getenv("BEIDAR_LICENSE_MASTER_KEY"); v != "" {
 		s.LicenseMasterKey = v
 	}
@@ -226,6 +232,25 @@ func SetGroqAPIKey(key string) error {
 	}
 	s.GroqAPIKey = key
 	return Save(s)
+}
+
+// SetGeminiAPIKeys stores the list of Gemini API keys in the encrypted config.
+func SetGeminiAPIKeys(keys []string) error {
+	s, err := Load()
+	if err != nil {
+		s = &Secrets{}
+	}
+	s.GeminiAPIKeys = keys
+	return Save(s)
+}
+
+// GetGeminiAPIKeys returns the stored Gemini API keys list.
+func GetGeminiAPIKeys() []string {
+	s, err := Load()
+	if err != nil || s == nil {
+		return nil
+	}
+	return s.GeminiAPIKeys
 }
 
 // deriveMachineKey creates a device-bound encryption key using hostname + machine ID.

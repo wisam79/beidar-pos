@@ -31,7 +31,7 @@ export const AboutSettings = () => {
             </div>
 
             {/* Main Brand Card */}
-            <div className="relative bg-surface/50 border border-border rounded-2xl overflow-hidden">
+            <div className="relative bg-surface border border-border rounded-2xl overflow-hidden">
                 {/* Gradient Background */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
 
@@ -92,22 +92,22 @@ export const AboutSettings = () => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-4 gap-2">
-                <div className="p-3 bg-surface/50 rounded-xl border border-border text-center hover:border-primary/30 transition-colors group">
+                <div className="p-3 bg-surface rounded-xl border border-border text-center hover:border-primary/30 transition-colors group">
                     <Database size={18} className="text-primary mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
                     <p className="font-bold text-sm text-text-main">محلي</p>
                     <p className="text-[9px] text-text-muted">تخزين سريع</p>
                 </div>
-                <div className="p-3 bg-surface/50 rounded-xl border border-border text-center hover:border-primary/30 transition-colors group">
+                <div className="p-3 bg-surface rounded-xl border border-border text-center hover:border-primary/30 transition-colors group">
                     <Zap size={18} className="text-primary mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
                     <p className="font-bold text-sm text-text-main">فائق</p>
                     <p className="text-[9px] text-text-muted">أداء عالي</p>
                 </div>
-                <div className="p-3 bg-surface/50 rounded-xl border border-border text-center hover:border-primary/30 transition-colors group">
+                <div className="p-3 bg-surface rounded-xl border border-border text-center hover:border-primary/30 transition-colors group">
                     <ShieldCheck size={18} className="text-primary mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
                     <p className="font-bold text-sm text-text-main">آمن</p>
                     <p className="text-[9px] text-text-muted">بنية محمية</p>
                 </div>
-                <div className="p-3 bg-surface/50 rounded-xl border border-border text-center hover:border-primary/30 transition-colors group">
+                <div className="p-3 bg-surface rounded-xl border border-border text-center hover:border-primary/30 transition-colors group">
                     <Globe size={18} className="text-primary mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
                     <p className="font-bold text-sm text-text-main">عربي</p>
                     <p className="text-[9px] text-text-muted">واجهة كاملة</p>
@@ -116,7 +116,7 @@ export const AboutSettings = () => {
 
             {/* Features */}
             <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 bg-surface/50 border border-border rounded-xl flex items-center gap-3 hover:border-primary/30 transition-all group">
+                <div className="p-4 bg-surface border border-border rounded-xl flex items-center gap-3 hover:border-primary/30 transition-all group">
                     <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Cpu size={20} className="text-primary" />
                     </div>
@@ -125,7 +125,7 @@ export const AboutSettings = () => {
                         <p className="text-[10px] text-text-muted">تحليل متقدم للبيانات</p>
                     </div>
                 </div>
-                <div className="p-4 bg-surface/50 border border-border rounded-xl flex items-center gap-3 hover:border-primary/30 transition-all group">
+                <div className="p-4 bg-surface border border-border rounded-xl flex items-center gap-3 hover:border-primary/30 transition-all group">
                     <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Cloud size={20} className="text-primary" />
                     </div>

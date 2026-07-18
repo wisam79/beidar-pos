@@ -40,5 +40,10 @@ func (h *StatsHandler) GetMonthlyComparison() (*domain.MonthlyComparison, error)
 	if err := auth.RequirePermission(auth.PermReports); err != nil {
 		return nil, err
 	}
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		var result domain.MonthlyComparison
+		err := h.lanService.RemoteGet("/api/stats/comparison", &result)
+		return &result, err
+	}
 	return h.statsService.GetMonthlyComparison()
 }

@@ -22,7 +22,7 @@ type LanService interface {
 	IsServerRunning() bool
 
 	// Client Connection (Local machine as a client to a remote server)
-	ConnectToServer(serverIP string, port int) error
+	ConnectToServer(serverIP string, port int, secret string) error
 	DisconnectFromServer()
 	GetClientStatus() domain.LanClientStatus
 	IsClientMode() bool
@@ -37,7 +37,7 @@ type LanService interface {
 	BlockDevice(deviceID, deviceName, reason string) error
 	UnblockDevice(id uint) error
 	GetBlockedDevices() ([]domain.BlockedDevice, error)
-	GenerateServerSecret() string
+	GenerateServerSecret() (string, error)
 	GetServerSecret() string
 	ValidateServerSecret(secret string) bool
 

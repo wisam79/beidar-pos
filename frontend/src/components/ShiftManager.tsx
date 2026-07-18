@@ -159,7 +159,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                 <div className="flex-1 flex flex-col gap-4 relative z-10 min-h-0 overflow-y-auto custom-scrollbar pr-1">
                     <div className="grid grid-cols-2 gap-3">
                         {/* Opening Balance */}
-                        <div className="bg-surface/50 border border-border/50 rounded-2xl p-3 flex flex-col gap-1 hover:border-border transition-colors">
+                        <div className="bg-surface border border-border/50 rounded-2xl p-3 flex flex-col gap-1 hover:border-border transition-colors">
                             <span className="text-[10px] uppercase font-bold text-text-muted tracking-wider">رصيد الافتتاح</span>
                             <span className="text-lg font-black text-text-main font-mono tracking-tight">
                                 {formatCurrency(activeShift.openingBalance, currency).replace(currency, '')}
@@ -222,7 +222,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                     </div>
                 </div>
             ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 p-6 rounded-2xl border border-dashed border-border/80 bg-surface/30 backdrop-blur-sm group-hover:border-primary/25 transition-all">
+                <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 p-6 rounded-2xl border border-dashed border-border/80 bg-surface  group-hover:border-primary/25 transition-all">
                     {/* Glowing active indicator dot */}
                     <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-[10px] font-black px-2 py-0.5 rounded-lg">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
@@ -258,7 +258,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
 
             {/* Open Shift Modal */}
             {showOpenModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+                <div className="fixed inset-0 bg-black/60  flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-surface border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-5 duration-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-black text-xl text-text-main">فتح شفت جديد</h3>
@@ -295,7 +295,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
 
             {/* Close Shift Modal */}
             {showCloseModal && activeShift && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+                <div className="fixed inset-0 bg-black/60  flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-surface border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-5 duration-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-black text-xl text-text-main">إغلاق الشفت</h3>
@@ -354,7 +354,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
 
             {/* Cash Movement Modal */}
             {showMovementModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+                <div className="fixed inset-0 bg-black/60  flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-surface border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-5 duration-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-black text-xl text-text-main flex items-center gap-2">

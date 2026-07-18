@@ -42,11 +42,11 @@ func (h *LanHandler) GetLanServerStatus() domain.LanServerStatus {
 	return h.lanService.GetServerStatus()
 }
 
-func (h *LanHandler) ConnectToLanServer(serverIP string, port int) error {
+func (h *LanHandler) ConnectToLanServer(serverIP string, port int, secret string) error {
 	if err := auth.RequirePermission(auth.PermSettings); err != nil {
 		return err
 	}
-	return h.lanService.ConnectToServer(serverIP, port)
+	return h.lanService.ConnectToServer(serverIP, port, secret)
 }
 
 func (h *LanHandler) DisconnectFromLanServer() {
@@ -72,7 +72,7 @@ func (h *LanHandler) TestLanConnection() string {
 	return h.lanService.TestConnection()
 }
 
-func (h *LanHandler) GenerateServerSecret() string {
+func (h *LanHandler) GenerateServerSecret() (string, error) {
 	return h.lanService.GenerateServerSecret()
 }
 

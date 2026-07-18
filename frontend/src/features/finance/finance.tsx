@@ -11,6 +11,8 @@ import { api, Expense, Supplier, Sale, PurchaseOrder } from '../../core/api';
 import { PurchaseOrdersTab } from './components/PurchaseOrdersTab';
 import { PageShell, StatsGrid, StatCard, LoadingState, TabNav, SearchInput } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
+import { useFinanceData } from '../../hooks/useFinance';
+import { Button } from '../../components/ds/Button';
 
 export const FinancePage: React.FC = () => {
     const { notify, prefs } = usePreferences();
@@ -35,35 +37,12 @@ export const FinancePage: React.FC = () => {
         open: false, title: '', message: '', onConfirm: () => { }
     });
 
-    // Local Data
-    const [expenses, setExpenses] = useState<Expense[]>([]);
-    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-    const [sales, setSales] = useState<Sale[]>([]);
-    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    const loadData = async () => {
-        try {
-            setLoading(true);
-            const [e, s, saData, poData] = await Promise.all([
-                api.expenses.list(),
-                api.suppliers.list(),
-                api.sales.list(0, 5000, '', '', ''),
-                api.purchaseOrders.list('')
-            ]);
-            setExpenses(e);
-            setSuppliers(s);
-            setSales(saData.data);
-            setPurchaseOrders(poData || []);
-        } catch (err) {
-            console.error(err);
-            notify('خطأ في تحميل البيانات المالية', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => { loadData(); }, []);
+    // React Query Cached Data
+    const { data: financeData, isLoading: loading, refetch: loadData } = useFinanceData();
+    const expenses = financeData?.expenses || [];
+    const suppliers = financeData?.suppliers || [];
+    const sales = financeData?.sales || [];
+    const purchaseOrders = financeData?.purchaseOrders || [];
 
     // --- Analytics Engine ---
     const stats = useMemo(() => {
@@ -331,19 +310,23 @@ export const FinancePage: React.FC = () => {
     return (
         <PageShell>
             <PageHeader title="الإدارة المالية" icon={Landmark} description="متابعة المصروفات، الأرباح، وديون الموردين." actions={
-                <div className="flex gap-2">
-                    <button onClick={() => { setExpenseForm({}); setExpenseModal(true); }} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 h-10 px-4 rounded-xl font-bold flex items-center gap-2 transition-all text-xs touch-target active:scale-95"><Minus size={16} /> تسجيل مصروف</button>
-                    <button onClick={() => { setSupplierForm({}); setSupplierModal(true); }} className="bg-primary/10 text-primary hover:bg-primary hover:text-black border border-primary/20 h-10 px-4 rounded-xl font-bold flex items-center gap-2 transition-all text-xs touch-target active:scale-95"><Users size={16} /> إدارة الموردين</button>
-                    <button
+                <div className="flex gap-2 items-center">
+                    <Button variant="danger" className="h-10 text-xs px-4" onClick={() => { setExpenseForm({}); setExpenseModal(true); }}>
+                        <Minus size={14} strokeWidth={3} /> تسجيل مصروف
+                    </Button>
+                    <Button variant="soft" className="h-10 text-xs px-4" onClick={() => { setSupplierForm({}); setSupplierModal(true); }}>
+                        <Users size={14} strokeWidth={3} /> إدارة الموردين
+                    </Button>
+                    <Button
                         onClick={() => setShowStats(!showStats)}
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
-                            ? 'bg-surface border border-border text-text-muted hover:text-text-main'
-                            : 'bg-gradient-to-br from-primary to-emerald-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
-                            }`}
+                        variant={showStats ? 'secondary' : 'primary'}
+                        className={`h-10 w-10 p-0 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                            !showStats ? 'bg-gradient-to-br from-primary to-emerald-500 border-transparent text-black hover:scale-105 shadow-md shadow-primary/25' : ''
+                        }`}
                         title={showStats ? 'إخفاء الإحصائيات' : 'عرض التحليل المالي'}
                     >
                         <LayoutDashboard size={showStats ? 18 : 20} />
-                    </button>
+                    </Button>
                 </div>
             } />
 
@@ -375,7 +358,7 @@ export const FinancePage: React.FC = () => {
                             {/* Charts Row */}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 {/* Revenue Growth Chart */}
-                                <div className="lg:col-span-2 bg-gradient-to-b from-surface to-surface-hover/20 border border-border rounded-3xl p-6 h-[400px] relative overflow-hidden group hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                                <div className="lg:col-span-2 bg-gradient-to-b from-surface to-surface-hover/20 border border-border rounded-3xl p-6 h-[280px] relative overflow-hidden group hover:border-primary/30 hover:shadow-lg transition-all duration-300">
                                     {/* Decorative subtle background glows */}
                                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/8 transition-all duration-500" />
                                     
@@ -389,9 +372,9 @@ export const FinancePage: React.FC = () => {
                                                 <p className="text-xs text-text-muted">مقارنة وتدفق المبيعات لآخر 6 أشهر</p>
                                             </div>
                                         </div>
-
+ 
                                         {/* Dynamic Growth Badge */}
-                                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border backdrop-blur-md select-none ${
+                                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border  select-none ${
                                             revenueGrowthPct >= 0 
                                                 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
                                                 : 'bg-red-500/10 text-red-500 border-red-500/20'
@@ -401,14 +384,14 @@ export const FinancePage: React.FC = () => {
                                             <span className="text-[10px] opacity-75 font-normal">الشهر الحالي</span>
                                         </div>
                                     </div>
-
-                                    <div className="h-[280px] w-full relative z-10">
+ 
+                                    <div className="h-[180px] w-full relative z-10">
                                         <SalesAreaChart data={charts.trendData} />
                                     </div>
                                 </div>
-
+ 
                                 {/* Expense Breakdown Donut */}
-                                <div className="bg-gradient-to-b from-surface to-surface-hover/20 border border-border rounded-3xl p-6 h-[400px] flex flex-col group hover:border-red-500/30 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+                                <div className="bg-gradient-to-b from-surface to-surface-hover/20 border border-border rounded-3xl p-6 h-[280px] flex flex-col group hover:border-red-500/30 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
                                     <div className="absolute top-0 left-0 w-48 h-48 bg-red-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-red-500/8 transition-all duration-500" />
                                     
                                     <div className="flex items-center gap-3 mb-6 relative z-10">
@@ -420,9 +403,9 @@ export const FinancePage: React.FC = () => {
                                             <p className="text-xs text-text-muted">حسب الفئات النشطة في النظام</p>
                                         </div>
                                     </div>
-
+ 
                                     <div className="flex-1 flex items-center justify-center relative z-10">
-                                        <div className="w-full h-full max-h-[280px]">
+                                        <div className="w-full h-full max-h-[180px]">
                                             <DonutChart data={charts.expenseBreakdown} />
                                         </div>
                                     </div>
@@ -432,7 +415,7 @@ export const FinancePage: React.FC = () => {
                             {/* Second Row: Recent Transactions & Quick Metrics */}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 {/* Recent Expenses List */}
-                                <div className="lg:col-span-2 bg-surface border border-border rounded-3xl p-6 hover:shadow-md transition-all duration-300 flex flex-col">
+                                <div className="lg:col-span-2 bg-gradient-to-b from-surface to-surface-hover/20 border border-border rounded-3xl p-6 hover:shadow-lg hover:border-primary/10 transition-all duration-300 flex flex-col min-h-[250px]">
                                     <div className="flex items-center justify-between mb-5">
                                         <div className="flex items-center gap-2.5">
                                             <div className="w-10 h-10 rounded-xl bg-surface-hover border border-border flex items-center justify-center">
@@ -463,7 +446,7 @@ export const FinancePage: React.FC = () => {
                                                 return (
                                                     <div 
                                                         key={e.id}
-                                                        className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-hover/30 border border-border/30 hover:border-border hover:bg-surface-hover/60 transition-all duration-200"
+                                                        className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-hover border border-border/30 hover:border-border hover:bg-surface-hover transition-all duration-200"
                                                     >
                                                         <div className="flex items-center gap-3">
                                                             <div className={`w-10 h-10 rounded-xl ${catInfo.bg} ${catInfo.border} border flex items-center justify-center`}>
@@ -490,13 +473,13 @@ export const FinancePage: React.FC = () => {
                                 </div>
 
                                 {/* Quick Financial Metrics & Health indicator */}
-                                <div className="bg-surface border border-border rounded-3xl p-6 hover:shadow-md transition-all duration-300 flex flex-col justify-between space-y-6">
+                                <div className="bg-gradient-to-b from-surface to-surface-hover/20 border border-border rounded-3xl p-6 hover:shadow-lg hover:border-primary/10 transition-all duration-300 flex flex-col justify-between space-y-6 min-h-[250px]">
                                     <div>
                                         <h3 className="text-sm font-black text-text-main mb-1">الوضع المالي العام</h3>
                                         <p className="text-[10px] text-text-muted mb-4">مؤشرات السيولة والربحية التقديرية</p>
                                         
                                         {/* Profit Margin Widget */}
-                                        <div className="bg-surface-hover/40 border border-border/50 rounded-2xl p-4 mb-4">
+                                        <div className="bg-surface-hover border border-border/50 rounded-2xl p-4 mb-4">
                                             <div className="flex justify-between items-center mb-2">
                                                 <span className="text-[11px] font-bold text-text-muted">هامش الربح التشغيلي</span>
                                                 <span className={`text-xs font-bold font-mono ${stats.profitMargin >= 20 ? 'text-emerald-500' : 'text-amber-500'}`}>
@@ -526,9 +509,9 @@ export const FinancePage: React.FC = () => {
                                                     : 'تنبيه: النشاط التجاري يسجل خسائر حالياً!'}
                                             </p>
                                         </div>
-
+ 
                                         {/* Receivables vs Payables Ratio */}
-                                        <div className="bg-surface-hover/40 border border-border/50 rounded-2xl p-4">
+                                        <div className="bg-surface-hover border border-border/50 rounded-2xl p-4">
                                             <div className="flex justify-between items-center mb-2">
                                                 <span className="text-[11px] font-bold text-text-muted">نسبة الديون (لنا / علينا)</span>
                                                 <span className="text-xs font-bold text-text-main font-mono">
@@ -547,15 +530,15 @@ export const FinancePage: React.FC = () => {
                                                     <span>علينا: {formatCurrency(stats.totalSupplierDebt, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</span>
                                                 </div>
                                             </div>
-
-                                            <div className="w-full h-2 bg-border rounded-full overflow-hidden flex">
+ 
+                                            <div className="w-full h-2 bg-border/40 rounded-full overflow-hidden flex">
                                                 <div 
-                                                    className="h-full bg-blue-500 transition-all duration-500"
+                                                    className="h-full bg-gradient-to-r from-blue-500/80 to-blue-500 transition-all duration-500"
                                                     style={{ width: `${debtInfo.receivablesPct}%` }}
                                                     title={`المستحقات لنا: ${debtInfo.receivablesPct.toFixed(0)}%`}
                                                 />
                                                 <div 
-                                                    className="h-full bg-orange-500 transition-all duration-500"
+                                                    className="h-full bg-gradient-to-l from-orange-500/80 to-orange-500 transition-all duration-500"
                                                     style={{ width: `${debtInfo.payablesPct}%` }}
                                                     title={`الديون علينا: ${debtInfo.payablesPct.toFixed(0)}%`}
                                                 />
@@ -612,7 +595,7 @@ export const FinancePage: React.FC = () => {
                                                 {filteredSuppliers.map((s) => (
                                                     <tr
                                                         key={s.id}
-                                                        className="border-b border-border/30 hover:bg-surface-hover/50 transition-colors group"
+                                                        className="border-b border-border/30 hover:bg-surface-hover transition-colors group"
                                                     >
                                                         <td className="px-4 py-3">
                                                             <div className="flex items-center gap-3">

@@ -1,10 +1,44 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import os from 'os'
+import fs from 'fs'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'serve-local-images',
+      configureServer(server) {
+        const appData = process.env.APPDATA || 
+          (process.platform === 'darwin' 
+            ? path.join(os.homedir(), 'Library', 'Application Support') 
+            : path.join(os.homedir(), '.config'));
+            
+        const imagesDir = path.join(appData, 'BeidarPOS_V3', 'images');
+
+        server.middlewares.use('/local-image', (req, res, next) => {
+          const filename = decodeURIComponent((req.url || '').split('?')[0].replace(/^\//, ''));
+          const filePath = path.join(imagesDir, filename);
+
+          if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+            const ext = path.extname(filePath).toLowerCase();
+            let mime = 'application/octet-stream';
+            if (ext === '.png') mime = 'image/png';
+            else if (ext === '.jpg' || ext === '.jpeg') mime = 'image/jpeg';
+            else if (ext === '.webp') mime = 'image/webp';
+            else if (ext === '.gif') mime = 'image/gif';
+
+            res.setHeader('Content-Type', mime);
+            fs.createReadStream(filePath).pipe(res);
+          } else {
+            next();
+          }
+        });
+      }
+    }
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

@@ -211,7 +211,7 @@ export const SalesAreaChart = memo(({ data }: { data: ChartDataPoint[] }) => {
                         <text
                             key={i}
                             x={x}
-                            y={height - 25}
+                            y={padding.top + chartHeight + 22}
                             textAnchor="middle"
                             className={`text-[12px] font-bold font-mono transition-colors duration-200 ${hoveredIndex === i ? 'fill-primary' : 'fill-text-muted'
                                 }`}
@@ -243,7 +243,7 @@ const PortalTooltip = ({ label, value, x, y }: { label: string, value: string, x
             className="fixed z-[9999] pointer-events-none transform -translate-x-1/2 -translate-y-[120%]"
             style={{ left: x, top: y }}
         >
-            <div className="bg-surface backdrop-blur-xl border border-border shadow-2xl shadow-black/35 rounded-xl px-4 py-3 flex flex-col items-center min-w-[130px] animate-in slide-in-from-bottom-2 duration-150">
+            <div className="bg-surface  border border-border shadow-2xl shadow-black/35 rounded-xl px-4 py-3 flex flex-col items-center min-w-[130px] animate-in slide-in-from-bottom-2 duration-150">
                 <span className="text-[10px] text-text-muted font-bold mb-1 uppercase tracking-wider">
                     {label}
                 </span>
@@ -306,7 +306,7 @@ export const DonutChart = memo(({ data }: { data: { label: string, value: number
 
     if (total === 0) return (
         <div className="w-full h-full flex flex-col items-center justify-center relative p-4">
-            <div className="w-36 h-36 rounded-full border-4 border-dashed border-border flex items-center justify-center bg-surface/30">
+            <div className="w-36 h-36 rounded-full border-4 border-dashed border-border flex items-center justify-center bg-surface">
                 <span className="text-xs text-text-muted font-bold">لا توجد بيانات</span>
             </div>
         </div>
@@ -316,7 +316,7 @@ export const DonutChart = memo(({ data }: { data: { label: string, value: number
         <div className="relative w-full h-full flex flex-col items-center justify-center gap-4 p-2">
             {/* Donut Chart SVG */}
             <div className="relative">
-                <svg viewBox="0 0 44 44" className="w-40 h-40">
+                <svg viewBox="0 0 44 44" className="w-32 h-32">
                     <defs>
                         <filter id="donutGlow" x="-50%" y="-50%" width="200%" height="200%">
                             <feGaussianBlur stdDeviation="1" result="coloredBlur" />

@@ -151,3 +151,18 @@ func TestGetDefaultPrinter(t *testing.T) {
 	}
 	t.Logf("Default printer: %q", printer)
 }
+
+func TestShapeArabicAndBiDi(t *testing.T) {
+	tests := []struct {
+		input string
+	}{
+		{"تجربة"},
+		{"كوكا كولا"},
+		{"كوكا كولا 1500 IQD"},
+	}
+
+	for _, test := range tests {
+		result := shapeArabicAndBiDi(test.input)
+		t.Logf("Input: %q, Shaped & BiDi: %q", test.input, result)
+	}
+}

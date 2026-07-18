@@ -276,7 +276,7 @@ export function CloudBackupSettings() {
 
             {/* Not Logged In State */}
             {!isLoggedIn && (
-                <div className="bg-surface/50 border border-border rounded-2xl overflow-hidden">
+                <div className="bg-surface border border-border rounded-2xl overflow-hidden">
                     <div className="p-5 border-b border-border bg-amber-500/5">
                         <div className="flex items-center gap-3 mb-3">
                             <div className="p-2.5 bg-amber-500/10 rounded-xl">
@@ -305,7 +305,7 @@ export function CloudBackupSettings() {
             {isLoggedIn && currentUser && (
                 <>
                     {/* User Info Card */}
-                    <div className="bg-surface/50 border border-border rounded-2xl p-4 shadow-sm">
+                    <div className="bg-surface border border-border rounded-2xl p-4 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 bg-gradient-to-br from-primary to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
@@ -335,7 +335,7 @@ export function CloudBackupSettings() {
                         {/* Auto Sync Toggle */}
                         <div className={`p-4 rounded-2xl border transition-all cursor-pointer ${autoSync
                             ? 'bg-primary/10 border-primary/30'
-                            : 'bg-surface/50 border-border hover:border-primary/20'
+                            : 'bg-surface border-border hover:border-primary/20'
                             }`}
                             onClick={handleAutoSyncToggle}
                         >
@@ -372,7 +372,7 @@ export function CloudBackupSettings() {
                     </div>
 
                     {/* Backups List */}
-                    <div className="bg-surface/50 border border-border rounded-2xl overflow-hidden">
+                    <div className="bg-surface border border-border rounded-2xl overflow-hidden">
                         <div className="p-3 border-b border-border flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Database size={16} className="text-primary" />
@@ -444,25 +444,25 @@ export function CloudBackupSettings() {
                 </>
             )}
 
-            <div className="bg-surface/30 border border-border rounded-2xl p-4">
+            <div className="bg-surface border border-border rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <Info size={16} className="text-primary" />
                     <span className="font-bold text-sm text-text-main">معلومات مهمة</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-surface/50 rounded-xl p-3 border border-border">
+                    <div className="bg-surface rounded-xl p-3 border border-border">
                         <p className="text-[10px] text-text-muted mb-1">الحد الأقصى</p>
                         <p className="text-sm font-bold text-text-main">3 نسخ / 5MB</p>
                     </div>
-                    <div className="bg-surface/50 rounded-xl p-3 border border-border">
+                    <div className="bg-surface rounded-xl p-3 border border-border">
                         <p className="text-[10px] text-text-muted mb-1">مدة الاحتفاظ</p>
                         <p className="text-sm font-bold text-text-main">30 يوم</p>
                     </div>
-                    <div className="bg-surface/50 rounded-xl p-3 border border-border">
+                    <div className="bg-surface rounded-xl p-3 border border-border">
                         <p className="text-[10px] text-text-muted mb-1">الجلسات</p>
                         <p className="text-sm font-bold text-text-main">جهاز واحد</p>
                     </div>
-                    <div className="bg-surface/50 rounded-xl p-3 border border-border">
+                    <div className="bg-surface rounded-xl p-3 border border-border">
                         <p className="text-[10px] text-text-muted mb-1">الاستعادة</p>
                         <p className="text-sm font-bold text-text-main">من أي جهاز</p>
                     </div>

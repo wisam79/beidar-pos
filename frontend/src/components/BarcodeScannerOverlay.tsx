@@ -207,7 +207,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
             <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
                 <div className="flex gap-4">
                     {hasTorch && (
-                        <button onClick={toggleTorch} className={`p-3 rounded-full transition-all backdrop-blur-md border ${torchOn ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' : 'bg-white/10 text-white border-white/10'}`}>
+                        <button onClick={toggleTorch} className={`p-3 rounded-full transition-all  border ${torchOn ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' : 'bg-white/10 text-white border-white/10'}`}>
                             {torchOn ? <Zap size={20} fill="currentColor" /> : <ZapOff size={20} />}
                         </button>
                     )}
@@ -216,7 +216,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                             <select
                                 value={activeCameraId || ''}
                                 onChange={(e) => setActiveCameraId(e.target.value)}
-                                className="appearance-none pl-10 pr-4 py-3 bg-white/10 border border-white/10 rounded-full text-white hover:bg-white/20 transition-all backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary text-sm max-w-[150px] truncate cursor-pointer [&>option]:bg-gray-900"
+                                className="appearance-none pl-10 pr-4 py-3 bg-white/10 border border-white/10 rounded-full text-white hover:bg-white/20 transition-all  focus:outline-none focus:ring-2 focus:ring-primary text-sm max-w-[150px] truncate cursor-pointer [&>option]:bg-gray-900"
                                 aria-label="اختيار الكاميرا"
                             >
                                 {cameras?.map((c) => (
@@ -229,7 +229,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                         </div>
                     )}
                 </div>
-                <button onClick={onClose} className="text-white p-3 bg-white/10 border border-white/10 rounded-full hover:bg-red-500/20 hover:text-red-500 transition-all backdrop-blur-md" aria-label="إغلاق الماسح">
+                <button onClick={onClose} className="text-white p-3 bg-white/10 border border-white/10 rounded-full hover:bg-red-500/20 hover:text-red-500 transition-all " aria-label="إغلاق الماسح">
                     <X size={20} />
                 </button>
             </div>
@@ -295,7 +295,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                         {/* Result Message Card */}
                         <div className="absolute bottom-12 left-6 right-6 flex flex-col items-center z-50 pointer-events-none">
                             {scanStatus === 'idle' ? (
-                                <div className="bg-black/60 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10 shadow-lg">
+                                <div className="bg-black/60  px-6 py-3 rounded-2xl border border-white/10 shadow-lg">
                                     <p className="text-gray-300 font-bold text-sm flex items-center gap-2">
                                         <Camera size={18} className="text-primary animate-pulse" />
                                         وجه الكاميرا نحو الباركود
@@ -319,7 +319,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
 
             {/* Scanned Items Panel - Clean Professional Design */}
             {scannedItems.length > 0 && (
-                <div className="absolute bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-white/10 py-4 px-4 z-50">
+                <div className="absolute bottom-0 left-0 right-0 bg-black/95  border-t border-white/10 py-4 px-4 z-50">
                     <div className="max-w-2xl mx-auto">
                         {/* Header Row */}
                         <div className="flex items-center justify-between mb-3">

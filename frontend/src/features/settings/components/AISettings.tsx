@@ -11,7 +11,7 @@ interface AISettingsProps {
 const AIFeatureCard = ({ icon: Icon, title, description }: {
     icon: React.ElementType, title: string, description: string
 }) => (
-    <div className="bg-surface/50 border border-border p-5 rounded-2xl hover:scale-105 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all cursor-default group">
+    <div className="bg-surface border border-border p-5 rounded-2xl hover:scale-105 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all cursor-default group">
         <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform text-primary">
             <Icon size={20} />
         </div>
@@ -40,7 +40,7 @@ export const AISettings = ({ prefs, handleChange }: AISettingsProps) => {
             </div>
 
             {/* AI Status Banner */}
-            <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm flex items-center justify-between">
+            <div className="bg-surface border border-border rounded-3xl p-6 shadow-sm flex items-center justify-between">
                 <div>
                     <h3 className="text-lg font-bold flex items-center gap-2">
                         <Brain className="text-primary" size={20} />

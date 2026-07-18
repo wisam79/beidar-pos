@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"strings"
 	"time"
 )
 
@@ -131,7 +132,16 @@ func GetCrashReportContent(filename string) (string, error) {
 		_ = InitCrashReporter()
 	}
 
-	filePath := filepath.Join(crashReportsDir, filename)
+	cleaned := filepath.Clean(filename)
+	if strings.Contains(cleaned, "..") || filepath.IsAbs(cleaned) {
+		return "", fmt.Errorf("invalid filename")
+	}
+
+	filePath := filepath.Join(crashReportsDir, cleaned)
+	if !strings.HasPrefix(filepath.Clean(filePath), filepath.Clean(crashReportsDir)) {
+		return "", fmt.Errorf("invalid file path")
+	}
+
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read crash report: %w", err)

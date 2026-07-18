@@ -36,6 +36,7 @@ export const SalesPage: React.FC = () => {
         paymentMethod,
         setPaymentMethod,
         subtotal,
+        vat,
         total,
         change,
         addToCart: addToCartHook,
@@ -46,6 +47,7 @@ export const SalesPage: React.FC = () => {
         isZenMode,
         setIsZenMode,
     } = useCart({
+        taxRate: prefs.taxRate,
         onCartRestored: () => notify('تم استعادة السلة المحفوظة', 'info'),
     });
 
@@ -146,7 +148,7 @@ export const SalesPage: React.FC = () => {
             staffName: currentUser?.name || '',
             date: getLocalDateString(),
             timestamp: Date.now(),
-            subtotal, discount, vat: 0, total,
+            subtotal, discount, vat, total,
             paymentMethod,
             status: paymentMethod === 'credit' ? 'pending' : 'completed',
             itemsCount: cart.reduce((a, b) => a + b.qty, 0),
@@ -422,7 +424,7 @@ export const SalesPage: React.FC = () => {
                 </div>
             )}
 
-            <div className={`flex flex-col bg-surface backdrop-blur-md border-l border-border h-full transition-all duration-300 ${isZenMode ? 'w-full rounded-none shadow-none' : 'w-[380px] lg:w-[420px] xl:w-[480px] 2xl:w-[520px] rounded-l-2xl shadow-2xl overflow-hidden'}`}>
+            <div className={`flex flex-col bg-surface  border-l border-border h-full transition-all duration-300 ${isZenMode ? 'w-full rounded-none shadow-none' : 'w-[380px] lg:w-[420px] xl:w-[480px] 2xl:w-[520px] rounded-l-2xl shadow-2xl overflow-hidden'}`}>
                 {!isZenMode && (
                     <div className={`border-b transition-all shrink-0 ${activeShift ? 'bg-green-500/5 border-green-500/20' : 'bg-black/5 dark:bg-white/[0.01] border-border'}`}>
                         <button
@@ -462,30 +464,32 @@ export const SalesPage: React.FC = () => {
                     </div>
                 )}
                 {isZenMode && (
-                    <div className="p-4 border-b border-border bg-black/5 dark:bg-white/[0.02] backdrop-blur-md flex items-center gap-3 shrink-0">
-                        <div className="relative flex-1">
-                            <input
-                                ref={searchRef}
-                                className="w-full bg-input-bg text-text-main border border-border rounded-full pl-12 pr-5 py-3.5 outline-none focus:border-primary transition-all text-base font-black placeholder:text-text-muted focus:shadow-[0_0_0_4px_rgba(var(--color-primary-rgb),0.15)] touch-target shadow-sm"
-                                placeholder="ابحث أو امسح الباركود..."
-                                value={searchQuery}
-                                onChange={e => {
-                                    setSearchQuery(e.target.value);
-                                    const found = products.find(p => p.barcode === e.target.value);
-                                    if (found) {
-                                        addToCart(found);
-                                        setSearchQuery('');
-                                    }
-                                }}
-                            />
-                            <Search className="absolute left-4.5 top-4 text-text-muted opacity-70" size={20} />
+                    <div className="p-4 border-b border-border bg-black/5 dark:bg-white/[0.02]  flex justify-center shrink-0">
+                        <div className="flex items-center gap-3 max-w-4xl w-full">
+                            <div className="relative flex-1">
+                                <input
+                                    ref={searchRef}
+                                    className="w-full bg-input-bg text-text-main border border-border rounded-xl pl-12 pr-5 py-3.5 outline-none focus:border-primary transition-all text-base font-black placeholder:text-text-muted focus:shadow-[0_0_0_4px_rgba(var(--color-primary-rgb),0.15)] touch-target shadow-sm"
+                                    placeholder="ابحث أو امسح الباركود..."
+                                    value={searchQuery}
+                                    onChange={e => {
+                                        setSearchQuery(e.target.value);
+                                        const found = products.find(p => p.barcode === e.target.value);
+                                        if (found) {
+                                            addToCart(found);
+                                            setSearchQuery('');
+                                        }
+                                    }}
+                                />
+                                <Search className="absolute left-4.5 top-4 text-text-muted opacity-70" size={20} />
+                            </div>
+                            <button onClick={() => setIsScannerOpen(true)} className="p-3.5 bg-purple-500/10 border border-purple-500/20 text-purple-500 rounded-xl hover:bg-purple-500 hover:text-white transition-all btn-press touch-target shadow-sm" title="ماسح الباركود" aria-label="ماسح الباركود">
+                                <ScanLine size={22} />
+                            </button>
+                            <button onClick={() => setShowCustomerModal(true)} className={`p-3.5 rounded-xl border transition-all btn-press touch-target shadow-sm ${selectedCustomer ? 'bg-primary/10 text-primary border-primary/20' : 'bg-surface text-text-muted border-border hover:text-text-main'}`} title="اختر العميل" aria-label="اختر العميل">
+                                <User size={22} />
+                            </button>
                         </div>
-                        <button onClick={() => setIsScannerOpen(true)} className="p-3.5 bg-purple-500/10 border border-purple-500/20 text-purple-500 rounded-full hover:bg-purple-500 hover:text-white transition-all btn-press touch-target shadow-sm" title="ماسح الباركود" aria-label="ماسح الباركود">
-                            <ScanLine size={22} />
-                        </button>
-                        <button onClick={() => setShowCustomerModal(true)} className={`p-3.5 rounded-full border transition-all btn-press touch-target shadow-sm ${selectedCustomer ? 'bg-primary/10 text-primary border-primary/20' : 'bg-surface text-text-muted border-border hover:text-text-main'}`} title="اختر العميل" aria-label="اختر العميل">
-                            <User size={22} />
-                        </button>
                     </div>
                 )}
 

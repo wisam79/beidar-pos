@@ -324,10 +324,49 @@ func TestPaymentService_Getters(t *testing.T) {
 		t.Errorf("Expected 1 installment sale, got %d", len(sales))
 	}
 
-	// 3. DeletePayment with non-existent ID
 	err = s.DeletePayment(9999)
 	if err == nil {
 		t.Error("Expected error when deleting non-existent payment")
 	}
 }
 
+func TestGetInstallmentAlertSummary(t *testing.T) {
+	s, db, cleanup := setupPaymentTestDB(t)
+	defer cleanup()
+
+	// Create customer
+	customer := &domain.Customer{ID: uuid.New().String(), Name: "Alert Customer"}
+	db.Create(customer)
+
+	// Create plan with past due dates
+	pastDate := time.Now().AddDate(0, -1, 0) // 1 month ago
+	plan := domain.InstallmentPlan{
+		Schedule: []domain.Installment{
+			{DueDate: pastDate.Format("2006-01-02"), Amount: domain.NewAmount(100), Status: "pending"},
+			{DueDate: time.Now().AddDate(0, 1, 0).Format("2006-01-02"), Amount: domain.NewAmount(100), Status: "pending"},
+		},
+	}
+
+	sale := &domain.Sale{
+		ID:              uuid.New().String(),
+		CustomerID:      customer.ID,
+		CustomerName:    customer.Name,
+		PaymentMethod:   "installment",
+		Status:          "pending",
+		InstallmentPlan: &plan,
+	}
+	db.Create(sale)
+
+	// Check alert summary
+	alerts, err := s.GetInstallmentAlertSummary()
+	if err != nil {
+		t.Fatalf("GetInstallmentAlertSummary failed: %v", err)
+	}
+
+	if alerts == nil || len(alerts.Alerts) != 1 {
+		t.Errorf("Expected 1 alert for past due installment, got %d", len(alerts.Alerts))
+	}
+	if len(alerts.Alerts) > 0 && alerts.Alerts[0].CustomerName != "Alert Customer" {
+		t.Errorf("Expected Alert Customer, got %s", alerts.Alerts[0].CustomerName)
+	}
+}

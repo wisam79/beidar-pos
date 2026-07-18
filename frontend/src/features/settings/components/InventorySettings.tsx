@@ -43,7 +43,7 @@ export const InventorySettings = ({ prefs, handleChange, errors }: InventorySett
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-surface/50 border border-border rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-surface border border-border rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
                         <Package size={24} />
                     </div>
@@ -52,7 +52,7 @@ export const InventorySettings = ({ prefs, handleChange, errors }: InventorySett
                         <p className="text-xl font-black text-text-main">{prefs.lowStockTrigger || 5}</p>
                     </div>
                 </div>
-                <div className="bg-surface/50 border border-border rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-surface border border-border rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${prefs.allowNegativeStock ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
                         <TrendingDown size={24} />
                     </div>
@@ -61,7 +61,7 @@ export const InventorySettings = ({ prefs, handleChange, errors }: InventorySett
                         <p className={`text-xl font-black ${prefs.allowNegativeStock ? 'text-red-500' : 'text-emerald-500'}`}>{prefs.allowNegativeStock ? 'مسموح' : 'محظور'}</p>
                     </div>
                 </div>
-                <div className="bg-surface/50 border border-border rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-surface border border-border rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                         <BarChart3 size={24} />
                     </div>
@@ -74,7 +74,7 @@ export const InventorySettings = ({ prefs, handleChange, errors }: InventorySett
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Low Stock Config */}
-                <div className="bg-surface/50 rounded-3xl border border-border p-6 shadow-sm">
+                <div className="bg-surface rounded-3xl border border-border p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center">
                             <Bell size={20} className="text-amber-500" />
@@ -105,7 +105,7 @@ export const InventorySettings = ({ prefs, handleChange, errors }: InventorySett
                 </div>
 
                 {/* Negative Stock Config */}
-                <div className={`rounded-3xl border-2 p-6 transition-all duration-300 ${prefs.allowNegativeStock ? 'bg-red-500/5 border-red-500/20 shadow-red-500/5' : 'bg-surface/50 border-border shadow-sm'}`}>
+                <div className={`rounded-3xl border-2 p-6 transition-all duration-300 ${prefs.allowNegativeStock ? 'bg-red-500/5 border-red-500/20 shadow-red-500/5' : 'bg-surface border-border shadow-sm'}`}>
                     <div className="flex items-center gap-3 mb-6">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${prefs.allowNegativeStock ? 'bg-red-500/20 text-red-600' : 'bg-surface-active text-text-muted'}`}>
                             <AlertTriangle size={20} />

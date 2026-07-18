@@ -32,7 +32,7 @@ export function DataTable<T>({ data, columns, keyExtractor, rowClassName, emptyT
           </thead>
           <tbody>
             {data.map((row, idx) => (
-              <tr key={keyExtractor(row, idx)} className={cn('border-b border-border/30 hover:bg-surface-hover/50 transition-colors', rowClassName?.(row, idx))}>
+              <tr key={keyExtractor(row, idx)} className={cn('border-b border-border/30 hover:bg-surface-hover transition-colors', rowClassName?.(row, idx))}>
                 {columns.map((col, colIdx) => (
                   <td key={colIdx} className={cn('text-text-main font-medium', col.className)}>
                     {typeof col.accessor === 'function' ? col.accessor(row) : String(row[col.accessor] ?? '')}

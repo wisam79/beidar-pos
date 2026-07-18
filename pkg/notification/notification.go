@@ -3,10 +3,12 @@
 package notification
 
 import (
+	"bytes"
+	"encoding/xml"
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
-	"strings"
 	"syscall"
 )
 
@@ -27,7 +29,7 @@ func ShowNativeNotification(title, message string, notifType NotificationType) e
 	}
 
 	// Use PowerShell to show Windows Toast Notification
-	script := fmt.Sprintf(`
+	script := `
 		[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
 		[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
 
@@ -35,8 +37,8 @@ func ShowNativeNotification(title, message string, notifType NotificationType) e
 		<toast>
 			<visual>
 				<binding template="ToastText02">
-					<text id="1">%s</text>
-					<text id="2">%s</text>
+					<text id="1">$($env:NOTIF_TITLE)</text>
+					<text id="2">$($env:NOTIF_MESSAGE)</text>
 				</binding>
 			</visual>
 		</toast>
@@ -46,10 +48,14 @@ func ShowNativeNotification(title, message string, notifType NotificationType) e
 		$xml.LoadXml($template)
 		$toast = New-Object Windows.UI.Notifications.ToastNotification $xml
 		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Beidar POS").Show($toast)
-	`, escapePS(title), escapePS(message))
+	`
 
 	cmd := exec.Command("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", script)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	cmd.Env = append(os.Environ(),
+		"NOTIF_TITLE="+escapeXML(title),
+		"NOTIF_MESSAGE="+escapeXML(message),
+	)
 	return cmd.Run()
 }
 
@@ -88,8 +94,8 @@ func ShowBackupCompletedNotification() error {
 	return ShowNativeNotification(title, message, NotificationSuccess)
 }
 
-func escapePS(s string) string {
-	result := strings.ReplaceAll(s, "\"", "`\"")
-	result = strings.ReplaceAll(result, "$", "`$")
-	return result
+func escapeXML(s string) string {
+	var buf bytes.Buffer
+	_ = xml.EscapeText(&buf, []byte(s))
+	return buf.String()
 }

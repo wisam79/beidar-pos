@@ -35,6 +35,17 @@ export const useUsbScannerDetection = ({
         };
     });
 
+    const onScanRef = useRef(onScan);
+    const onUsbDetectedRef = useRef(onUsbDetected);
+    const isUsbDetectedRef = useRef(state.isUsbDetected);
+
+    // Update refs on every render to ensure always having the latest reference
+    useEffect(() => {
+        onScanRef.current = onScan;
+        onUsbDetectedRef.current = onUsbDetected;
+        isUsbDetectedRef.current = state.isUsbDetected;
+    });
+
     const bufferRef = useRef('');
     const lastKeyTimeRef = useRef(0);
     const consecutiveFastInputsRef = useRef(0);
@@ -58,7 +69,7 @@ export const useUsbScannerDetection = ({
                 // Check if this was fast input (USB scanner pattern)
                 if (consecutiveFastInputsRef.current >= MIN_BARCODE_LENGTH - 1) {
                     // Definitely a USB scanner!
-                    if (!state.isUsbDetected) {
+                    if (!isUsbDetectedRef.current) {
                         localStorage.setItem(USB_SCANNER_KEY, 'true');
                         setState(prev => ({
                             ...prev,
@@ -66,14 +77,16 @@ export const useUsbScannerDetection = ({
                             lastDetectionTime: now,
                             scanCount: prev.scanCount + 1
                         }));
-                        onUsbDetected?.();
+                        onUsbDetectedRef.current?.();
                     } else {
                         setState(prev => ({ ...prev, scanCount: prev.scanCount + 1 }));
                     }
+                } else {
+                    setState(prev => ({ ...prev, scanCount: prev.scanCount + 1 }));
                 }
 
-                // Execute scan callback
-                onScan(bufferRef.current);
+                // Execute scan callback synchronously
+                onScanRef.current(bufferRef.current);
             }
 
             // Reset buffer
@@ -97,7 +110,7 @@ export const useUsbScannerDetection = ({
                 consecutiveFastInputsRef.current++;
             }
         }
-    }, [enabled, onScan, onUsbDetected, state.isUsbDetected]);
+    }, [enabled]);
 
     // Attach global keydown listener
     useEffect(() => {

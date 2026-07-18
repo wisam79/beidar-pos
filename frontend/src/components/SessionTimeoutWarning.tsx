@@ -12,7 +12,7 @@ export const SessionTimeoutWarning = () => {
     if (!sessionTimeoutWarning) return null;
 
     return (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50  animate-in fade-in duration-300">
             <div className="bg-surface rounded-2xl border border-border shadow-2xl p-6 max-w-sm mx-4 animate-in zoom-in-95 duration-300">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">

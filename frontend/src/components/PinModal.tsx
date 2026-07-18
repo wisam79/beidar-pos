@@ -63,7 +63,7 @@ export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[9999] bg-black/90  flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-surface border border-border rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col items-center">
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 border border-primary/20">
                     <Lock size={32} />

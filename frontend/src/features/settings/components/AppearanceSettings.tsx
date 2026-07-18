@@ -30,7 +30,7 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Main Appearance Controls */}
-                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
+                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Monitor size={24} />
@@ -43,14 +43,16 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
                             <label className="block text-[11px] text-text-muted font-bold uppercase mb-2">حجم الخط</label>
                             <div className="relative">
                                 <select
-                                    className="w-full bg-surface-active/50 border border-border text-text-main rounded-lg py-3 px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold appearance-none cursor-pointer transition-all"
+                                    className="w-full bg-input-bg border border-border text-text-main rounded-lg py-3 px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold appearance-none cursor-pointer transition-all"
                                     value={prefs.fontSize}
                                     onChange={e => handleChange('fontSize', e.target.value)}
                                     aria-label="حجم الخط"
                                 >
-                                    <option value="normal">متوسط (افتراضي)</option>
-                                    <option value="large">كبير</option>
-                                    <option value="xl">كبير جداً</option>
+                                    <option value="small" className="bg-bg">صغير</option>
+                                    <option value="normal" className="bg-bg">متوسط (افتراضي)</option>
+                                    <option value="large" className="bg-bg">كبير</option>
+                                    <option value="xl" className="bg-bg">كبير جداً</option>
+                                    <option value="2xl" className="bg-bg">عملاق</option>
                                 </select>
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
                                     <Type size={16} />
@@ -62,7 +64,7 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
                             <label className="block text-[11px] text-text-muted font-bold uppercase mb-2">اللغة / Language</label>
                             <div className="relative">
                                 <select
-                                    className="w-full bg-surface-active/50 border border-border text-text-main rounded-lg py-3 px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold appearance-none cursor-pointer transition-all"
+                                    className="w-full bg-input-bg border border-border text-text-main rounded-lg py-3 px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold appearance-none cursor-pointer transition-all"
                                     value={prefs.language || 'ar'}
                                     onChange={e => {
                                         const newLang = e.target.value;
@@ -71,8 +73,8 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
                                     }}
                                     aria-label="اللغة"
                                 >
-                                    <option value="ar">العربية</option>
-                                    <option value="en">English</option>
+                                    <option value="ar" className="bg-bg">العربية</option>
+                                    <option value="en" className="bg-bg">English</option>
                                 </select>
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
                                     <Globe size={16} />
@@ -83,7 +85,7 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
                 </div>
 
                 {/* Toggles Grid */}
-                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
+                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Sparkles size={24} />

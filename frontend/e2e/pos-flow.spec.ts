@@ -8,8 +8,7 @@ test.describe('POS Full Sales Cycle', () => {
         await mockWails(page);
         await page.goto('/#/sales');
         await page.waitForLoadState('networkidle');
-
-        await page.waitForTimeout(1500);
+        await page.locator('#root').waitFor({ state: 'visible' });
 
         // Check if we are on the login screen and handle authentication if needed
         const selectAccountText = page.locator('h2').filter({ hasText: /اختر حسابك|اختر الحساب|Select your account/i }).first();
@@ -17,19 +16,20 @@ test.describe('POS Full Sales Cycle', () => {
             const adminButton = page.locator('button').filter({ hasText: /Admin|admin/i }).first();
             if (await adminButton.isVisible().catch(() => false)) {
                 await adminButton.click();
-                await page.waitForTimeout(800);
-
+                
                 const zeroButton = page.locator('button').filter({ hasText: /^0$/ }).first();
-                if (await zeroButton.isVisible().catch(() => false)) {
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(4000); // Wait for login animation and redirection to sales
-                }
+                await zeroButton.waitFor({ state: 'visible', timeout: 5000 });
+
+                await zeroButton.click();
+                await page.waitForTimeout(150);
+                await zeroButton.click();
+                await page.waitForTimeout(150);
+                await zeroButton.click();
+                await page.waitForTimeout(150);
+                await zeroButton.click();
+                
+                // Wait for login animation and redirection to sales
+                await page.locator('input[placeholder*="بحث"], input[placeholder*="search"]').first().waitFor({ state: 'visible', timeout: 10000 });
             }
         }
     });
@@ -56,15 +56,13 @@ test.describe('POS Full Sales Cycle', () => {
         if (await searchInput.isVisible().catch(() => false)) {
             await searchInput.click();
             await searchInput.fill('Test Product');
-            await page.waitForTimeout(500);
+            
+            const productBtn = page.locator('button').filter({ hasText: /Test Product/i }).first();
+            await productBtn.waitFor({ state: 'visible', timeout: 5000 });
+            await productBtn.click();
 
-            const cartButtons = page.locator('button').filter({ hasText: /إضافة|Add|\+/i });
-            const cartBtnCount = await cartButtons.count();
-
-            if (cartBtnCount > 0 && await cartButtons.first().isVisible().catch(() => false)) {
-                await cartButtons.first().click();
-                await page.waitForTimeout(500);
-            }
+            // Wait for cart list item to be rendered (e.g. showing "الصافي" net price label or "Test Product" inside cart)
+            await page.locator('text=الصافي').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
             const cartContent = await page.locator('#root').textContent() || '';
             expect(cartContent.length).toBeGreaterThan(0);
@@ -79,7 +77,8 @@ test.describe('POS Full Sales Cycle', () => {
 
         if (await customerBtn.isVisible().catch(() => false)) {
             await customerBtn.click();
-            await page.waitForTimeout(500);
+            // Wait for customer list modal/content to appear
+            await page.locator('p, [role="dialog"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
         }
 
         const body = await page.locator('#root').textContent() || '';
@@ -92,9 +91,10 @@ test.describe('POS Full Sales Cycle', () => {
 
         if (await checkoutBtn.isVisible().catch(() => false) && await checkoutBtn.isEnabled().catch(() => false)) {
             await checkoutBtn.click();
-            await page.waitForTimeout(1000);
-
+            
             const paymentModal = page.locator('[role="dialog"], .modal').first();
+            await paymentModal.waitFor({ state: 'visible', timeout: 5000 });
+
             if (await paymentModal.isVisible().catch(() => false)) {
                 const paymentContent = await paymentModal.textContent() || '';
                 expect(paymentContent.length).toBeGreaterThan(0);

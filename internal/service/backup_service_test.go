@@ -4,46 +4,30 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
-	"os"
+	"beidar-desktop/internal/testutil"
 	"strings"
 	"testing"
 
-	"github.com/glebarez/sqlite"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 func setupBackupTestDB(t *testing.T) (service.BackupService, *gorm.DB, func()) {
-	dbFileName := "test_backup_" + uuid.New().String()[:8] + ".db"
-	os.Remove(dbFileName)
-
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to open test DB: %v", err)
-	}
-
-	// Set global DB for ResetDatabase/InitDB to work
-	repository.SetTestDB(db)
-
-	if err := db.AutoMigrate(
+	db, cleanup := testutil.SetupDB(t,
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Customer{}, &domain.Payment{},
 		&domain.StockMovement{}, &domain.Shift{}, &domain.CashMovement{}, &domain.Staff{},
 		&domain.AppPreferences{}, &domain.LoginAttempt{}, &domain.Supplier{}, &domain.Category{},
 		&domain.Expense{}, &domain.ParkedSale{}, &domain.PurchaseOrder{}, &domain.PurchaseOrderItem{},
-	); err != nil {
-		t.Fatalf("Failed to migrate test DB: %v", err)
-	}
+	)
+
+	// Set global DB for ResetDatabase/InitDB to work
+	repository.SetTestDB(db)
 
 	backupRepo := repository.NewBackupRepository(db)
 	productRepo := repository.NewProductRepository(db)
 	backupService := service.NewBackupService(backupRepo, productRepo)
 
 	return backupService, db, func() {
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
-		os.Remove(dbFileName)
+		cleanup()
 		repository.SetTestDB(nil)
 	}
 }
@@ -150,5 +134,96 @@ func TestDatabaseExportImport(t *testing.T) {
 	db.Model(&domain.Customer{}).Count(&custCount)
 	if custCount != 1 {
 		t.Errorf("Expected 1 customer after import, got %d", custCount)
+	}
+}
+
+func TestBackupOperations(t *testing.T) {
+	backupService, db, cleanup := setupBackupTestDB(t)
+	defer cleanup()
+
+	// Seed some data so export is not empty
+	db.Create(&domain.Customer{ID: "cust_backup", Name: "Customer Backup"})
+
+	// 1. GetBackupDir
+	dir, err := service.GetBackupDir()
+	if err != nil {
+		t.Fatalf("Expected no error from GetBackupDir, got %v", err)
+	}
+	if dir == "" {
+		t.Errorf("Expected valid backup dir path")
+	}
+
+	// 2. CreateBackup
+	res, err := backupService.CreateBackup()
+	if err != nil {
+		t.Fatalf("Expected no error from CreateBackup, got %v", err)
+	}
+	if !res.Success {
+		t.Errorf("Expected backup to succeed, error: %s", res.Error)
+	}
+	if res.Path == "" {
+		t.Errorf("Expected backup path to be set")
+	}
+
+	// 3. ListBackups
+	list, err := backupService.ListBackups()
+	if err != nil {
+		t.Fatalf("Expected no error from ListBackups, got %v", err)
+	}
+	if len(list) < 1 {
+		t.Errorf("Expected at least 1 backup in list")
+	}
+
+	// 4. RestoreBackup
+	err = backupService.RestoreBackup(res.Path)
+	if err != nil {
+		t.Fatalf("Expected no error from RestoreBackup, got %v", err)
+	}
+
+	// 5. CleanOldBackups (with 0 days to delete all)
+	deleted, err := backupService.CleanOldBackups(0)
+	if err != nil {
+		t.Fatalf("Expected no error from CleanOldBackups, got %v", err)
+	}
+	// Note: cutoff logic might not delete immediate backups depending on timezone, but let's test deletion explicitly.
+
+	// 6. DeleteBackup
+	err = backupService.DeleteBackup(res.Path)
+	if err != nil && deleted == 0 { // If clean didn't delete it, delete manually
+		t.Fatalf("Expected no error from DeleteBackup, got %v", err)
+	}
+}
+
+func TestImageStorageMigration(t *testing.T) {
+	backupService, db, cleanup := setupBackupTestDB(t)
+	defer cleanup()
+
+	payload := strings.Repeat("A", 300)
+	base64Image := "data:image/png;base64," + payload
+	db.Create(&domain.Product{
+		ID:    "prod_img_1",
+		Name:  "Product With Image",
+		Image: base64Image,
+	})
+
+	// Run migration
+	migrated, err := backupService.MigrateImagesToFilesystem()
+	if err != nil {
+		t.Fatalf("Expected no error from MigrateImagesToFilesystem, got %v", err)
+	}
+	if migrated != 1 {
+		t.Errorf("Expected 1 image migrated, got %d", migrated)
+	}
+
+	// Run stats
+	stats, err := backupService.GetImageStorageStats()
+	if err != nil {
+		t.Fatalf("Expected no error from GetImageStorageStats, got %v", err)
+	}
+	if stats.TotalImages < 1 {
+		t.Errorf("Expected at least 1 image in stats, got %d", stats.TotalImages)
+	}
+	if stats.Base64Count != 0 {
+		t.Errorf("Expected 0 base64 images remaining, got %d", stats.Base64Count)
 	}
 }

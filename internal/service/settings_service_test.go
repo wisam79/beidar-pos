@@ -4,6 +4,7 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
+	"beidar-desktop/internal/testutil"
 	"beidar-desktop/pkg/crashreporter"
 	"beidar-desktop/pkg/logger"
 	"beidar-desktop/pkg/secureconfig"
@@ -17,7 +18,6 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/glebarez/sqlite"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -25,17 +25,7 @@ import (
 
 func setupSettingsTestDB(t *testing.T) (service.SettingsService, *gorm.DB, func()) {
 	logger.InitLogger(logger.INFO, false)
-	dbFileName := "test_settings_" + uuid.New().String()[:8] + ".db"
-	os.Remove(dbFileName)
-
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to open test DB: %v", err)
-	}
-
-	if err := db.AutoMigrate(&domain.AppPreferences{}); err != nil {
-		t.Fatalf("Failed to migrate test DB: %v", err)
-	}
+	db, cleanup := testutil.SetupDB(t, &domain.AppPreferences{})
 
 	// Seed default preferences so Get() doesn't fail
 	hashedPin, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
@@ -48,13 +38,7 @@ func setupSettingsTestDB(t *testing.T) (service.SettingsService, *gorm.DB, func(
 	preferencesRepo := repository.NewPreferencesRepository(db)
 	settingsService := service.NewSettingsService(preferencesRepo)
 
-	return settingsService, db, func() {
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
-		os.Remove(dbFileName)
-	}
+	return settingsService, db, cleanup
 }
 
 func TestPreferencesLifecycle(t *testing.T) {
@@ -220,11 +204,12 @@ func TestSettingsService_SupabaseAndUpdater(t *testing.T) {
 		if r.URL.Path == "/rest/v1/global_settings" {
 			if r.Method == "GET" {
 				w.Header().Set("Content-Type", "application/json")
+				
 				response := []map[string]interface{}{
 					{
 						"id":         "ai_keys",
 						"key":        "ai_keys",
-						"value":      json.RawMessage(`{"gemini_keys": ["key-alpha", "key-beta"]}`),
+						"value":      json.RawMessage(`{"gemini_keys": ["key-alpha", "key-beta"], "groq_keys": ["groq-alpha", "groq-beta"]}`),
 						"updated_at": "2026-06-12T12:00:00Z",
 					},
 				}
@@ -314,7 +299,27 @@ func TestSettingsService_SupabaseAndUpdater(t *testing.T) {
 		t.Error("Expected SaveGlobalAIKeys with bad token to fail, got nil")
 	}
 
-	// 6. Test DownloadUpdate (covers downloader code)
+	// 6. Test FetchGlobalGroqKeys
+	groqKeys, err := s.FetchGlobalGroqKeys()
+	if err != nil {
+		t.Fatalf("FetchGlobalGroqKeys failed: %v", err)
+	}
+	if len(groqKeys) != 2 || groqKeys[0] != "groq-alpha" || groqKeys[1] != "groq-beta" {
+		t.Errorf("Unexpected groq keys retrieved: %v", groqKeys)
+	}
+
+	// 7. Test SaveGlobalGroqKeys
+	err = s.SaveGlobalGroqKeys([]string{"groq-alpha"}, "")
+	if err == nil {
+		t.Error("Expected error when saving groq keys without token, got nil")
+	}
+
+	err = s.SaveGlobalGroqKeys([]string{"groq-alpha"}, "test-user-token")
+	if err != nil {
+		t.Fatalf("SaveGlobalGroqKeys failed: %v", err)
+	}
+
+	// 8. Test DownloadUpdate (covers downloader code)
 	// Calculate correct checksum of "dummy content"
 	dummyHashBytes := sha256.Sum256([]byte("dummy content"))
 	correctChecksum := hex.EncodeToString(dummyHashBytes[:])

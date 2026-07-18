@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"beidar-desktop/internal/core/domain"
+	pkgcrypto "beidar-desktop/pkg/crypto"
 	"beidar-desktop/pkg/secureconfig"
 )
 
@@ -109,10 +110,26 @@ func (s *cloudService) loadSessionFromCache() {
 	if err != nil {
 		return
 	}
+
+	key := deriveSupabaseSessionKey()
+	decrypted, err := pkgcrypto.Decrypt(string(data), key)
+	if err != nil {
+		fmt.Printf("⚠️ Failed to decrypt session cache: %v\n", err)
+		return
+	}
+
 	var session domain.UserSession
-	if json.Unmarshal(data, &session) == nil {
+	if json.Unmarshal(decrypted, &session) == nil {
 		currentSession = &session
 	}
+}
+
+func deriveSupabaseSessionKey() []byte {
+	host, err := os.Hostname()
+	if err != nil {
+		host = "beidar-supabase-session-default"
+	}
+	return pkgcrypto.DeriveKey(fmt.Sprintf("beidar-supabase-session-key-%s", host))
 }
 
 func (s *cloudService) saveSessionToCache() {
@@ -124,7 +141,15 @@ func (s *cloudService) saveSessionToCache() {
 		return
 	}
 	jsonData, _ := json.Marshal(session)
-	_ = os.WriteFile(getSessionCachePath(), jsonData, 0600)
+
+	key := deriveSupabaseSessionKey()
+	encrypted, err := pkgcrypto.Encrypt(jsonData, key)
+	if err != nil {
+		fmt.Printf("⚠️ Failed to encrypt session cache: %v\n", err)
+		return
+	}
+
+	_ = os.WriteFile(getSessionCachePath(), []byte(encrypted), 0600)
 }
 
 func (s *cloudService) clearSessionCache() {
@@ -947,7 +972,7 @@ func (s *cloudService) KeepAliveSupabase() {
 			req.Header.Set("Authorization", "Bearer "+session.AccessToken)
 		}
 
-		client := &http.Client{Timeout: 5 * time.Second}
+		client := getPinnedClient()
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Printf("⚠️ [KeepAlive] Supabase connection ping failed: %v\n", err)

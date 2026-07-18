@@ -50,9 +50,7 @@ export const VirtualProductGrid: React.FC<VirtualProductGridProps> = ({
 
         const updateColumns = () => {
             const newCols = getColumns();
-            if (newCols !== columns) {
-                setColumns(newCols);
-            }
+            setColumns(prev => (newCols !== prev ? newCols : prev));
         };
 
         // Debounced resize handler for better performance
@@ -81,7 +79,7 @@ export const VirtualProductGrid: React.FC<VirtualProductGridProps> = ({
             window.removeEventListener('resize', debouncedUpdate);
             resizeObserver.disconnect();
         };
-    }, [columns]);
+    }, []);
 
     // Calculate rows
     const rowCount = Math.ceil(products.length / columns);

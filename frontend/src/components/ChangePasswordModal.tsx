@@ -91,7 +91,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/70  z-[200] flex items-center justify-center p-4">
             <div className="bg-surface rounded-3xl border border-border shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 fade-in duration-300">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 p-6 border-b border-border">

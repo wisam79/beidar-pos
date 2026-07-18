@@ -18,7 +18,7 @@ export const settingsSchema = z.object({
     aiRotationMode: z.string().optional(),
     groqApiKey: z.string().optional(),
     // Enums (less critical for form input validation as they use Select usually, but good for data integrity)
-    fontSize: z.enum(['normal', 'large', 'xl']).optional(),
+    fontSize: z.enum(['small', 'normal', 'large', 'xl', '2xl']).optional(),
     language: z.string().optional(),
     currency: z.string().optional(),
 });

@@ -10,10 +10,12 @@ import (
 )
 
 // GenerateSessionToken creates a unique session token for a client
-func (s *lanService) GenerateSessionToken() string {
+func (s *lanService) GenerateSessionToken() (string, error) {
 	bytes := make([]byte, 16)
-	_, _ = rand.Read(bytes)
-	return hex.EncodeToString(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate secure session token: %w", err)
+	}
+	return hex.EncodeToString(bytes), nil
 }
 
 // RegisterClient registers a new client connection
@@ -30,7 +32,10 @@ func (s *lanService) RegisterClient(deviceID, deviceName, ipAddress string) (str
 	s.clientsMutex.Lock()
 	defer s.clientsMutex.Unlock()
 
-	token := s.GenerateSessionToken()
+	token, err := s.GenerateSessionToken()
+	if err != nil {
+		return "", err
+	}
 	now := time.Now().Unix()
 
 	s.connectedClients[deviceID] = &domain.ConnectedClient{
@@ -183,14 +188,16 @@ func (s *lanService) ClearAllClients() {
 
 // GenerateServerSecret creates a new random secret for the LAN server.
 // Uses 16 bytes (128 bits) of entropy, rendered as 32 hex characters.
-func (s *lanService) GenerateServerSecret() string {
+func (s *lanService) GenerateServerSecret() (string, error) {
 	s.secretMutex.Lock()
 	defer s.secretMutex.Unlock()
 
 	bytes := make([]byte, 16) // 128-bit secret → 32 hex characters
-	_, _ = rand.Read(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate secure server secret: %w", err)
+	}
 	s.secret = hex.EncodeToString(bytes)
-	return s.secret
+	return s.secret, nil
 }
 
 // GetServerSecret returns the current server secret

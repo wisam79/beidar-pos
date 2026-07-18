@@ -4,42 +4,23 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
-	"beidar-desktop/pkg/logger"
-	"os"
+	"beidar-desktop/internal/testutil"
 	"testing"
 	"time"
 
-	"github.com/glebarez/sqlite"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 func setupStatsTestDB(t *testing.T) (service.StatsService, *gorm.DB, func()) {
-	logger.InitLogger(logger.INFO, false)
-	dbFileName := "test_stats_" + uuid.New().String()[:8] + ".db"
-	os.Remove(dbFileName)
-
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to open test DB: %v", err)
-	}
-
-	if err := db.AutoMigrate(
+	db, cleanup := testutil.SetupDB(t,
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Expense{}, &domain.Category{},
-	); err != nil {
-		t.Fatalf("Failed to migrate test DB: %v", err)
-	}
+	)
 
 	statsRepo := repository.NewStatsRepository(db)
 	statsService := service.NewStatsService(statsRepo)
 
-	return statsService, db, func() {
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
-		os.Remove(dbFileName)
-	}
+	return statsService, db, cleanup
 }
 
 func TestStatsAggregations(t *testing.T) {
@@ -50,8 +31,8 @@ func TestStatsAggregations(t *testing.T) {
 	product := domain.Product{
 		ID:    uuid.New().String(),
 		Name:  "Gamer Mouse",
-		Cost:  15000,
-		Price: 25000,
+		Cost:  domain.NewAmount(150),
+		Price: domain.NewAmount(250),
 		Stock: 10,
 	}
 	db.Create(&product)
@@ -60,7 +41,7 @@ func TestStatsAggregations(t *testing.T) {
 	expense := domain.Expense{
 		ID:       uuid.New().String(),
 		Title:    "Broadband Internet",
-		Amount:   50000,
+		Amount:   domain.NewAmount(500),
 		Date:     time.Now().Format("2006-01-02"),
 		Category: "Utility",
 	}
@@ -72,8 +53,8 @@ func TestStatsAggregations(t *testing.T) {
 		CustomerName:  "Hassan CRM Customer",
 		Date:          time.Now().Format("2006-01-02"),
 		Timestamp:     time.Now().UnixMilli(),
-		Subtotal:      50000,
-		Total:         50000,
+		Subtotal:      domain.NewAmount(500),
+		Total:         domain.NewAmount(500),
 		PaymentMethod: "cash",
 		Status:        "completed",
 		Items: []domain.SaleItem{
@@ -81,9 +62,9 @@ func TestStatsAggregations(t *testing.T) {
 				ProductID: product.ID,
 				Name:      product.Name,
 				Quantity:  2,
-				Price:     25000,
-				Total:     50000,
-				Cost:      15000,
+				Price:     domain.NewAmount(250),
+				Total:     domain.NewAmount(500),
+				Cost:      domain.NewAmount(150),
 			},
 		},
 	}

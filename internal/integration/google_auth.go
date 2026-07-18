@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"beidar-desktop/pkg/crypto"
 	"beidar-desktop/pkg/secureconfig"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -72,17 +73,21 @@ func getGoogleTokenPath() string {
 
 func (s *cloudService) InitGoogleAuth() (string, error) {
 	authCodeChan = make(chan string)
-	server := &http.Server{Addr: ":" + AuthPort}
 
 	// Generate secure state token
 	b := make([]byte, 16)
-	if _, err := rand.Read(b); err == nil {
-		oauthStateToken = hex.EncodeToString(b)
-	} else {
-		oauthStateToken = "fallback-secure-state-" + fmt.Sprintf("%d", time.Now().UnixNano())
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("system entropy failure for google auth state: %w", err)
+	}
+	oauthStateToken = hex.EncodeToString(b)
+
+	mux := http.NewServeMux()
+	server := &http.Server{
+		Addr:    "127.0.0.1:" + AuthPort,
+		Handler: mux,
 	}
 
-	http.HandleFunc("/auth/callback", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/auth/callback", func(w http.ResponseWriter, r *http.Request) {
 		state := r.URL.Query().Get("state")
 		if state == "" || state != oauthStateToken {
 			http.Error(w, "State mismatch (CSRF warning)", http.StatusBadRequest)
@@ -145,12 +150,18 @@ func saveToken(token *oauth2.Token) error {
 		Expiry:       token.Expiry,
 	}
 
-	file, err := json.MarshalIndent(data, "", " ")
+	file, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(getGoogleTokenPath(), file, 0600)
+	key := deriveGoogleAuthKey()
+	encrypted, err := crypto.Encrypt(file, key)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt oauth token: %w", err)
+	}
+
+	return os.WriteFile(getGoogleTokenPath(), []byte(encrypted), 0600)
 }
 
 func (s *cloudService) IsGoogleConnected() bool {
@@ -191,14 +202,28 @@ func (s *cloudService) GetGoogleClient() (*http.Client, error) {
 	return googleOauthConfig.Client(context.Background(), token), nil
 }
 
+func deriveGoogleAuthKey() []byte {
+	host, err := os.Hostname()
+	if err != nil {
+		host = "beidar-google-auth-default"
+	}
+	return crypto.DeriveKey(fmt.Sprintf("beidar-google-auth-key-%s", host))
+}
+
 func loadToken() (*oauth2.Token, error) {
 	data, err := os.ReadFile(getGoogleTokenPath())
 	if err != nil {
 		return nil, err
 	}
 
+	key := deriveGoogleAuthKey()
+	decrypted, err := crypto.Decrypt(string(data), key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt oauth token: %w", err)
+	}
+
 	var store TokenStore
-	if err := json.Unmarshal(data, &store); err != nil {
+	if err := json.Unmarshal(decrypted, &store); err != nil {
 		return nil, err
 	}
 

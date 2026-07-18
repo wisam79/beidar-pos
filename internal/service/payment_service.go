@@ -354,6 +354,10 @@ func (s *paymentService) CalculateInstallmentPlan(total, downPayment domain.Amou
 
 	rawPerMonth := remaining / domain.Amount(months)         // integer division (truncates toward zero)
 	roundedBase := rawPerMonth.RoundToNearest(unit)          // floor to nearest 25000 cents
+	
+	if roundedBase <= 0 {
+		roundedBase = rawPerMonth
+	}
 
 	schedule := make([]domain.Installment, months)
 
@@ -387,18 +391,31 @@ func (s *paymentService) CalculateInstallmentPlan(total, downPayment domain.Amou
 }
 
 func (s *paymentService) GetInstallmentAlertSummary() (*domain.InstallmentAlertSummary, error) {
-	customers, err := s.customerRepo.GetAll()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch customers: %w", err)
-	}
-	customerMap := make(map[string]domain.Customer)
-	for _, c := range customers {
-		customerMap[c.ID] = c
-	}
-
 	sales, err := s.saleRepo.GetInstallmentSales()
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch installment sales: %w", err)
+	}
+
+	// Extract unique customer IDs from installment sales
+	custIDMap := make(map[string]bool)
+	for _, sale := range sales {
+		if sale.CustomerID != "" {
+			custIDMap[sale.CustomerID] = true
+		}
+	}
+	custIDs := make([]string, 0, len(custIDMap))
+	for id := range custIDMap {
+		custIDs = append(custIDs, id)
+	}
+
+	customers, err := s.customerRepo.GetByIDs(custIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch installment customers: %w", err)
+	}
+
+	customerMap := make(map[string]domain.Customer)
+	for _, c := range customers {
+		customerMap[c.ID] = c
 	}
 
 	var totalOverdue int64

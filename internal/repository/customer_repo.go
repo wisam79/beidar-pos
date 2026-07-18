@@ -37,6 +37,15 @@ func (r *customerRepository) GetByID(id string) (*domain.Customer, error) {
 	return &customer, nil
 }
 
+func (r *customerRepository) GetByIDs(ids []string) ([]domain.Customer, error) {
+	var customers []domain.Customer
+	if len(ids) == 0 {
+		return customers, nil
+	}
+	err := r.db.Find(&customers, "id IN ?", ids).Error
+	return customers, err
+}
+
 func (r *customerRepository) GetByPhone(phone string) (*domain.Customer, error) {
 	var customer domain.Customer
 	if err := r.db.First(&customer, "phone = ?", phone).Error; err != nil {

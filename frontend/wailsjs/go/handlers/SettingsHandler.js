@@ -26,6 +26,10 @@ export function FetchGlobalAIKeys() {
   return window['go']['handlers']['SettingsHandler']['FetchGlobalAIKeys']();
 }
 
+export function FetchGlobalGroqKeys() {
+  return window['go']['handlers']['SettingsHandler']['FetchGlobalGroqKeys']();
+}
+
 export function GetCrashReportContent(arg1) {
   return window['go']['handlers']['SettingsHandler']['GetCrashReportContent'](arg1);
 }
@@ -60,6 +64,10 @@ export function IsAutoStartEnabled() {
 
 export function SaveGlobalAIKeys(arg1, arg2) {
   return window['go']['handlers']['SettingsHandler']['SaveGlobalAIKeys'](arg1, arg2);
+}
+
+export function SaveGlobalGroqKeys(arg1, arg2) {
+  return window['go']['handlers']['SettingsHandler']['SaveGlobalGroqKeys'](arg1, arg2);
 }
 
 export function ShowNativeNotification(arg1, arg2, arg3) {

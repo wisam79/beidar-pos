@@ -106,7 +106,7 @@ const badgeStyles: Record<BadgeType, string> = {
 export const Badge = memo(({ type, text }: { type: BadgeType | string, text: string }) => {
     const styleClass = badgeStyles[type as BadgeType] || badgeStyles.info;
     return (
-        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 w-fit select-none backdrop-blur-sm ${styleClass}`}>
+        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 w-fit select-none  ${styleClass}`}>
             {type.includes('success') || type === 'completed' ? <CheckCircle2 size={12} /> : type.includes('warn') || type === 'pending' ? <AlertTriangle size={12} /> : type.includes('err') || type === 'returned' ? <XCircle size={12} /> : <Info size={12} />}
             {text}
         </span>
@@ -115,7 +115,7 @@ export const Badge = memo(({ type, text }: { type: BadgeType | string, text: str
 Badge.displayName = 'Badge';
 
 export const PageHeader = memo(({ title, icon: Icon, description, actions, children }: PageHeaderProps) => (
-    <header className="shrink-0 flex flex-col gap-2.5 bg-surface/85 backdrop-blur-md border border-border rounded-2xl py-2.5 px-4 lg:py-3 lg:px-5 shadow-card mb-3 w-full text-right">
+    <header className="shrink-0 flex flex-col gap-2.5 bg-surface  border border-border rounded-2xl py-2.5 px-4 lg:py-3 lg:px-5 shadow-card mb-3 w-full text-right">
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 w-full">
             {/* Right-to-Left (Arabic friendly) layout: Icon & Title */}
             <div className="flex items-center gap-3 w-full md:w-auto">
@@ -169,7 +169,7 @@ export const Modal = memo(({ title, description, onClose, children, footer, open
 
     return createPortal(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-lg transition-opacity duration-300 animate-in fade-in" />
+            <div className="absolute inset-0 bg-black/70  transition-opacity duration-300 animate-in fade-in" />
             <div
                 className={`
                     relative w-full ${maxWidth} 
@@ -184,7 +184,7 @@ export const Modal = memo(({ title, description, onClose, children, footer, open
                 onClick={e => e.stopPropagation()}
             >
                 {(title || description) && (
-                    <div className="px-8 py-6 border-b border-border/80 flex justify-between items-center shrink-0 bg-surface/98">
+                    <div className="px-8 py-6 border-b border-border/80 flex justify-between items-center shrink-0 bg-surface">
                         <div>
                             {title && <h2 className="text-lg font-black text-text-main tracking-tight">{title}</h2>}
                             {description && <p className="mt-1 text-sm text-text-muted">{description}</p>}
@@ -196,7 +196,7 @@ export const Modal = memo(({ title, description, onClose, children, footer, open
                     </div>
                 )}
                 <div className="p-8 overflow-y-auto custom-scrollbar flex-1">{children}</div>
-                {footer && <div className="flex justify-end gap-2 border-t border-border/80 p-6 bg-surface/98">{footer}</div>}
+                {footer && <div className="flex justify-end gap-2 border-t border-border/80 p-6 bg-surface">{footer}</div>}
             </div>
         </div>,
         document.body
@@ -414,9 +414,9 @@ export const GlassPanel = memo(({
     onClick?: () => void;
 }) => {
     const blurClass = {
-        sm: 'backdrop-blur-sm',
-        md: 'backdrop-blur-md',
-        lg: 'backdrop-blur-lg'
+        sm: '',
+        md: '',
+        lg: ''
     };
 
     return (
@@ -424,7 +424,7 @@ export const GlassPanel = memo(({
             onClick={onClick}
             className={`
             ${blurClass[blur]}
-            bg-surface/80
+            bg-surface
             border border-border/50
             rounded-2xl
             ${onClick ? 'cursor-pointer' : ''}

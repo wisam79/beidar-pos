@@ -58,7 +58,7 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
                 {/* User Info */}
                 {currentUser && (
                     <div 
-                        className="flex items-center gap-1.5 h-[22px] text-[11px] font-medium text-text-muted hover:text-text-main bg-surface-hover/60 dark:bg-neutral-800/40 border border-border/40 dark:border-neutral-700/50 px-2.5 rounded-full shadow-xs hover:bg-surface-hover dark:hover:bg-neutral-800/70 hover:border-border/80 dark:hover:border-neutral-600 transition-all duration-200 cursor-default group"
+                        className="flex items-center gap-1.5 h-[22px] text-[11px] font-medium text-text-muted hover:text-text-main bg-surface-hover dark:bg-neutral-800/40 border border-border/40 dark:border-neutral-700/50 px-2.5 rounded-full shadow-xs hover:bg-surface-hover dark:hover:bg-neutral-800/70 hover:border-border/80 dark:hover:border-neutral-600 transition-all duration-200 cursor-default group"
                         title={`المستخدم الحالي: ${currentUser.name}`}
                     >
                         <User size={12} className="text-primary/75 dark:text-primary/90 shrink-0 group-hover:scale-110 transition-transform duration-200" />
@@ -93,7 +93,7 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
                 {/* Version */}
                 {appVersion && (
                     <div 
-                        className="flex items-center gap-1.5 h-[22px] text-[11px] font-medium text-text-muted hover:text-text-main bg-surface-hover/60 dark:bg-neutral-800/40 border border-border/40 dark:border-neutral-700/50 px-2.5 rounded-full shadow-xs hover:bg-surface-hover dark:hover:bg-neutral-800/70 hover:border-border/80 dark:hover:border-neutral-600 transition-all duration-200 cursor-default group"
+                        className="flex items-center gap-1.5 h-[22px] text-[11px] font-medium text-text-muted hover:text-text-main bg-surface-hover dark:bg-neutral-800/40 border border-border/40 dark:border-neutral-700/50 px-2.5 rounded-full shadow-xs hover:bg-surface-hover dark:hover:bg-neutral-800/70 hover:border-border/80 dark:hover:border-neutral-600 transition-all duration-200 cursor-default group"
                         title={`إصدار النظام: ${appVersion}`}
                     >
                         <Server size={11} className="text-text-muted/70 shrink-0 group-hover:scale-105 transition-transform duration-200" />

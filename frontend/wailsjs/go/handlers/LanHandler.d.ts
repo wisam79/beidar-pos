@@ -5,7 +5,7 @@ import {context} from '../models';
 
 export function BlockLanDevice(arg1:string,arg2:string,arg3:string):Promise<void>;
 
-export function ConnectToLanServer(arg1:string,arg2:number):Promise<void>;
+export function ConnectToLanServer(arg1:string,arg2:number,arg3:string):Promise<void>;
 
 export function DisconnectFromLanServer():Promise<void>;
 

@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import type { AppPreferences } from '../core/types';
 
 const sizeMap: Record<string, string> = {
+  small: '13px',
   normal: '15px',
-  large: '16px',
-  xl: '17px',
+  large: '17px',
+  xl: '19px',
+  '2xl': '22px',
 };
 
 export function useTheme(prefs: AppPreferences) {

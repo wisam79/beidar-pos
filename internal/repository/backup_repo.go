@@ -109,51 +109,96 @@ func (r *backupRepository) Import(data domain.DatabaseExport) error {
 			tx.Create(&data.Suppliers)
 		}
 		if len(data.Customers) > 0 {
-			tx.Create(&data.Customers)
-		}
-		if len(data.Products) > 0 {
-			tx.Create(&data.Products)
-		}
-		for _, s := range data.Sales {
-			items := s.Items
-			s.Items = nil
-			tx.Create(&s)
-			for _, item := range items {
-				item.SaleID = s.ID
-				tx.Create(&item)
+			if err := tx.CreateInBatches(&data.Customers, 100).Error; err != nil {
+				return err
 			}
 		}
+		if len(data.Products) > 0 {
+			if err := tx.CreateInBatches(&data.Products, 100).Error; err != nil {
+				return err
+			}
+		}
+
+		var allSaleItems []domain.SaleItem
+		for i := range data.Sales {
+			s := &data.Sales[i]
+			for j := range s.Items {
+				item := s.Items[j]
+				item.SaleID = s.ID
+				allSaleItems = append(allSaleItems, item)
+			}
+			s.Items = nil
+		}
+		if len(data.Sales) > 0 {
+			if err := tx.CreateInBatches(&data.Sales, 100).Error; err != nil {
+				return err
+			}
+		}
+		if len(allSaleItems) > 0 {
+			if err := tx.CreateInBatches(&allSaleItems, 100).Error; err != nil {
+				return err
+			}
+		}
+
 		if len(data.Expenses) > 0 {
-			tx.Create(&data.Expenses)
+			if err := tx.CreateInBatches(&data.Expenses, 100).Error; err != nil {
+				return err
+			}
 		}
 		if len(data.StockMovements) > 0 {
-			tx.Create(&data.StockMovements)
+			if err := tx.CreateInBatches(&data.StockMovements, 100).Error; err != nil {
+				return err
+			}
 		}
 		if data.Preferences != nil {
-			tx.Create(data.Preferences)
+			if err := tx.Create(data.Preferences).Error; err != nil {
+				return err
+			}
 		}
 		if len(data.Staff) > 0 {
-			tx.Create(&data.Staff)
+			if err := tx.CreateInBatches(&data.Staff, 100).Error; err != nil {
+				return err
+			}
 		}
 		if len(data.Payments) > 0 {
-			tx.Create(&data.Payments)
+			if err := tx.CreateInBatches(&data.Payments, 100).Error; err != nil {
+				return err
+			}
 		}
 		if len(data.ParkedSales) > 0 {
-			tx.Create(&data.ParkedSales)
+			if err := tx.CreateInBatches(&data.ParkedSales, 100).Error; err != nil {
+				return err
+			}
 		}
 		if len(data.Shifts) > 0 {
-			tx.Create(&data.Shifts)
+			if err := tx.CreateInBatches(&data.Shifts, 100).Error; err != nil {
+				return err
+			}
 		}
 		if len(data.CashMovements) > 0 {
-			tx.Create(&data.CashMovements)
+			if err := tx.CreateInBatches(&data.CashMovements, 100).Error; err != nil {
+				return err
+			}
 		}
-		for _, po := range data.PurchaseOrders {
-			items := po.Items
-			po.Items = nil
-			tx.Create(&po)
-			for _, item := range items {
+
+		var allPurchaseItems []domain.PurchaseOrderItem
+		for i := range data.PurchaseOrders {
+			po := &data.PurchaseOrders[i]
+			for j := range po.Items {
+				item := po.Items[j]
 				item.OrderID = po.ID
-				tx.Create(&item)
+				allPurchaseItems = append(allPurchaseItems, item)
+			}
+			po.Items = nil
+		}
+		if len(data.PurchaseOrders) > 0 {
+			if err := tx.CreateInBatches(&data.PurchaseOrders, 100).Error; err != nil {
+				return err
+			}
+		}
+		if len(allPurchaseItems) > 0 {
+			if err := tx.CreateInBatches(&allPurchaseItems, 100).Error; err != nil {
+				return err
 			}
 		}
 

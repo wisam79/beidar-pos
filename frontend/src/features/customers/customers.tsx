@@ -8,8 +8,9 @@ import { Modal, Badge, PageHeader, EmptyState, SpotlightCard } from '../../compo
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput } from '../../components/blocks';
 import { analyzeCustomerProfile } from '../../core/ai';
+import { useQuery } from '@tanstack/react-query';
+import { useCustomers, useInvalidateCustomers, useConfirmModal } from '../../hooks';
 import { api } from '../../core/api';
-import { useInvalidateCustomers, useConfirmModal } from '../../hooks';
 import { ReceiptTemplate } from '../../components/ReceiptTemplate';
 import { Printer, Eye } from 'lucide-react';
 import { DataTable, ColumnDef } from '../../components/shared/DataTable';
@@ -23,10 +24,20 @@ export const CustomersPage: React.FC = () => {
     // React Query cache invalidation for cross-page sync
     const invalidateCustomers = useInvalidateCustomers();
 
-    // Local State
-    const [customers, setCustomers] = useState<Customer[]>([]);
-    const [sales, setSales] = useState<Sale[]>([]);
-    const [loading, setLoading] = useState(true);
+    // React Query Hooks
+    const { customers, isLoading: customersLoading, refetch: refetchCustomers } = useCustomers();
+    const { data: sales = [], isLoading: salesLoading } = useQuery({
+        queryKey: ['sales', 0, 5000, '', '', ''],
+        queryFn: async () => {
+            const res = await api.sales.list(0, 5000, '', '', '');
+            return res?.data || [];
+        }
+    });
+
+    const loading = customersLoading || salesLoading;
+    const loadData = () => {
+        refetchCustomers();
+    };
 
     const [search, setSearch] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
@@ -40,26 +51,6 @@ export const CustomersPage: React.FC = () => {
     const [showOnlyDebt, setShowOnlyDebt] = useState(false);
     const [showStats, setShowStats] = useState(false); // Collapsible stats state
     const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
-
-    // Load Data using API
-    const loadData = async () => {
-        try {
-            setLoading(true);
-            const [custs, slsData] = await Promise.all([
-                api.customers.list(),
-                api.sales.list(0, 5000, '', '', '')
-            ]);
-            setCustomers(custs);
-            setSales(slsData.data);
-        } catch (e) {
-            console.error(e);
-            notify('فشل تحميل بيانات العملاء', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => { loadData(); }, []);
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // 🔗 Pending Action Handler (from QuickActionsBar)
@@ -294,7 +285,7 @@ export const CustomersPage: React.FC = () => {
                                         return (
                                             <tr
                                                 key={c.id}
-                                                className={`border-b border-border/30 hover:bg-surface-hover/50 transition-colors group`}
+                                                className={`border-b border-border/30 hover:bg-surface-hover transition-colors group`}
                                             >
                                                 <td className="px-4 py-3 relative">
                                                     {/* Health indicator bar on the right in RTL */}

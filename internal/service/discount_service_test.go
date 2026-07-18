@@ -4,38 +4,20 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
-	"os"
+	"beidar-desktop/internal/testutil"
 	"testing"
 	"time"
 
-	"github.com/glebarez/sqlite"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 func setupDiscountTestDB(t *testing.T) (service.DiscountService, *gorm.DB, func()) {
-	dbFileName := "test_disc_" + uuid.New().String()[:8] + ".db"
-	os.Remove(dbFileName)
-
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to open test DB: %v", err)
-	}
-
-	if err := db.AutoMigrate(&domain.Discount{}); err != nil {
-		t.Fatalf("Failed to migrate test DB: %v", err)
-	}
+	db, cleanup := testutil.SetupDB(t, &domain.Discount{})
 
 	discountRepo := repository.NewDiscountRepository(db)
 	discountService := service.NewDiscountService(discountRepo)
 
-	return discountService, db, func() {
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
-		os.Remove(dbFileName)
-	}
+	return discountService, db, cleanup
 }
 
 func TestDiscountLifecycle(t *testing.T) {

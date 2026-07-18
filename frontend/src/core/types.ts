@@ -153,7 +153,7 @@ export interface AppPreferences {
   defaultPrinter: string;
   accentColor: string;
   compactMode: boolean;
-  fontSize: 'normal' | 'large' | 'xl';
+  fontSize: 'small' | 'normal' | 'large' | 'xl' | '2xl';
   theme: 'dark' | 'light';
 
   enableSound: boolean; // Required

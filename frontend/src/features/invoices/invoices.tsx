@@ -234,7 +234,7 @@ export const InvoicesPage: React.FC = () => {
                                         <tr
                                             key={s.id}
                                             onClick={() => { setSelectedInvoice(s); setIsPrinting(false); setPrintMode('a4'); }}
-                                            className={`border-b border-border/30 hover:bg-surface-hover/50 transition-colors cursor-pointer group ${
+                                            className={`border-b border-border/30 hover:bg-surface-hover transition-colors cursor-pointer group ${
                                                 isReturned ? 'opacity-60 grayscale-[0.5]' : ''
                                             }`}
                                         >
@@ -337,7 +337,7 @@ export const InvoicesPage: React.FC = () => {
                             </div>
 
                             {/* Floating Zoom Controls */}
-                            <div className="absolute bottom-4 right-4 flex gap-2 bg-surface/90 backdrop-blur-md rounded-xl p-2 border border-border shadow-lg z-10">
+                            <div className="absolute bottom-4 right-4 flex gap-2 bg-surface  rounded-xl p-2 border border-border shadow-lg z-10">
                                 <button onClick={() => setPreviewScale(s => Math.min(1.5, s + 0.1))} className="p-2 hover:bg-surface-hover text-text-main rounded-lg transition-colors" title="تكبير"><ZoomIn size={20} /></button>
                                 <div className="w-px bg-border"></div>
                                 <button onClick={() => setPreviewScale(s => Math.max(0.3, s - 0.1))} className="p-2 hover:bg-surface-hover text-text-main rounded-lg transition-colors" title="تصغير"><ZoomOut size={20} /></button>

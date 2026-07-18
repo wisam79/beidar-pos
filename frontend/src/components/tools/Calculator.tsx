@@ -162,7 +162,7 @@ export const Calculator = () => {
     );
 
     return (
-        <div className="w-80 bg-gradient-to-b from-surface to-surface/80 backdrop-blur-xl rounded-b-2xl p-4 shadow-2xl select-none font-sans">
+        <div className="w-80 bg-gradient-to-b from-surface to-surface/80  rounded-b-2xl p-4 shadow-2xl select-none font-sans">
             {/* Display Area */}
             {/* FORCE LTR direction for math expressions so they read correctly (5 + 9, not 9 + 5) */}
             <div className="min-h-28 flex flex-col justify-end items-end mb-3 relative group px-2" dir="ltr">
@@ -193,7 +193,7 @@ export const Calculator = () => {
 
                 {/* History Panel */}
                 {showHistory && (
-                    <div className="absolute inset-0 bg-surface/98 z-20 backdrop-blur-xl rounded-xl flex flex-col p-2 overflow-y-auto custom-scrollbar border border-white/10" dir="rtl">
+                    <div className="absolute inset-0 bg-surface z-20  rounded-xl flex flex-col p-2 overflow-y-auto custom-scrollbar border border-white/10" dir="rtl">
                         <div className="flex justify-between items-center pb-2 border-b border-white/10 mb-2">
                             <span className="text-xs font-bold text-text-muted">السجل</span>
                             <button onClick={() => { setHistory([]); localStorage.removeItem('beidar_calc_history'); }} className="text-[10px] text-red-400">مسح</button>

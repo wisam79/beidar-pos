@@ -44,7 +44,7 @@ export const SecuritySettings = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* Access Control & PIN */}
-                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
+                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Lock size={24} />
@@ -76,7 +76,7 @@ export const SecuritySettings = ({
                 </div>
 
                 {/* Automation & Backups */}
-                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm">
+                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Clock size={24} />
@@ -95,7 +95,7 @@ export const SecuritySettings = ({
 
 
                 {/* Staff Management */}
-                <div className="bg-surface/50 border border-border rounded-lg p-6 shadow-sm flex flex-col justify-between">
+                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm flex flex-col justify-between">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-3 bg-primary/10 rounded-lg text-primary">
                             <Users size={24} />
@@ -110,7 +110,7 @@ export const SecuritySettings = ({
 
                         <button
                             onClick={openStaffManager}
-                            className="w-full mt-auto flex items-center justify-between p-5 bg-surface/50 border border-border hover:border-primary/30 rounded-lg hover:shadow-lg hover:shadow-primary/5 transition-all group cursor-pointer hover:bg-surface-hover"
+                            className="w-full mt-auto flex items-center justify-between p-5 bg-surface border border-border hover:border-primary/30 rounded-lg hover:shadow-lg hover:shadow-primary/5 transition-all group cursor-pointer hover:bg-surface-hover"
                         >
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:scale-110 transition-transform">

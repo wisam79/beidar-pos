@@ -640,7 +640,7 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
 
             {/* Sales Table */}
             <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-                {isLoading && <div className="absolute inset-0 bg-surface/50 backdrop-blur-sm flex items-center justify-center z-10"><RefreshCw className="animate-spin text-primary" /></div>}
+                {isLoading && <div className="absolute inset-0 bg-surface  flex items-center justify-center z-10"><RefreshCw className="animate-spin text-primary" /></div>}
                 <DataTable
                     data={sales}
                     columns={columns}

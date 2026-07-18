@@ -23,9 +23,13 @@ func (r *expenseRepository) Transaction(fn func(tx domain.Tx) error) error {
 	})
 }
 
-func (r *expenseRepository) GetExpenses() ([]domain.Expense, error) {
+func (r *expenseRepository) GetExpenses(month string) ([]domain.Expense, error) {
 	var expenses []domain.Expense
-	result := r.db.Order("date desc").Find(&expenses)
+	query := r.db.Order("date desc")
+	if month != "" {
+		query = query.Where("date LIKE ?", month+"%")
+	}
+	result := query.Find(&expenses)
 	return expenses, result.Error
 }
 

@@ -24,16 +24,20 @@ func (h *FinanceHandler) Startup(ctx context.Context) {
 	h.ctx = ctx
 }
 
-func (h *FinanceHandler) GetExpenses() ([]domain.Expense, error) {
+func (h *FinanceHandler) GetExpenses(month string) ([]domain.Expense, error) {
 	if err := auth.Require(); err != nil {
 		return nil, err
 	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result []domain.Expense
-		err := h.lanService.RemoteGet("/api/expenses", &result)
+		path := "/api/expenses"
+		if month != "" {
+			path += "?month=" + month
+		}
+		err := h.lanService.RemoteGet(path, &result)
 		return result, err
 	}
-	return h.financeService.GetExpenses()
+	return h.financeService.GetExpenses(month)
 }
 
 func (h *FinanceHandler) SaveExpense(e domain.Expense) error {

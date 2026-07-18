@@ -224,7 +224,7 @@ const useDesktopSettings = (notify: (msg: string, type: 'success' | 'error' | 'i
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const AutoStartCard = React.memo(({ enabled, loading, onToggle }: { enabled: boolean, loading: boolean, onToggle: () => void }) => (
-    <div className="group bg-surface/50 border border-border hover:border-primary/30 rounded-lg p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/5">
+    <div className="group bg-surface border border-border hover:border-primary/30 rounded-lg p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/5">
         <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-primary to-emerald-400 text-black rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
                 <Power size={24} className="text-black" />
@@ -243,7 +243,7 @@ const AutoStartCard = React.memo(({ enabled, loading, onToggle }: { enabled: boo
             disabled={loading}
             className={`w-full py-4 rounded-lg font-bold flex items-center justify-center gap-3 transition-all duration-300 ${enabled
                 ? 'bg-primary/10 text-primary hover:bg-primary/25 border border-primary/20'
-                : 'bg-surface-active text-text-muted hover:bg-surface-hover/80 hover:text-text-main border border-border'
+                : 'bg-surface-active text-text-muted hover:bg-surface-hover hover:text-text-main border border-border'
                 }`}
         >
             {loading ? <Loader2 size={20} className="animate-spin" /> : <Power size={20} />}
@@ -253,7 +253,7 @@ const AutoStartCard = React.memo(({ enabled, loading, onToggle }: { enabled: boo
 ));
 
 const SimulatePrintCard = React.memo(({ enabled, onToggle }: { enabled: boolean, onToggle: () => void }) => (
-    <div className="group bg-surface/50 border border-border hover:border-blue-500/30 rounded-lg p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-blue-500/5">
+    <div className="group bg-surface border border-border hover:border-blue-500/30 rounded-lg p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-blue-500/5">
         <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-400 text-white rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-300">
                 <FileText size={24} className="text-white" />
@@ -271,7 +271,7 @@ const SimulatePrintCard = React.memo(({ enabled, onToggle }: { enabled: boolean,
             onClick={onToggle}
             className={`w-full py-4 rounded-lg font-bold flex items-center justify-center gap-3 transition-all duration-300 ${enabled
                 ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/25 border border-blue-500/20'
-                : 'bg-surface-active text-text-muted hover:bg-surface-hover/80 hover:text-text-main border border-border'
+                : 'bg-surface-active text-text-muted hover:bg-surface-hover hover:text-text-main border border-border'
                 }`}
         >
             <FileText size={20} />
@@ -359,7 +359,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                 </div>
 
                 {/* Updates Section */}
-                <div className="relative overflow-hidden bg-surface/50 border border-border rounded-lg p-6 shadow-sm flex flex-col justify-between group hover:border-primary/30 transition-all duration-300">
+                <div className="relative overflow-hidden bg-surface border border-border rounded-lg p-6 shadow-sm flex flex-col justify-between group hover:border-primary/30 transition-all duration-300">
                     <div className="flex items-center justify-between">
                         <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                             <RefreshCw size={24} className={`text-primary ${update.checking ? 'animate-spin' : ''}`} />
@@ -420,7 +420,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
             </div>
 
             {/* Printers Section */}
-            <div className="bg-surface/50 border border-border rounded-lg p-8 shadow-sm">
+            <div className="bg-surface border border-border rounded-lg p-8 shadow-sm">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20">
@@ -478,7 +478,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
             </div>
 
             {/* Diagnostics Section */}
-            <div className="bg-surface/50 border border-border rounded-lg p-8 shadow-sm opacity-80 hover:opacity-100 transition-opacity">
+            <div className="bg-surface border border-border rounded-lg p-8 shadow-sm opacity-80 hover:opacity-100 transition-opacity">
                 <div className="flex items-center gap-4 mb-6">
                     <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center border border-red-500/20">
                         <AlertTriangle size={24} className="text-red-500" />

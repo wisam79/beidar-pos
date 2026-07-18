@@ -204,7 +204,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                     </div>
 
                     {/* Card */}
-                    <div className="bg-surface backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+                    <div className="bg-surface  rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
 
                         {/* Staff Selection Mode */}
                         {mode === 'select' && (

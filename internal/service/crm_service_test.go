@@ -4,30 +4,19 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
+	"beidar-desktop/internal/testutil"
 	"beidar-desktop/pkg/logger"
-	"os"
 	"testing"
 
-	"github.com/glebarez/sqlite"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 func setupCRMTestDB(t *testing.T) (service.CRMService, *gorm.DB, func()) {
 	logger.InitLogger(logger.INFO, false)
-	dbFileName := "test_crm_" + uuid.New().String()[:8] + ".db"
-	os.Remove(dbFileName)
-
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to open test DB: %v", err)
-	}
-
-	if err := db.AutoMigrate(
+	db, cleanup := testutil.SetupDB(t,
 		&domain.Customer{}, &domain.Supplier{}, &domain.Product{}, &domain.Sale{},
-	); err != nil {
-		t.Fatalf("Failed to migrate test DB: %v", err)
-	}
+	)
 
 	customerRepo := repository.NewCustomerRepository(db)
 	supplierRepo := repository.NewSupplierRepository(db)
@@ -35,13 +24,7 @@ func setupCRMTestDB(t *testing.T) (service.CRMService, *gorm.DB, func()) {
 
 	crmService := service.NewCRMService(customerRepo, supplierRepo, productRepo)
 
-	return crmService, db, func() {
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
-		os.Remove(dbFileName)
-	}
+	return crmService, db, cleanup
 }
 
 func TestCustomerLifecycle(t *testing.T) {
@@ -152,5 +135,42 @@ func TestSupplierLifecycle(t *testing.T) {
 	db.First(&p, "id = ?", product.ID)
 	if p.Supplier != "" {
 		t.Errorf("Expected product supplier to be empty, got '%s'", p.Supplier)
+	}
+}
+
+func TestSearchCustomers(t *testing.T) {
+	s, db, cleanup := setupCRMTestDB(t)
+	defer cleanup()
+
+	// Create test customers
+	db.Create(&domain.Customer{ID: "c1", Name: "Ali Ahmed", Phone: "07701112222"})
+	db.Create(&domain.Customer{ID: "c2", Name: "Omar Ali", Phone: "07803334444"})
+	db.Create(&domain.Customer{ID: "c3", Name: "Zainab", Phone: "07505556666"})
+
+	// Search by name
+	results, err := s.SearchCustomers("Ali")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	if len(results) != 2 {
+		t.Errorf("Expected 2 customers, got %d", len(results))
+	}
+
+	// Search by phone
+	results, err = s.SearchCustomers("0780")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	if len(results) != 1 {
+		t.Errorf("Expected 1 customer, got %d", len(results))
+	}
+
+	// Search with no match
+	results, err = s.SearchCustomers("Nonexistent")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	if len(results) != 0 {
+		t.Errorf("Expected 0 customers, got %d", len(results))
 	}
 }

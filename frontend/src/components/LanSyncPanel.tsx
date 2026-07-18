@@ -8,7 +8,7 @@ const api = {
         startServer: () => LanHandler.StartLanServer(),
         stopServer: () => LanHandler.StopLanServer(),
         getServerStatus: () => LanHandler.GetLanServerStatus(),
-        connect: (ip: string, port: number) => LanHandler.ConnectToLanServer(ip, port),
+        connect: (ip: string, port: number, secret: string = '') => LanHandler.ConnectToLanServer(ip, port, secret),
         disconnect: () => LanHandler.DisconnectFromLanServer(),
         getClientStatus: () => LanHandler.GetLanClientStatus(),
         getLocalIP: () => LanHandler.GetLocalIP(),
@@ -80,6 +80,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
     const [isScanning, setIsScanning] = useState(false);
     const [selectedServer, setSelectedServer] = useState<DiscoveredServer | null>(null);
     const [manualIp, setManualIp] = useState('');
+    const [serverSecret, setServerSecret] = useState('');
 
     const fetchStatus = useCallback(async () => {
         try {
@@ -140,7 +141,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
 
         setLoading(true);
         try {
-            await api.lan.connect(ip, port);
+            await api.lan.connect(ip, port, serverSecret);
             notify('تم الاتصال بالسيرفر بنجاح! جاري التحديث...', 'success');
             // Reload to clear cache and fetch fresh data from server
             setTimeout(() => {
@@ -275,7 +276,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
             {/* Current Mode Status Card */}
             <div className={`p-6 rounded-3xl border shadow-sm transition-all ${mode === 'server' ? 'bg-gradient-to-br from-primary/10 to-transparent border-primary/20 shadow-primary/5' :
                 mode === 'client' ? 'bg-surface-active/50 border-border' :
-                    'bg-surface/50 border-border'
+                    'bg-surface border-border'
                 }`}>
                 <div className="flex items-center gap-4">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${mode === 'server' ? 'bg-primary text-black shadow-primary/30' :
@@ -299,7 +300,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
 
             {/* Server Section */}
             {mode !== 'client' && (
-                <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm">
+                <div className="bg-surface border border-border rounded-3xl p-6 shadow-sm">
                     <h3 className="text-lg font-bold text-text-main mb-6 flex items-center gap-2">
                         <Server size={20} className="text-primary" />
                         إعادة تشغيل الخادم (للجهاز الرئيسي)
@@ -333,20 +334,20 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                 <div className="flex border-b border-border bg-surface-active/30">
                                     <button
                                         onClick={() => setActiveTab('clients')}
-                                        className={`flex-1 py-3 text-sm font-bold transition-all ${activeTab === 'clients' ? 'bg-surface text-primary border-t-2 border-primary' : 'text-text-muted hover:bg-surface/50'}`}
+                                        className={`flex-1 py-3 text-sm font-bold transition-all ${activeTab === 'clients' ? 'bg-surface text-primary border-t-2 border-primary' : 'text-text-muted hover:bg-surface'}`}
                                     >
                                         <Users size={14} className="inline ml-2" /> المتصلون ({connectedClients.length})
                                     </button>
                                     <div className="w-px bg-border" />
                                     <button
                                         onClick={() => setActiveTab('blocked')}
-                                        className={`flex-1 py-3 text-sm font-bold transition-all ${activeTab === 'blocked' ? 'bg-surface text-red-500 border-t-2 border-red-500' : 'text-text-muted hover:bg-surface/50'}`}
+                                        className={`flex-1 py-3 text-sm font-bold transition-all ${activeTab === 'blocked' ? 'bg-surface text-red-500 border-t-2 border-red-500' : 'text-text-muted hover:bg-surface'}`}
                                     >
                                         <Shield size={14} className="inline ml-2" /> المحظورون ({blockedDevices.length})
                                     </button>
                                 </div>
 
-                                <div className="p-4 min-h-[200px] max-h-[300px] overflow-y-auto custom-scrollbar bg-surface/30">
+                                <div className="p-4 min-h-[200px] max-h-[300px] overflow-y-auto custom-scrollbar bg-surface">
                                     {activeTab === 'clients' ? (
                                         connectedClients.length === 0 ? (
                                             <div className="flex flex-col items-center justify-center h-48 text-text-muted opacity-50">
@@ -448,7 +449,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
 
             {/* Client Section */}
             {mode !== 'server' && (
-                <div className="bg-surface/50 border border-border rounded-3xl p-6 shadow-sm">
+                <div className="bg-surface border border-border rounded-3xl p-6 shadow-sm">
                     <h3 className="text-lg font-bold text-text-main mb-6 flex items-center gap-2">
                         <Monitor size={20} className="text-primary" />
                         وضع العميل (للأجهزة الفرعية)
@@ -539,6 +540,19 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                 onChange={(e) => { setManualIp(e.target.value); setSelectedServer(null); }}
                                 placeholder="مثال: 192.168.1.100"
                                 dir="ltr"
+                                className="w-full p-3 bg-bg border border-border rounded-xl text-center font-mono text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                            />
+
+                            <div className="flex items-center gap-2 mb-2 mt-2">
+                                <Shield size={14} className="text-text-muted" />
+                                <span className="text-xs font-bold text-text-muted">رمز سر الخادم (اختياري):</span>
+                            </div>
+
+                            <input
+                                type="password"
+                                value={serverSecret}
+                                onChange={(e) => setServerSecret(e.target.value)}
+                                placeholder="أدخل رمز سر الخادم إذا كان مفروضاً"
                                 className="w-full p-3 bg-bg border border-border rounded-xl text-center font-mono text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                             />
 

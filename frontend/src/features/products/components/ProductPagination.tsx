@@ -19,7 +19,7 @@ export const ProductPagination = memo(({
     currentCount,
     onPageChange
 }: ProductPaginationProps) => (
-    <div className="shrink-0 py-3 flex items-center justify-between border-t border-border px-4 bg-surface rounded-b-xl backdrop-blur-sm">
+    <div className="shrink-0 py-3 flex items-center justify-between border-t border-border px-4 bg-surface rounded-b-xl ">
         <span className="text-[10px] text-text-muted font-mono flex items-center gap-2 font-bold">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_var(--color-primary)]"></div>
             عرض {currentCount} من {totalRecords} سجل

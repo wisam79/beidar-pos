@@ -225,6 +225,197 @@ const (
 	LF  = 0x0A
 )
 
+type arabicForm struct {
+	isolated rune
+	final    rune
+	initial  rune
+	medial   rune
+}
+
+var arabicForms = map[rune]arabicForm{
+	'ء': {isolated: 0xFE80, final: 0xFE80, initial: 0xFE80, medial: 0xFE80},
+	'آ': {isolated: 0xFE81, final: 0xFE82, initial: 0xFE81, medial: 0xFE82},
+	'أ': {isolated: 0xFE83, final: 0xFE84, initial: 0xFE83, medial: 0xFE84},
+	'ؤ': {isolated: 0xFE85, final: 0xFE86, initial: 0xFE85, medial: 0xFE86},
+	'إ': {isolated: 0xFE87, final: 0xFE88, initial: 0xFE87, medial: 0xFE88},
+	'ئ': {isolated: 0xFE89, final: 0xFE8A, initial: 0xFE8B, medial: 0xFE8C},
+	'ا': {isolated: 0xFE8D, final: 0xFE8E, initial: 0xFE8D, medial: 0xFE8E},
+	'ب': {isolated: 0xFE8F, final: 0xFE90, initial: 0xFE91, medial: 0xFE92},
+	'ة': {isolated: 0xFE93, final: 0xFE94, initial: 0xFE93, medial: 0xFE94},
+	'ت': {isolated: 0xFE95, final: 0xFE96, initial: 0xFE97, medial: 0xFE98},
+	'ث': {isolated: 0xFE99, final: 0xFE9A, initial: 0xFE9B, medial: 0xFE9C},
+	'ج': {isolated: 0xFE9D, final: 0xFE9E, initial: 0xFE9F, medial: 0xFEA0},
+	'ح': {isolated: 0xFEA1, final: 0xFEA2, initial: 0xFEA3, medial: 0xFEA4},
+	'خ': {isolated: 0xFEA5, final: 0xFEA6, initial: 0xFEA7, medial: 0xFEA8},
+	'د': {isolated: 0xFEA9, final: 0xFEAA, initial: 0xFEA9, medial: 0xFEAA},
+	'ذ': {isolated: 0xFEAB, final: 0xFEAC, initial: 0xFEAB, medial: 0xFEAC},
+	'ر': {isolated: 0xFEAD, final: 0xFEAE, initial: 0xFEAD, medial: 0xFEAE},
+	'ز': {isolated: 0xFEAF, final: 0xFEB0, initial: 0xFEAF, medial: 0xFEB0},
+	'س': {isolated: 0xFEB1, final: 0xFEB2, initial: 0xFEB3, medial: 0xFEB4},
+	'ش': {isolated: 0xFEB5, final: 0xFEB6, initial: 0xFEB7, medial: 0xFEB8},
+	'ص': {isolated: 0xFEB9, final: 0xFEBA, initial: 0xFEBB, medial: 0xFEBC},
+	'ض': {isolated: 0xFEBD, final: 0xFEBE, initial: 0xFEBF, medial: 0xFEC0},
+	'ط': {isolated: 0xFEC1, final: 0xFEC2, initial: 0xFEC3, medial: 0xFEC4},
+	'ظ': {isolated: 0xFEC5, final: 0xFEC6, initial: 0xFEC7, medial: 0xFEC8},
+	'ع': {isolated: 0xFEC9, final: 0xFECA, initial: 0xFECB, medial: 0xFECC},
+	'غ': {isolated: 0xFECD, final: 0xFECE, initial: 0xFECF, medial: 0xFED0},
+	'ف': {isolated: 0xFED1, final: 0xFED2, initial: 0xFED3, medial: 0xFED4},
+	'ق': {isolated: 0xFED5, final: 0xFED6, initial: 0xFED7, medial: 0xFED8},
+	'ك': {isolated: 0xFED9, final: 0xFEDA, initial: 0xFEDB, medial: 0xFEDC},
+	'ل': {isolated: 0xFEDD, final: 0xFEDE, initial: 0xFEDF, medial: 0xFEE0},
+	'م': {isolated: 0xFEE1, final: 0xFEE2, initial: 0xFEE3, medial: 0xFEE4},
+	'ن': {isolated: 0xFEE5, final: 0xFEE6, initial: 0xFEE7, medial: 0xFEE8},
+	'ه': {isolated: 0xFEE9, final: 0xFEEA, initial: 0xFEEB, medial: 0xFEEC},
+	'و': {isolated: 0xFEED, final: 0xFEEE, initial: 0xFEED, medial: 0xFEEE},
+	'ى': {isolated: 0xFEEF, final: 0xFEF0, initial: 0xFEEF, medial: 0xFEF0},
+	'ي': {isolated: 0xFEF1, final: 0xFEF2, initial: 0xFEF3, medial: 0xFEF4},
+}
+
+func isArabic(r rune) bool {
+	return (r >= 0x0600 && r <= 0x06FF) || (r >= 0xFE70 && r <= 0xFEFC)
+}
+
+func joinsRight(r rune) bool {
+	if r == 'ء' || r == 0xFE80 {
+		return false
+	}
+	return isArabic(r)
+}
+
+func joinsLeft(r rune) bool {
+	switch r {
+	case 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل', 'م', 'ن', 'ه', 'ي', 'ئ':
+		return true
+	case 'پ', 'چ', 'گ':
+		return true
+	}
+	return false
+}
+
+func shapeArabicSegment(segment []rune) []rune {
+	if len(segment) == 0 {
+		return segment
+	}
+
+	// 1. Merge Lam-Alef
+	var merged []rune
+	for i := 0; i < len(segment); {
+		if segment[i] == 'ل' && i+1 < len(segment) {
+			next := segment[i+1]
+			if next == 'ا' {
+				merged = append(merged, 0xFEFB)
+				i += 2
+				continue
+			} else if next == 'أ' {
+				merged = append(merged, 0xFEF7)
+				i += 2
+				continue
+			} else if next == 'إ' {
+				merged = append(merged, 0xFEF9)
+				i += 2
+				continue
+			} else if next == 'آ' {
+				merged = append(merged, 0xFEF5)
+				i += 2
+				continue
+			}
+		}
+		merged = append(merged, segment[i])
+		i++
+	}
+
+	// 2. Shape contextually
+	shaped := make([]rune, len(merged))
+	for i, c := range merged {
+		if !isArabic(c) || c == ' ' {
+			shaped[i] = c
+			continue
+		}
+
+		// Lam-Alef ligatures
+		if c == 0xFEFB || c == 0xFEF7 || c == 0xFEF9 || c == 0xFEF5 {
+			linkRight := (i > 0) && joinsLeft(merged[i-1])
+			if linkRight {
+				shaped[i] = c + 1 // Final form is U+FEFB+1 = U+FEFC
+			} else {
+				shaped[i] = c
+			}
+			continue
+		}
+
+		form, hasForm := arabicForms[c]
+		if !hasForm {
+			shaped[i] = c
+			continue
+		}
+
+		linkRight := (i > 0) && joinsLeft(merged[i-1]) && joinsRight(c)
+		linkLeft := (i < len(merged)-1) && joinsRight(merged[i+1]) && joinsLeft(c)
+
+		if linkRight && linkLeft {
+			shaped[i] = form.medial
+		} else if linkRight {
+			shaped[i] = form.final
+		} else if linkLeft {
+			shaped[i] = form.initial
+		} else {
+			shaped[i] = form.isolated
+		}
+	}
+
+	return shaped
+}
+
+func shapeArabicAndBiDi(s string) string {
+	runes := []rune(s)
+	n := len(runes)
+	var result []rune
+
+	for i := 0; i < n; {
+		if isArabic(runes[i]) {
+			// Find the end of this Arabic run
+			j := i
+			for j < n {
+				if isArabic(runes[j]) {
+					j++
+				} else if runes[j] == ' ' {
+					// Only keep going if there is an Arabic rune ahead
+					hasArabicAhead := false
+					for k := j + 1; k < n; k++ {
+						if isArabic(runes[k]) {
+							hasArabicAhead = true
+							break
+						} else if runes[k] != ' ' {
+							break
+						}
+					}
+					if hasArabicAhead {
+						j++
+					} else {
+						break
+					}
+				} else {
+					break
+				}
+			}
+
+			// Segment from i to j (exclusive) is an Arabic run
+			arabicSegment := runes[i:j]
+			shaped := shapeArabicSegment(arabicSegment)
+			// Reverse the shaped runes
+			for l, m := 0, len(shaped)-1; l < m; l, m = l+1, m-1 {
+				shaped[l], shaped[m] = shaped[m], shaped[l]
+			}
+			result = append(result, shaped...)
+			i = j
+		} else {
+			result = append(result, runes[i])
+			i++
+		}
+	}
+	return string(result)
+}
+
 // utf8ToPC864 converts UTF-8 string to PC864 bytes (DOS Arabic Code Page)
 func utf8ToPC864(s string) []byte {
 	var res []byte
@@ -234,6 +425,129 @@ func utf8ToPC864(s string) []byte {
 			continue
 		}
 		switch r {
+		// Arabic Presentation Forms-B
+		case 0xFE80: res = append(res, 0xC1) // Hamza Isolated
+		case 0xFE81: res = append(res, 0xC2) // Alef with Madda Above Isolated
+		case 0xFE82: res = append(res, 0xA2) // Alef with Madda Above Final
+		case 0xFE83: res = append(res, 0xC3) // Alef with Hamza Above Isolated
+		case 0xFE84: res = append(res, 0xA5) // Alef with Hamza Above Final
+		case 0xFE85: res = append(res, 0xC4) // Waw with Hamza Above Isolated
+		case 0xFE86: res = append(res, 0xC4) // Waw with Hamza Above Final (fallback)
+		case 0xFE8B: res = append(res, 0xC6) // Yeh with Hamza Above Initial
+		case 0xFE8C: res = append(res, 0xC6) // Yeh with Hamza Above Medial (fallback)
+		case 0xFE8D: res = append(res, 0xC7) // Alef Isolated
+		case 0xFE8E: res = append(res, 0xA8) // Alef Final
+		case 0xFE8F: res = append(res, 0xA9) // Beh Isolated
+		case 0xFE90: res = append(res, 0x9E) // Beh Final
+		case 0xFE91: res = append(res, 0xC8) // Beh Initial
+		case 0xFE92: res = append(res, 0xC8) // Beh Medial (fallback)
+		case 0xFE93: res = append(res, 0xC9) // Teh Marbuta Isolated
+		case 0xFE94: res = append(res, 0xC9) // Teh Marbuta Final (fallback)
+		case 0xFE95: res = append(res, 0xAA) // Teh Isolated
+		case 0xFE96: res = append(res, 0xAA) // Teh Final (fallback)
+		case 0xFE97: res = append(res, 0xCA) // Teh Initial
+		case 0xFE98: res = append(res, 0xCA) // Teh Medial (fallback)
+		case 0xFE99: res = append(res, 0xAB) // Theh Isolated
+		case 0xFE9A: res = append(res, 0xAB) // Theh Final (fallback)
+		case 0xFE9B: res = append(res, 0xCB) // Theh Initial
+		case 0xFE9C: res = append(res, 0xCB) // Theh Medial (fallback)
+		case 0xFE9D: res = append(res, 0xAD) // Jeem Isolated
+		case 0xFE9E: res = append(res, 0xAD) // Jeem Final (fallback)
+		case 0xFE9F: res = append(res, 0xCC) // Jeem Initial
+		case 0xFEA0: res = append(res, 0xCC) // Jeem Medial (fallback)
+		case 0xFEA1: res = append(res, 0xAE) // Hah Isolated
+		case 0xFEA2: res = append(res, 0xAE) // Hah Final (fallback)
+		case 0xFEA3: res = append(res, 0xCD) // Hah Initial
+		case 0xFEA4: res = append(res, 0xCD) // Hah Medial (fallback)
+		case 0xFEA5: res = append(res, 0xAF) // Khah Isolated
+		case 0xFEA6: res = append(res, 0xAF) // Khah Final (fallback)
+		case 0xFEA7: res = append(res, 0xCE) // Khah Initial
+		case 0xFEA8: res = append(res, 0xCE) // Khah Medial (fallback)
+		case 0xFEA9: res = append(res, 0xCF) // Dal Isolated
+		case 0xFEAA: res = append(res, 0xCF) // Dal Final (fallback)
+		case 0xFEAB: res = append(res, 0xD0) // Thal Isolated
+		case 0xFEAC: res = append(res, 0xD0) // Thal Final (fallback)
+		case 0xFEAD: res = append(res, 0xD1) // Reh Isolated
+		case 0xFEAE: res = append(res, 0xD1) // Reh Final (fallback)
+		case 0xFEAF: res = append(res, 0xD2) // Zain Isolated
+		case 0xFEB0: res = append(res, 0xD2) // Zain Final (fallback)
+		case 0xFEB1: res = append(res, 0xBC) // Seen Isolated
+		case 0xFEB2: res = append(res, 0xBC) // Seen Final (fallback)
+		case 0xFEB3: res = append(res, 0xD3) // Seen Initial
+		case 0xFEB4: res = append(res, 0xD3) // Seen Medial (fallback)
+		case 0xFEB5: res = append(res, 0xBD) // Sheen Isolated
+		case 0xFEB6: res = append(res, 0xBD) // Sheen Final (fallback)
+		case 0xFEB7: res = append(res, 0xD4) // Sheen Initial
+		case 0xFEB8: res = append(res, 0xD4) // Sheen Medial (fallback)
+		case 0xFEB9: res = append(res, 0xBE) // Sad Isolated
+		case 0xFEBA: res = append(res, 0xBE) // Sad Final (fallback)
+		case 0xFEBB: res = append(res, 0xD5) // Sad Initial
+		case 0xFEBC: res = append(res, 0xD5) // Sad Medial (fallback)
+		case 0xFEBD: res = append(res, 0xEB) // Dad Isolated
+		case 0xFEBE: res = append(res, 0xEB) // Dad Final (fallback)
+		case 0xFEBF: res = append(res, 0xD6) // Dad Initial
+		case 0xFEC0: res = append(res, 0xD6) // Dad Medial (fallback)
+		case 0xFEC1: res = append(res, 0xD7) // Tah Isolated
+		case 0xFEC2: res = append(res, 0xD7) // Tah Final (fallback)
+		case 0xFEC3: res = append(res, 0xD7) // Tah Initial (fallback)
+		case 0xFEC4: res = append(res, 0xD7) // Tah Medial (fallback)
+		case 0xFEC5: res = append(res, 0xD8) // Zah Isolated
+		case 0xFEC6: res = append(res, 0xD8) // Zah Final (fallback)
+		case 0xFEC7: res = append(res, 0xD8) // Zah Initial (fallback)
+		case 0xFEC8: res = append(res, 0xD8) // Zah Medial (fallback)
+		case 0xFEC9: res = append(res, 0xDF) // Ain Isolated
+		case 0xFECA: res = append(res, 0xC5) // Ain Final
+		case 0xFECB: res = append(res, 0xD9) // Ain Initial
+		case 0xFECC: res = append(res, 0xEC) // Ain Medial
+		case 0xFECD: res = append(res, 0xEE) // Ghain Isolated
+		case 0xFECE: res = append(res, 0xED) // Ghain Final
+		case 0xFECF: res = append(res, 0xDA) // Ghain Initial
+		case 0xFED0: res = append(res, 0xF7) // Ghain Medial
+		case 0xFED1: res = append(res, 0xBA) // Feh Isolated
+		case 0xFED2: res = append(res, 0xBA) // Feh Final (fallback)
+		case 0xFED3: res = append(res, 0xE1) // Feh Initial
+		case 0xFED4: res = append(res, 0xE1) // Feh Medial (fallback)
+		case 0xFED5: res = append(res, 0xF8) // Qaf Isolated
+		case 0xFED6: res = append(res, 0xF8) // Qaf Final (fallback)
+		case 0xFED7: res = append(res, 0xE2) // Qaf Initial
+		case 0xFED8: res = append(res, 0xE2) // Qaf Medial (fallback)
+		case 0xFED9: res = append(res, 0xFC) // Kaf Isolated
+		case 0xFEDA: res = append(res, 0xFC) // Kaf Final (fallback)
+		case 0xFEDB: res = append(res, 0xE3) // Kaf Initial
+		case 0xFEDC: res = append(res, 0xE3) // Kaf Medial (fallback)
+		case 0xFEDD: res = append(res, 0xFB) // Lam Isolated
+		case 0xFEDE: res = append(res, 0xFB) // Lam Final (fallback)
+		case 0xFEDF: res = append(res, 0xE4) // Lam Initial
+		case 0xFEE0: res = append(res, 0xE4) // Lam Medial (fallback)
+		case 0xFEE1: res = append(res, 0xEF) // Meem Isolated
+		case 0xFEE2: res = append(res, 0xEF) // Meem Final (fallback)
+		case 0xFEE3: res = append(res, 0xE5) // Meem Initial
+		case 0xFEE4: res = append(res, 0xE5) // Meem Medial (fallback)
+		case 0xFEE5: res = append(res, 0xF2) // Noon Isolated
+		case 0xFEE6: res = append(res, 0xF2) // Noon Final (fallback)
+		case 0xFEE7: res = append(res, 0xE6) // Noon Initial
+		case 0xFEE8: res = append(res, 0xE6) // Noon Medial (fallback)
+		case 0xFEE9: res = append(res, 0xF3) // Heh Isolated
+		case 0xFEEA: res = append(res, 0xF3) // Heh Final (fallback)
+		case 0xFEEB: res = append(res, 0xE7) // Heh Initial
+		case 0xFEEC: res = append(res, 0xF4) // Heh Medial
+		case 0xFEED: res = append(res, 0xE8) // Waw Isolated
+		case 0xFEEE: res = append(res, 0xE8) // Waw Final (fallback)
+		case 0xFEEF: res = append(res, 0xE9) // Alef Maksura Isolated
+		case 0xFEF0: res = append(res, 0xF5) // Alef Maksura Final
+		case 0xFEF1: res = append(res, 0xFD) // Yeh Isolated
+		case 0xFEF2: res = append(res, 0xF6) // Yeh Final
+		case 0xFEF3: res = append(res, 0xEA) // Yeh Initial
+		case 0xFEF4: res = append(res, 0xEA) // Yeh Medial (fallback)
+		case 0xFEF5: res = append(res, 0x99) // Lam with Alef with Madda Above Isolated
+		case 0xFEF6: res = append(res, 0x9A) // Lam with Alef with Madda Above Final
+		case 0xFEF7: res = append(res, 0x99) // Lam-Alef with Hamza Above Isolated
+		case 0xFEF8: res = append(res, 0x9A) // Lam-Alef with Hamza Above Final
+		case 0xFEF9: res = append(res, 0x9D) // Lam-Alef with Hamza Below Isolated (fallback)
+		case 0xFEFA: res = append(res, 0x9E) // Lam-Alef with Hamza Below Final (fallback)
+		case 0xFEFB: res = append(res, 0x9D) // Lam-Alef Isolated
+		case 0xFEFC: res = append(res, 0x9E) // Lam-Alef Final
+
 		case '،':
 			res = append(res, 0xAC)
 		case '؛':
@@ -366,7 +680,8 @@ func utf8ToPC864(s string) []byte {
 }
 
 func utf8ToWindows1256(s string) []byte {
-	return utf8ToPC864(s)
+	shaped := shapeArabicAndBiDi(s)
+	return utf8ToPC864(shaped)
 }
 
 // BuildESCPOSReceipt builds a receipt using ESC/POS commands

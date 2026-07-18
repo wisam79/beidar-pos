@@ -22,13 +22,17 @@ func (r *preferencesRepository) Get() (*domain.AppPreferences, error) {
 	if err := r.db.First(&prefs).Error; err != nil {
 		return nil, err
 	}
-	decryptPrefs(&prefs)
+	if err := decryptPrefs(&prefs); err != nil {
+		return nil, err
+	}
 	return &prefs, nil
 }
 
 func (r *preferencesRepository) Save(prefs *domain.AppPreferences) error {
 	encrypted := *prefs
-	encryptPrefs(&encrypted)
+	if err := encryptPrefs(&encrypted); err != nil {
+		return err
+	}
 	return r.db.Save(&encrypted).Error
 }
 
@@ -40,58 +44,68 @@ func derivePrefsKey() []byte {
 	return crypto.DeriveKey(fmt.Sprintf("beidar-prefs-key-%s", host))
 }
 
-func encryptPrefs(prefs *domain.AppPreferences) {
+func encryptPrefs(prefs *domain.AppPreferences) error {
 	key := derivePrefsKey()
 
 	if prefs.GeminiAPIKey != "" {
-		if enc, err := crypto.Encrypt([]byte(prefs.GeminiAPIKey), key); err == nil {
-			prefs.GeminiAPIKey = enc
+		enc, err := crypto.Encrypt([]byte(prefs.GeminiAPIKey), key)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt Gemini API Key: %w", err)
 		}
+		prefs.GeminiAPIKey = enc
 	}
 
 	if prefs.GroqAPIKey != "" {
-		if enc, err := crypto.Encrypt([]byte(prefs.GroqAPIKey), key); err == nil {
-			prefs.GroqAPIKey = enc
+		enc, err := crypto.Encrypt([]byte(prefs.GroqAPIKey), key)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt Groq API Key: %w", err)
 		}
+		prefs.GroqAPIKey = enc
 	}
 
 	if len(prefs.GeminiAPIKeys) > 0 {
 		encrypted := make([]string, 0, len(prefs.GeminiAPIKeys))
 		for _, k := range prefs.GeminiAPIKeys {
-			if enc, err := crypto.Encrypt([]byte(k), key); err == nil {
-				encrypted = append(encrypted, enc)
-			} else {
-				encrypted = append(encrypted, k)
+			enc, err := crypto.Encrypt([]byte(k), key)
+			if err != nil {
+				return fmt.Errorf("failed to encrypt Gemini API Keys list item: %w", err)
 			}
+			encrypted = append(encrypted, enc)
 		}
 		prefs.GeminiAPIKeys = encrypted
 	}
+	return nil
 }
 
-func decryptPrefs(prefs *domain.AppPreferences) {
+func decryptPrefs(prefs *domain.AppPreferences) error {
 	key := derivePrefsKey()
 
 	if prefs.GeminiAPIKey != "" {
-		if dec, err := crypto.Decrypt(prefs.GeminiAPIKey, key); err == nil {
-			prefs.GeminiAPIKey = string(dec)
+		dec, err := crypto.Decrypt(prefs.GeminiAPIKey, key)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt Gemini API Key: %w", err)
 		}
+		prefs.GeminiAPIKey = string(dec)
 	}
 
 	if prefs.GroqAPIKey != "" {
-		if dec, err := crypto.Decrypt(prefs.GroqAPIKey, key); err == nil {
-			prefs.GroqAPIKey = string(dec)
+		dec, err := crypto.Decrypt(prefs.GroqAPIKey, key)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt Groq API Key: %w", err)
 		}
+		prefs.GroqAPIKey = string(dec)
 	}
 
 	if len(prefs.GeminiAPIKeys) > 0 {
 		decrypted := make([]string, 0, len(prefs.GeminiAPIKeys))
 		for _, k := range prefs.GeminiAPIKeys {
-			if dec, err := crypto.Decrypt(k, key); err == nil {
-				decrypted = append(decrypted, string(dec))
-			} else {
-				decrypted = append(decrypted, k)
+			dec, err := crypto.Decrypt(k, key)
+			if err != nil {
+				return fmt.Errorf("failed to decrypt Gemini API Keys list item: %w", err)
 			}
+			decrypted = append(decrypted, string(dec))
 		}
 		prefs.GeminiAPIKeys = decrypted
 	}
+	return nil
 }

@@ -240,6 +240,7 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/categories", authMiddleware(s.handleCategories))
 	mux.HandleFunc("/api/expenses", authMiddleware(s.handleExpenses))
 	mux.HandleFunc("/api/stats/dashboard", authMiddleware(s.handleDashboardStats))
+	mux.HandleFunc("/api/stats/comparison", authMiddleware(s.handleMonthlyComparisonStats))
 	mux.HandleFunc("/api/preferences", authMiddleware(s.handlePreferences))
 	mux.HandleFunc("/api/stock/movements", authMiddleware(s.handleStockMovements))
 	mux.HandleFunc("/api/database/export", authMiddleware(s.handleDatabaseExport))
@@ -641,7 +642,8 @@ func (s *lanService) handleExpenses(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		expenses, err := s.financeService.GetExpenses()
+		month := r.URL.Query().Get("month")
+		expenses, err := s.financeService.GetExpenses(month)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -690,6 +692,20 @@ func (s *lanService) handleDashboardStats(w http.ResponseWriter, r *http.Request
 		return
 	}
 	_ = json.NewEncoder(w).Encode(stats)
+}
+
+func (s *lanService) handleMonthlyComparisonStats(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+	comp, err := s.statsService.GetMonthlyComparison()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_ = json.NewEncoder(w).Encode(comp)
 }
 
 func (s *lanService) handlePreferences(w http.ResponseWriter, r *http.Request) {

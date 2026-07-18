@@ -22,6 +22,7 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
     const [storeName, setStoreName] = useState('');
     const [licenseKey, setLicenseKey] = useState('');
     const [serverIP, setServerIP] = useState('');
+    const [serverSecret, setServerSecret] = useState('');
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -90,7 +91,7 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
         setLoading(true);
         setError('');
         try {
-            await api.lan.connect(serverIP);
+            await api.lan.connect(serverIP, 0, serverSecret);
             onSuccess();
         } catch (err: unknown) {
             console.error(err);
@@ -179,7 +180,7 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
 
                 {/* Mode Tabs - Compact */}
                 <div className="flex justify-center mb-4">
-                    <div className="inline-flex bg-surface backdrop-blur-xl rounded-2xl p-1.5 border border-border">
+                    <div className="inline-flex bg-surface  rounded-2xl p-1.5 border border-border">
                         {modes.map(({ id, label, icon: TabIcon }) => (
                             <button
                                 key={id}
@@ -204,7 +205,7 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
                     {/* Card glow */}
                     <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-emerald-400/20 to-cyan-400/20 rounded-[2rem] blur-xl opacity-50" />
 
-                    <div className="relative bg-surface backdrop-blur-2xl rounded-3xl border border-border shadow-card overflow-hidden">
+                    <div className="relative bg-surface  rounded-3xl border border-border shadow-card overflow-hidden">
                         {/* Top accent line */}
                         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
@@ -225,19 +226,32 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
                             } className="space-y-3">
 
                                 {mode === 'lan' ? (
-                                    <InputField
-                                        icon={Server}
-                                        label="عنوان الخادم (IP)"
-                                        type="text"
-                                        value={serverIP}
-                                        onChange={setServerIP}
-                                        placeholder="192.168.1.xxx"
-                                        hint="تأكد من تشغيل بث الشبكة على الجهاز الرئيسي"
-                                        focused={focusedField === 'serverIP'}
-                                        onFocus={() => setFocusedField('serverIP')}
-                                        onBlur={() => setFocusedField(null)}
-                                        mono
-                                    />
+                                    <>
+                                        <InputField
+                                            icon={Server}
+                                            label="عنوان الخادم (IP)"
+                                            type="text"
+                                            value={serverIP}
+                                            onChange={setServerIP}
+                                            placeholder="192.168.1.xxx"
+                                            hint="تأكد من تشغيل بث الشبكة على الجهاز الرئيسي"
+                                            focused={focusedField === 'serverIP'}
+                                            onFocus={() => setFocusedField('serverIP')}
+                                            onBlur={() => setFocusedField(null)}
+                                            mono
+                                        />
+                                        <InputField
+                                            icon={Shield}
+                                            label="رمز سر الخادم (اختياري)"
+                                            type="password"
+                                            value={serverSecret}
+                                            onChange={setServerSecret}
+                                            placeholder="أدخل الرمز السري"
+                                            focused={focusedField === 'serverSecret'}
+                                            onFocus={() => setFocusedField('serverSecret')}
+                                            onBlur={() => setFocusedField(null)}
+                                        />
+                                    </>
                                 ) : (
                                     <>
                                         {mode === 'register' && (

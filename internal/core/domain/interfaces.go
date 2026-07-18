@@ -1,9 +1,5 @@
 package domain
 
-import (
-	"beidar-desktop/pkg/updater"
-)
-
 //go:generate mockgen -source=interfaces.go -destination=../../../internal/repository/mocks/mock_repository.go -package=mocks
 
 // ---------- Repository Interfaces (in domain per Clean Architecture) ----------
@@ -59,6 +55,7 @@ type CustomerRepository interface {
 	Transaction(fn func(tx Tx) error) error
 	GetAll() ([]Customer, error)
 	GetByID(id string) (*Customer, error)
+	GetByIDs(ids []string) ([]Customer, error)
 	GetByPhone(phone string) (*Customer, error)
 	Create(customer *Customer) error
 	Update(customer *Customer) error
@@ -129,7 +126,7 @@ type PreferencesRepository interface {
 type ExpenseRepository interface {
 	WithTx(tx Tx) ExpenseRepository
 	Transaction(fn func(tx Tx) error) error
-	GetExpenses() ([]Expense, error)
+	GetExpenses(month string) ([]Expense, error)
 	GetExpenseByID(id string) (*Expense, error)
 	CreateExpense(e *Expense) error
 	UpdateExpense(e *Expense) error
@@ -258,7 +255,7 @@ type PaymentService interface {
 // FinanceService defines the business logic for finance, expenses, categories, and POs
 type FinanceService interface {
 	// Expense & Category Management
-	GetExpenses() ([]Expense, error)
+	GetExpenses(month string) ([]Expense, error)
 	SaveExpense(e Expense) error
 	DeleteExpense(id string) error
 	GetCategories() ([]Category, error)
@@ -373,8 +370,8 @@ type SettingsService interface {
 	ClearCrashReports() error
 
 	// Updates
-	CheckForUpdates() (*updater.UpdateInfo, error)
-	GetUpdateStatus() updater.UpdateStatus
+	CheckForUpdates() (*UpdateInfo, error)
+	GetUpdateStatus() UpdateStatus
 	DownloadUpdate(url, expectedChecksum string) (string, error)
 	InstallUpdate(installerPath string) error
 	SkipVersion(version string) error

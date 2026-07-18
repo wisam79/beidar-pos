@@ -42,7 +42,7 @@ export const ProductFormModal = ({
         <Modal title={editingProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'} onClose={onClose} size="lg">
             <div className="flex flex-col h-[78vh] max-h-[720px]">
                 {/* Modern Sleek Tab Switcher */}
-                <div className="flex gap-1 bg-surface-hover/60 backdrop-blur-md p-1 rounded-xl mb-4 border border-border/60 shrink-0">
+                <div className="flex gap-1 bg-surface-hover  p-1 rounded-xl mb-4 border border-border/60 shrink-0">
                     <button
                         onClick={() => setActiveTab('details')}
                         className={`flex-1 py-2 px-4 rounded-lg text-xs font-black transition-all duration-200 flex items-center justify-center gap-2 ${
@@ -71,7 +71,7 @@ export const ProductFormModal = ({
                     {activeTab === 'details' ? (
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
                             {/* Right Column: Identity, Media & Categorization (col-span-5) */}
-                            <div className="lg:col-span-5 bg-surface-hover/10 rounded-2xl border border-border/40 p-5 space-y-4">
+                            <div className="lg:col-span-5 bg-surface-hover rounded-2xl border border-border/40 p-5 space-y-4">
                                 <h4 className="text-xs font-black text-text-muted flex items-center gap-2 border-b border-border/30 pb-2">
                                     <Package size={14} className="text-primary" /> هوية وبيانات المنتج
                                 </h4>
@@ -97,7 +97,7 @@ export const ProductFormModal = ({
                                                 </div>
                                             )}
                                             {/* Overlay Actions */}
-                                            <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-1.5 backdrop-blur-[2px]">
+                                            <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-1.5 ">
                                                 <label className="cursor-pointer bg-white/10 hover:bg-white/20 border border-white/20 p-1.5 rounded-lg text-white transition-all transform hover:scale-110" aria-label="Upload Image">
                                                     <Upload size={14} />
                                                     <input type="file" className="hidden" accept="image/*" onChange={onImageUpload} />
@@ -210,7 +210,7 @@ export const ProductFormModal = ({
                                     <button
                                         onClick={onAiGenerateDescription}
                                         disabled={isGenerating}
-                                        className="absolute bottom-3 left-3 bg-gradient-to-r from-purple-500/15 to-blue-500/15 hover:from-purple-500/30 hover:to-blue-500/30 border border-purple-500/30 text-purple-400 hover:text-white px-3 py-1.5 rounded-lg text-[9px] font-black flex items-center gap-1.5 transition-all shadow-sm backdrop-blur-sm active:scale-95 duration-100 hover:shadow-[0_0_15px_rgba(147,51,234,0.15)]"
+                                        className="absolute bottom-3 left-3 bg-gradient-to-r from-purple-500/15 to-blue-500/15 hover:from-purple-500/30 hover:to-blue-500/30 border border-purple-500/30 text-purple-400 hover:text-white px-3 py-1.5 rounded-lg text-[9px] font-black flex items-center gap-1.5 transition-all shadow-sm  active:scale-95 duration-100 hover:shadow-[0_0_15px_rgba(147,51,234,0.15)]"
                                     >
                                         {isGenerating ? <RefreshCw size={10} className="animate-spin" /> : <Sparkles size={10} />} توليد وصف ذكي
                                     </button>
@@ -218,7 +218,7 @@ export const ProductFormModal = ({
                             </div>
 
                             {/* Left Column: Pricing, Inventory & Custom Attributes (col-span-7) */}
-                            <div className="lg:col-span-7 bg-surface-hover/10 rounded-2xl border border-border/40 p-5 space-y-4">
+                            <div className="lg:col-span-7 bg-surface-hover rounded-2xl border border-border/40 p-5 space-y-4">
                                 <h4 className="text-xs font-black text-text-muted flex items-center gap-2 border-b border-border/30 pb-2">
                                     <DollarSign size={14} className="text-primary" /> تفاصيل الأسعار والمخزون
                                 </h4>
@@ -376,7 +376,7 @@ export const ProductFormModal = ({
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {productHistory.map(m => (
-                                        <div key={m.id} className="flex justify-between items-center bg-surface-hover/20 backdrop-blur-md p-4 rounded-2xl border border-border/60 transition-all duration-200 hover:border-border hover:shadow-card">
+                                        <div key={m.id} className="flex justify-between items-center bg-surface-hover  p-4 rounded-2xl border border-border/60 transition-all duration-200 hover:border-border hover:shadow-card">
                                             <div>
                                                 <div className="flex items-center gap-2.5">
                                                     <Badge 
@@ -399,7 +399,7 @@ export const ProductFormModal = ({
                 </div>
 
                 {/* Modern Footer Actions */}
-                <div className="pt-4 border-t border-border/60 flex gap-3 mt-auto shrink-0 bg-surface/98 backdrop-blur-lg">
+                <div className="pt-4 border-t border-border/60 flex gap-3 mt-auto shrink-0 bg-surface ">
                     {editingProduct && (
                         <button 
                             onClick={() => onDelete(editingProduct.id!)} 
@@ -413,7 +413,7 @@ export const ProductFormModal = ({
                     {editingProduct && (
                         <button 
                             onClick={() => onDuplicate(editingProduct)} 
-                            className="w-11 h-11 bg-surface-hover hover:bg-surface-hover/80 text-text-muted border border-border/80 rounded-xl hover:text-text-main transition-all flex items-center justify-center shrink-0 active:scale-95 duration-100" 
+                            className="w-11 h-11 bg-surface-hover hover:bg-surface-hover text-text-muted border border-border/80 rounded-xl hover:text-text-main transition-all flex items-center justify-center shrink-0 active:scale-95 duration-100" 
                             title="نسخ وتكرار المنتج"
                         >
                             <Copy size={18} />

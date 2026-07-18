@@ -4,11 +4,10 @@ import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
+	"beidar-desktop/internal/testutil"
 	"beidar-desktop/pkg/logger"
-	"os"
 	"testing"
 
-	"github.com/glebarez/sqlite"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -17,104 +16,109 @@ import (
 
 func setupStaffTestDB(t *testing.T) (service.StaffService, *gorm.DB, func()) {
 	logger.InitLogger(logger.INFO, false)
-	dbFileName := "test_staff_" + uuid.New().String()[:8] + ".db"
-	os.Remove(dbFileName)
-
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to open test DB: %v", err)
-	}
-
-	if err := db.AutoMigrate(
+	db, cleanup := testutil.SetupDB(t,
 		&domain.Staff{}, &domain.LoginAttempt{}, &domain.Sale{}, &domain.Payment{},
-	); err != nil {
-		t.Fatalf("Failed to migrate DB: %v", err)
-	}
+	)
 
 	staffRepo := repository.NewStaffRepository(db)
 	staffService := service.NewStaffService(staffRepo)
 
-	return staffService, db, func() {
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
-		os.Remove(dbFileName)
-	}
+	return staffService, db, cleanup
 }
 
 func TestStaffCRUDAndAuth(t *testing.T) {
-	s, _, cleanup := setupStaffTestDB(t)
-	defer cleanup()
+	t.Run("SeedDefaultAdmin", func(t *testing.T) {
+		s, _, cleanup := setupStaffTestDB(t)
+		defer cleanup()
 
-	// 1. Seed default admin
-	if err := s.SeedDefaultAdmin(); err != nil {
-		t.Fatalf("SeedDefaultAdmin failed: %v", err)
-	}
+		if err := s.SeedDefaultAdmin(); err != nil {
+			t.Fatalf("SeedDefaultAdmin failed: %v", err)
+		}
 
-	all, _ := s.GetAllStaff()
-	if len(all) != 1 {
-		t.Errorf("Expected 1 seeded admin, got %d", len(all))
-	}
-	admin := all[0]
-	if admin.Username != "admin" {
-		t.Errorf("Expected username 'admin', got '%s'", admin.Username)
-	}
+		all, _ := s.GetAllStaff()
+		if len(all) != 1 {
+			t.Errorf("Expected 1 seeded admin, got %d", len(all))
+		}
+		admin := all[0]
+		if admin.Username != "admin" {
+			t.Errorf("Expected username 'admin', got '%s'", admin.Username)
+		}
+	})
 
-	// 2. Auth by Username successfully (PIN is "0000" by default)
-	res, err := s.AuthenticateByUsername("admin", "0000")
-	if err != nil {
-		t.Fatalf("AuthenticateByUsername error: %v", err)
-	}
-	if !res.Success {
-		t.Errorf("Auth failed: %s", res.Message)
-	}
-	if !res.RequirePINChange {
-		t.Error("Seeded admin should require PIN change because it is using default PIN")
-	}
+	t.Run("AuthenticateByUsername", func(t *testing.T) {
+		s, _, cleanup := setupStaffTestDB(t)
+		defer cleanup()
 
-	// 3. Create Cashier
-	cashier := domain.Staff{
-		Name:     "Karrar Cashier",
-		Username: "karrar",
-		Role:     domain.RoleCashier,
-	}
-	created, err := s.CreateStaff(cashier, "4321")
-	if err != nil {
-		t.Fatalf("CreateStaff failed: %v", err)
-	}
+		if err := s.SeedDefaultAdmin(); err != nil {
+			t.Fatalf("SeedDefaultAdmin failed: %v", err)
+		}
 
-	if len(created.Permissions) != len(service.RolePermissions[domain.RoleCashier]) {
-		t.Errorf("Expected permissions for cashier role, got %v", created.Permissions)
-	}
+		res, err := s.AuthenticateByUsername("admin", "0000")
+		if err != nil {
+			t.Fatalf("AuthenticateByUsername error: %v", err)
+		}
+		if !res.Success {
+			t.Errorf("Auth failed: %s", res.Message)
+		}
+		if !res.RequirePINChange {
+			t.Error("Seeded admin should require PIN change because it is using default PIN")
+		}
+	})
 
-	// 4. Test AuthenticateByPIN (Fast O(1) matching)
-	pinRes, err := s.AuthenticateByPIN("4321")
-	if err != nil {
-		t.Fatalf("AuthenticateByPIN error: %v", err)
-	}
-	if !pinRes.Success {
-		t.Errorf("PIN Auth failed: %s", pinRes.Message)
-	}
-	if pinRes.Staff.Username != "karrar" {
-		t.Errorf("Expected cashier staff, got '%s'", pinRes.Staff.Username)
-	}
+	t.Run("CreateStaffAndAuthenticateByPIN", func(t *testing.T) {
+		s, _, cleanup := setupStaffTestDB(t)
+		defer cleanup()
 
-	// Verify FastPIN was indexed
-	updatedCashier, _ := s.GetStaff(created.ID)
-	if updatedCashier.FastPIN == "" {
-		t.Error("FastPIN should be populated after successful login")
-	}
+		cashier := domain.Staff{
+			Name:     "Karrar Cashier",
+			Username: "karrar",
+			Role:     domain.RoleCashier,
+		}
+		created, err := s.CreateStaff(cashier, "4321")
+		if err != nil {
+			t.Fatalf("CreateStaff failed: %v", err)
+		}
 
-	// 5. Rate limiting/lockout test
-	for i := 0; i < 5; i++ {
-		_, _ = s.AuthenticateByUsername("admin", "wrong_pin")
-	}
+		if len(created.Permissions) != len(service.RolePermissions[domain.RoleCashier]) {
+			t.Errorf("Expected permissions for cashier role, got %v", created.Permissions)
+		}
 
-	lockRes, _ := s.AuthenticateByUsername("admin", "0000")
-	if lockRes.Success {
-		t.Error("Expected login to be locked out after 5 failures")
-	}
+		// Test AuthenticateByPIN (Fast O(1) matching)
+		pinRes, err := s.AuthenticateByPIN("4321")
+		if err != nil {
+			t.Fatalf("AuthenticateByPIN error: %v", err)
+		}
+		if !pinRes.Success {
+			t.Errorf("PIN Auth failed: %s", pinRes.Message)
+		}
+		if pinRes.Staff.Username != "karrar" {
+			t.Errorf("Expected cashier staff, got '%s'", pinRes.Staff.Username)
+		}
+
+		// Verify FastPIN was indexed
+		updatedCashier, _ := s.GetStaff(created.ID)
+		if updatedCashier.FastPIN == "" {
+			t.Error("FastPIN should be populated after successful login")
+		}
+	})
+
+	t.Run("RateLimitingLockout", func(t *testing.T) {
+		s, _, cleanup := setupStaffTestDB(t)
+		defer cleanup()
+
+		if err := s.SeedDefaultAdmin(); err != nil {
+			t.Fatalf("SeedDefaultAdmin failed: %v", err)
+		}
+
+		for i := 0; i < 5; i++ {
+			_, _ = s.AuthenticateByUsername("admin", "wrong_pin")
+		}
+
+		lockRes, _ := s.AuthenticateByUsername("admin", "0000")
+		if lockRes.Success {
+			t.Error("Expected login to be locked out after 5 failures")
+		}
+	})
 }
 
 func TestStaffPermissions(t *testing.T) {
@@ -489,6 +493,50 @@ func TestStaffService_PinAuthEdgeCases(t *testing.T) {
 	}
 	if !res2.Success {
 		t.Errorf("O(1) PIN Auth failed: %s", res2.Message)
+	}
+}
+
+func TestStaffService_UniquePin(t *testing.T) {
+	s, _, cleanup := setupStaffTestDB(t)
+	defer cleanup()
+
+	// 1. Create a staff member with PIN "8254"
+	staff1 := domain.Staff{
+		Name:     "Staff One",
+		Username: "staff1",
+		Role:     domain.RoleCashier,
+	}
+	_, err := s.CreateStaff(staff1, "8254")
+	if err != nil {
+		t.Fatalf("CreateStaff 1 failed: %v", err)
+	}
+
+	// 2. Create another staff member with the SAME PIN "8254" -> should fail
+	staff2 := domain.Staff{
+		Name:     "Staff Two",
+		Username: "staff2",
+		Role:     domain.RoleCashier,
+	}
+	_, err = s.CreateStaff(staff2, "8254")
+	if err == nil {
+		t.Error("Expected CreateStaff with duplicate PIN to fail")
+	}
+
+	// 3. Create a staff member with a different PIN "9761"
+	staff3 := domain.Staff{
+		Name:     "Staff Three",
+		Username: "staff3",
+		Role:     domain.RoleCashier,
+	}
+	created3, err := s.CreateStaff(staff3, "9761")
+	if err != nil {
+		t.Fatalf("CreateStaff 3 failed: %v", err)
+	}
+
+	// 4. Update password of Staff Three to "8254" (duplicate of Staff One) -> should fail
+	err = s.UpdateStaffPassword(created3.ID, "8254")
+	if err == nil {
+		t.Error("Expected UpdateStaffPassword with duplicate PIN to fail")
 	}
 }
 

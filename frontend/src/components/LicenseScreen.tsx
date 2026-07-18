@@ -18,6 +18,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
   const [error, setError] = useState('');
   const [deviceId, setDeviceId] = useState('');
   const [discoveredServers, setDiscoveredServers] = useState<{ serverName: string, serverIP: string, port: number }[]>([]);
+  const [serverSecret, setServerSecret] = useState('');
 
   React.useEffect(() => {
     getDeviceId().then(setDeviceId);
@@ -87,7 +88,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
     setError('');
 
     try {
-      await api.lan.connect(serverIp.trim(), serverPort);
+      await api.lan.connect(serverIp.trim(), serverPort, serverSecret);
       // Check status to confirm
       const status = await api.lan.getClientStatus();
       if (status.connected) {
@@ -132,7 +133,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
             <p className="text-sm text-text-muted mb-4">
               للاستمرار في استخدام التطبيق، يرجى التواصل مع مطور التطبيق لشراء ترخيص
             </p>
-            <div className="bg-surface/60 backdrop-blur rounded-xl p-4 border border-border">
+            <div className="bg-surface  rounded-xl p-4 border border-border">
               <p className="text-xs text-text-muted mb-2">للتواصل والشراء:</p>
               <a
                 href="tel:07811942002"
@@ -146,7 +147,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
           </div>
         )}
 
-        <div className="bg-surface/80 backdrop-blur-xl border border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
+        <div className="bg-surface  border border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
           <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${mode === 'license' ? 'from-primary to-blue-600' : 'from-blue-500 to-cyan-500'}`}></div>
 
           {mode === 'license' ? (
@@ -260,7 +261,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
                     <Server className="absolute right-4 top-3.5 text-text-muted group-focus-within/input:text-blue-400 transition-colors" size={20} />
                     <input
                       type="text"
-                      className="w-full bg-bg border border-border text-text-main rounded-xl py-3 pr-12 pl-4 outline-none focus:border-blue-500 focus:bg-surface transition-all font-mono text-center ltr text-lg placeholder:text-text-muted/50 font-bold"
+                      className="w-full bg-bg border border-border text-text-main rounded-xl py-3 pr-12 ltr text-lg placeholder:text-text-muted/50 font-bold"
                       placeholder="192.168.1.X"
                       dir="ltr"
                       value={serverIp}
@@ -270,6 +271,17 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
                   </div>
                 </div>
               </details>
+
+              <div className="mt-3">
+                <input
+                  type="password"
+                  className="w-full bg-bg border border-border text-text-main rounded-xl py-3 px-4 outline-none focus:border-blue-500 focus:bg-surface transition-all font-mono text-center text-sm placeholder:text-text-muted/50"
+                  placeholder="رمز سر الخادم (اختياري)"
+                  value={serverSecret}
+                  onChange={(e) => setServerSecret(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
 
               {error && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center gap-3 text-red-400 text-xs font-bold animate-in slide-in-from-top-2">
@@ -302,7 +314,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
         <div className="mt-8 text-center space-y-4">
           <button
             onClick={() => { setMode(mode === 'license' ? 'lan' : 'license'); setError(''); }}
-            className="text-sm font-bold text-text-muted hover:text-text-main transition-colors flex items-center justify-center gap-2 mx-auto py-2 px-4 rounded-lg hover:bg-surface/50"
+            className="text-sm font-bold text-text-muted hover:text-text-main transition-colors flex items-center justify-center gap-2 mx-auto py-2 px-4 rounded-lg hover:bg-surface"
           >
             {mode === 'license' ? (
               <>

@@ -81,7 +81,7 @@ export const ProductListView = memo(({
                                 key={p.id}
                                 data-index={virtualRow.index}
                                 ref={measureElement}
-                                className={`border-b border-border/30 hover:bg-surface-hover/50 transition-colors cursor-pointer group ${p.id && selectedIds.includes(p.id) ? 'bg-primary/5' : ''}`}
+                                className={`border-b border-border/30 hover:bg-surface-hover transition-colors cursor-pointer group ${p.id && selectedIds.includes(p.id) ? 'bg-primary/5' : ''}`}
                                 onClick={() => onEditProduct(p)}
                             >
                                 <td className="text-right" onClick={e => e.stopPropagation()}>

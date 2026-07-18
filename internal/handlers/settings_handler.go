@@ -52,11 +52,11 @@ func (h *SettingsHandler) GetCurrentVersion() string {
 	return updater.GetCurrentVersion()
 }
 
-func (h *SettingsHandler) CheckForUpdates() (*updater.UpdateInfo, error) {
+func (h *SettingsHandler) CheckForUpdates() (*domain.UpdateInfo, error) {
 	return h.settingsService.CheckForUpdates()
 }
 
-func (h *SettingsHandler) GetUpdateStatus() updater.UpdateStatus {
+func (h *SettingsHandler) GetUpdateStatus() domain.UpdateStatus {
 	return h.settingsService.GetUpdateStatus()
 }
 

@@ -61,7 +61,7 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
                 <div className="relative flex-1">
                     <input
                         ref={searchRef}
-                        className="h-12 w-full rounded-full border bg-input-bg px-12 py-3 text-sm font-black text-text-main outline-none transition focus:border-primary focus:shadow-[0_0_0_4px_var(--color-primary-dim)]"
+                        className="h-12 w-full rounded-xl bg-surface px-12 py-3 text-sm font-black text-text-main outline-none transition focus:bg-surface-hover focus:shadow-[0_0_0_4px_var(--color-primary-dim)]"
                         placeholder="بحث باسم المنتج، الباركود..."
                         value={searchQuery}
                         onChange={(e) => {
@@ -123,7 +123,7 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
                 <button
                     type="button"
                     onClick={() => setSelectedCategory(t('common.all'))}
-                    className={`h-10 whitespace-nowrap rounded-full border px-5 text-xs font-black transition active:scale-[0.98] ${selectedCategory === t('common.all') ? 'border-primary bg-primary text-primary-fg' : 'border-border bg-surface text-text-muted hover:bg-surface-hover hover:text-text-main'}`}
+                    className={`h-10 whitespace-nowrap rounded-full px-5 text-xs font-black transition active:scale-[0.98] ${selectedCategory === t('common.all') ? 'bg-primary text-primary-fg shadow-sm' : 'bg-surface text-text-muted hover:bg-surface-hover hover:text-text-main shadow-sm'}`}
                 >
                     {t('common.all')}
                 </button>
@@ -132,7 +132,7 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
                         key={category.id || category.name}
                         type="button"
                         onClick={() => setSelectedCategory(category.name)}
-                        className={`h-10 whitespace-nowrap rounded-full border px-5 text-xs font-black transition active:scale-[0.98] ${selectedCategory === category.name ? 'border-primary bg-primary text-primary-fg' : 'border-border bg-surface text-text-muted hover:bg-surface-hover hover:text-text-main'}`}
+                        className={`h-10 whitespace-nowrap rounded-full px-5 text-xs font-black transition active:scale-[0.98] ${selectedCategory === category.name ? 'bg-primary text-primary-fg shadow-sm' : 'bg-surface text-text-muted hover:bg-surface-hover hover:text-text-main shadow-sm'}`}
                     >
                         {category.name}
                     </button>

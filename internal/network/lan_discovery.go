@@ -14,7 +14,7 @@ const (
 	DiscoveryPort         = 9765
 	DiscoveryMagic        = "BEIDAR_POS_V1"
 	BroadcastInterval     = 5 * time.Second
-	DiscoveryScanDuration = 5 * time.Second
+	DiscoveryScanDuration = 2 * time.Second
 )
 
 type DiscoveryMessage struct {
