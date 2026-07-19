@@ -70,8 +70,7 @@ export const SettingsPage: React.FC = () => {
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleChange = (key: keyof AppPreferences, value: any) => {
+    const handleChange = <K extends keyof AppPreferences>(key: K, value: AppPreferences[K]) => {
         setLocalPrefs(prev => {
             const next = { ...prev, [key]: value };
             setHasChanges(JSON.stringify(next) !== JSON.stringify(prefs));

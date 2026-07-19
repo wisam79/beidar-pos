@@ -492,7 +492,7 @@ func (a *App) ImportDatabaseBackupNative() (bool, error) {
 
 // CalculateInstallmentPlan calculates the installment plan details
 
-func (a *App) CalculateInstallmentPlan(total, downPayment float64, months int) (*domain.InstallmentPlan, error) {
+func (a *App) CalculateInstallmentPlan(total, downPayment domain.Amount, months int) (*domain.InstallmentPlan, error) {
 	return a.PaymentHandler.CalculateInstallmentPlan(total, downPayment, months)
 }
 

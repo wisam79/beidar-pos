@@ -4,7 +4,7 @@ import {domain} from '../models';
 import {handlers} from '../models';
 import {context} from '../models';
 
-export function CalculateInstallmentPlan(arg1:number,arg2:number,arg3:number):Promise<domain.InstallmentPlan>;
+export function CalculateInstallmentPlan(arg1:domain.Amount,arg2:domain.Amount,arg3:number):Promise<domain.InstallmentPlan>;
 
 export function CreatePayment(arg1:domain.Payment):Promise<domain.Payment>;
 
@@ -18,6 +18,6 @@ export function GetPaymentsByCustomer(arg1:string):Promise<Array<domain.Payment>
 
 export function GetPaymentsBySale(arg1:string):Promise<Array<domain.Payment>>;
 
-export function PayInstallment(arg1:string,arg2:number,arg3:number,arg4:string):Promise<void>;
+export function PayInstallment(arg1:string,arg2:number,arg3:domain.Amount,arg4:string):Promise<void>;
 
 export function Startup(arg1:context.Context):Promise<void>;

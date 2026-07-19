@@ -21,7 +21,7 @@ export function useTheme(prefs: AppPreferences) {
       color = '#306D29';
     }
     
-    console.log('[Theme Debug] Resolved color:', color, 'from prefs:', prefs.accentColor);
+    
     root.style.setProperty('--color-primary', color);
 
     const r = parseInt(color.slice(1, 3), 16);

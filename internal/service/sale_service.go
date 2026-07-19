@@ -646,13 +646,13 @@ func (s *saleService) DeleteSale(id string) error {
 	)
 }
 
-func (s *saleService) ParkSale(itemsJSON string, customerName string, customerID string, note string, total float64, itemsCount float64) (*domain.ParkedSale, error) {
+func (s *saleService) ParkSale(itemsJSON string, customerName string, customerID string, note string, total domain.Amount, itemsCount float64) (*domain.ParkedSale, error) {
 	parked := domain.ParkedSale{
 		ItemsJSON:    itemsJSON,
 		CustomerName: customerName,
 		CustomerID:   customerID,
 		Note:         note,
-		Total:        domain.NewAmount(total),
+		Total:        total,
 		ItemsCount:   itemsCount,
 		CreatedAt:    time.Now().Unix(),
 	}

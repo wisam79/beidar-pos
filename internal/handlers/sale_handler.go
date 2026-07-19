@@ -103,7 +103,7 @@ func (h *SaleHandler) DeleteSale(id string) error {
 	return h.saleService.DeleteSale(id)
 }
 
-func (h *SaleHandler) ParkSale(itemsJSON string, customerName string, customerID string, note string, total float64, itemsCount float64) (*domain.ParkedSale, error) {
+func (h *SaleHandler) ParkSale(itemsJSON string, customerName string, customerID string, note string, total domain.Amount, itemsCount float64) (*domain.ParkedSale, error) {
 	if err := auth.RequirePermission(auth.PermSales); err != nil {
 		return nil, err
 	}

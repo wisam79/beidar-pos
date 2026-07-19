@@ -6,7 +6,7 @@ import { SettingInput } from './SettingsUI';
 
 interface StoreSettingsProps {
     prefs: AppPreferences;
-    handleChange: (key: keyof AppPreferences, value: unknown) => void;
+    handleChange: <K extends keyof AppPreferences>(key: K, value: AppPreferences[K]) => void;
     errors: Record<string, string>;
     logoInputRef: React.RefObject<HTMLInputElement>;
     handleLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;

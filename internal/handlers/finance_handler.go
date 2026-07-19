@@ -118,18 +118,18 @@ func (h *FinanceHandler) VerifyAdminPin(pin string) (bool, error) {
 	return h.financeService.VerifyAdminPin(pin)
 }
 
-func (h *FinanceHandler) OpenShift(staffID, staffName string, openingBalance float64) (*domain.Shift, error) {
+func (h *FinanceHandler) OpenShift(staffID, staffName string, openingBalance domain.Amount) (*domain.Shift, error) {
 	if err := auth.RequirePermission(auth.PermFinance); err != nil {
 		return nil, err
 	}
-	return h.financeService.OpenShift(staffID, staffName, domain.NewAmount(openingBalance))
+	return h.financeService.OpenShift(staffID, staffName, openingBalance)
 }
 
-func (h *FinanceHandler) CloseShift(shiftID string, closingBalance float64, note string) (*domain.Shift, error) {
+func (h *FinanceHandler) CloseShift(shiftID string, closingBalance domain.Amount, note string) (*domain.Shift, error) {
 	if err := auth.RequirePermission(auth.PermFinance); err != nil {
 		return nil, err
 	}
-	return h.financeService.CloseShift(shiftID, domain.NewAmount(closingBalance), note)
+	return h.financeService.CloseShift(shiftID, closingBalance, note)
 }
 
 func (h *FinanceHandler) GetActiveShift() (*domain.Shift, error) {
@@ -139,11 +139,11 @@ func (h *FinanceHandler) GetActiveShift() (*domain.Shift, error) {
 	return h.financeService.GetActiveShift()
 }
 
-func (h *FinanceHandler) AddCashMovement(shiftID, moveType, reason, staffID, staffName string, amount float64) (*domain.CashMovement, error) {
+func (h *FinanceHandler) AddCashMovement(shiftID, moveType, reason, staffID, staffName string, amount domain.Amount) (*domain.CashMovement, error) {
 	if err := auth.RequirePermission(auth.PermFinance); err != nil {
 		return nil, err
 	}
-	return h.financeService.AddCashMovement(shiftID, moveType, reason, staffID, staffName, domain.NewAmount(amount))
+	return h.financeService.AddCashMovement(shiftID, moveType, reason, staffID, staffName, amount)
 }
 
 func (h *FinanceHandler) GetShiftMovements(shiftID string) ([]domain.CashMovement, error) {
@@ -209,11 +209,11 @@ func (h *FinanceHandler) ReceivePurchaseOrder(orderID string, items []domain.Pur
 	return h.financeService.ReceivePurchaseOrder(orderID, items)
 }
 
-func (h *FinanceHandler) PayPurchaseOrder(orderID string, amount float64, method string) error {
+func (h *FinanceHandler) PayPurchaseOrder(orderID string, amount domain.Amount, method string) error {
 	if err := auth.RequirePermission(auth.PermFinance); err != nil {
 		return err
 	}
-	return h.financeService.PayPurchaseOrder(orderID, domain.NewAmount(amount), method)
+	return h.financeService.PayPurchaseOrder(orderID, amount, method)
 }
 
 func (h *FinanceHandler) GetPurchaseOrderStats() (*domain.PurchaseOrderStats, error) {

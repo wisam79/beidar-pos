@@ -49,11 +49,11 @@ func (h *PaymentHandler) DeletePayment(id uint) error {
 	return h.paymentService.DeletePayment(id)
 }
 
-func (h *PaymentHandler) PayInstallment(saleID string, installmentIndex int, amount float64, method string) error {
+func (h *PaymentHandler) PayInstallment(saleID string, installmentIndex int, amount domain.Amount, method string) error {
 	if err := auth.RequirePermission(auth.PermSales); err != nil {
 		return err
 	}
-	return h.paymentService.PayInstallment(saleID, installmentIndex, domain.NewAmount(amount), method)
+	return h.paymentService.PayInstallment(saleID, installmentIndex, amount, method)
 }
 
 func (h *PaymentHandler) GetCustomerInstallments(customerID string) ([]domain.Sale, error) {
@@ -64,9 +64,9 @@ func (h *PaymentHandler) GetCustomerInstallments(customerID string) ([]domain.Sa
 }
 
 type InstallmentSummaryResult struct {
-	Total     int     `json:"total"`
-	Paid      int     `json:"paid"`
-	Remaining float64 `json:"remaining"`
+	Total     int           `json:"total"`
+	Paid      int           `json:"paid"`
+	Remaining domain.Amount `json:"remaining"`
 }
 
 func (h *PaymentHandler) GetInstallmentSummary(saleID string) (*InstallmentSummaryResult, error) {
@@ -80,14 +80,14 @@ func (h *PaymentHandler) GetInstallmentSummary(saleID string) (*InstallmentSumma
 	return &InstallmentSummaryResult{
 		Total:     total,
 		Paid:      paid,
-		Remaining: remaining.Float(),
+		Remaining: remaining,
 	}, nil
 }
 
-func (h *PaymentHandler) CalculateInstallmentPlan(total, downPayment float64, months int) (*domain.InstallmentPlan, error) {
+func (h *PaymentHandler) CalculateInstallmentPlan(total, downPayment domain.Amount, months int) (*domain.InstallmentPlan, error) {
 	if err := auth.Require(); err != nil {
 		return nil, err
 	}
-	return h.paymentService.CalculateInstallmentPlan(domain.NewAmount(total), domain.NewAmount(downPayment), months)
+	return h.paymentService.CalculateInstallmentPlan(total, downPayment, months)
 }
 

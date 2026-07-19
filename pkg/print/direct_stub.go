@@ -19,11 +19,11 @@ func PrintRaw(printerName string, data []byte) error {
 	return errors.New("direct printing is not supported on this platform")
 }
 
-func BuildESCPOSReceipt(storeName string, items []domain.ReceiptItem, total float64, currency string) []byte {
+func BuildESCPOSReceipt(storeName string, items []domain.ReceiptItem, total domain.Amount, currency string) []byte {
 	return nil
 }
 
-func PrintReceipt(printerName, storeName string, items []domain.ReceiptItem, total float64, currency string) error {
+func PrintReceipt(printerName, storeName string, items []domain.ReceiptItem, total domain.Amount, currency string) error {
 	return errors.New("direct printing is not supported on this platform")
 }
 

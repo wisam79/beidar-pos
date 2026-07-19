@@ -3,11 +3,11 @@
 import {domain} from '../models';
 import {context} from '../models';
 
-export function AddCashMovement(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:number):Promise<domain.CashMovement>;
+export function AddCashMovement(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:domain.Amount):Promise<domain.CashMovement>;
 
 export function CancelPurchaseOrder(arg1:string):Promise<void>;
 
-export function CloseShift(arg1:string,arg2:number,arg3:string):Promise<domain.Shift>;
+export function CloseShift(arg1:string,arg2:domain.Amount,arg3:string):Promise<domain.Shift>;
 
 export function CreatePurchaseOrder(arg1:domain.PurchaseOrder):Promise<domain.PurchaseOrder>;
 
@@ -35,9 +35,9 @@ export function GetShiftHistory(arg1:number):Promise<Array<domain.Shift>>;
 
 export function GetShiftMovements(arg1:string):Promise<Array<domain.CashMovement>>;
 
-export function OpenShift(arg1:string,arg2:string,arg3:number):Promise<domain.Shift>;
+export function OpenShift(arg1:string,arg2:string,arg3:domain.Amount):Promise<domain.Shift>;
 
-export function PayPurchaseOrder(arg1:string,arg2:number,arg3:string):Promise<void>;
+export function PayPurchaseOrder(arg1:string,arg2:domain.Amount,arg3:string):Promise<void>;
 
 export function ReceivePurchaseOrder(arg1:string,arg2:Array<domain.PurchaseOrderItem>):Promise<void>;
 

@@ -231,7 +231,7 @@ type SaleService interface {
 	ReturnSalePartial(saleID string, productID string, qtyToReturn float64) error
 	GetSaleItems(saleID string) ([]SaleItem, error)
 	DeleteSale(id string) error
-	ParkSale(itemsJSON string, customerName string, customerID string, note string, total float64, itemsCount float64) (*ParkedSale, error)
+	ParkSale(itemsJSON string, customerName string, customerID string, note string, total Amount, itemsCount float64) (*ParkedSale, error)
 	GetParkedSales() ([]ParkedSale, error)
 	GetParkedSalesCount() (int, error)
 	RetrieveParkedSale(id uint) (*ParkedSale, error)
@@ -330,7 +330,7 @@ type PrintService interface {
 	GenerateQRCode(data string, size int) (string, error)
 	GetAvailablePrinters() ([]PrinterInfo, error)
 	GetDefaultPrinter() (string, error)
-	PrintReceiptDirect(printerName, storeName string, items []ReceiptItem, total float64, currency string) error
+	PrintReceiptDirect(printerName, storeName string, items []ReceiptItem, total Amount, currency string) error
 	TestPrinter(printerName string) error
 	PrintBitmapReceipt(printerName, base64Image string) error
 }

@@ -13,6 +13,7 @@ import {
     Sparkles,
     LogOut,
     Clock,
+    Menu,
     LucideIcon,
 } from '../lib/icons';
 import { View } from '../core/types';
@@ -31,8 +32,8 @@ interface NavItem {
 interface SidebarProps {
     active: View;
     setView: (view: View) => void;
-    isOpen: boolean;
-    setIsOpen: (open: boolean) => void;
+    isOpen?: boolean;
+    setIsOpen?: (open: boolean) => void;
     onToggleAI: () => void;
     onLogout?: () => void;
     lowStockCount?: number;
@@ -57,10 +58,12 @@ interface NavButtonProps {
     onClick: () => void;
     variant?: 'default' | 'ai' | 'danger';
     badge?: number;
+    isExpanded?: boolean;
 }
 
-const NavButton = React.memo(({ icon: Icon, label, isActive, onClick, variant = 'default', badge }: NavButtonProps) => {
-    const base = 'relative flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-120 ease-out active:scale-95 touch-target';
+const NavButton = React.memo(({ icon: Icon, label, isActive, onClick, variant = 'default', badge, isExpanded }: NavButtonProps) => {
+    const base = 'relative flex items-center rounded-xl border transition-all duration-120 ease-out active:scale-95 touch-target';
+    const size = isExpanded ? 'h-11 w-full px-3 justify-start gap-3' : 'h-11 w-11 justify-center';
     const variants = {
         default: isActive
             ? 'border-primary/15 bg-primary-dim text-primary shadow-xs'
@@ -73,21 +76,33 @@ const NavButton = React.memo(({ icon: Icon, label, isActive, onClick, variant = 
         <button
             type="button"
             onClick={onClick}
-            className={`${base} ${variants[variant]}`}
+            className={`${base} ${size} ${variants[variant]}`}
             aria-label={label}
             aria-current={isActive ? 'page' : undefined}
         >
-            <Icon size={22} strokeWidth={isActive ? 2.2 : 1.9} />
-            {isActive && (
+            <Icon size={22} strokeWidth={isActive ? 2.2 : 1.9} className="shrink-0" />
+            
+            {isExpanded && (
+                <span className="font-medium text-sm whitespace-nowrap overflow-hidden text-ellipsis text-right leading-none pt-1">
+                    {label}
+                </span>
+            )}
+
+            {isActive && !isExpanded && (
                 <span className="absolute right-0 top-3 bottom-3 w-1 rounded-l bg-primary" />
             )}
+            
             {badge !== undefined && badge > 0 && (
-                <span className="absolute -left-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-black text-white shadow-sm">
+                <span className={`absolute flex h-5 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-black text-white shadow-sm ${isExpanded ? 'left-3 top-1/2 -translate-y-1/2 min-w-5' : '-left-1 -top-1 min-w-5'}`}>
                     {badge > 9 ? '9+' : badge}
                 </span>
             )}
         </button>
     );
+
+    if (isExpanded) {
+        return content;
+    }
 
     return (
         <Tooltip side="left" content={label}>
@@ -107,14 +122,25 @@ export const Sidebar = React.memo(({
 }: SidebarProps) => {
     const { t } = useTranslation();
     const { logout, hasPermission, isAdmin } = useAuth();
+    const [isExpanded, setIsExpanded] = React.useState(false);
 
     const isAllowed = (permission: string | null | undefined): boolean => !permission || isAdmin || hasPermission(permission);
 
     const handleNavClick = (id: View) => setView(id);
 
     return (
-        <aside className="relative z-[40] flex h-full w-20 shrink-0 flex-col items-center bg-sidebar border-l border-border py-3">
-            <nav className="flex w-full flex-col items-center gap-2 overflow-y-auto no-scrollbar px-3 py-3">
+        <aside className={`relative z-[40] flex h-full shrink-0 flex-col bg-sidebar border-l border-border py-3 transition-all duration-150 ease-out ${isExpanded ? 'w-56 items-stretch' : 'w-20 items-center'}`}>
+            <div className={`flex w-full mb-2 ${isExpanded ? 'px-4 justify-end' : 'justify-center'}`}>
+                <button 
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
+                    aria-label="Toggle Sidebar"
+                >
+                    <Menu size={20} />
+                </button>
+            </div>
+
+            <nav className={`flex w-full flex-col gap-2 overflow-y-auto no-scrollbar py-2 ${isExpanded ? 'px-4' : 'px-3 items-center'}`}>
                 {NAV_ITEMS.filter((item) => isAllowed(item.permission)).map((item) => (
                     <NavButton
                         key={item.id}
@@ -123,18 +149,20 @@ export const Sidebar = React.memo(({
                         isActive={active === item.id}
                         onClick={() => handleNavClick(item.id as View)}
                         badge={item.id === 'inventory' ? lowStockCount : undefined}
+                        isExpanded={isExpanded}
                     />
                 ))}
             </nav>
 
-            <div className="mt-auto mb-2 h-px w-10 bg-border" />
+            <div className={`mt-auto mb-2 h-px bg-border transition-all duration-150 ease-out ${isExpanded ? 'w-48 mx-auto' : 'w-10'}`} />
 
-            <nav className="flex w-full flex-col items-center gap-2 px-3 pb-3">
+            <nav className={`flex w-full flex-col gap-2 pb-3 ${isExpanded ? 'px-4' : 'px-3 items-center'}`}>
                 <NavButton
                     icon={Sparkles}
                     label={t('common.aiAssistant', 'المساعد الذكي')}
                     onClick={onToggleAI}
                     variant="ai"
+                    isExpanded={isExpanded}
                 />
                 {isAllowed(Permissions.SETTINGS) && (
                     <NavButton
@@ -142,9 +170,10 @@ export const Sidebar = React.memo(({
                         label={t('nav.settings')}
                         isActive={active === 'settings'}
                         onClick={() => handleNavClick('settings')}
+                        isExpanded={isExpanded}
                     />
                 )}
-                <NavButton icon={LogOut} label={t('auth.logout')} onClick={() => { logout(); onLogout?.(); }} variant="danger" />
+                <NavButton icon={LogOut} label={t('auth.logout')} onClick={() => { logout(); onLogout?.(); }} variant="danger" isExpanded={isExpanded} />
             </nav>
         </aside>
     );

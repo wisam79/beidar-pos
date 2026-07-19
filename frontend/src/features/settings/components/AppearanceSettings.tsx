@@ -6,7 +6,7 @@ import { SettingToggle } from './SettingsUI';
 
 interface AppearanceSettingsProps {
     prefs: AppPreferences;
-    handleChange: (key: keyof AppPreferences, value: unknown) => void;
+    handleChange: <K extends keyof AppPreferences>(key: K, value: AppPreferences[K]) => void;
 }
 
 export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsProps) => {
@@ -45,7 +45,7 @@ export const AppearanceSettings = ({ prefs, handleChange }: AppearanceSettingsPr
                                 <select
                                     className="w-full bg-input-bg border border-border text-text-main rounded-lg py-3 px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold appearance-none cursor-pointer transition-all"
                                     value={prefs.fontSize}
-                                    onChange={e => handleChange('fontSize', e.target.value)}
+                                    onChange={e => handleChange('fontSize', e.target.value as AppPreferences['fontSize'])}
                                     aria-label="حجم الخط"
                                 >
                                     <option value="small" className="bg-bg">صغير</option>

@@ -6,7 +6,7 @@ import { SettingInput, SettingToggle } from './SettingsUI';
 
 interface SalesSettingsProps {
     prefs: AppPreferences;
-    handleChange: (key: keyof AppPreferences, value: unknown) => void;
+    handleChange: <K extends keyof AppPreferences>(key: K, value: AppPreferences[K]) => void;
     errors: Record<string, string>;
     setShowDiscountManager: (show: boolean) => void;
 }

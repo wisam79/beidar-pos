@@ -19,7 +19,7 @@ export function GetSaleItems(arg1:string):Promise<Array<domain.SaleItem>>;
 
 export function GetSales(arg1:number,arg2:number,arg3:string,arg4:string,arg5:string):Promise<domain.PaginatedSales>;
 
-export function ParkSale(arg1:string,arg2:string,arg3:string,arg4:string,arg5:number,arg6:number):Promise<domain.ParkedSale>;
+export function ParkSale(arg1:string,arg2:string,arg3:string,arg4:string,arg5:domain.Amount,arg6:number):Promise<domain.ParkedSale>;
 
 export function ProcessSale(arg1:domain.Sale):Promise<void>;
 

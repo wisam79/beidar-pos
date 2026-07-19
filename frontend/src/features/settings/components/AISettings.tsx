@@ -4,7 +4,7 @@ import { AppPreferences } from '../../../core/types';
 
 interface AISettingsProps {
     prefs: AppPreferences;
-    handleChange: (key: keyof AppPreferences, value: unknown) => void;
+    handleChange: <K extends keyof AppPreferences>(key: K, value: AppPreferences[K]) => void;
 }
 
 // Feature card component

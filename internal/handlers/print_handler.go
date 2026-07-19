@@ -76,8 +76,7 @@ func (h *PrintHandler) GetDefaultPrinter() (string, error) {
 	return h.printService.GetDefaultPrinter()
 }
 
-// PrintReceiptDirect sends an ESC/POS receipt directly to a printer
-func (h *PrintHandler) PrintReceiptDirect(printerName, storeName string, items []domain.ReceiptItem, total float64, currency string) error {
+func (h *PrintHandler) PrintReceiptDirect(printerName, storeName string, items []domain.ReceiptItem, total domain.Amount, currency string) error {
 	if err := auth.Require(); err != nil {
 		return err
 	}

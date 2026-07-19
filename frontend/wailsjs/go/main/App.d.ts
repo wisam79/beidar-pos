@@ -6,7 +6,7 @@ export function AI_CancelStream():Promise<void>;
 
 export function AI_GenerateStream(arg1:string):Promise<void>;
 
-export function CalculateInstallmentPlan(arg1:number,arg2:number,arg3:number):Promise<domain.InstallmentPlan>;
+export function CalculateInstallmentPlan(arg1:domain.Amount,arg2:domain.Amount,arg3:number):Promise<domain.InstallmentPlan>;
 
 export function DownloadProductsTemplateNative():Promise<boolean>;
 

@@ -685,7 +685,7 @@ func utf8ToWindows1256(s string) []byte {
 }
 
 // BuildESCPOSReceipt builds a receipt using ESC/POS commands
-func BuildESCPOSReceipt(storeName string, items []domain.ReceiptItem, total float64, currency string) []byte {
+func BuildESCPOSReceipt(storeName string, items []domain.ReceiptItem, total domain.Amount, currency string) []byte {
 	var data []byte
 
 	now := time.Now()
@@ -727,7 +727,7 @@ func BuildESCPOSReceipt(storeName string, items []domain.ReceiptItem, total floa
 		data = append(data, ESC, 'E', 0)
 		data = append(data, LF)
 
-		details := fmt.Sprintf("%.0f x %d = %.0f", item.Price, item.Qty, item.Total)
+		details := fmt.Sprintf("%.0f x %d = %.0f", item.Price.Float(), item.Qty, item.Total.Float())
 		data = append(data, []byte(details)...)
 		data = append(data, LF)
 		data = append(data, []byte("----------------")...)
@@ -740,7 +740,7 @@ func BuildESCPOSReceipt(storeName string, items []domain.ReceiptItem, total floa
 	data = append(data, ESC, 'E', 1)
 	totalLabel := utf8ToWindows1256("المجموع")
 	data = append(data, totalLabel...)
-	data = append(data, []byte(fmt.Sprintf(": %.0f %s", total, currency))...)
+	data = append(data, []byte(fmt.Sprintf(": %.0f %s", total.Float(), currency))...)
 	data = append(data, LF, LF)
 	data = append(data, ESC, 'E', 0)
 
@@ -762,7 +762,7 @@ func truncateRunes(s string, maxLen int) string {
 }
 
 // PrintReceipt prints a receipt to the specified printer
-func PrintReceipt(printerName, storeName string, items []domain.ReceiptItem, total float64, currency string) error {
+func PrintReceipt(printerName, storeName string, items []domain.ReceiptItem, total domain.Amount, currency string) error {
 	data := BuildESCPOSReceipt(storeName, items, total, currency)
 	return PrintRaw(printerName, data)
 }

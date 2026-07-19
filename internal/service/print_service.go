@@ -45,7 +45,7 @@ func (s *printService) GetDefaultPrinter() (string, error) {
 	return print.GetDefaultPrinter()
 }
 
-func (s *printService) PrintReceiptDirect(printerName, storeName string, items []domain.ReceiptItem, total float64, currency string) error {
+func (s *printService) PrintReceiptDirect(printerName, storeName string, items []domain.ReceiptItem, total domain.Amount, currency string) error {
 	return print.PrintReceipt(printerName, storeName, items, total, currency)
 }
 

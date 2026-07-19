@@ -12,8 +12,8 @@ type PrinterInfo struct {
 type ReceiptItem struct {
 	Name  string  `json:"name"`
 	Qty   int     `json:"qty"`
-	Price float64 `json:"price"`
-	Total float64 `json:"total"`
+	Price Amount `json:"price"`
+	Total Amount `json:"total"`
 }
 
 // CSVImportResult holds the result of a CSV import operation
