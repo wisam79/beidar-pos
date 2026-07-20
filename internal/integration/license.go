@@ -1,13 +1,8 @@
 package integration
 
 import (
-	"archive/zip"
-	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -21,7 +16,8 @@ import (
 	"time"
 
 	"beidar-desktop/internal/core/domain"
-	"beidar-desktop/internal/repository"
+	pkgcrypto "beidar-desktop/pkg/crypto"
+	"beidar-desktop/pkg/secureconfig"
 )
 
 // legacySalt is retained ONLY for backwards-compatible decryption of license
@@ -151,6 +147,16 @@ func (s *cloudService) getCachedLicense(licenseKey, userID string) (*domain.Lice
 		return nil, errors.New("cache expired")
 	}
 
+	if cache.Result.ExpiresAt != "" {
+		expiry, parseErr := time.Parse(time.RFC3339, cache.Result.ExpiresAt)
+		if parseErr != nil {
+			expiry, parseErr = time.Parse("2006-01-02T15:04:05Z07:00", cache.Result.ExpiresAt)
+		}
+		if parseErr == nil && time.Now().After(expiry) {
+			return nil, errors.New("license expired")
+		}
+	}
+
 	message := "تم التحقق من النسخة المحلية (وضع عدم الاتصال)"
 	if timeSinceLastCheck > int64(gracePeriodWarning.Seconds()) {
 		daysLeft := 30 - int(timeSinceLastCheck/86400)
@@ -227,20 +233,37 @@ func loadOrCreateMasterKey() ([]byte, error) {
 	return masterKeyBytes, nil
 }
 
-// getEncryptionKey returns the device-bound AES key derived from the master key.
-// Used for all NEW encryption.
+// getEncryptionKey returns the device-bound AES key derived from the master
+// key AND the hardware machine ID (MachineGuid on Windows, machine-id on
+// Unix). Combining the two binds the license cache to this specific device.
 func (s *cloudService) getEncryptionKey() ([]byte, error) {
 	mk, err := loadOrCreateMasterKey()
 	if err != nil {
 		return nil, err
 	}
-	// Derive a 32-byte AES key from the master key via SHA-256.
+	machineID := secureconfig.MachineID()
+	seed := append(mk, []byte(machineID)...)
+	seed = append(seed, []byte("BeidarPOS_License_AES_v3")...)
+	sum := sha256.Sum256(seed)
+	return sum[:], nil
+}
+
+// prevEncryptionKey reproduces the OLD device-bound derivation (master key
+// only, no machine ID) so we can decrypt caches written by previous builds
+// and automatically migrate them to the new machine-ID-bound key on the next
+// write. This is purely for backwards compatibility; never use for new
+// writes.
+func prevEncryptionKey() ([]byte, error) {
+	mk, err := loadOrCreateMasterKey()
+	if err != nil {
+		return nil, err
+	}
 	sum := sha256.Sum256(append(mk, []byte("BeidarPOS_License_AES_v3")...))
 	return sum[:], nil
 }
 
-// legacyEncryptionKey reproduces the OLD hardcoded derivation so we can still
-// decrypt caches written by previous builds (one-time migration).
+// legacyEncryptionKey reproduces the ORIGINAL hardcoded derivation so we can
+// still decrypt caches from builds that predate the per-device master key.
 func legacyEncryptionKey() []byte {
 	hash := sha256.Sum256([]byte(legacySalt + "BeidarPOS_Encryption_Key_v3"))
 	return hash[:]
@@ -251,60 +274,34 @@ func (s *cloudService) encrypt(plaintext []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	block, err := aes.NewCipher(key)
+	enc, err := pkgcrypto.Encrypt(plaintext, key)
 	if err != nil {
 		return nil, err
 	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-
-	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
-	return []byte(base64.StdEncoding.EncodeToString(ciphertext)), nil
+	return []byte(enc), nil
 }
 
 func (s *cloudService) decrypt(data []byte) ([]byte, error) {
-	ciphertext, err := base64.StdEncoding.DecodeString(string(data))
-	if err != nil {
-		return nil, err
-	}
+	encoded := string(data)
 
-	// Try the new device-bound key first.
-	key, kerr := s.getEncryptionKey()
-	if kerr == nil {
-		if plaintext, derr := aesGCMDecrypt(key, ciphertext); derr == nil {
-			return plaintext, nil
+	// 1. Try the new machine-ID-bound key.
+	if key, err := s.getEncryptionKey(); err == nil {
+		if pt, derr := pkgcrypto.Decrypt(encoded, key); derr == nil {
+			return pt, nil
 		}
 	}
 
-	// Backwards-compat fallback: caches written by older builds used the
-	// hardcoded key. This lets users upgrade without losing their cached
-	// license; the next write rotates them onto the device-bound key.
-	return aesGCMDecrypt(legacyEncryptionKey(), ciphertext)
-}
+	// 2. Previous key (master key only, no machine ID). Automatically
+	//    migrates old caches to the new key on the next write.
+	if key, err := prevEncryptionKey(); err == nil {
+		if pt, derr := pkgcrypto.Decrypt(encoded, key); derr == nil {
+			return pt, nil
+		}
+	}
 
-// aesGCMDecrypt performs AES-GCM decryption with the given key.
-func aesGCMDecrypt(key, ciphertext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	if len(ciphertext) < gcm.NonceSize() {
-		return nil, errors.New("ciphertext too short")
-	}
-	nonce, ciphertext := ciphertext[:gcm.NonceSize()], ciphertext[gcm.NonceSize():]
-	return gcm.Open(nil, nonce, ciphertext, nil)
+	// 3. Legacy hardcoded key (for caches from builds before per-device
+	//    master keys existed).
+	return pkgcrypto.Decrypt(encoded, legacyEncryptionKey())
 }
 
 func (s *cloudService) VerifyLicense(licenseKey string) (*domain.LicenseResult, error) {
@@ -390,11 +387,20 @@ func (s *cloudService) GetUserLicenseStatus() (*domain.LicenseResult, error) {
 	if err == nil {
 		if result.Licensed {
 			storedKey := s.GetStoredLicenseKey()
-			if storedKey == "" {
-				storedKey = "AUTO_" + user.UserID[:8]
-				s.storeLicenseKey(storedKey)
+			cacheKey := storedKey
+			if cacheKey == "" {
+				// No stored license key was bound on this device (e.g.
+				// the cloud user was licensed from the admin dashboard
+				// without going through the desktop activation flow).
+				// Use a synthetic key based on the user ID so the offline
+				// cache can still be matched. Do NOT call storeLicenseKey
+				// here — the stored license key file must only hold a
+				// real activation key, not a synthetic one.
+				if len(user.UserID) > 0 {
+					cacheKey = "USER_" + user.UserID
+				}
 			}
-			_ = s.cacheResult(storedKey, user.UserID, result)
+			_ = s.cacheResult(cacheKey, user.UserID, result)
 			s.saveSessionToCache()
 			return result, nil
 		} else {
@@ -404,8 +410,15 @@ func (s *cloudService) GetUserLicenseStatus() (*domain.LicenseResult, error) {
 	}
 
 	storedKey := s.GetStoredLicenseKey()
-	if storedKey != "" {
-		cached, cacheErr := s.getCachedLicense(storedKey, user.UserID)
+	cacheKey := storedKey
+	if cacheKey == "" && len(user.UserID) > 0 {
+		// Match the synthetic key used when writing the cache (see online
+		// branch above) so users licensed via the admin dashboard without
+		// going through desktop activation can still read the offline cache.
+		cacheKey = "USER_" + user.UserID
+	}
+	if cacheKey != "" {
+		cached, cacheErr := s.getCachedLicense(cacheKey, user.UserID)
 		if cacheErr == nil && cached != nil && cached.Licensed {
 			cached.Message = "تم التحقق من النسخة المحلية (وضع عدم الاتصال)"
 			return cached, nil
@@ -474,107 +487,3 @@ func (s *cloudService) activateOnline(licenseKey, userID string) (*domain.Licens
 }
 
 
-
-func compressDatabaseForBackup() ([]byte, error) {
-	buf := new(bytes.Buffer)
-	zipWriter := zip.NewWriter(buf)
-
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return nil, err
-	}
-	dbPath := filepath.Join(configDir, "BeidarPOS_V3", "beidar_v3.db")
-
-	var srcPath string
-	useTemp := false
-
-	db := repository.GetDB()
-	if db != nil {
-		tempFile := filepath.Join(os.TempDir(), fmt.Sprintf("beidar_backup_%d.db", time.Now().UnixNano()))
-		if err := db.Exec("VACUUM INTO ?", tempFile).Error; err == nil {
-			srcPath = tempFile
-			useTemp = true
-		}
-	}
-
-	if srcPath == "" {
-		srcPath = dbPath
-	}
-
-	dbFile, err := os.Open(srcPath)
-	if err != nil {
-		return nil, err
-	}
-	defer dbFile.Close()
-
-	if useTemp {
-		defer os.Remove(srcPath)
-	}
-
-	info, err := dbFile.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	header, _ := zip.FileInfoHeader(info)
-	header.Name = "beidar_v3.db"
-	header.Method = zip.Deflate
-
-	writer, err := zipWriter.CreateHeader(header)
-	if err != nil {
-		return nil, err
-	}
-
-	_, _ = io.Copy(writer, dbFile)
-	_ = zipWriter.Close()
-
-	return buf.Bytes(), nil
-}
-
-func restoreFromCompressed(data []byte) error {
-	reader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	if err != nil {
-		return err
-	}
-
-	if err := repository.CloseDB(); err != nil {
-		return err
-	}
-
-	backupPath, err := repository.BackupPath()
-	if err != nil {
-		return err
-	}
-
-	for _, file := range reader.File {
-		if file.Name == "beidar_v3.db" {
-			rc, err := file.Open()
-			if err != nil {
-				_ = repository.RestoreBackup(backupPath)
-				return err
-			}
-			defer rc.Close()
-
-			configDir, _ := os.UserConfigDir()
-			dbPath := filepath.Join(configDir, "BeidarPOS_V3", "beidar_v3.db")
-			outFile, err := os.Create(dbPath)
-			if err != nil {
-				_ = repository.RestoreBackup(backupPath)
-				return err
-			}
-			defer outFile.Close()
-
-			_, _ = io.Copy(outFile, rc)
-			_ = os.Remove(backupPath)
-
-			if _, err := repository.InitDB(); err != nil {
-				return fmt.Errorf("فشل إعادة تهيئة قاعدة البيانات: %v", err)
-			}
-
-			return nil
-		}
-	}
-
-	_ = repository.RestoreBackup(backupPath)
-	return fmt.Errorf("لم يتم العثور على ملف قاعدة البيانات في النسخة الاحتياطية")
-}

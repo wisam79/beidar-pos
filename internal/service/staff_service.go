@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 // RolePermissions defines default permissions for each role.
@@ -75,13 +76,17 @@ func (s *staffService) checkRateLimit(identifier string) (bool, string, error) {
 func (s *staffService) recordFailedAttempt(identifier string, maxAttempts int) error {
 	attempt, err := s.staffRepo.GetLoginAttempt(identifier)
 	if err != nil {
-		// Create new record
-		newAttempt := domain.LoginAttempt{
-			Identifier:  identifier,
-			Attempts:    1,
-			LastAttempt: time.Now().Unix(),
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			newAttempt := domain.LoginAttempt{
+				Identifier:  identifier,
+				Attempts:    1,
+				LastAttempt: time.Now().Unix(),
+			}
+			return s.staffRepo.SaveLoginAttempt(&newAttempt)
 		}
-		return s.staffRepo.SaveLoginAttempt(&newAttempt)
+		// Real DB error — don't silently overwrite.
+		logger.Logger.Error("AUTH", fmt.Sprintf("Failed to read login attempts for %s: %v", identifier, err))
+		return nil
 	}
 
 	attempt.Attempts++
@@ -616,7 +621,6 @@ func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 	}
 
 	_ = s.recordFailedAttempt("pin_auth_"+hashedInput, MaxGlobalPinAttempts)
-	time.Sleep(2 * time.Second) // Throttling brute force
 
 	attempt, err := s.staffRepo.GetLoginAttempt("pin_auth_" + hashedInput)
 	if err == nil && attempt != nil {

@@ -280,9 +280,13 @@ func (s *aiService) selectGroqKey(prefs *domain.AppPreferences) string {
 		}
 	}
 
-	// Recovery from env variable
+	// Recovery from env variable (canonical GROQ_API_KEY with legacy "grok" fallback)
 	if len(activeKeys) == 0 {
-		if envKey := os.Getenv("grok"); envKey != "" {
+		envKey := os.Getenv("GROQ_API_KEY")
+		if envKey == "" {
+			envKey = os.Getenv("grok")
+		}
+		if envKey != "" {
 			activeKeys = append(activeKeys, envKey)
 		}
 	}

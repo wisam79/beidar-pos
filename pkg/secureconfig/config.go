@@ -11,14 +11,13 @@ import (
 
 // Secrets holds all sensitive configuration values.
 type Secrets struct {
-	SupabaseURL           string   `json:"supabase_url,omitempty"`
-	SupabaseAnonKey       string   `json:"supabase_anon_key,omitempty"`
-	GoogleOAuthClientID   string   `json:"google_oauth_client_id,omitempty"`
-	GoogleOAuthClientSecret string `json:"google_oauth_client_secret,omitempty"`
-	GeminiAPIKey          string   `json:"gemini_api_key,omitempty"`
-	GeminiAPIKeys         []string `json:"gemini_api_keys,omitempty"`
-	LicenseMasterKey      string   `json:"license_master_key,omitempty"`
-	GroqAPIKey            string   `json:"groq_api_key,omitempty"`
+	SupabaseURL             string   `json:"supabase_url,omitempty"`
+	SupabaseAnonKey         string   `json:"supabase_anon_key,omitempty"`
+	GoogleOAuthClientID     string   `json:"google_oauth_client_id,omitempty"`
+	GoogleOAuthClientSecret string   `json:"google_oauth_client_secret,omitempty"`
+	GeminiAPIKey            string   `json:"gemini_api_key,omitempty"`
+	GeminiAPIKeys           []string `json:"gemini_api_keys,omitempty"`
+	GroqAPIKey              string   `json:"groq_api_key,omitempty"`
 }
 
 var (
@@ -87,12 +86,15 @@ func Load() (*Secrets, error) {
 		s.SupabaseAnonKey = v
 	}
 
-	if v := os.Getenv("BEIDAR_LICENSE_MASTER_KEY"); v != "" {
-		s.LicenseMasterKey = v
-	}
-
 	loadedSecrets = s
 	return s, nil
+}
+
+// MachineID returns a stable per-machine identifier (Windows MachineGuid or
+// /etc/machine-id on Unix). It is exposed so other packages (e.g. license
+// cache encryption) can derive device-bound keys consistent with secureconfig.
+func MachineID() string {
+	return readMachineID()
 }
 
 // deriveLegacyMachineKey derives the legacy machine key using "windows-default"
@@ -213,15 +215,26 @@ func SetGoogleOAuthSecrets(clientID, clientSecret string) error {
 }
 
 // GetGroqAPIKey returns the stored Groq API key.
+// Env precedence: GROQ_API_KEY (canonical) then "grok" (legacy alias, kept
+// for backwards compatibility with existing deployments).
 func GetGroqAPIKey() string {
 	s, err := Load()
 	if err != nil || s == nil {
-		return os.Getenv("grok")
+		return groqEnvFallback()
 	}
 	if s.GroqAPIKey == "" {
-		return os.Getenv("grok")
+		return groqEnvFallback()
 	}
 	return s.GroqAPIKey
+}
+
+// groqEnvFallback checks the canonical GROQ_API_KEY env var first, falling
+// back to the legacy "grok" env var name so existing .env files keep working.
+func groqEnvFallback() string {
+	if v := os.Getenv("GROQ_API_KEY"); v != "" {
+		return v
+	}
+	return os.Getenv("grok")
 }
 
 // SetGroqAPIKey stores a Groq API key in the encrypted config.

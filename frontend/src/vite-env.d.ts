@@ -1,9 +1,5 @@
 /// <reference types="vite/client" />
 
-interface ImportMetaEnv {
-    readonly VITE_GEMINI_API_KEY: string;
-}
-
 declare module 'qrcode' {
     export function toString(text: string, options?: Record<string, unknown>): Promise<string>;
     export function toDataURL(text: string, options?: Record<string, unknown>): Promise<string>;

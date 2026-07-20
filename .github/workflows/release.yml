@@ -11,6 +11,11 @@ permissions:
   attestations: write
   id-token: write
 
+# Single source of truth for the application version. Kept in sync with
+# wails.json -> info.productVersion. Bump both when cutting a release.
+env:
+  APP_VERSION: '2.0.8'
+
 jobs:
   # ═══════════════════════════════════════════════════════════════════
   # بناء Windows Installer
@@ -40,9 +45,10 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build Wails App
-        run: wails build -platform windows/amd64 -o beidar-desktop.exe -clean
+        run: wails build -platform windows/amd64 -o beidar-desktop.exe -clean -ldflags "-X beidar-desktop/pkg/updater.CurrentVersion=$env:APP_VERSION -X beidar-desktop/pkg/crashreporter.AppVersion=$env:APP_VERSION"
         env:
           NODE_ENV: production
+          APP_VERSION: ${{ env.APP_VERSION }}
 
       - name: Sign Binary (إذا توفر المفتاح)
         if: env.SIGNING_CERT != ''
@@ -94,9 +100,10 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build Wails App
-        run: wails build -platform linux/amd64 -o beidar-desktop -clean
+        run: wails build -platform linux/amd64 -o beidar-desktop -clean -ldflags "-X beidar-desktop/pkg/updater.CurrentVersion=$APP_VERSION -X beidar-desktop/pkg/crashreporter.AppVersion=$APP_VERSION"
         env:
           NODE_ENV: production
+          APP_VERSION: ${{ env.APP_VERSION }}
 
       - name: Upload AppImage Artifact
         uses: actions/upload-artifact@v4

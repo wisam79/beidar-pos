@@ -41,6 +41,9 @@ func (h *SettingsHandler) UpdatePreferences(prefs domain.AppPreferences) error {
 }
 
 func (h *SettingsHandler) VerifyAdminPin(pin string) bool {
+	if err := auth.Require(); err != nil {
+		return false
+	}
 	return h.settingsService.VerifyAdminPin(pin)
 }
 
@@ -96,14 +99,23 @@ func (h *SettingsHandler) IsAutoStartEnabled() bool {
 }
 
 func (h *SettingsHandler) GetCrashReports() ([]string, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.settingsService.GetCrashReports()
 }
 
 func (h *SettingsHandler) GetCrashReportContent(filename string) (string, error) {
+	if err := auth.Require(); err != nil {
+		return "", err
+	}
 	return h.settingsService.GetCrashReportContent(filename)
 }
 
 func (h *SettingsHandler) ClearCrashReports() error {
+	if err := auth.Require(); err != nil {
+		return err
+	}
 	return h.settingsService.ClearCrashReports()
 }
 

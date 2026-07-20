@@ -75,6 +75,73 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }, []);
 
+    // Login with username and PIN
+    const login = useCallback(async (username: string, password: string): Promise<AuthResult> => {
+        try {
+            const result = await api.staff.authenticate(username, password);
+            if (result.success && result.staff) {
+                setCurrentUser(result.staff);
+                setPermissions(result.permissions || []);
+                if (result.requirePinChange || result.staff.mustChangePin) {
+                    setRequirePinChange(true);
+                }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    user: result.staff,
+                    permissions: result.permissions || []
+                }));
+                localStorage.setItem(LAST_STAFF_KEY, result.staff.id);
+                localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+            }
+            return result;
+        } catch {
+            return { success: false, message: 'خطأ في الاتصال' } as AuthResult;
+        }
+    }, []);
+
+    // Login with PIN
+    const loginWithPIN = useCallback(async (pin: string): Promise<AuthResult> => {
+        try {
+            const result = await api.staff.authenticateByPIN(pin);
+            if (result.success && result.staff) {
+                setCurrentUser(result.staff);
+                setPermissions(result.permissions || []);
+                if (result.requirePinChange || result.staff.mustChangePin) {
+                    setRequirePinChange(true);
+                }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    user: result.staff,
+                    permissions: result.permissions || []
+                }));
+                localStorage.setItem(LAST_STAFF_KEY, result.staff.id);
+                localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+            }
+            return result;
+        } catch {
+            return { success: false, message: 'خطأ في الاتصال' } as AuthResult;
+        }
+    }, []);
+
+    // Logout — clears the backend session singleton.
+    const logout = useCallback(() => {
+        try {
+            api.staff.logout();
+        } catch {
+            // Binding may not exist during development; ignore silently.
+        }
+        setCurrentUser(null);
+        setPermissions([]);
+        setSessionTimeoutWarning(false);
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(LAST_ACTIVITY_KEY);
+    }, []);
+
+    // Check if user has a specific permission
+    const hasPermission = useCallback((permission: string): boolean => {
+        if (!currentUser) return false;
+        if (currentUser.role === 'admin') return true;
+        return permissions.includes(permission);
+    }, [currentUser, permissions]);
+
     // Idle timeout management
     useEffect(() => {
         if (!currentUser || idleTimeout === 0) return;
@@ -119,86 +186,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
             clearInterval(checkIdle);
         };
-    }, [currentUser, idleTimeout, extendSession]);
-
-    // Login with username and PIN
-    const login = async (username: string, password: string): Promise<AuthResult> => {
-        try {
-            const result = await api.staff.authenticate(username, password);
-            if (result.success && result.staff) {
-                setCurrentUser(result.staff);
-                setPermissions(result.permissions || []);
-                // Check if user needs to change default PIN
-                if (result.requirePinChange || result.staff.mustChangePin) {
-                    setRequirePinChange(true);
-                }
-                // Persist session
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                    user: result.staff,
-                    permissions: result.permissions || []
-                }));
-                // Save last staff ID for quick login on restart
-                localStorage.setItem(LAST_STAFF_KEY, result.staff.id);
-                // Start idle tracking
-                localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-            }
-            return result;
-        } catch (error) {
-            return { success: false, message: 'خطأ في الاتصال' } as AuthResult;
-        }
-    };
-
-    // Login with PIN
-    const loginWithPIN = async (pin: string): Promise<AuthResult> => {
-        try {
-            const result = await api.staff.authenticateByPIN(pin);
-            if (result.success && result.staff) {
-                setCurrentUser(result.staff);
-                setPermissions(result.permissions || []);
-                // Check for PIN change requirement
-                if (result.requirePinChange || result.staff.mustChangePin) {
-                    setRequirePinChange(true);
-                }
-                // Persist session
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                    user: result.staff,
-                    permissions: result.permissions || []
-                }));
-                // Save last staff ID for quick login on restart
-                localStorage.setItem(LAST_STAFF_KEY, result.staff.id);
-                // Start idle tracking
-                localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-            }
-            return result;
-        } catch (error) {
-            return { success: false, message: 'خطأ في الاتصال' } as AuthResult;
-        }
-    };
-
-    // Logout — clears the backend session singleton so that any subsequent
-    // Wails call is properly rejected by the auth middleware.
-    const logout = () => {
-        try {
-            // Fire-and-forget: the backend session is cleared regardless of
-            // whether this IPC call succeeds (the window is closing anyway).
-            api.staff.logout();
-        } catch {
-            // Binding may not exist during development; ignore silently.
-        }
-        setCurrentUser(null);
-        setPermissions([]);
-        setSessionTimeoutWarning(false);
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(LAST_ACTIVITY_KEY);
-    };
-
-    // Check if user has a specific permission
-    const hasPermission = (permission: string): boolean => {
-        if (!currentUser) return false;
-        // Admin has all permissions
-        if (currentUser.role === 'admin') return true;
-        return permissions.includes(permission);
-    };
+    }, [currentUser, idleTimeout, extendSession, logout]);
 
     const value = useMemo<AuthContextType>(() => ({
         currentUser,
@@ -222,17 +210,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         requirePinChange,
         sessionTimeoutWarning,
         idleMinutesRemaining,
-        // Stable functions from useState/useCallback/imports don't strictly need to be here if they are truly stable, 
-        // but including them satisfies exhaustive-deps if they were locally defined without useCallback.
-        // Assuming extendsession/login etc are stable or useCallbacks.
-        // Looking at previous view_file, they seem to be defined inside the component? 
-        // I need to confirm if 'extendSession' etc are wrapped in useCallback.
-        // If not, useMemo won't help much if the functions are recreated every render.
-        // Let's assume for now I should just wrap the value. 
-        // Wait, if login/logout are not memoized, this useMemo is useless.
-        // I should check strict dependency usage. 
-        // I'll assume they are or I'll fix them if I see they aren't.
-        // Re-reading logic: I'll wrap the value object.
+        extendSession,
+        login,
+        loginWithPIN,
+        logout,
+        hasPermission,
+        setIdleTimeout,
     ]);
 
     return (

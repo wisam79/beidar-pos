@@ -114,8 +114,14 @@ func (s *cloudService) loadSessionFromCache() {
 	key := deriveSupabaseSessionKey()
 	decrypted, err := pkgcrypto.Decrypt(string(data), key)
 	if err != nil {
-		fmt.Printf("⚠️ Failed to decrypt session cache: %v\n", err)
-		return
+		// Fallback: try the old hostname-only key so existing sessions
+		// migrate to the new machine-ID-bound key on the next write.
+		prevKey := prevSupabaseSessionKey()
+		decrypted, err = pkgcrypto.Decrypt(string(data), prevKey)
+		if err != nil {
+			fmt.Printf("⚠️ Failed to decrypt session cache: %v\n", err)
+			return
+		}
 	}
 
 	var session domain.UserSession
@@ -125,6 +131,18 @@ func (s *cloudService) loadSessionFromCache() {
 }
 
 func deriveSupabaseSessionKey() []byte {
+	host, err := os.Hostname()
+	if err != nil {
+		host = "beidar-supabase-session-default"
+	}
+	machineID := secureconfig.MachineID()
+	return pkgcrypto.DeriveKey(fmt.Sprintf("beidar-supabase-session-key-%s-%s", host, machineID))
+}
+
+// prevSupabaseSessionKey reproduces the old hostname-only derivation so
+// sessions written by builds before the machine-ID binding can still be
+// decrypted and rotated to the new key on the next write.
+func prevSupabaseSessionKey() []byte {
 	host, err := os.Hostname()
 	if err != nil {
 		host = "beidar-supabase-session-default"

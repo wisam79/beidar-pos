@@ -73,7 +73,11 @@ func (s *settingsService) GetPreferences() (*domain.AppPreferences, error) {
 		}
 	}
 	if prefs.GroqAPIKey == "" || prefs.GroqAPIKey == "********" {
-		if envKey := os.Getenv("grok"); envKey != "" {
+		envKey := os.Getenv("GROQ_API_KEY")
+		if envKey == "" {
+			envKey = os.Getenv("grok")
+		}
+		if envKey != "" {
 			prefs.GroqAPIKey = envKey
 		}
 	}
@@ -140,8 +144,7 @@ func (s *settingsService) VerifyAdminPin(pin string) bool {
 	if prefs.AdminPin == "" {
 		return false
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(prefs.AdminPin), []byte(pin))
-	return err == nil
+	return VerifyAdminPin(prefs.AdminPin, pin)
 }
 
 func (s *settingsService) GetDeviceID() (string, error) {

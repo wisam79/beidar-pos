@@ -107,14 +107,29 @@ CREATE POLICY "Admins have full access to global_settings" ON public.global_sett
 -- =========================================================================
 -- SEED INITIAL ADMIN USER
 -- =========================================================================
--- This block automatically registers your first admin.
+-- SECURITY NOTE: The admin account must NOT be created with hardcoded
+-- credentials in version control. Create the first admin interactively via
+-- the Supabase Dashboard (Authentication > Users) or run this block
+-- AFTER replacing the placeholders below with a strong, unique password.
+--
+-- Steps:
+--   1. Set :admin_email and :admin_pass to real values (use psql variables
+--      or Supabase SQL Editor's "Run" with substitution disabled).
+--   2. Run this block ONCE.
+--   3. Change the password immediately after first login.
 DO $$
 DECLARE
     new_user_id UUID := gen_random_uuid();
-    admin_email TEXT := 'wisamsamir78@gmail.com'; -- Your admin email
-    admin_pass TEXT := 'wisam77862@@';                -- Your secure admin password
-    admin_user TEXT := 'wisam';                  -- Your admin username
+    -- Replace these placeholders BEFORE running. Never commit real values.
+    admin_email TEXT := 'CHANGE_ME@example.com';
+    admin_pass  TEXT := 'CHANGE_ME_STRONG_PASSWORD';
+    admin_user  TEXT := 'admin';
 BEGIN
+    IF admin_email = 'CHANGE_ME@example.com' OR admin_pass = 'CHANGE_ME_STRONG_PASSWORD' THEN
+        RAISE NOTICE 'Admin seed skipped: please replace the placeholder email/password in this block before running.';
+        RETURN;
+    END IF;
+
     -- Check if user already exists
     IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = admin_email) THEN
         INSERT INTO auth.users (

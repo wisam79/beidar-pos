@@ -73,14 +73,23 @@ func (h *LanHandler) TestLanConnection() string {
 }
 
 func (h *LanHandler) GenerateServerSecret() (string, error) {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return "", err
+	}
 	return h.lanService.GenerateServerSecret()
 }
 
 func (h *LanHandler) GetServerSecret() string {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return ""
+	}
 	return h.lanService.GetServerSecret()
 }
 
 func (h *LanHandler) GetConnectedClients() []domain.ConnectedClient {
+	if err := auth.Require(); err != nil {
+		return nil
+	}
 	return h.lanService.GetConnectedClients()
 }
 

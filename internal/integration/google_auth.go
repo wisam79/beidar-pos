@@ -207,6 +207,17 @@ func deriveGoogleAuthKey() []byte {
 	if err != nil {
 		host = "beidar-google-auth-default"
 	}
+	machineID := secureconfig.MachineID()
+	return crypto.DeriveKey(fmt.Sprintf("beidar-google-auth-key-%s-%s", host, machineID))
+}
+
+// prevGoogleAuthKey reproduces the old hostname-only derivation so OAuth
+// tokens cached by previous builds can still be decrypted and migrated.
+func prevGoogleAuthKey() []byte {
+	host, err := os.Hostname()
+	if err != nil {
+		host = "beidar-google-auth-default"
+	}
 	return crypto.DeriveKey(fmt.Sprintf("beidar-google-auth-key-%s", host))
 }
 
@@ -219,7 +230,13 @@ func loadToken() (*oauth2.Token, error) {
 	key := deriveGoogleAuthKey()
 	decrypted, err := crypto.Decrypt(string(data), key)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt oauth token: %w", err)
+		// Fallback: try the old hostname-only key so OAuth tokens from
+		// previous builds migrate to the new machine-ID-bound key.
+		prevKey := prevGoogleAuthKey()
+		decrypted, err = crypto.Decrypt(string(data), prevKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt oauth token: %w", err)
+		}
 	}
 
 	var store TokenStore

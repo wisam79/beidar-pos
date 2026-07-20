@@ -217,11 +217,15 @@ func main() {
 }
 
 func loadEnv() {
-	paths := []string{".env", "frontend/.env"}
-	for _, path := range paths {
+	// loadDotEnv parses a simple KEY=VALUE .env file and applies values to the
+	// process environment ONLY when the variable is not already set. This
+	// prevents a stray .env file next to the shipped binary from silently
+	// hijacking runtime configuration that was explicitly provided through the
+	// real environment (e.g. by the installer or CI).
+	loadDotEnv := func(path string) {
 		file, err := os.Open(path)
 		if err != nil {
-			continue
+			return // file is optional
 		}
 		defer file.Close()
 
@@ -231,6 +235,8 @@ func loadEnv() {
 			if line == "" || strings.HasPrefix(line, "#") {
 				continue
 			}
+			// Allow an optional "export " prefix.
+			line = strings.TrimPrefix(line, "export ")
 
 			parts := strings.SplitN(line, "=", 2)
 			if len(parts) != 2 {
@@ -239,13 +245,26 @@ func loadEnv() {
 
 			key := strings.TrimSpace(parts[0])
 			val := strings.TrimSpace(parts[1])
-
 			val = strings.Trim(val, `"'`)
 
-			if key != "" && val != "" {
+			if key == "" {
+				continue
+			}
+			// Never override a value already present in the real environment.
+			if _, exists := os.LookupEnv(key); exists {
+				continue
+			}
+			if val != "" {
 				_ = os.Setenv(key, val)
 			}
 		}
+		if err := scanner.Err(); err != nil {
+			fmt.Printf("⚠️ Failed to parse %s: %v\n", path, err)
+		}
 	}
+
+	// Load root .env first (lowest priority), then frontend/.env.
+	loadDotEnv(".env")
+	loadDotEnv("frontend/.env")
 }
 

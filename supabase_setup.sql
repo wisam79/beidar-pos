@@ -96,10 +96,15 @@ ALTER TABLE public.global_settings ENABLE ROW LEVEL SECURITY;
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- A. licenses policies
-CREATE POLICY "Public Read Access" ON public.licenses
-    FOR SELECT TO anon, authenticated, service_role USING (true);
+-- SECURITY: tight RLS — only authenticated users can see their own bound
+-- license, and service_role (edge functions / admin) gets full access.
+-- Previously this allowed SELECT to `anon`, which combined with weak
+-- 16-hex-char license keys made offline brute-force enumeration feasible.
+CREATE POLICY "Authenticated users read own license" ON public.licenses
+    FOR SELECT TO authenticated
+    USING (auth.uid() = user_id);
 
-CREATE POLICY "Admin Full Access" ON public.licenses
+CREATE POLICY "Service role full access to licenses" ON public.licenses
     FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- B. admin_logs policies
@@ -107,18 +112,17 @@ CREATE POLICY "Admin Logs Access" ON public.admin_logs
     FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- C. app_admins policies
-CREATE POLICY "Admin Table Access" ON public.app_admins
-    FOR SELECT TO service_role USING (true);
-
-CREATE POLICY "Public Read Password Hashes" ON public.app_admins
-    FOR SELECT TO anon USING (true);
+-- SECURITY: app_admins held bcrypt password hashes and is now deprecated in
+-- favour of the new app_admins linked to auth.users (see
+-- admin_security_setup.sql). Until that migration runs, restrict reads to
+-- service_role so password hashes are not exposed to anon.
+CREATE POLICY "Service role access to app_admins" ON public.app_admins
+    FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- D. active_sessions policies
-CREATE POLICY "Allow select active sessions" ON public.active_sessions
-    FOR SELECT TO authenticated, anon USING (true);
-
-CREATE POLICY "Allow insert/update/delete active sessions" ON public.active_sessions
-    FOR ALL TO authenticated, anon USING (true) WITH CHECK (true);
+-- SECURITY: only service_role may read/write session locks.
+CREATE POLICY "Service role manages active sessions" ON public.active_sessions
+    FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- E. user_backups policies
 CREATE POLICY "Allow full access to own backups" ON public.user_backups
@@ -154,10 +158,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- 5. SEED DEFAULT DEVELOPER CREDENTIALS
+-- 5. SEED INITIAL DEVELOPER CREDENTIALS
 -- ═══════════════════════════════════════════════════════════════════════════════
--- Inserts default admin username 'wisam' with password 'beidar2026' (bcrypt hash).
--- Change this password immediately after setup if running in production.
-INSERT INTO public.app_admins (username, password_hash) 
-VALUES ('wisam', '$2a$10$bjc01RdJBE8UdEwc1A2XL.g2raNczLqgpMQY5eZMm.8Y9EKk032tu')
-ON CONFLICT (username) DO NOTHING;
+-- SECURITY: Do not seed production admin credentials from a checked-in file.
+-- Create the initial admin user through the Supabase Dashboard
+-- (Authentication > Users) or by running an interactive SQL block AFTER
+-- replacing placeholder values. The legacy app_admins (username/password_hash)
+-- table is deprecated and will be replaced by the auth.users-linked
+-- app_admins in admin_security_setup.sql.

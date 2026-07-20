@@ -35,7 +35,7 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
                 if (licStatus && licStatus.licensed) {
                     onSuccess();
                 } else {
-                    onSuccess();
+                    setError(licStatus?.message || 'لا يوجد ترخيص نشط مرتبط بحسابك');
                 }
             } else {
                 setError(res?.message || 'فشل تسجيل الدخول');
