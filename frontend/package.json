@@ -34,7 +34,7 @@
     "@fontsource/cairo": "^5.2.7",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/lemonada": "^5.2.8",
-    "@google/genai": "^1.31.0",
+    "@google/genai": "^2.12.0",
     "@phosphor-icons/react": "^2.1.10",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-table": "^8.21.3",
