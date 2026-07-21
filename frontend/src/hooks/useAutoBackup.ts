@@ -41,5 +41,5 @@ export function useAutoBackup(
     };
 
     performBackup();
-  }, [appState, prefs.autoBackup, prefs.lastBackupDate]);
+  }, [appState, prefs.autoBackup, prefs.lastBackupDate, prefs, setPrefs, notify]);
 }

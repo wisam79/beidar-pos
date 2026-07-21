@@ -2,7 +2,9 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
+
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // productRepository is the SQLite/Gorm implementation of domain.ProductRepository
@@ -51,6 +53,17 @@ func (r *productRepository) GetByIDs(ids []string) ([]domain.Product, error) {
 	}
 	var products []domain.Product
 	if err := r.db.Select("id, name, barcode, price, cost, stock, min_stock, category, CASE WHEN length(image) > 500 THEN '' ELSE image END as image, supplier, wholesale_price, description, custom_details").Where("id IN ?", ids).Find(&products).Error; err != nil {
+		return nil, err
+	}
+	return products, nil
+}
+
+func (r *productRepository) GetForUpdate(ids []string) ([]domain.Product, error) {
+	if len(ids) == 0 {
+		return []domain.Product{}, nil
+	}
+	var products []domain.Product
+	if err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id IN ?", ids).Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil

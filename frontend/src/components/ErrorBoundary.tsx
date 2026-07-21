@@ -1,5 +1,5 @@
 
-import React, { ErrorInfo, ReactNode, useState, useCallback } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, RotateCcw, Copy, CheckCircle } from 'lucide-react';
 import { logger } from '../core/logger';
 

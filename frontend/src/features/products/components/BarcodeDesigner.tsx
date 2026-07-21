@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Product, AppPreferences } from '../../../core/types';
 import { formatCurrency } from '../../../core/utils';
 import { Modal } from '../../../components/ui';
-import { LayoutTemplate, Grid, Type, Printer, Plus, Minus, List, Trash2, Settings, CheckSquare, Square, Eye, Layers, Tag, Store } from 'lucide-react';
+import { LayoutTemplate, Grid, Type, Printer, Plus, Minus, Trash2, Settings, CheckSquare, Square, Eye, Layers, Tag, Store } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
 
 interface LabelSettings {

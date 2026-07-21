@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Cloud, Check, AlertCircle, Loader2, Info, Database, RefreshCw, User, LogIn, LogOut, Download, Trash2 } from 'lucide-react';
+import { Cloud, Check, AlertCircle, Loader2, Info, Database, RefreshCw, User, LogOut, Download, Trash2 } from 'lucide-react';
 import { ConfirmModal } from '../../../components/ConfirmModal';
 import { useConfirmModal } from '../../../hooks';
 import * as CloudHandler from '../../../../wailsjs/go/handlers/CloudHandler';
@@ -94,7 +94,7 @@ export function CloudBackupSettings() {
             const list = await CloudHandler.ListCloudBackupsForUser();
             setBackups((list || []) as CloudBackup[]);
             // Load auto-sync setting
-            const config = await window.go.main.App.GetBackupConfig();
+            const config = await window.go.handlers.SettingsHandler.GetBackupConfig();
             setAutoSync(config.cloudAutoSync);
         } catch (error) {
             console.error('Load backups failed:', error);
@@ -104,7 +104,7 @@ export function CloudBackupSettings() {
     const handleAutoSyncToggle = async () => {
         try {
             const newValue = !autoSync;
-            await window.go.main.App.SetCloudAutoSync(newValue);
+            await window.go.handlers.SettingsHandler.SetCloudAutoSync(newValue);
             setAutoSync(newValue);
             // Optionally show feedback
             setMessage({ type: 'success', text: newValue ? 'تم تفعيل النسخ السحابي التلقائي' : 'تم إيقاف النسخ السحابي التلقائي' });

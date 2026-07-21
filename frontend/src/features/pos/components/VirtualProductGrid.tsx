@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ProductCard } from '../../../components/ProductCard';
 import { Package } from 'lucide-react';

@@ -4,7 +4,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { api, PaginatedProducts } from '../core/api';
+import { api } from '../core/api';
 import { Product } from '../core/types';
 import { queryKeys } from '../core/queryClient';
 

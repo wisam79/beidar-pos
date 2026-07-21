@@ -9,7 +9,7 @@ interface WailsWindow {
     go?: {
         main?: {
             App?: {
-                ForceQuit?: () => void;
+                ForceCloseApp?: () => void;
                 MinimizeWindow?: () => void;
             };
         };
@@ -40,8 +40,8 @@ export const AppCloseDialog = () => {
 
     const handleForceClose = () => {
         const wailsWindow = window as unknown as WailsWindow;
-        if (wailsWindow.go?.main?.App?.ForceQuit) {
-            wailsWindow.go.main.App.ForceQuit();
+        if (wailsWindow.go?.main?.App?.ForceCloseApp) {
+            wailsWindow.go.main.App.ForceCloseApp();
         }
     };
 

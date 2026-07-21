@@ -52,8 +52,8 @@ CREATE TABLE IF NOT EXISTS public.app_admins (
 -- D. admin_logs table
 CREATE TABLE IF NOT EXISTS public.admin_logs (
     id serial PRIMARY KEY,
-    admin_username varchar,
-    action varchar,
+    admin_username varchar NOT NULL,
+    action varchar NOT NULL,
     target_license varchar,
     details text,
     created_at timestamptz DEFAULT now()
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS public.active_sessions (
 
 -- F. user_backups table
 CREATE TABLE IF NOT EXISTS public.user_backups (
-    id text PRIMARY KEY,
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     backup_id text NOT NULL,
     user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     store_name text,
@@ -80,6 +80,21 @@ CREATE TABLE IF NOT EXISTS public.user_backups (
     data text NOT NULL,
     created_at timestamptz DEFAULT now()
 );
+
+-- 1.1 INDEXES
+CREATE INDEX IF NOT EXISTS idx_licenses_user_id ON public.licenses(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_backups_user_id ON public.user_backups(user_id);
+
+-- 1.2 EXTENSIONS & TRIGGERS
+CREATE EXTENSION IF NOT EXISTS moddatetime schema extensions;
+
+DROP TRIGGER IF EXISTS handle_updated_at ON public.global_settings;
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.global_settings
+  FOR EACH ROW EXECUTE PROCEDURE moddatetime (updated_at);
+
+DROP TRIGGER IF EXISTS handle_updated_at ON public.licenses;
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.licenses
+  FOR EACH ROW EXECUTE PROCEDURE moddatetime (updated_at);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- 2. ENABLE ROW LEVEL SECURITY (RLS)
@@ -124,6 +139,9 @@ CREATE POLICY "Service role access to app_admins" ON public.app_admins
 CREATE POLICY "Service role manages active sessions" ON public.active_sessions
     FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+CREATE POLICY "Service role deletes active sessions" ON public.active_sessions
+    FOR DELETE TO service_role USING (true);
+
 -- E. user_backups policies
 CREATE POLICY "Allow full access to own backups" ON public.user_backups
     FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
@@ -148,6 +166,7 @@ CREATE POLICY "Admin Write Settings" ON public.global_settings
 CREATE OR REPLACE FUNCTION public.get_user_by_id(user_id uuid)
 RETURNS json
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   result json;

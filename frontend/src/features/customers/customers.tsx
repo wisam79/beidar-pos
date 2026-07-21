@@ -1,10 +1,10 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Phone, DollarSign, Clock, Plus, Search, Edit, Trash2, FileText, CreditCard, Sparkles, BrainCircuit, History, Wallet, MessageSquare, Users, TrendingUp, Calculator, Check, AlertTriangle, Filter, Calendar } from 'lucide-react';
+import { User, Phone, Plus, Edit, Trash2, FileText, CreditCard, Sparkles, BrainCircuit, History, Wallet, MessageSquare, Users, Calculator, Check, Filter } from 'lucide-react';
 import { Customer, Sale } from '../../core/types';
 import { formatCurrency } from '../../core/utils';
-import { Modal, Badge, PageHeader, EmptyState, SpotlightCard } from '../../components/ui';
+import { Modal, Badge, PageHeader, EmptyState } from '../../components/ui';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput } from '../../components/blocks';
 import { analyzeCustomerProfile } from '../../core/ai';
@@ -13,7 +13,7 @@ import { useCustomers, useInvalidateCustomers, useConfirmModal } from '../../hoo
 import { api } from '../../core/api';
 import { ReceiptTemplate } from '../../components/ReceiptTemplate';
 import { Printer, Eye } from 'lucide-react';
-import { DataTable, ColumnDef } from '../../components/shared/DataTable';
+import { DataTable } from '../../components/shared/DataTable';
 import { usePreferences } from '../../components/PreferencesContext';
 
 export const CustomersPage: React.FC = () => {

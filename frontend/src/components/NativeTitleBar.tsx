@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Minus, Square, X, Minimize2, Sun, Moon, Wifi, WifiOff, Server, User } from 'lucide-react';
+import { Minus, Square, X, Minimize2, Sun, Moon, Server, User } from 'lucide-react';
 import { WindowMinimise, WindowMaximise, Quit as WindowClose } from '../../wailsjs/runtime/runtime';
 
 interface NativeTitleBarProps {

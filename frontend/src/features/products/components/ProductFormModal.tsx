@@ -1,9 +1,9 @@
-import React, { useRef } from 'react';
-import { Package, History, DollarSign, RefreshCw, Sparkles, Layers, FileText, Trash2, Copy, Upload, Image as ImageIcon, X } from 'lucide-react';
+import React from 'react';
+import { Package, History, DollarSign, RefreshCw, Sparkles, Layers, Trash2, Copy, Upload, Image as ImageIcon } from 'lucide-react';
 import { Modal, EmptyState, Badge } from '../../../components/ui';
-import { formatCurrency, compressImage } from '../../../core/utils';
+import { formatCurrency } from '../../../core/utils';
 import { Product, AppPreferences, CategoryDef } from '../../../core/types';
-import { ErrorMessage, FieldError } from '../../../components/ErrorMessage';
+import { FieldError } from '../../../components/ErrorMessage';
 
 interface ProductFormModalProps {
     isOpen: boolean;
@@ -402,7 +402,7 @@ export const ProductFormModal = ({
                 <div className="pt-4 border-t border-border/60 flex gap-3 mt-auto shrink-0 bg-surface ">
                     {editingProduct && (
                         <button 
-                            onClick={() => onDelete(editingProduct.id!)} 
+                            onClick={() => editingProduct?.id && onDelete(editingProduct.id)} 
                             className="w-11 h-11 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shrink-0 active:scale-95 duration-100 hover:shadow-[0_0_15px_rgba(239,68,68,0.25)]" 
                             aria-label="حذف المنتج" 
                             title="حذف المنتج"

@@ -9,9 +9,15 @@ export function CreateBackup():Promise<domain.BackupResult>;
 
 export function DeleteBackup(arg1:string):Promise<void>;
 
+export function DownloadProductsTemplateNative():Promise<boolean>;
+
 export function ExportDatabase():Promise<domain.DatabaseExport>;
 
+export function ExportDatabaseBackupNative():Promise<boolean>;
+
 export function ExportProductsCSV():Promise<domain.CSVExportResult>;
+
+export function ExportProductsCSVNative():Promise<domain.CSVExportResult>;
 
 export function GetCSVTemplate():Promise<string>;
 
@@ -19,7 +25,11 @@ export function GetImageStorageStats():Promise<domain.ImageStorageStats>;
 
 export function ImportDatabase(arg1:domain.DatabaseExport):Promise<void>;
 
+export function ImportDatabaseBackupNative():Promise<boolean>;
+
 export function ImportProductsCSV(arg1:string,arg2:boolean):Promise<domain.CSVImportResult>;
+
+export function ImportProductsCSVNative(arg1:boolean):Promise<domain.CSVImportResult>;
 
 export function ListBackups():Promise<Array<domain.BackupInfo>>;
 

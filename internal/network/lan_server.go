@@ -184,7 +184,6 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 				allowedCashierPosts := map[string]bool{
 					"/api/sales/process": true,
 					"/api/customers":     true,
-					"/api/products":      true,
 				}
 
 				// Reject cashier from accessing sensitive admin/stats endpoints (any HTTP method)

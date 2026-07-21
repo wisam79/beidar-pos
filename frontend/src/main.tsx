@@ -28,6 +28,15 @@ import { useGlobalKeyboardShortcuts } from './hooks/useGlobalKeyboardShortcuts';
 import { useAutoBackup } from './hooks/useAutoBackup';
 import { useAppInitialization } from './hooks/useAppInitialization';
 import { AppCloseDialog } from './components/AppCloseDialog';
+import { logger } from './core/logger';
+
+// Global error handlers for uncaught exceptions outside React boundary
+window.addEventListener('error', (event) => {
+  logger.error('Uncaught Exception', event.error || event.message, 'Global');
+});
+window.addEventListener('unhandledrejection', (event) => {
+  logger.error('Unhandled Promise Rejection', event.reason, 'Global');
+});
 
 const App = () => {
   const appState = useAppStore((s) => s.appState);
@@ -254,5 +263,7 @@ const MainRoot = () => (
   </QueryClientProvider>
 );
 
-const root = createRoot(document.getElementById('root')!);
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Failed to find the root element');
+const root = createRoot(rootElement);
 root.render(<MainRoot />);

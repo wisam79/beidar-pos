@@ -2,7 +2,7 @@
  * Utility Functions Tests
  */
 import { describe, it, expect } from 'vitest';
-import { formatCurrency, compressImage } from '../core/utils';
+import { formatCurrency } from '../core/utils';
 
 describe('formatCurrency', () => {
     it('should format number with IQD currency', () => {

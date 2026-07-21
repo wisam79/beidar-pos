@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, User, Eye, EyeOff, LogIn, Hash, ChevronRight, Loader2 } from 'lucide-react';
+import { Lock, Hash, ChevronRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../core/AuthContext';
 import { api, Staff } from '../core/api';
 import { NativeTitleBar } from './NativeTitleBar';

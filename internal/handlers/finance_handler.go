@@ -2,21 +2,32 @@ package handlers
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/internal/integration"
 	"beidar-desktop/internal/network"
 	"beidar-desktop/pkg/auth"
 	"context"
+	"fmt"
 )
 
 type FinanceHandler struct {
 	ctx            context.Context
 	financeService domain.FinanceService
 	lanService     network.LanService
+	backupService  domain.BackupService
+	cloudService   integration.CloudService
 }
 
-func NewFinanceHandler(financeService domain.FinanceService, lanService network.LanService) *FinanceHandler {
+func NewFinanceHandler(
+	financeService domain.FinanceService,
+	lanService network.LanService,
+	backupService domain.BackupService,
+	cloudService integration.CloudService,
+) *FinanceHandler {
 	return &FinanceHandler{
 		financeService: financeService,
 		lanService:     lanService,
+		backupService:  backupService,
+		cloudService:   cloudService,
 	}
 }
 
@@ -129,7 +140,21 @@ func (h *FinanceHandler) CloseShift(shiftID string, closingBalance domain.Amount
 	if err := auth.RequirePermission(auth.PermFinance); err != nil {
 		return nil, err
 	}
-	return h.financeService.CloseShift(shiftID, closingBalance, note)
+	shift, err := h.financeService.CloseShift(shiftID, closingBalance, note)
+	if err == nil {
+		// 🛡️ Trigger background backup automatically upon shift close
+		go func() {
+			fmt.Println("🛡️ Running end-of-shift automated backup...")
+			if h.backupService != nil {
+				_, _ = h.backupService.CreateBackup()
+				_, _ = h.backupService.CleanOldBackups(7)
+			}
+			if h.cloudService != nil && h.cloudService.IsLoggedIn() {
+				_ = h.cloudService.CloudBackupNow()
+			}
+		}()
+	}
+	return shift, err
 }
 
 func (h *FinanceHandler) GetActiveShift() (*domain.Shift, error) {

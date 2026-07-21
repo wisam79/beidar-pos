@@ -244,13 +244,23 @@ func (s *backupService) ExportProductsCSV() (*domain.CSVExportResult, error) {
 		return nil, err
 	}
 
+	sanitizeCSVField := func(val string) string {
+		if len(val) > 0 {
+			firstChar := val[0]
+			if firstChar == '=' || firstChar == '+' || firstChar == '-' || firstChar == '@' {
+				return "'" + val
+			}
+		}
+		return val
+	}
+
 	for _, p := range products {
 		row := []string{
-			p.Barcode,
-			p.Name,
-			p.Description,
-			p.Category,
-			p.Supplier,
+			sanitizeCSVField(p.Barcode),
+			sanitizeCSVField(p.Name),
+			sanitizeCSVField(p.Description),
+			sanitizeCSVField(p.Category),
+			sanitizeCSVField(p.Supplier),
 			fmt.Sprintf("%.2f", p.Cost.Float()),
 			fmt.Sprintf("%.2f", p.Price.Float()),
 			fmt.Sprintf("%.2f", p.Stock),

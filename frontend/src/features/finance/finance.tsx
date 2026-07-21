@@ -1,13 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Landmark, TrendingDown, TrendingUp, Users, Plus, Search, Trash2, Sparkles, Building2, Wallet, PieChart, Minus, FileText, ShoppingCart, LayoutDashboard, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Landmark, TrendingDown, TrendingUp, Users, Trash2, Sparkles, Building2, Wallet, PieChart, Minus, FileText, ShoppingCart, LayoutDashboard, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { formatCurrency, getLocalDateString } from '../../core/utils';
-import { Badge, Modal, PageHeader, SpotlightCard, EmptyState } from '../../components/ui';
+import { Badge, Modal, PageHeader, EmptyState } from '../../components/ui';
 import { DataTable } from '../../components/shared/DataTable';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { DonutChart, SalesAreaChart } from '../../components/charts';
 import { categorizeExpense, writeRestockEmail } from '../../core/ai';
-import { api, Expense, Supplier, Sale, PurchaseOrder } from '../../core/api';
+import { api, Expense, Supplier } from '../../core/api';
 import { PurchaseOrdersTab } from './components/PurchaseOrdersTab';
 import { PageShell, StatsGrid, StatCard, LoadingState, TabNav, SearchInput } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Camera, RefreshCw, AlertTriangle, Zap, ZapOff, CheckCircle2, ScanLine, Box, Ban, ShoppingCart, Package } from 'lucide-react';
+import { X, Camera, AlertTriangle, Zap, ZapOff, CheckCircle2, Box, Ban, ShoppingCart } from 'lucide-react';
 import { playBeep } from '../core/utils';
 
 import type { Html5Qrcode as Html5QrcodeType } from 'html5-qrcode';

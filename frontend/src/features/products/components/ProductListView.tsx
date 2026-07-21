@@ -97,7 +97,7 @@ export const ProductListView = memo(({
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-bg border border-border flex items-center justify-center overflow-hidden shrink-0 text-xl shadow-inner">
                                             {resolveImage(p.image) ? (
-                                                <img src={resolveImage(p.image)!} className="w-full h-full object-cover" alt={p.name} />
+                                                <img src={resolveImage(p.image) || ''} className="w-full h-full object-cover" alt={p.name} />
                                             ) : (
                                                 p.image
                                             )}

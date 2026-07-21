@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, Lock, ArrowRight, Loader2, ShieldCheck, AlertTriangle, Code2, Wifi, Server, LogOut } from 'lucide-react';
+import { Key, Loader2, ShieldCheck, AlertTriangle, Code2, Wifi, Server, LogOut } from 'lucide-react';
 import { BeidarLogo } from './ui';
 import { activateLicense, getDeviceId } from '../core/license';
 import { api } from '../core/api';

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { api, ProductStats } from '../core/api';
-import { Product, StockMovement } from '../core/types';
+import { api } from '../core/api';
+import { StockMovement } from '../core/types';
 
 export const useInventoryProducts = (
     page: number,

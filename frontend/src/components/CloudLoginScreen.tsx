@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Lock, Mail, Key, User, ArrowRight, Loader2, Store, AlertTriangle, Server, Cloud, Sparkles, Shield, Zap } from 'lucide-react';
 import { api, desktopApi } from '../core/api';
 

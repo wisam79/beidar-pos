@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal } from '../../../components/ui';
 import { api, Discount } from '../../../core/api';
 import {
-    Tag, Percent, DollarSign, Calendar, Hash, Trash2,
+    Tag, Percent, DollarSign, Trash2,
     Plus, Edit2, Power, Gift, ShoppingBag, Layers, X, Check,
     Sparkles
 } from 'lucide-react';

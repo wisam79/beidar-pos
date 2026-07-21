@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-    Monitor, Power, Printer, RefreshCw, Check, X, Loader2, Download, Zap,
+import React, { useState, useEffect, useCallback } from 'react';
+import { Power, Printer, RefreshCw, Check, Loader2, Download,
     AlertTriangle, Play, FileText, Trash2
 } from 'lucide-react';
 import { desktopApi, PrinterInfo, UpdateInfo } from '../../../core/api';

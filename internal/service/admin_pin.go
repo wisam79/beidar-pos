@@ -62,6 +62,11 @@ func VerifyAdminPin(adminPinHash, pin string) bool {
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(adminPinHash), []byte(pin)); err != nil {
+		// Fallback for unmigrated plain-text PINs
+		if adminPinHash == pin {
+			resetAdminPinRateLimit()
+			return true
+		}
 		recordAdminPinFailure()
 		return false
 	}

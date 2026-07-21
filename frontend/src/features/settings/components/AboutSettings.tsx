@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Monitor, Sparkles, Code2, Instagram, ShieldCheck, Zap, Cloud,
-    Heart, Award, Globe, Cpu, Database, Star, Info, Terminal, ChevronRight
+    Monitor, Code2, Instagram, ShieldCheck, Zap, Cloud,
+    Heart, Award, Globe, Cpu, Database, Star, Info, Terminal
 } from 'lucide-react';
 import { desktopApi } from '../../../core/api';
 

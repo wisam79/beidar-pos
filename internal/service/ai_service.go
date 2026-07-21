@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/pkg/secureconfig"
@@ -145,18 +146,27 @@ func (s *aiService) GenerateStream(prompt string, onChunk func(string), onError 
 				continue // try next candidate (if it has other configs/fallback) or fail
 			}
 
-			// Invoke the modular provider
-			err := providerInstance.GenerateStream(ctx, prompt, apiKey, model, onChunk, onError)
-			if err == nil {
-				// Success! Exit orchestrator
-				onComplete()
-				return
-			}
+			// Invoke the modular provider with Exponential Backoff
+			var err error
+			maxRetries := 3
+			for attempt := 1; attempt <= maxRetries; attempt++ {
+				err = providerInstance.GenerateStream(ctx, prompt, apiKey, model, onChunk, onError)
+				if err == nil {
+					// Success! Exit orchestrator
+					onComplete()
+					return
+				}
 
-			// If context was canceled by user, do not fallback, just exit
-			if errors.Is(err, context.Canceled) {
-				onComplete()
-				return
+				// If context was canceled by user, do not fallback, just exit
+				if errors.Is(err, context.Canceled) {
+					onComplete()
+					return
+				}
+
+				// Exponential backoff
+				if attempt < maxRetries {
+					time.Sleep(time.Duration(attempt*attempt) * time.Second)
+				}
 			}
 
 			// Log error and attempt next model in failover loop

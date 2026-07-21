@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Package, AlertTriangle, DollarSign, Printer, RefreshCw, Sparkles, Plus, Minus, ChevronDown, XCircle, Layers, ChevronRight, ChevronLeft, History, Truck, BarChart2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { Product, StockMovement } from '../../core/types';
+import React, { useState, useEffect } from 'react';
+import { Package, AlertTriangle, DollarSign, Printer, RefreshCw, Sparkles, Plus, Minus, ChevronDown, XCircle, Layers, History, Truck, BarChart2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Product } from '../../core/types';
 import { formatCurrency } from '../../core/utils';
-import { Badge, PageHeader, EmptyState } from '../../components/ui';
+import { PageHeader, EmptyState } from '../../components/ui';
 import { analyzeInventoryRisk } from '../../core/ai';
-import { api, ProductStats } from '../../core/api';
+import { api } from '../../core/api';
 import { useInvalidateProducts, useDashboardStats, useInventoryProducts, useInventoryMetadata, useInventoryMovements } from '../../hooks';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';

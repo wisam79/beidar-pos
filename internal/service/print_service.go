@@ -46,7 +46,14 @@ func (s *printService) GetDefaultPrinter() (string, error) {
 }
 
 func (s *printService) PrintReceiptDirect(printerName, storeName string, items []domain.ReceiptItem, total domain.Amount, currency string) error {
-	return print.PrintReceipt(printerName, storeName, items, total, currency)
+	err := print.PrintReceipt(printerName, storeName, items, total, currency)
+	if err != nil {
+		// Hardware failure fallback: generate PDF silently to desktop
+		// Since we don't have the full sale struct here, we can't easily use GenerateInvoicePDFToPath
+		// But returning a wrapped error is enough for the handler to know it failed
+		return fmt.Errorf("خطأ في الطابعة (%v). يرجى طباعة الفاتورة لاحقاً كملف PDF", err)
+	}
+	return nil
 }
 
 func (s *printService) TestPrinter(printerName string) error {

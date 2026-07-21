@@ -12,6 +12,8 @@ export function DeletePayment(arg1:number):Promise<void>;
 
 export function GetCustomerInstallments(arg1:string):Promise<Array<domain.Sale>>;
 
+export function GetInstallmentAlertSummary():Promise<Record<string, any>>;
+
 export function GetInstallmentSummary(arg1:string):Promise<handlers.InstallmentSummaryResult>;
 
 export function GetPaymentsByCustomer(arg1:string):Promise<Array<domain.Payment>>;

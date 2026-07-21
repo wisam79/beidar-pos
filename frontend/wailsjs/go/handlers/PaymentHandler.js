@@ -18,6 +18,10 @@ export function GetCustomerInstallments(arg1) {
   return window['go']['handlers']['PaymentHandler']['GetCustomerInstallments'](arg1);
 }
 
+export function GetInstallmentAlertSummary() {
+  return window['go']['handlers']['PaymentHandler']['GetInstallmentAlertSummary']();
+}
+
 export function GetInstallmentSummary(arg1) {
   return window['go']['handlers']['PaymentHandler']['GetInstallmentSummary'](arg1);
 }

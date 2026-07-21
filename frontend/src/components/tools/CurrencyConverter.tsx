@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRightLeft, DollarSign, Settings2, Zap, Calculator as CalcIcon } from 'lucide-react';
+import { ArrowRightLeft, DollarSign, Settings2, Calculator as CalcIcon } from 'lucide-react';
 
 interface Currency {
     code: string;

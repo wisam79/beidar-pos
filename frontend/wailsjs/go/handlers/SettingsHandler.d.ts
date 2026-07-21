@@ -17,6 +17,8 @@ export function FetchGlobalAIKeys():Promise<Array<string>>;
 
 export function FetchGlobalGroqKeys():Promise<Array<string>>;
 
+export function GetBackupConfig():Promise<domain.BackupConfig>;
+
 export function GetCrashReportContent(arg1:string):Promise<string>;
 
 export function GetCrashReports():Promise<Array<string>>;
@@ -36,6 +38,8 @@ export function IsAutoStartEnabled():Promise<boolean>;
 export function SaveGlobalAIKeys(arg1:Array<string>,arg2:string):Promise<void>;
 
 export function SaveGlobalGroqKeys(arg1:Array<string>,arg2:string):Promise<void>;
+
+export function SetCloudAutoSync(arg1:boolean):Promise<void>;
 
 export function ShowNativeNotification(arg1:string,arg2:string,arg3:string):Promise<void>;
 

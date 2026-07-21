@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { TrendingUp, TrendingDown, Minus, ArrowRight, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, Minus, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { AnimatedNumber } from '../../../components/ui';
 import { MonthData } from '../../../hooks/useMonthlyComparison';
 

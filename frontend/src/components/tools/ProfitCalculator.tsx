@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { TrendingUp, Percent, Package, DollarSign, RotateCcw, PieChart } from 'lucide-react';
+import React, { useState } from 'react';
+import { TrendingUp, Percent, RotateCcw } from 'lucide-react';
 
 export const ProfitCalculator = () => {
     const [cost, setCost] = useState('');

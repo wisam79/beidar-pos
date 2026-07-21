@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Package, Plus, Search, Trash2, Check, X, DollarSign, Eye, Truck, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Package, Plus, Search, Trash2, Check, X, DollarSign, Truck, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatCurrency } from '../../../core/utils';
 import { Modal, Badge, EmptyState, SpotlightCard } from '../../../components/ui';
 import { ConfirmModal } from '../../../components/ConfirmModal';
-import { api, PurchaseOrder, PurchaseOrderItem, ReceiveOrderItem, Supplier, Product } from '../../../core/api';
+import { api, PurchaseOrder, ReceiveOrderItem, Supplier, Product } from '../../../core/api';
 import { useConfirmModal, usePurchaseOrders, useInventoryProducts } from '../../../hooks';
 
 interface PurchaseOrdersTabProps {

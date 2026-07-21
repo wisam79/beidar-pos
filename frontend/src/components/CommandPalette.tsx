@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, ShoppingCart, Package, Sparkles, LayoutGrid, Archive, Receipt, Users, Landmark, BarChart, Settings, ArrowRight, CornerDownLeft, Loader2, LucideIcon } from 'lucide-react';
+import { Search, ShoppingCart, Package, LayoutGrid, Archive, Receipt, Users, Landmark, BarChart, Settings, CornerDownLeft, Loader2, LucideIcon } from 'lucide-react';
 import { formatCurrency } from '../core/utils';
 import { Product, View } from '../core/types';
 import { api } from '../core/api';

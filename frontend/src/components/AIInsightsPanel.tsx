@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-    Brain, Sparkles, TrendingUp, TrendingDown, Package,
+    Brain, Sparkles, TrendingUp, Package,
     RefreshCw, AlertTriangle, Lightbulb, Loader2, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { getQuickInsight, generateDailySummary, analyzeInventory, predictSalesTrend } from '../core/ai';
-import { api, Product, Sale } from '../core/api';
+import { getQuickInsight, generateDailySummary } from '../core/ai';
+import { Product } from '../core/api';
 
 interface AIInsightsPanelProps {
     todayRevenue: number;

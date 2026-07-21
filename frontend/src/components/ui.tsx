@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2, CheckCircle2, AlertTriangle, XCircle, Info, LucideIcon } from 'lucide-react';
+import { X, CheckCircle2, AlertTriangle, XCircle, Info, LucideIcon } from 'lucide-react';
 
 // ============ Interfaces ============
 interface CardProps {

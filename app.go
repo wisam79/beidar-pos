@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -15,7 +12,6 @@ import (
 	"beidar-desktop/internal/network"
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
-	"beidar-desktop/pkg/auth"
 	"beidar-desktop/pkg/imagestore"
 	"beidar-desktop/pkg/updater"
 
@@ -43,6 +39,8 @@ type App struct {
 	productRepo     domain.ProductRepository
 	productService  domain.ProductService
 	paymentService  domain.PaymentService
+	backupService   domain.BackupService
+	cloudService    integration.CloudService
 	ForceClose      bool
 }
 
@@ -197,7 +195,7 @@ func initHandlers(services *appServices, repos *appRepositories) *App {
 		ProductHandler:  handlers.NewProductHandler(services.product, services.lan),
 		SaleHandler:     handlers.NewSaleHandler(services.sale, services.lan),
 		PaymentHandler:  handlers.NewPaymentHandler(services.payment),
-		FinanceHandler:  handlers.NewFinanceHandler(services.finance, services.lan),
+		FinanceHandler:  handlers.NewFinanceHandler(services.finance, services.lan, services.backup, services.cloud),
 		CRMHandler:      handlers.NewCRMHandler(services.crm, services.lan),
 		StaffHandler:    handlers.NewStaffHandler(services.staff, services.cloud),
 		StatsHandler:    handlers.NewStatsHandler(services.stats, services.lan),
@@ -211,6 +209,8 @@ func initHandlers(services *appServices, repos *appRepositories) *App {
 		productRepo:     repos.product,
 		productService:  services.product,
 		paymentService:  services.payment,
+		backupService:   services.backup,
+		cloudService:    services.cloud,
 	}
 }
 
@@ -265,344 +265,51 @@ func (a *App) startup(ctx context.Context) {
 
 	// ⚡ Trigger Supabase Keep-Alive ping to prevent project suspension
 	go a.CloudHandler.KeepAliveSupabase()
-}
 
-// GetCSVTemplate returns a template string for CSV product import
-func (a *App) GetCSVTemplate() string {
-	return "Name,Barcode,Price,Cost,Stock,MinStock,Category,WholesalePrice,Description\n" +
-		"Example Product,123456789,10.00,5.00,100,10,Snacks,8.50,A delicious snack\n"
-}
-
-// ExportProductsCSV exports all products to a CSV string
-func (a *App) ExportProductsCSV() (*domain.CSVExportResult, error) {
-	if err := auth.RequirePermission(auth.PermExportData); err != nil {
-		return nil, err
-	}
-	products, err := a.ProductHandler.GetAllProducts()
-	if err != nil {
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	writer := csv.NewWriter(&buf)
-
-	// Write header
-	header := []string{"Name", "Barcode", "Price", "Cost", "Stock", "MinStock", "Category", "WholesalePrice", "Description"}
-	if err := writer.Write(header); err != nil {
-		return nil, err
-	}
-
-	for _, p := range products {
-		row := []string{
-			p.Name,
-			p.Barcode,
-			fmt.Sprintf("%.2f", p.Price.Float()),
-			fmt.Sprintf("%.2f", p.Cost.Float()),
-			fmt.Sprintf("%.2f", p.Stock),
-			fmt.Sprintf("%.2f", p.MinStock),
-			p.Category,
-			fmt.Sprintf("%.2f", p.WholesalePrice.Float()),
-			p.Description,
-		}
-		if err := writer.Write(row); err != nil {
-			return nil, err
-		}
-	}
-	writer.Flush()
-
-	return &domain.CSVExportResult{
-		Data:     buf.String(),
-		Filename: fmt.Sprintf("products_export_%d.csv", time.Now().Unix()),
-		Count:    len(products),
-	}, nil
-}
-
-// ImportProductsCSV imports products from a CSV string
-func (a *App) ImportProductsCSV(csvData string, updateExisting bool) (*domain.CSVImportResult, error) {
-	if err := auth.RequirePermission(auth.PermProducts); err != nil {
-		return nil, err
-	}
-	res, err := a.BackupHandler.ImportProductsCSV(csvData, updateExisting)
-	if err == nil && a.productService != nil {
-		a.productService.ClearCache()
-	}
-	return res, err
-}
-
-// ExportProductsCSVNative prompts the user with SaveFileDialog and writes the products CSV directly to disk
-func (a *App) ExportProductsCSVNative() (*domain.CSVExportResult, error) {
-	if err := auth.RequirePermission(auth.PermExportData); err != nil {
-		return nil, err
-	}
-	res, err := a.ExportProductsCSV()
-	if err != nil {
-		return nil, err
-	}
-
-	savePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:           "تصدير المنتجات CSV",
-		DefaultFilename: res.Filename,
-		Filters: []runtime.FileFilter{
-			{DisplayName: "CSV Files (*.csv)", Pattern: "*.csv"},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	if savePath == "" {
-		return nil, fmt.Errorf("cancelled")
-	}
-
-	err = os.WriteFile(savePath, []byte(res.Data), 0644)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-// DownloadProductsTemplateNative prompts the user with SaveFileDialog for products_template.csv and writes it to disk
-func (a *App) DownloadProductsTemplateNative() (bool, error) {
-	if err := auth.Require(); err != nil {
-		return false, err
-	}
-	templateStr := a.GetCSVTemplate()
-
-	savePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:           "تحميل نموذج المنتجات CSV",
-		DefaultFilename: "products_template.csv",
-		Filters: []runtime.FileFilter{
-			{DisplayName: "CSV Files (*.csv)", Pattern: "*.csv"},
-		},
-	})
-	if err != nil {
-		return false, err
-	}
-	if savePath == "" {
-		return false, nil
-	}
-
-	err = os.WriteFile(savePath, []byte(templateStr), 0644)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
-// ImportProductsCSVNative prompts the user with OpenFileDialog, reads the CSV, and imports it
-func (a *App) ImportProductsCSVNative(updateExisting bool) (*domain.CSVImportResult, error) {
-	if err := auth.RequirePermission(auth.PermProducts); err != nil {
-		return nil, err
-	}
-	openPath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "استيراد المنتجات CSV",
-		Filters: []runtime.FileFilter{
-			{DisplayName: "CSV Files (*.csv)", Pattern: "*.csv"},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	if openPath == "" {
-		return nil, fmt.Errorf("cancelled")
-	}
-
-	csvData, err := os.ReadFile(openPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return a.ImportProductsCSV(string(csvData), updateExisting)
-}
-
-// ExportDatabaseBackupNative prompts the user with SaveFileDialog and exports a database backup JSON to disk
-func (a *App) ExportDatabaseBackupNative() (bool, error) {
-	if err := auth.RequirePermission(auth.PermExportData); err != nil {
-		return false, err
-	}
-	data, err := a.BackupHandler.ExportDatabase()
-	if err != nil {
-		return false, err
-	}
-
-	jsonData, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return false, fmt.Errorf("failed to marshal backup data: %w", err)
-	}
-
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	defaultFilename := fmt.Sprintf("beidar_backup_%s.json", timestamp)
-
-	savePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:           "تصدير نسخة احتياطية لقاعدة البيانات",
-		DefaultFilename: defaultFilename,
-		Filters: []runtime.FileFilter{
-			{DisplayName: "JSON Files (*.json)", Pattern: "*.json"},
-		},
-	})
-	if err != nil {
-		return false, err
-	}
-	if savePath == "" {
-		return false, nil
-	}
-
-	if err := os.WriteFile(savePath, jsonData, 0644); err != nil {
-		return false, fmt.Errorf("failed to write backup file: %w", err)
-	}
-
-	return true, nil
-}
-
-// ImportDatabaseBackupNative prompts the user with OpenFileDialog, reads JSON backup, and restores database
-func (a *App) ImportDatabaseBackupNative() (bool, error) {
-	if err := auth.RequireAdmin(); err != nil {
-		return false, err
-	}
-	openPath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "استيراد نسخة احتياطية لقاعدة البيانات",
-		Filters: []runtime.FileFilter{
-			{DisplayName: "JSON Files (*.json)", Pattern: "*.json"},
-		},
-	})
-	if err != nil {
-		return false, err
-	}
-	if openPath == "" {
-		return false, nil
-	}
-
-	jsonData, err := os.ReadFile(openPath)
-	if err != nil {
-		return false, fmt.Errorf("failed to read backup file: %w", err)
-	}
-
-	var data domain.DatabaseExport
-	if err := json.Unmarshal(jsonData, &data); err != nil {
-		return false, fmt.Errorf("failed to parse backup file: %w", err)
-	}
-
-	if err := a.BackupHandler.ImportDatabase(data); err != nil {
-		return false, fmt.Errorf("failed to restore backup: %w", err)
-	}
-
-	return true, nil
-}
-
-// CalculateInstallmentPlan calculates the installment plan details
-
-func (a *App) CalculateInstallmentPlan(total, downPayment domain.Amount, months int) (*domain.InstallmentPlan, error) {
-	return a.PaymentHandler.CalculateInstallmentPlan(total, downPayment, months)
-}
-
-
-
-// GetBackupConfig retrieves current backup/sync config
-func (a *App) GetBackupConfig() (*domain.BackupConfig, error) {
-	if err := auth.Require(); err != nil {
-		return nil, err
-	}
-	prefs, err := a.SettingsHandler.GetPreferences()
-	if err != nil {
-		return nil, err
-	}
-	return &domain.BackupConfig{
-		CloudAutoSync: prefs.CloudAutoSync,
-	}, nil
-}
-
-// SetCloudAutoSync updates the cloud auto sync preference
-func (a *App) SetCloudAutoSync(enabled bool) error {
-	if err := auth.RequirePermission(auth.PermSettings); err != nil {
-		return err
-	}
-	prefs, err := a.SettingsHandler.GetPreferences()
-	if err != nil {
-		return err
-	}
-	prefs.CloudAutoSync = enabled
-	return a.SettingsHandler.UpdatePreferences(*prefs)
-}
-
-// GetInstallmentAlertSummary calculates overdue installments metrics (backward-compatible wrapper)
-func (a *App) GetInstallmentAlertSummary() (map[string]interface{}, error) {
-	if err := auth.RequirePermission(auth.PermReports); err != nil {
-		return nil, err
-	}
-	summary, err := a.paymentService.GetInstallmentAlertSummary()
-	if err != nil {
-		return nil, err
-	}
-
-	// Map domain.InstallmentAlertSummary to the exact structure the frontend expects
-	type InstallmentAlertCompatible struct {
-		SaleID        string  `json:"saleId"`
-		CustomerID    string  `json:"customerId"`
-		CustomerName  string  `json:"customerName"`
-		CustomerPhone string  `json:"customerPhone"`
-		InstNumber    int     `json:"instNumber"`
-		DueDate       string  `json:"dueDate"`
-		Amount        float64 `json:"amount"` // float64 for frontend compatibility
-		DaysOverdue   int     `json:"daysOverdue"`
-		TotalDue      float64 `json:"totalDue"` // float64 for frontend compatibility
-	}
-
-	type TopCustomerCompatible struct {
-		CustomerID   string  `json:"customerId"`
-		CustomerName string  `json:"customerName"`
-		TotalDebt    float64 `json:"totalDebt"` // float64 for frontend compatibility
-		OverdueCount int     `json:"overdueCount"`
-	}
-
-	alerts := make([]InstallmentAlertCompatible, len(summary.Alerts))
-	for i, alert := range summary.Alerts {
-		alerts[i] = InstallmentAlertCompatible{
-			SaleID:        alert.SaleID,
-			CustomerID:    alert.CustomerID,
-			CustomerName:  alert.CustomerName,
-			CustomerPhone: alert.CustomerPhone,
-			InstNumber:    alert.InstNumber,
-			DueDate:       alert.DueDate,
-			Amount:        alert.Amount.Float(),
-			DaysOverdue:   alert.DaysOverdue,
-			TotalDue:      alert.TotalDue.Float(),
-		}
-	}
-
-	topCustomers := make([]TopCustomerCompatible, len(summary.TopCustomers))
-	for i, customer := range summary.TopCustomers {
-		topCustomers[i] = TopCustomerCompatible{
-			CustomerID:   customer.CustomerID,
-			CustomerName: customer.CustomerName,
-			TotalDebt:    customer.TotalDebt.Float(),
-			OverdueCount: customer.OverdueCount,
-		}
-	}
-
-	return map[string]interface{}{
-		"totalOverdue": summary.TotalOverdue,
-		"totalAmount":  summary.TotalAmount.Float(),
-		"byDay":        summary.ByDay,
-		"topCustomers": topCustomers,
-		"alerts":       alerts,
-	}, nil
-}
-
-// AI_GenerateStream streams generation response from Gemini API (backward-compatible proxy)
-func (a *App) AI_GenerateStream(prompt string) error {
-	return a.AIHandler.AI_GenerateStream(prompt)
-}
-
-// AI_CancelStream cancels the current AI generation stream (backward-compatible proxy)
-func (a *App) AI_CancelStream() {
-	a.AIHandler.AI_CancelStream()
+	// 🛡️ Start Automated Backups Worker
+	go a.startAutomatedBackups()
 }
 
 // ForceQuit forces the application to close bypassing the custom dialog
-func (a *App) ForceQuit() {
+func (a *App) ForceCloseApp() {
 	a.ForceClose = true
-	runtime.Quit(a.ctx)
+	if a.ctx != nil {
+		runtime.Quit(a.ctx)
+	} else {
+		os.Exit(0)
+	}
+}
+
+// startAutomatedBackups runs in a background goroutine and triggers a backup every 12 hours.
+func (a *App) startAutomatedBackups() {
+	ticker := time.NewTicker(12 * time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-a.ctx.Done():
+			return
+		case <-ticker.C:
+			fmt.Println("🛡️ Running automated background backup...")
+			if a.backupService != nil {
+				_, err := a.backupService.CreateBackup()
+				if err != nil {
+					fmt.Printf("⚠️ Automated local backup failed: %v\n", err)
+				} else {
+					fmt.Println("✅ Automated local backup succeeded.")
+					_, _ = a.backupService.CleanOldBackups(7)
+				}
+			}
+			if a.cloudService != nil && a.cloudService.IsLoggedIn() {
+				err := a.cloudService.CloudBackupNow()
+				if err != nil {
+					fmt.Printf("⚠️ Automated cloud backup failed: %v\n", err)
+				} else {
+					fmt.Println("✅ Automated cloud backup succeeded.")
+				}
+			}
+		}
+	}
 }
 
 // MinimizeWindow minimizes the application window

@@ -1,6 +1,5 @@
 import React, { memo, useMemo } from 'react';
 import { AlertCircle, CheckCircle2, Package, FileWarning, CalendarClock, ChevronRight } from 'lucide-react';
-import { AnimatedNumber } from '../../../components/ui';
 import type { View } from '../../../core/types';
 
 interface SmartAlertsCardProps {

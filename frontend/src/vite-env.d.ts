@@ -14,21 +14,17 @@ interface Window {
     requestIdleCallback: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
     webkitAudioContext: typeof AudioContext;
     go: {
+        handlers: {
+            BackupHandler: any;
+            SettingsHandler: any;
+            PaymentHandler: any;
+            AIHandler: any;
+        };
         main: {
             App: {
-                ImportProductsCSV(text: string, updateExisting: boolean): Promise<ImportResult>;
-                ExportProductsCSV(): Promise<ExportResult>;
-                GetCSVTemplate(): Promise<string>;
-                AI_GenerateStream(prompt: string): Promise<void>;
-                CalculateInstallmentPlan(total: number, downPayment: number, months: number): Promise<InstallmentPlan>;
                 GetLicenseUserDetails(deviceId: string): Promise<UserDetailsData>;
-                GetBackupConfig(): Promise<{ cloudAutoSync: boolean }>;
-                SetCloudAutoSync(enabled: boolean): Promise<void>;
-                ExportProductsCSVNative(): Promise<ExportResult>;
-                DownloadProductsTemplateNative(): Promise<boolean>;
-                ImportProductsCSVNative(updateExisting: boolean): Promise<ImportResult>;
-                ExportDatabaseBackupNative(): Promise<boolean>;
-                ImportDatabaseBackupNative(): Promise<boolean>;
+                ForceCloseApp(): void;
+                MinimizeWindow(): void;
             }
         }
     };

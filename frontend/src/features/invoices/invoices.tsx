@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PrintPortal } from '../../components/PrintPortal';
-import { Search, Printer, FileText, Receipt, RefreshCcw, Trash2, DollarSign, CheckCircle2, Clock, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, CreditCard, ScanLine } from 'lucide-react';
+import { Printer, FileText, Receipt, RefreshCcw, Trash2, DollarSign, CheckCircle2, Clock, ZoomIn, ZoomOut, Calendar, ArrowUpRight, CreditCard, ScanLine } from 'lucide-react';
 import { Sale } from '../../core/types';
 import { formatCurrency, playBeep } from '../../core/utils';
 import { Badge, Modal, PageHeader, EmptyState, useScanDetection } from '../../components/ui';

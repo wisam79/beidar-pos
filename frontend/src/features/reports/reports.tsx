@@ -4,19 +4,19 @@ import {
     TrendingUp, DollarSign, ShoppingBag, TrendingDown, Download,
     Sparkles, RefreshCw, Activity, Wallet, CreditCard, Users,
     BarChart3, ArrowUpRight, ArrowDownRight, Package, AlertTriangle,
-    Calendar, Filter, FileText, UserCheck, Clock, Receipt, LucideIcon
+    Calendar, FileText, UserCheck, Receipt, LucideIcon
 } from 'lucide-react';
 import { formatCurrency, getLocalDateString } from '../../core/utils';
 import { PageHeader, Card, SpotlightCard } from '../../components/ui';
 import { PageShell, LoadingState, TabNav, SegmentedControl } from '../../components/blocks';
 import { SalesAreaChart } from '../../components/charts';
-import { MetricCard, DateRangeButton, CustomerRank } from './components/ReportsComponents';
+import { CustomerRank } from './components/ReportsComponents';
 import { forecastSales } from '../../core/ai';
-import { api, Sale, Expense, Product, Customer, Staff, StockMovement, DashboardStats } from '../../core/api';
+import { api, Sale, Product, Customer, Staff, StockMovement, DashboardStats } from '../../core/api';
 import { AppPreferences } from '../../core/types';
 import { logger } from '../../core/logger';
 import { usePreferences } from '../../components/PreferencesContext';
-import { exportSalesReport, exportFinancialSummary, exportProductsReport, exportInventoryReport, exportCustomersReport } from '../../core/export';
+import { exportSalesReport, exportFinancialSummary, exportInventoryReport, exportCustomersReport } from '../../core/export';
 import { useDashboardStats, useProducts, useCustomers, useMonthlyComparison, useStockMovements, MonthData } from '../../hooks';
 
 // ═══════════════════════════════════════════════════════════════════════════════

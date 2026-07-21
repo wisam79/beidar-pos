@@ -47,7 +47,7 @@ export function useAppInitialization() {
 
   useEffect(() => {
     checkAuthStatus();
-  }, []);
+  }, [checkAuthStatus]);
 
   return { appState, setAppState, checkAuthStatus };
 }

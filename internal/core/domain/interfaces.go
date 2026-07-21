@@ -11,6 +11,7 @@ type ProductRepository interface {
 	GetAll() ([]Product, error)
 	GetByID(id string) (*Product, error)
 	GetByIDs(ids []string) ([]Product, error)
+	GetForUpdate(ids []string) ([]Product, error)
 	GetByBarcode(barcode string) (*Product, error)
 	GetProductsWithBase64Images() ([]Product, error)
 	CountProductsWithBase64Images() (int64, error)

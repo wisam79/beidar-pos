@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Clock, Calendar, DollarSign, TrendingUp, AlertTriangle, CheckCircle, X, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { api } from '../../core/api';
-import { Shift, CashMovement } from '../../core/types';
-import { logger } from '../../core/logger';
+import { Clock, Calendar, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Shift } from '../../core/types';
 import { formatCurrency } from '../../core/utils';
 import { ShiftManager } from '../../components/ShiftManager';
 import { useAuth } from '../../core/AuthContext';

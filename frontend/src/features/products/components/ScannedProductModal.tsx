@@ -52,7 +52,7 @@ export const ScannedProductModal = ({
                         {/* Large Product Image */}
                         <div className="w-28 h-28 rounded-2xl bg-surface border-2 border-border flex items-center justify-center overflow-hidden shrink-0 shadow-xl">
                             {resolveImage(scannedProduct.image) ? (
-                                <img src={resolveImage(scannedProduct.image)!} className="w-full h-full object-cover" alt={scannedProduct.name} />
+                                <img src={resolveImage(scannedProduct.image) || ''} className="w-full h-full object-cover" alt={scannedProduct.name} />
                             ) : (
                                 <span className="text-6xl">{scannedProduct.image || '📦'}</span>
                             )}

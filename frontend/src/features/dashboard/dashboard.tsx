@@ -10,7 +10,6 @@
  */
 import React, { useState } from 'react';
 import {
-    LayoutDashboard,
     Wallet,
     ShoppingCart,
     Package,
@@ -26,7 +25,6 @@ import {
     TrendingDown,
     Trophy,
     Users,
-    ChevronLeft,
     Activity
 } from 'lucide-react';
 import { View } from '../../core/types';

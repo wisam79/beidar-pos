@@ -30,6 +30,10 @@ export function FetchGlobalGroqKeys() {
   return window['go']['handlers']['SettingsHandler']['FetchGlobalGroqKeys']();
 }
 
+export function GetBackupConfig() {
+  return window['go']['handlers']['SettingsHandler']['GetBackupConfig']();
+}
+
 export function GetCrashReportContent(arg1) {
   return window['go']['handlers']['SettingsHandler']['GetCrashReportContent'](arg1);
 }
@@ -68,6 +72,10 @@ export function SaveGlobalAIKeys(arg1, arg2) {
 
 export function SaveGlobalGroqKeys(arg1, arg2) {
   return window['go']['handlers']['SettingsHandler']['SaveGlobalGroqKeys'](arg1, arg2);
+}
+
+export function SetCloudAutoSync(arg1) {
+  return window['go']['handlers']['SettingsHandler']['SetCloudAutoSync'](arg1);
 }
 
 export function ShowNativeNotification(arg1, arg2, arg3) {

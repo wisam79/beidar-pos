@@ -150,3 +150,30 @@ func (h *SettingsHandler) SaveGlobalGroqKeys(keys []string, userToken string) er
 	}
 	return h.settingsService.SaveGlobalGroqKeys(keys, userToken)
 }
+
+// GetBackupConfig retrieves current backup/sync config
+func (h *SettingsHandler) GetBackupConfig() (*domain.BackupConfig, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
+	prefs, err := h.GetPreferences()
+	if err != nil {
+		return nil, err
+	}
+	return &domain.BackupConfig{
+		CloudAutoSync: prefs.CloudAutoSync,
+	}, nil
+}
+
+// SetCloudAutoSync updates the cloud auto sync preference
+func (h *SettingsHandler) SetCloudAutoSync(enabled bool) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
+	prefs, err := h.GetPreferences()
+	if err != nil {
+		return err
+	}
+	prefs.CloudAutoSync = enabled
+	return h.UpdatePreferences(*prefs)
+}

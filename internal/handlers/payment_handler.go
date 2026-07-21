@@ -91,3 +91,66 @@ func (h *PaymentHandler) CalculateInstallmentPlan(total, downPayment domain.Amou
 	return h.paymentService.CalculateInstallmentPlan(total, downPayment, months)
 }
 
+// GetInstallmentAlertSummary calculates overdue installments metrics (backward-compatible wrapper)
+func (h *PaymentHandler) GetInstallmentAlertSummary() (map[string]interface{}, error) {
+	if err := auth.RequirePermission(auth.PermReports); err != nil {
+		return nil, err
+	}
+	summary, err := h.paymentService.GetInstallmentAlertSummary()
+	if err != nil {
+		return nil, err
+	}
+
+	// Map domain.InstallmentAlertSummary to the exact structure the frontend expects
+	type InstallmentAlertCompatible struct {
+		SaleID        string  `json:"saleId"`
+		CustomerID    string  `json:"customerId"`
+		CustomerName  string  `json:"customerName"`
+		CustomerPhone string  `json:"customerPhone"`
+		InstNumber    int     `json:"instNumber"`
+		DueDate       string  `json:"dueDate"`
+		Amount        float64 `json:"amount"` // float64 for frontend compatibility
+		DaysOverdue   int     `json:"daysOverdue"`
+		TotalDue      float64 `json:"totalDue"` // float64 for frontend compatibility
+	}
+
+	type TopCustomerCompatible struct {
+		CustomerID   string  `json:"customerId"`
+		CustomerName string  `json:"customerName"`
+		TotalDebt    float64 `json:"totalDebt"` // float64 for frontend compatibility
+		OverdueCount int     `json:"overdueCount"`
+	}
+
+	alerts := make([]InstallmentAlertCompatible, len(summary.Alerts))
+	for i, alert := range summary.Alerts {
+		alerts[i] = InstallmentAlertCompatible{
+			SaleID:        alert.SaleID,
+			CustomerID:    alert.CustomerID,
+			CustomerName:  alert.CustomerName,
+			CustomerPhone: alert.CustomerPhone,
+			InstNumber:    alert.InstNumber,
+			DueDate:       alert.DueDate,
+			Amount:        alert.Amount.Float(),
+			DaysOverdue:   alert.DaysOverdue,
+			TotalDue:      alert.TotalDue.Float(),
+		}
+	}
+
+	topCustomers := make([]TopCustomerCompatible, len(summary.TopCustomers))
+	for i, customer := range summary.TopCustomers {
+		topCustomers[i] = TopCustomerCompatible{
+			CustomerID:   customer.CustomerID,
+			CustomerName: customer.CustomerName,
+			TotalDebt:    customer.TotalDebt.Float(),
+			OverdueCount: customer.OverdueCount,
+		}
+	}
+
+	return map[string]interface{}{
+		"totalOverdue": summary.TotalOverdue,
+		"totalAmount":  summary.TotalAmount.Float(),
+		"byDay":        summary.ByDay,
+		"topCustomers": topCustomers,
+		"alerts":       alerts,
+	}, nil
+}

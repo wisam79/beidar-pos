@@ -108,7 +108,7 @@ export const SettingsPage: React.FC = () => {
 
     const handleExport = async () => {
         try {
-            const success = await window.go.main.App.ExportDatabaseBackupNative();
+            const success = await window.go.handlers.BackupHandler.ExportDatabaseBackupNative();
             if (success) {
                 // Update last backup date
                 const now = new Date().toISOString();
@@ -140,7 +140,7 @@ export const SettingsPage: React.FC = () => {
             onConfirm: async () => {
                 closeConfirm();
                 try {
-                    const success = await window.go.main.App.ImportDatabaseBackupNative();
+                    const success = await window.go.handlers.BackupHandler.ImportDatabaseBackupNative();
                     if (success) {
                         notify('تم استعادة البيانات بنجاح! 🎉', 'success');
                         setTimeout(() => window.location.reload(), 1500);

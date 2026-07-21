@@ -403,7 +403,7 @@ export const getQuickInsight = async (
 // Note: editProductImage is temporarily disabled or needs a backend implementation for multi-part encoding.
 // For now, returning null/not implemented.
 export const editProductImage = async (base64Image: string, editPrompt: string): Promise<string | null> => {
-  // TODO: Implement backend support for image editing (Gemini Vision)
+
   console.warn("AI Image Edit features moved to backend - Not yet implemented");
   return null;
 }

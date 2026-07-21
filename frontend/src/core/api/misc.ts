@@ -17,8 +17,8 @@ export const backup = {
     cleanOldBackups: (retainDays: number) => BackupHandler.CleanOldBackups(retainDays),
 };
 
-export const ImportProductsCSVNative = (updateExisting: boolean) => App.ImportProductsCSVNative(updateExisting);
-export const ExportProductsCSVNative = () => App.ExportProductsCSVNative();
-export const DownloadProductsTemplateNative = () => App.DownloadProductsTemplateNative();
-export const ExportDatabaseBackupNative = () => App.ExportDatabaseBackupNative();
-export const ImportDatabaseBackupNative = () => App.ImportDatabaseBackupNative();
+export const ImportProductsCSVNative = (updateExisting: boolean) => BackupHandler.ImportProductsCSVNative(updateExisting);
+export const ExportProductsCSVNative = () => BackupHandler.ExportProductsCSVNative();
+export const DownloadProductsTemplateNative = () => BackupHandler.DownloadProductsTemplateNative();
+export const ExportDatabaseBackupNative = () => BackupHandler.ExportDatabaseBackupNative();
+export const ImportDatabaseBackupNative = () => BackupHandler.ImportDatabaseBackupNative();

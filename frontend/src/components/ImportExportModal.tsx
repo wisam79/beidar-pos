@@ -79,7 +79,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
         setImportResult(null);
 
         try {
-            const result = await window.go.main.App.ImportProductsCSVNative(updateExisting);
+            const result = await window.go.handlers.BackupHandler.ImportProductsCSVNative(updateExisting);
             setImportResult(result);
 
             if (result.success && (result.imported > 0 || result.updated > 0)) {
@@ -107,7 +107,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
         try {
             const text = await file.text();
-            const result = await window.go.main.App.ImportProductsCSV(text, updateExisting);
+            const result = await window.go.handlers.BackupHandler.ImportProductsCSV(text, updateExisting);
             setImportResult(result);
 
             if (result.success && (result.imported > 0 || result.updated > 0)) {
@@ -128,7 +128,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
     const handleExport = async () => {
         setExporting(true);
         try {
-            const result = await window.go.main.App.ExportProductsCSVNative();
+            const result = await window.go.handlers.BackupHandler.ExportProductsCSVNative();
             if (result && result.count > 0) {
                 notify(`تم تصدير ${result.count} منتج بنجاح`, 'success');
             }
@@ -147,7 +147,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
     // Download template via native dialog
     const handleDownloadTemplate = async () => {
         try {
-            const success = await window.go.main.App.DownloadProductsTemplateNative();
+            const success = await window.go.handlers.BackupHandler.DownloadProductsTemplateNative();
             if (success) {
                 notify('تم تحميل القالب', 'success');
             }

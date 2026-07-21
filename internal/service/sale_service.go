@@ -208,10 +208,13 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		for i, item := range sale.Items {
 			productIDs[i] = item.ProductID
 		}
-		products, err := txProductRepo.GetByIDs(productIDs)
-		if err != nil {
-			return err
+
+		// Use GORM Lock for Update (Pessimistic Locking) via repository interface
+		products, fetchErr := txProductRepo.GetForUpdate(productIDs)
+		if fetchErr != nil {
+			return fetchErr
 		}
+
 		productMap := make(map[string]*domain.Product, len(products))
 		for i := range products {
 			productMap[products[i].ID] = &products[i]
@@ -245,12 +248,12 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 			calculatedSubtotal = calculatedSubtotal.Add(realPrice.MulFloat(item.Quantity))
 			calculatedTotal = calculatedTotal.Add(itemTotal)
 
-			err = txProductRepo.UpdateStock(item.ProductID, -item.Quantity)
-			if err != nil {
-				if errors.Is(err, domain.ErrInsufficientStock) {
+			updateErr := txProductRepo.UpdateStock(item.ProductID, -item.Quantity)
+			if updateErr != nil {
+				if errors.Is(updateErr, domain.ErrInsufficientStock) {
 					return ErrSalesInsufficientStock(product.Name, product.Stock, item.Quantity)
 				}
-				return err
+				return updateErr
 			}
 
 			movement := domain.StockMovement{
@@ -285,7 +288,7 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		}
 
 		if err := txSaleRepo.Create(sale); err != nil {
-			return errors.New(i18n.GetMessage("SAVE_SALE_FAILED", err.Error()))
+			return fmt.Errorf("%s: %w", i18n.GetMessage("SAVE_SALE_FAILED", ""), err)
 		}
 
 		if sale.CustomerID != "" {
@@ -351,7 +354,7 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 						StaffID:    sale.StaffID,
 					}
 					if err := txPaymentRepo.Create(&payment); err != nil {
-						return errors.New(i18n.GetMessage("SAVE_PAYMENT_FAILED", err.Error()))
+						return fmt.Errorf("%s: %w", i18n.GetMessage("SAVE_PAYMENT_FAILED", ""), err)
 					}
 				}
 			}
@@ -365,7 +368,7 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 				StaffID:    sale.StaffID,
 			}
 			if err := txPaymentRepo.Create(&payment); err != nil {
-				return errors.New(i18n.GetMessage("SAVE_PAYMENT_FAILED", err.Error()))
+				return fmt.Errorf("%s: %w", i18n.GetMessage("SAVE_PAYMENT_FAILED", ""), err)
 			}
 		}
 
@@ -379,7 +382,7 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		requireShift := requireShiftPref
 
 		if err := txShiftRepo.UpdateShiftSales(sale.Total, cashAmount, requireShift); err != nil {
-			return errors.New(i18n.GetMessage("SALE_PROCESS_FAILED", err.Error()))
+			return fmt.Errorf("%s: %w", i18n.GetMessage("SALE_PROCESS_FAILED", ""), err)
 		}
 
 		logger.LogSale("COMPLETED", sale.ID, sale.Total.Float(), sale.CustomerID)

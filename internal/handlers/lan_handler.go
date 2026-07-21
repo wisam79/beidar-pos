@@ -5,6 +5,7 @@ import (
 	"beidar-desktop/internal/network"
 	"beidar-desktop/pkg/auth"
 	"context"
+	"fmt"
 )
 
 type LanHandler struct {
@@ -79,11 +80,15 @@ func (h *LanHandler) GenerateServerSecret() (string, error) {
 	return h.lanService.GenerateServerSecret()
 }
 
-func (h *LanHandler) GetServerSecret() string {
+func (h *LanHandler) GetServerSecret() (string, error) {
 	if err := auth.RequirePermission(auth.PermSettings); err != nil {
-		return ""
+		return "", err
 	}
-	return h.lanService.GetServerSecret()
+	secret := h.lanService.GetServerSecret()
+	if secret == "" {
+		return "", fmt.Errorf("سر الخادم غير متوفر")
+	}
+	return secret, nil
 }
 
 func (h *LanHandler) GetConnectedClients() []domain.ConnectedClient {

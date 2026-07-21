@@ -10,7 +10,7 @@ import { BarcodeScannerOverlay, ScanResult } from '../../components/BarcodeScann
 import { BarcodeDesigner } from './components/BarcodeDesigner';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { ImportExportModal } from '../../components/ImportExportModal';
-import { api, Supplier } from '../../core/api';
+import { api } from '../../core/api';
 import { generateProductDescription, improveText, suggestProductPrice, suggestProductEmoji } from '../../core/ai';
 import { useInvalidateProducts, useWindowSize, useUsbScannerDetection, useProducts, useConfirmModal } from '../../hooks';
 import { usePreferences } from '../../components/PreferencesContext';
@@ -270,7 +270,7 @@ export const ProductsPage: React.FC = () => {
             const productId: string = form.id || '';
             const p: Product = {
                 id: productId,
-                name: form.name!,
+                name: form.name || '',
                 barcode: form.barcode || '',
                 category: form.category || t('common.uncategorized'),
                 supplier: form.supplier || '',

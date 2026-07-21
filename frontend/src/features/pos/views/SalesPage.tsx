@@ -340,7 +340,7 @@ export const SalesPage: React.FC = () => {
 
     const handleInstallmentConfirm = async () => {
         try {
-            const plan = await window.go.main.App.CalculateInstallmentPlan(total, instConfig.downPayment, instConfig.months);
+            const plan = await window.go.handlers.PaymentHandler.CalculateInstallmentPlan(total, instConfig.downPayment, instConfig.months);
 
             handleCheckout({
                 paymentMethod: 'installment',

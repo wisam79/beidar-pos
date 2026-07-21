@@ -14,12 +14,24 @@ export function DeleteBackup(arg1) {
   return window['go']['handlers']['BackupHandler']['DeleteBackup'](arg1);
 }
 
+export function DownloadProductsTemplateNative() {
+  return window['go']['handlers']['BackupHandler']['DownloadProductsTemplateNative']();
+}
+
 export function ExportDatabase() {
   return window['go']['handlers']['BackupHandler']['ExportDatabase']();
 }
 
+export function ExportDatabaseBackupNative() {
+  return window['go']['handlers']['BackupHandler']['ExportDatabaseBackupNative']();
+}
+
 export function ExportProductsCSV() {
   return window['go']['handlers']['BackupHandler']['ExportProductsCSV']();
+}
+
+export function ExportProductsCSVNative() {
+  return window['go']['handlers']['BackupHandler']['ExportProductsCSVNative']();
 }
 
 export function GetCSVTemplate() {
@@ -34,8 +46,16 @@ export function ImportDatabase(arg1) {
   return window['go']['handlers']['BackupHandler']['ImportDatabase'](arg1);
 }
 
+export function ImportDatabaseBackupNative() {
+  return window['go']['handlers']['BackupHandler']['ImportDatabaseBackupNative']();
+}
+
 export function ImportProductsCSV(arg1, arg2) {
   return window['go']['handlers']['BackupHandler']['ImportProductsCSV'](arg1, arg2);
+}
+
+export function ImportProductsCSVNative(arg1) {
+  return window['go']['handlers']['BackupHandler']['ImportProductsCSVNative'](arg1);
 }
 
 export function ListBackups() {

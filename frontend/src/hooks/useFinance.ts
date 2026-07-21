@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api, Expense } from '../core/api';
+import { api } from '../core/api';
 
 export const useExpenses = (month?: string) => {
     return useQuery({

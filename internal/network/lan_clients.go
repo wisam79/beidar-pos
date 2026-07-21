@@ -59,7 +59,7 @@ func (s *lanService) ValidateSessionToken(token string) (*domain.ConnectedClient
 	defer s.clientsMutex.RUnlock()
 
 	for _, client := range s.connectedClients {
-		if client.SessionToken == token {
+		if subtle.ConstantTimeCompare([]byte(client.SessionToken), []byte(token)) == 1 {
 			if client.Status == "suspended" {
 				return nil, fmt.Errorf("جلستك معلّقة من قبل المدير")
 			}

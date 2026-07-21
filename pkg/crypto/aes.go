@@ -8,12 +8,17 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
+
+	"golang.org/x/crypto/pbkdf2"
 )
 
-// DeriveKey creates a 32-byte AES-256 key from a seed string using SHA-256.
+// DeriveKey creates a 32-byte AES-256 key from a seed string using PBKDF2.
 func DeriveKey(seed string) []byte {
-	h := sha256.Sum256([]byte(seed))
-	return h[:]
+	// Use a static salt derived from the seed for deterministic keys, or a fixed salt.
+	// For backward compatibility in logic, we derive a static salt from the seed itself or use a constant.
+	// A constant salt for PBKDF2 when deterministic keys are needed (e.g. searching).
+	salt := []byte("beidar_pos_salt_v2")
+	return pbkdf2.Key([]byte(seed), salt, 100000, 32, sha256.New)
 }
 
 // Encrypt encrypts plaintext using AES-256-GCM. Returns base64( nonce + ciphertext ).

@@ -19,7 +19,6 @@ import {
 import { View } from '../core/types';
 import { useAuth, Permissions } from '../core/AuthContext';
 import { Tooltip } from './ds/Tooltip';
-import { Badge } from './ds/Badge';
 
 interface NavItem {
     id: View | 'ai';

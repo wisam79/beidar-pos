@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Check, X, AlertTriangle, Info } from 'lucide-react';
+import { AlertCircle, X, AlertTriangle, Info } from 'lucide-react';
 
 interface ConfirmModalProps {
     isOpen: boolean;

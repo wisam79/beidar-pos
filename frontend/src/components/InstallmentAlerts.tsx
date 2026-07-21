@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Phone, MessageCircle, Calendar, DollarSign, Users, Clock, ChevronDown, ChevronUp, Send } from 'lucide-react';
+import { AlertTriangle, Phone, MessageCircle, Calendar, DollarSign, Users, Clock } from 'lucide-react';
 import { formatCurrency } from '../core/utils';
 import { AppPreferences } from '../core/types';
 
@@ -58,8 +58,7 @@ export const InstallmentAlerts: React.FC<Props> = ({ prefs, notify }) => {
     const fetchAlerts = async () => {
         setLoading(true);
         try {
-            // @ts-expect-error - Wails binding
-            const data = await window.go.main.App.GetInstallmentAlertSummary();
+            const data = await window.go.handlers.PaymentHandler.GetInstallmentAlertSummary();
             setSummary(data);
         } catch (err) {
             console.error('Failed to fetch alerts:', err);

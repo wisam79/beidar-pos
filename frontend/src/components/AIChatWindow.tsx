@@ -112,7 +112,7 @@ export const AIChatWindow = ({ isOpen, onClose, contextData }: AIChatWindowProps
         const fullPrompt = `${systemInstruction}\n\n---\nUser Request: ${userMsg}`;
 
         try {
-            await window.go.main.App.AI_GenerateStream(fullPrompt);
+            await window.go.handlers.AIHandler.AI_GenerateStream(fullPrompt);
         } catch (e) {
             console.error(e);
             setLoading(false);

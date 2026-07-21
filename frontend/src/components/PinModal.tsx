@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, ArrowLeft, X, Lock, Check } from 'lucide-react';
+import { ArrowLeft, X, Lock, Check } from 'lucide-react';
 import { playBeep } from '../core/utils';
 import { api } from '../core/api';
 
