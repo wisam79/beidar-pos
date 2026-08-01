@@ -49,6 +49,9 @@ func (s *aiService) GenerateStream(prompt string, onChunk func(string), onError 
 		return fmt.Errorf("يوجد طلب ذكاء اصطناعي قيد التنفيذ بالفعل، انتظر حتى يكتمل")
 	}
 
+	// Increment requestCounter for robust key & model rotation
+	atomic.AddUint64(&s.requestCounter, 1)
+
 	prefs, err := s.settingsService.GetPreferences()
 	if err != nil {
 		s.aiMutex.Unlock()
@@ -211,7 +214,7 @@ func (s *aiService) selectWeightedModel(models []WeightedModel) string {
 	}
 
 	// Use requestCounter for predictable weighted round-robin distribution
-	count := atomic.AddUint64(&s.requestCounter, 1)
+	count := atomic.LoadUint64(&s.requestCounter)
 	val := int(count % uint64(totalWeight))
 
 	current := 0

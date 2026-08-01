@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { NotifyFunction, AppPreferences } from '../core/types';
-import { playBeep, getLocalDateString } from '../core/utils';
+import { playBeep, getLocalDateString, sanitizePrefsForStorage } from '../core/utils';
 
 export function useAutoBackup(
   appState: string,
@@ -29,7 +29,7 @@ export function useAutoBackup(
         const now = new Date().toISOString();
         const updated: AppPreferences = { ...prefs, lastBackupDate: now };
         setPrefs(updated);
-        localStorage.setItem('beidar_preferences', JSON.stringify(updated));
+        localStorage.setItem('beidar_preferences', JSON.stringify(sanitizePrefsForStorage(updated as unknown as Record<string, unknown>)));
         api.prefs.set(updated).catch(console.error);
 
         notify('تم إجراء النسخ الاحتياطي التلقائي بنجاح ✅', 'success');

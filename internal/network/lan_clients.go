@@ -63,6 +63,10 @@ func (s *lanService) ValidateSessionToken(token string) (*domain.ConnectedClient
 			if client.Status == "suspended" {
 				return nil, fmt.Errorf("جلستك معلّقة من قبل المدير")
 			}
+			// Inactivity timeout: 12 hours
+			if time.Now().Unix()-client.LastActivity > 12*3600 {
+				return nil, fmt.Errorf("انتهت صلاحية الجلسة بسبب الخمول، يرجى تسجيل الدخول مجدداً")
+			}
 			return client, nil
 		}
 	}

@@ -438,6 +438,7 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 			}
 
 			if found && updateExisting {
+				diff := stockVal - existingProduct.Stock
 				existingProduct.Name = name
 				existingProduct.Description = description
 				existingProduct.Category = category
@@ -453,6 +454,19 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 					result.Skipped++
 					continue
 				}
+
+				if diff != 0 {
+					movement := domain.StockMovement{
+						ProductID:   existingProduct.ID,
+						ProductName: existingProduct.Name,
+						Type:        "import_csv_adjust",
+						Qty:         diff,
+						Reason:      "تعديل مخزون عبر استيراد CSV",
+						Timestamp:   time.Now().UnixMilli(),
+					}
+					_ = txRepo.CreateStockMovement(&movement)
+				}
+
 				result.Updated++
 				result.ImportedIDs = append(result.ImportedIDs, existingProduct.ID)
 			} else if found && !updateExisting {
@@ -479,6 +493,19 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 					result.Skipped++
 					continue
 				}
+
+				if stockVal > 0 {
+					movement := domain.StockMovement{
+						ProductID:   newProduct.ID,
+						ProductName: newProduct.Name,
+						Type:        "import_csv",
+						Qty:         stockVal,
+						Reason:      "استيراد CSV: منتج جديد",
+						Timestamp:   time.Now().UnixMilli(),
+					}
+					_ = txRepo.CreateStockMovement(&movement)
+				}
+
 				result.Imported++
 				result.ImportedIDs = append(result.ImportedIDs, newProduct.ID)
 			}

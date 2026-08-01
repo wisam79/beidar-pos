@@ -57,6 +57,20 @@ func (h *SaleHandler) ProcessSale(sale domain.Sale) error {
 	if err := auth.RequirePermission(auth.PermSales); err != nil {
 		return err
 	}
+	// Any discount (invoice-level or item-level) requires the dedicated permission.
+	anyItemHasDiscount := func() bool {
+		for _, item := range sale.Items {
+			if item.Discount > 0 {
+				return true
+			}
+		}
+		return false
+	}
+	if sale.Discount > 0 || anyItemHasDiscount() {
+		if err := auth.RequirePermission(auth.PermDiscounts); err != nil {
+			return err
+		}
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemotePost("/api/sales/process", sale, nil)
 	}
@@ -67,12 +81,18 @@ func (h *SaleHandler) ReturnSale(id string) error {
 	if err := auth.RequirePermission(auth.PermDeleteSales); err != nil {
 		return err
 	}
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		return h.lanService.RemotePost("/api/sales/return", map[string]interface{}{"id": id}, nil)
+	}
 	return h.saleService.ReturnSale(id)
 }
 
 func (h *SaleHandler) ReturnSalePartial(saleID string, productID string, qtyToReturn float64) error {
 	if err := auth.RequirePermission(auth.PermDeleteSales); err != nil {
 		return err
+	}
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		return h.lanService.RemotePost("/api/sales/return-partial", map[string]interface{}{"saleId": saleID, "productId": productID, "quantity": qtyToReturn}, nil)
 	}
 	return h.saleService.ReturnSalePartial(saleID, productID, qtyToReturn)
 }

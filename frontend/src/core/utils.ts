@@ -20,7 +20,7 @@ export function cn(...inputs: ClassValue[]) {
 export const formatCurrency = (amount: number, currency: string = 'IQD'): string => {
     // Format number with thousands separator
     const formatted = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 0,
+        maximumFractionDigits: 2,
     }).format(amount);
     // Return with currency suffix (Arabic style: number first, then currency)
     return `${formatted} ${currency}`;
@@ -40,6 +40,24 @@ export const safeJSONParse = <T = unknown>(key: string, fallback: T): T => {
         console.error(`Error parsing ${key}`, e);
         return fallback;
     }
+};
+
+/**
+ * Strips secrets (Admin PIN, AI API keys) from a preferences object before it
+ * is mirrored to localStorage. Sensitive values are replaced with the same
+ * masked placeholder the backend uses, so plaintext keys never touch disk.
+ */
+export const sanitizePrefsForStorage = (prefs: Record<string, unknown>): Record<string, unknown> => {
+    const MASKED = '********';
+    const sanitized: Record<string, unknown> = { ...prefs };
+    const secretKeys = ['adminPin', 'geminiApiKey', 'geminiApiKeys', 'groqApiKey', 'AdminPin', 'GeminiAPIKey', 'GeminiAPIKeys', 'GroqAPIKey'];
+    for (const key of secretKeys) {
+        if (key in sanitized) {
+            const value = sanitized[key];
+            sanitized[key] = Array.isArray(value) ? [MASKED] : MASKED;
+        }
+    }
+    return sanitized;
 };
 
 /**

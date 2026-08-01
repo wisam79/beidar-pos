@@ -1,4 +1,5 @@
 import { api } from './api';
+import { sanitizePrefsForStorage } from './utils';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -153,7 +154,7 @@ class GoogleDriveManager {
 
             // Restore preferences
             if (backup.preferences) {
-                localStorage.setItem('beidar_preferences', JSON.stringify(backup.preferences));
+                localStorage.setItem('beidar_preferences', JSON.stringify(sanitizePrefsForStorage(backup.preferences)));
             }
 
             this.updateStatus({ inProgress: false });

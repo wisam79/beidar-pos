@@ -92,8 +92,8 @@ func (s *crmService) SaveCustomer(c domain.Customer) error {
 		return nil
 	}
 
-	// Update existing - check if customer exists first
-	_, err := s.customerRepo.GetByID(c.ID)
+	// Update existing - merge safe fields only
+	existing, err := s.customerRepo.GetByID(c.ID)
 	if err != nil {
 		return pkgerrors.NewAppError(
 			pkgerrors.ModuleCustomer,
@@ -104,10 +104,14 @@ func (s *crmService) SaveCustomer(c domain.Customer) error {
 		)
 	}
 
-	if err := s.customerRepo.Update(&c); err != nil {
+	existing.Name = c.Name
+	existing.Phone = c.Phone
+	existing.Notes = c.Notes
+
+	if err := s.customerRepo.Update(existing); err != nil {
 		return errors.New(i18n.GetMessage("UPDATE_CUSTOMER_FAILED", err.Error()))
 	}
-	logger.LogCustomer("UPDATED", c.ID, c.Name)
+	logger.LogCustomer("UPDATED", existing.ID, existing.Name)
 	return nil
 }
 
@@ -188,7 +192,25 @@ func (s *crmService) SaveSupplier(sup domain.Supplier) error {
 		sup.ID = uuid.New().String()
 		return s.supplierRepo.Create(&sup)
 	}
-	return s.supplierRepo.Update(&sup)
+
+	existing, err := s.supplierRepo.GetByID(sup.ID)
+	if err != nil {
+		return pkgerrors.NewAppError(
+			pkgerrors.ModuleProduct,
+			"SUPPLIER_NOT_FOUND",
+			i18n.GetMessage("SUPPLIER_NOT_FOUND"),
+			"",
+			"id",
+		)
+	}
+
+	existing.Name = sup.Name
+	existing.CompanyName = sup.CompanyName
+	existing.Phone = sup.Phone
+	existing.Email = sup.Email
+	existing.Notes = sup.Notes
+
+	return s.supplierRepo.Update(existing)
 }
 
 func (s *crmService) DeleteSupplier(id string, force bool) error {

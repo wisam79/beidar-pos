@@ -28,6 +28,15 @@ func (h *PaymentHandler) CreatePayment(payment domain.Payment) (*domain.Payment,
 	return h.paymentService.CreatePayment(payment)
 }
 
+// CreatePaymentForced records an overpayment after a manager confirms it.
+// Requires the finance permission (stricter than the cashier-level CreatePayment).
+func (h *PaymentHandler) CreatePaymentForced(payment domain.Payment) error {
+	if err := auth.RequirePermission(auth.PermFinance); err != nil {
+		return err
+	}
+	return h.paymentService.CreatePaymentForced(payment)
+}
+
 func (h *PaymentHandler) GetPaymentsBySale(saleID string) ([]domain.Payment, error) {
 	if err := auth.Require(); err != nil {
 		return nil, err

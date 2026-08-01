@@ -224,7 +224,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                                 value={discount > 0 ? discount : ''}
                                 onChange={(e) => setDiscount(Number(e.target.value))}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-danger/60">%</span>
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-danger/60">د.ع</span>
                         </div>
 
                         {paymentMethod === 'cash' ? (

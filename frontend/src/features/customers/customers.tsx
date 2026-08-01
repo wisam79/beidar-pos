@@ -1,6 +1,7 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { User, Phone, Plus, Edit, Trash2, FileText, CreditCard, Sparkles, BrainCircuit, History, Wallet, MessageSquare, Users, Calculator, Check, Filter } from 'lucide-react';
 import { Customer, Sale } from '../../core/types';
 import { formatCurrency } from '../../core/utils';
@@ -203,14 +204,32 @@ export const CustomersPage: React.FC = () => {
         return matchesSearch && matchesDebt;
     });
 
-    const selectedCustomerHistory = historyModal ? sales.filter(s => s.customer === customers.find(c => c.id === historyModal)?.name) : [];
+    const tableScrollRef = useRef<HTMLDivElement>(null);
+    const rowVirtualizer = useVirtualizer({
+        count: filtered.length,
+        getScrollElement: () => tableScrollRef.current,
+        estimateSize: () => 68,
+        overscan: 8,
+    });
+    const virtualRows = rowVirtualizer.getVirtualItems();
+
+    const selectedCustomerHistory = historyModal
+        ? sales.filter(s => {
+            const target = customers.find(c => c.id === historyModal);
+            if (!target) return false;
+            return s.customerId === historyModal || (!s.customerId && s.customer === target.name);
+        })
+        : [];
 
     // Installment logic
     const selectedCustomerInstallments = useMemo(() => {
         if (!installmentModal) return [];
-        const customerName = customers.find(c => c.id === installmentModal)?.name;
-        if (!customerName) return [];
-        return sales.filter(s => s.customer === customerName && s.paymentMethod === 'installment' && s.installmentPlan);
+        const target = customers.find(c => c.id === installmentModal);
+        if (!target) return [];
+        return sales.filter(s =>
+            s.paymentMethod === 'installment' && s.installmentPlan &&
+            (s.customerId === installmentModal || (!s.customerId && s.customer === target.name))
+        );
     }, [installmentModal, sales, customers]);
 
     if (loading) return <LoadingState icon={Users} title="جاري تحميل بيانات العملاء..." subtitle="تحليل السجلات" />;
@@ -263,7 +282,7 @@ export const CustomersPage: React.FC = () => {
                     />
                 ) : (
                     <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
-                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                        <div ref={tableScrollRef} className="flex-1 overflow-y-auto custom-scrollbar">
                             <table className="w-full text-right text-sm border-collapse">
                                 <thead className="sticky top-0 z-10 bg-surface-hover border-b border-border text-text-muted text-xs">
                                     <tr>
@@ -273,8 +292,9 @@ export const CustomersPage: React.FC = () => {
                                         <th className="px-4 py-3 text-left w-[420px] pl-8">الإجراءات</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {filtered.map((c) => {
+                                <tbody className="relative" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+                                    {virtualRows.map((virtualRow) => {
+                                        const c = filtered[virtualRow.index];
                                         const isVip = (c.totalPurchases || 0) > 1000000;
                                         const debt = c.debt || 0;
                                         const instDebt = c.installmentDebt || 0;
@@ -285,7 +305,8 @@ export const CustomersPage: React.FC = () => {
                                         return (
                                             <tr
                                                 key={c.id}
-                                                className={`border-b border-border/30 hover:bg-surface-hover transition-colors group`}
+                                                className={`absolute top-0 left-0 right-0 border-b border-border/30 hover:bg-surface-hover transition-colors group`}
+                                                style={{ transform: `translateY(${virtualRow.start}px)`, height: `${virtualRow.size}px` }}
                                             >
                                                 <td className="px-4 py-3 relative">
                                                     {/* Health indicator bar on the right in RTL */}

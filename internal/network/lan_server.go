@@ -50,8 +50,23 @@ func (s *lanService) StartServer(port int) error {
 		return fmt.Errorf("لا يوجد بورت متاح للسيرفر")
 	}
 
+	// Ensure a server secret exists before serving any traffic so LAN
+	// registration and scanner endpoints are never left open. The secret is
+	// generated once per process run and shown to the operator through the
+	// settings screen (LanHandler.GetServerSecret).
+	if s.GetServerSecret() == "" {
+		if _, err := s.GenerateServerSecret(); err != nil {
+			return fmt.Errorf("فشل توليد سر الخادم: %w", err)
+		}
+		fmt.Println("🔑 Generated new LAN server secret")
+	}
+
 	s.server = &http.Server{
-		Handler: s.serverMux,
+		Handler:           s.serverMux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 	s.actualPort = actualPort
 
@@ -189,6 +204,11 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 				// Reject cashier from accessing sensitive admin/stats endpoints (any HTTP method)
 				if r.URL.Path == "/api/database/export" ||
 					r.URL.Path == "/api/stats/dashboard" ||
+					r.URL.Path == "/api/stats/comparison" ||
+					r.URL.Path == "/api/expenses" ||
+					r.URL.Path == "/api/stock/movements" ||
+					r.URL.Path == "/api/sales/return" ||
+					r.URL.Path == "/api/sales/return-partial" ||
 					r.URL.Path == "/api/admin/clients" ||
 					r.URL.Path == "/api/admin/blocked" {
 					http.Error(w, `{"error":"غير مصرح لك بهذه العملية - صلاحيات المدير مطلوبة"}`, http.StatusForbidden)
@@ -272,6 +292,12 @@ func (s *lanService) handleConnect(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method != "POST" {
 		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Per-IP rate limit: slow down credential brute-forcing on /api/connect.
+	if !s.allowConnectRateLimit(r.RemoteAddr) {
+		http.Error(w, `{"error":"محاولات كثيرة، حاول لاحقاً"}`, http.StatusTooManyRequests)
 		return
 	}
 

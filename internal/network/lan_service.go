@@ -3,6 +3,7 @@ package network
 import (
 	"beidar-desktop/internal/core/domain"
 	"context"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -47,6 +48,42 @@ type LanService interface {
 	RemoteDelete(endpoint string) error
 }
 
+// connectRateEntry tracks per-IP rate limiting for /api/connect
+type connectRateEntry struct {
+	count   int
+	expires time.Time
+}
+
+const (
+	connectRateWindow  = time.Minute
+	connectRateMaxPerIP = 10
+)
+
+// allowConnectRateLimit reports whether the given remote address is still
+// within the allowed connect-attempt budget. False means the caller must
+// reject the attempt (HTTP 429) to slow down credential brute-forcing.
+func (s *lanService) allowConnectRateLimit(remoteAddr string) bool {
+	ip, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		ip = remoteAddr
+	}
+
+	s.connectRateMutex.Lock()
+	defer s.connectRateMutex.Unlock()
+
+	now := time.Now()
+	entry, ok := s.connectRateLimits[ip]
+	if !ok || now.After(entry.expires) {
+		s.connectRateLimits[ip] = &connectRateEntry{count: 1, expires: now.Add(connectRateWindow)}
+		return true
+	}
+	entry.count++
+	if entry.count > connectRateMaxPerIP {
+		return false
+	}
+	return true
+}
+
 type lanService struct {
 	ctx             context.Context
 	ctxMutex        sync.RWMutex
@@ -58,6 +95,7 @@ type lanService struct {
 	statsService    domain.StatsService
 	settingsService domain.SettingsService
 	backupService   domain.BackupService
+	staffService    domain.StaffService
 
 	// Server state
 	server          *http.Server
@@ -67,6 +105,10 @@ type lanService struct {
 	actualPort      int
 	secret          string
 	secretMutex     sync.RWMutex
+
+	// Per-IP rate limiting for /api/connect
+	connectRateLimits map[string]*connectRateEntry
+	connectRateMutex  sync.Mutex
 
 	// Clients list (on server)
 	connectedClients map[string]*domain.ConnectedClient
@@ -95,6 +137,7 @@ func NewLanService(
 	statsService domain.StatsService,
 	settingsService domain.SettingsService,
 	backupService domain.BackupService,
+	staffService domain.StaffService,
 ) LanService {
 	return &lanService{
 		networkRepo:      networkRepo,
@@ -105,8 +148,10 @@ func NewLanService(
 		statsService:     statsService,
 		settingsService:  settingsService,
 		backupService:    backupService,
+		staffService:     staffService,
 		serverStatus:     "stopped",
 		connectedClients: make(map[string]*domain.ConnectedClient),
+		connectRateLimits: make(map[string]*connectRateEntry),
 		httpClient:       &http.Client{Timeout: 10 * time.Second},
 	}
 }

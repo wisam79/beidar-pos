@@ -43,6 +43,12 @@ func TestStaffCRUDAndAuth(t *testing.T) {
 		if admin.Username != "admin" {
 			t.Errorf("Expected username 'admin', got '%s'", admin.Username)
 		}
+		if !admin.MustChangePin {
+			t.Error("Seeded admin must require a PIN change on first login")
+		}
+		if bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte("0000")) == nil {
+			t.Error("Seeded admin must not use the default PIN '0000'")
+		}
 	})
 
 	t.Run("AuthenticateByUsername", func(t *testing.T) {
@@ -53,7 +59,18 @@ func TestStaffCRUDAndAuth(t *testing.T) {
 			t.Fatalf("SeedDefaultAdmin failed: %v", err)
 		}
 
-		res, err := s.AuthenticateByUsername("admin", "0000")
+		// The seeded admin has a random initial PIN, so authenticate a known one.
+		admin := domain.Staff{
+			Name:          "Test Admin",
+			Username:      "testadmin",
+			Role:          domain.RoleAdmin,
+			MustChangePin: true,
+		}
+		if _, err := s.CreateStaff(admin, "7654321"); err != nil {
+			t.Fatalf("CreateStaff failed: %v", err)
+		}
+
+		res, err := s.AuthenticateByUsername("testadmin", "7654321")
 		if err != nil {
 			t.Fatalf("AuthenticateByUsername error: %v", err)
 		}
@@ -61,7 +78,7 @@ func TestStaffCRUDAndAuth(t *testing.T) {
 			t.Errorf("Auth failed: %s", res.Message)
 		}
 		if !res.RequirePINChange {
-			t.Error("Seeded admin should require PIN change because it is using default PIN")
+			t.Error("Staff with MustChangePin should require a PIN change after login")
 		}
 	})
 
@@ -95,10 +112,10 @@ func TestStaffCRUDAndAuth(t *testing.T) {
 			t.Errorf("Expected cashier staff, got '%s'", pinRes.Staff.Username)
 		}
 
-		// Verify FastPIN was indexed
+		// Verify FastPIN is no longer written by the service
 		updatedCashier, _ := s.GetStaff(created.ID)
-		if updatedCashier.FastPIN == "" {
-			t.Error("FastPIN should be populated after successful login")
+		if updatedCashier.FastPIN != "" {
+			t.Error("FastPIN should NOT be populated after successful login")
 		}
 	})
 
@@ -298,6 +315,25 @@ func TestStaffUpdateAndDelete(t *testing.T) {
 		t.Error("Expected error when deleting last admin")
 	}
 
+	// Prevent deactivating the last admin via toggle
+	if err := s.ToggleStaffStatus(admin.ID); err == nil {
+		t.Error("Expected error when deactivating the last admin")
+	}
+	stillAdmin, _ := s.GetStaff(admin.ID)
+	if !stillAdmin.Active {
+		t.Error("Last admin should remain active after a rejected toggle")
+	}
+
+	// Deactivating an admin is allowed when another admin remains
+	secondAdmin := domain.Staff{Name: "Second Admin", Username: "admin2nd", Role: domain.RoleAdmin}
+	secondCreated, err := s.CreateStaff(secondAdmin, "1234567")
+	if err != nil {
+		t.Fatalf("CreateStaff second admin failed: %v", err)
+	}
+	if err := s.ToggleStaffStatus(secondCreated.ID); err != nil {
+		t.Errorf("Expected to deactivate admin when another admin exists: %v", err)
+	}
+
 	// Attempt delete non-existent staff
 	if err := s.DeleteStaff("invalid-id", false); err == nil {
 		t.Error("Expected error when deleting non-existent staff")
@@ -389,110 +425,107 @@ func TestStaffValidationAndCounts(t *testing.T) {
 	}
 }
 
-func TestStaffService_PinAuthEdgeCases(t *testing.T) {
+func TestStaffService_PinAuthTarpit(t *testing.T) {
+	s, _, cleanup := setupStaffTestDB(t)
+	defer cleanup()
+
+	cashier := domain.Staff{
+		Name:     "Tarpit Cashier",
+		Username: "tarpit",
+		Role:     domain.RoleCashier,
+	}
+	created, err := s.CreateStaff(cashier, "4321")
+	if err != nil {
+		t.Fatalf("CreateStaff failed: %v", err)
+	}
+
+	// First failure: the tarpit must add a delay (1s)
+	start := time.Now()
+	fail1, _ := s.AuthenticateByPIN("0000")
+	elapsed1 := time.Since(start)
+	if fail1.Success {
+		t.Fatal("Expected first wrong PIN to fail")
+	}
+	if elapsed1 < 900*time.Millisecond {
+		t.Errorf("Expected tarpit delay after first failure, got %v", elapsed1)
+	}
+
+	// Second failure: the delay must grow (2s)
+	start = time.Now()
+	fail2, _ := s.AuthenticateByPIN("1111")
+	elapsed2 := time.Since(start)
+	if fail2.Success {
+		t.Fatal("Expected second wrong PIN to fail")
+	}
+	if elapsed2 <= elapsed1 {
+		t.Errorf("Expected increasing tarpit delay, first=%v second=%v", elapsed1, elapsed2)
+	}
+
+	// A correct PIN must still succeed after failures (tarpit, not lockout)
+	okRes, err := s.AuthenticateByPIN("4321")
+	if err != nil {
+		t.Fatalf("AuthenticateByPIN error: %v", err)
+	}
+	if !okRes.Success {
+		t.Fatalf("Correct PIN blocked after failures: %s", okRes.Message)
+	}
+	if okRes.Staff.Username != "tarpit" {
+		t.Errorf("Expected cashier staff, got '%s'", okRes.Staff.Username)
+	}
+
+	// FastPIN must not be written on login
+	updated, err := s.GetStaff(created.ID)
+	if err != nil {
+		t.Fatalf("GetStaff failed: %v", err)
+	}
+	if updated.FastPIN != "" {
+		t.Error("FastPIN should NOT be populated after login")
+	}
+}
+
+func TestStaffService_PinAuthLegacyStaff(t *testing.T) {
 	s, db, cleanup := setupStaffTestDB(t)
 	defer cleanup()
 
-	// 1. Setup rate limit lockout test
-	db.Create(&domain.LoginAttempt{
-		Identifier:  "pin_auth",
-		Attempts:    50,
-		LockedUntil: time.Now().Unix() + 100,
-	})
-
-	lockRes, err := s.AuthenticateByPIN("1234")
-	if err != nil {
-		t.Fatalf("AuthenticateByPIN rate limit check failed: %v", err)
-	}
-	if lockRes.Success {
-		t.Error("Expected PIN Auth to be locked out")
-	}
-
-	// Clear attempts for next test
-	db.Exec("DELETE FROM login_attempts")
-
-	// 2. First failure test (wrong PIN, no previous attempts)
-	// Because wrong login sleeps for 2 seconds, we can just run it once.
-	failRes, err := s.AuthenticateByPIN("0000") // 0000 is default but no user with this exists yet
-	if err != nil {
-		t.Fatalf("AuthenticateByPIN failed: %v", err)
-	}
-	if failRes.Success {
-		t.Error("Expected PIN Auth to fail for non-existent PIN")
-	}
-
-	// 3. Subsequent failure with remaining attempts > 0
-	db.Exec("DELETE FROM login_attempts")
-	db.Create(&domain.LoginAttempt{
-		Identifier:  "pin_auth",
-		Attempts:    2,
-		LastAttempt: time.Now().Unix(),
-	})
-	failRes2, err := s.AuthenticateByPIN("0000")
-	if err != nil {
-		t.Fatalf("AuthenticateByPIN failed: %v", err)
-	}
-	if failRes2.Success {
-		t.Error("Expected PIN Auth to fail")
-	}
-	// Verify it returned remaining attempts message
-	if failRes2.Message == "" {
-		t.Error("Expected failure message with remaining attempts info")
-	}
-
-	// Clear attempts again
-	db.Exec("DELETE FROM login_attempts")
-
-	// 4. Fallback and Lazy Migration test
+	// Legacy staff with a populated FastPIN must still authenticate via bcrypt,
+	// and their FastPIN column must be left untouched (no longer written or read
+	// by the service).
 	hash, err := bcrypt.GenerateFromPassword([]byte("5555"), bcrypt.DefaultCost)
 	if err != nil {
 		t.Fatalf("Failed to generate password hash: %v", err)
 	}
 	cashierID := uuid.New().String()
-	created := domain.Staff{
+	legacy := domain.Staff{
 		ID:           cashierID,
-		Name:         "Hassan Cashier",
-		Username:     "hassan",
+		Name:         "Legacy Cashier",
+		Username:     "legacy",
 		Role:         domain.RoleCashier,
 		Active:       true,
 		PasswordHash: string(hash),
-		FastPIN:      "", // explicitly empty to test lazy migration fallback
+		FastPIN:      "legacy_fast_index",
 		CreatedAt:    time.Now().Unix(),
 	}
-	if err := db.Create(&created).Error; err != nil {
-		t.Fatalf("Failed to insert cashier directly: %v", err)
+	if err := db.Create(&legacy).Error; err != nil {
+		t.Fatalf("Failed to insert legacy cashier directly: %v", err)
 	}
 
-	// Cashier has no FastPIN initially in the DB
-	if created.FastPIN != "" {
-		t.Error("Expected FastPIN to be empty initially")
-	}
-
-	// AuthenticateByPIN - hits fallback because FastPIN is empty, matches cashier via loop, saves FastPIN
 	res, err := s.AuthenticateByPIN("5555")
 	if err != nil {
-		t.Fatalf("AuthenticateByPIN fallback failed: %v", err)
+		t.Fatalf("AuthenticateByPIN failed: %v", err)
 	}
 	if !res.Success {
-		t.Errorf("PIN Auth failed: %s", res.Message)
+		t.Fatalf("Legacy PIN auth failed: %s", res.Message)
+	}
+	if res.Staff.ID != cashierID {
+		t.Errorf("Expected legacy cashier, got %s", res.Staff.ID)
 	}
 
-	// Verify FastPIN is now populated
-	updated, err := s.GetStaff(created.ID)
+	updated, err := s.GetStaff(cashierID)
 	if err != nil {
 		t.Fatalf("GetStaff failed: %v", err)
 	}
-	if updated.FastPIN == "" {
-		t.Error("Expected FastPIN to be populated after fallback login")
-	}
-
-	// Second authentication - should hit O(1) FastPIN match directly
-	res2, err := s.AuthenticateByPIN("5555")
-	if err != nil {
-		t.Fatalf("AuthenticateByPIN O(1) failed: %v", err)
-	}
-	if !res2.Success {
-		t.Errorf("O(1) PIN Auth failed: %s", res2.Message)
+	if updated.FastPIN != "legacy_fast_index" {
+		t.Error("Expected legacy FastPIN to remain untouched")
 	}
 }
 

@@ -11,7 +11,7 @@ import { LanSyncPanel } from '../../components/LanSyncPanel';
 import { DesktopSettingsPanel } from './components/DesktopSettingsPanel';
 import { api } from '../../core/api';
 import { AppPreferences } from '../../core/types';
-import { compressImage } from '../../core/utils';
+import { compressImage, sanitizePrefsForStorage } from '../../core/utils';
 import { validateSettings } from '../../core/schemas/settings.schema';
 import { PageShell } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
@@ -95,7 +95,7 @@ export const SettingsPage: React.FC = () => {
         try {
             await api.prefs.set(localPrefs);
             // Also save to localStorage so AI module can read the API key
-            localStorage.setItem('beidar_preferences', JSON.stringify(localPrefs));
+            localStorage.setItem('beidar_preferences', JSON.stringify(sanitizePrefsForStorage(localPrefs as unknown as Record<string, unknown>)));
             setPrefs(localPrefs);
             setHasChanges(false);
             setErrors({});
@@ -115,7 +115,7 @@ export const SettingsPage: React.FC = () => {
                 handleChange('lastBackupDate', now);
                 // Verify immediate storage update for the alert to clear
                 const updatedPrefs = { ...localPrefs, lastBackupDate: now };
-                localStorage.setItem('beidar_preferences', JSON.stringify(updatedPrefs));
+                localStorage.setItem('beidar_preferences', JSON.stringify(sanitizePrefsForStorage(updatedPrefs as unknown as Record<string, unknown>)));
                 api.prefs.set(updatedPrefs);
 
                 notify('تم تصدير نسخة احتياطية 📦', 'success');

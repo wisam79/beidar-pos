@@ -100,6 +100,29 @@ func (r *shiftRepository) UpdateShiftSales(saleTotal, cashAmount domain.Amount, 
 	}).Error
 }
 
+// UpdateShiftRefunds decrements the active shift totals by the refunded amounts.
+// It no-ops when there is no open shift, mirroring UpdateShiftSales.
+func (r *shiftRepository) UpdateShiftRefunds(totalRefund, cashRefund domain.Amount) error {
+	var id string
+	err := r.db.Model(&domain.Shift{}).
+		Where("status = ?", "open").
+		Limit(1).
+		Pluck("id", &id).Error
+	if err != nil {
+		return err
+	}
+	if id == "" {
+		return nil
+	}
+
+	return r.db.Model(&domain.Shift{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"total_sales":      gorm.Expr("total_sales - ?", int64(totalRefund)),
+		"cash_sales":       gorm.Expr("cash_sales - ?", int64(cashRefund)),
+		"sales_count":      gorm.Expr("sales_count - 1"),
+		"expected_balance": gorm.Expr("expected_balance - ?", int64(cashRefund)),
+	}).Error
+}
+
 func (r *shiftRepository) Save(shift *domain.Shift) error {
 	return r.db.Save(shift).Error
 }

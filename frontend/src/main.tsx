@@ -10,7 +10,7 @@ import './i18n';
 import '@fontsource-variable/readex-pro';
 import './index.css';
 import { type View, type AppPreferences } from './core/types';
-import { safeJSONParse } from './core/utils';
+import { safeJSONParse, sanitizePrefsForStorage } from './core/utils';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SplashScreen } from './components/SplashScreen';
 import { LicenseScreen } from './components/LicenseScreen';
@@ -203,7 +203,7 @@ const App = () => {
     setPrefs((prev: AppPreferences) => {
       const theme: AppPreferences['theme'] = prev.theme === 'dark' ? 'light' : 'dark';
       const next: AppPreferences = { ...prev, theme };
-      localStorage.setItem('beidar_preferences', JSON.stringify(next));
+      localStorage.setItem('beidar_preferences', JSON.stringify(sanitizePrefsForStorage(next as unknown as Record<string, unknown>)));
       return next;
     });
   };

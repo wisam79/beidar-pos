@@ -5,11 +5,12 @@ import (
 	pkgerrors "beidar-desktop/pkg/errors"
 	"beidar-desktop/pkg/i18n"
 	"beidar-desktop/pkg/logger"
-	"crypto/sha256"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,7 +31,7 @@ var RolePermissions = map[domain.Role][]string{
 		domain.PermReports, domain.PermFinance, domain.PermDiscounts, domain.PermDeleteSales, domain.PermEditPrices,
 	},
 	domain.RoleCashier: {
-		domain.PermSales, domain.PermCustomers, domain.PermInvoices,
+		domain.PermSales, domain.PermCustomers, domain.PermInvoices, domain.PermDiscounts,
 	},
 	domain.RoleViewer: {
 		// Read-only
@@ -50,9 +51,18 @@ func NewStaffService(staffRepo domain.StaffRepository) domain.StaffService {
 
 // Lockout settings
 const (
-	MaxLoginAttempts     = 5
-	MaxGlobalPinAttempts = 50
-	LockoutDuration      = 15 * 60 // 15 minutes
+	MaxLoginAttempts = 5
+	LockoutDuration  = 15 * 60 // 15 minutes
+)
+
+// pinAuthMu/pinAuthFailures implement the global PIN-authentication tarpit:
+// every failed PIN guess adds an exponential delay (1s, 2s, 4s... capped at
+// 15s) before returning, while a correct PIN always resets the counter. This
+// throttles brute-force attempts without ever locking out valid PINs. Kept
+// separate from the admin-PIN tarpit so the two flows never interfere.
+var (
+	pinAuthMu       sync.Mutex
+	pinAuthFailures int
 )
 
 func (s *staffService) checkRateLimit(identifier string) (bool, string, error) {
@@ -218,8 +228,7 @@ func (s *staffService) CreateStaff(staff domain.Staff, password string) (*domain
 	staff.CreatedAt = time.Now().Unix()
 	staff.Active = true
 
-	fastPIN := s.generateFastPIN(password)
-	existingPIN, _ := s.staffRepo.GetByFastPIN(fastPIN)
+	existingPIN, _ := s.pinAlreadyUsed(password, "")
 	if existingPIN != nil {
 		return nil, pkgerrors.NewAppError(
 			pkgerrors.ModuleStaff,
@@ -241,7 +250,6 @@ func (s *staffService) CreateStaff(staff domain.Staff, password string) (*domain
 		)
 	}
 	staff.PasswordHash = string(hash)
-	staff.FastPIN = s.generateFastPIN(password)
 
 	if len(staff.Permissions) == 0 {
 		staff.Permissions = RolePermissions[staff.Role]
@@ -340,19 +348,6 @@ func (s *staffService) UpdateStaff(staff domain.Staff) error {
 	}
 
 	// Fetch current to maintain hashed password, etc.
-	if staff.Active && !current.Active && current.FastPIN != "" {
-		existingPIN, _ := s.staffRepo.GetByFastPIN(current.FastPIN)
-		if existingPIN != nil && existingPIN.ID != current.ID {
-			return pkgerrors.NewAppError(
-				pkgerrors.ModuleStaff,
-				"DUPLICATE_PIN",
-				i18n.GetMessage("DUPLICATE_PIN"),
-				i18n.GetHint("DUPLICATE_PIN"),
-				"active",
-			)
-		}
-	}
-
 	current.Name = staff.Name
 	current.Username = staff.Username
 	current.Role = staff.Role
@@ -422,9 +417,8 @@ func (s *staffService) UpdateStaffPassword(id string, newPassword string) error 
 		}
 	}
 
-	fastPIN := s.generateFastPIN(newPassword)
-	existingPIN, _ := s.staffRepo.GetByFastPIN(fastPIN)
-	if existingPIN != nil && existingPIN.ID != id {
+	existingPIN, _ := s.pinAlreadyUsed(newPassword, id)
+	if existingPIN != nil {
 		return pkgerrors.NewAppError(
 			pkgerrors.ModuleStaff,
 			"DUPLICATE_PIN",
@@ -440,7 +434,6 @@ func (s *staffService) UpdateStaffPassword(id string, newPassword string) error 
 	}
 
 	staff.PasswordHash = string(hash)
-	staff.FastPIN = fastPIN
 	staff.MustChangePin = false
 
 	return s.staffRepo.Update(staff)
@@ -515,6 +508,21 @@ func (s *staffService) ToggleStaffStatus(id string) error {
 	if err != nil {
 		return err
 	}
+
+	// Never deactivate the last remaining admin.
+	if staff.Active && staff.Role == domain.RoleAdmin {
+		adminCount, err := s.staffRepo.CountByRole(domain.RoleAdmin)
+		if err == nil && adminCount <= 1 {
+			return pkgerrors.NewAppError(
+				pkgerrors.ModuleStaff,
+				"LAST_ADMIN",
+				i18n.GetMessage("LAST_ADMIN"),
+				i18n.GetHint("LAST_ADMIN"),
+				"active",
+			)
+		}
+	}
+
 	staff.Active = !staff.Active
 	return s.staffRepo.Update(staff)
 }
@@ -565,71 +573,58 @@ func (s *staffService) AuthenticateByUsername(username, password string) (*domai
 }
 
 func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error) {
-	hashedInput := s.generateFastPIN(pin)
-	locked, msg, err := s.checkRateLimit("pin_auth_" + hashedInput)
-	if err != nil {
-		return nil, err
-	}
-	if locked {
-		return &domain.AuthResult{Success: false, Message: msg}, nil
-	}
-
-	fastMatch, err := s.staffRepo.GetByFastPIN(hashedInput)
-	if err == nil && fastMatch != nil {
-		if err := bcrypt.CompareHashAndPassword([]byte(fastMatch.PasswordHash), []byte(pin)); err == nil {
-			_ = s.clearLoginAttempts("pin_auth_" + hashedInput)
-			fastMatch.LastLogin = time.Now().Unix()
-			_ = s.staffRepo.Update(fastMatch)
-			requireChange := fastMatch.MustChangePin || s.CheckUsingDefaultPassword(pin)
-
-			return &domain.AuthResult{
-				Success:          true,
-				Staff:            *fastMatch,
-				Permissions:      fastMatch.Permissions,
-				RequirePINChange: requireChange,
-			}, nil
-		}
-	}
-
-	// Fallback: search active staff who do not have a FastPIN set yet
+	// PINs are verified against the stored bcrypt hashes of all active staff.
+	// The legacy FastPIN index (unsalted sha256 of the PIN) is never used for
+	// authentication and is no longer written by the service.
 	activeStaff, err := s.staffRepo.GetActive()
 	if err != nil {
 		return nil, err
 	}
 
-	for _, st := range activeStaff {
-		if st.FastPIN == "" && st.PasswordHash != "" {
-			if err := bcrypt.CompareHashAndPassword([]byte(st.PasswordHash), []byte(pin)); err == nil {
-				// Lazy Migration: save FastPIN
-				st.FastPIN = hashedInput
-				_ = s.staffRepo.Update(&st)
+	for i := range activeStaff {
+		st := &activeStaff[i]
+		if st.PasswordHash == "" {
+			continue
+		}
+		if bcrypt.CompareHashAndPassword([]byte(st.PasswordHash), []byte(pin)) == nil {
+			// Success: reset the global failure counter so a correct PIN is
+			// never blocked by previous failures (tarpit, not lockout).
+			pinAuthMu.Lock()
+			pinAuthFailures = 0
+			pinAuthMu.Unlock()
 
-				_ = s.clearLoginAttempts("pin_auth_" + hashedInput)
-				st.LastLogin = time.Now().Unix()
-				_ = s.staffRepo.Update(&st)
+			st.LastLogin = time.Now().Unix()
+			_ = s.staffRepo.Update(st)
 
-				requireChange := st.MustChangePin || s.CheckUsingDefaultPassword(pin)
+			requireChange := st.MustChangePin || s.CheckUsingDefaultPassword(pin)
 
-				return &domain.AuthResult{
-					Success:          true,
-					Staff:            st,
-					Permissions:      st.Permissions,
-					RequirePINChange: requireChange,
-				}, nil
-			}
+			return &domain.AuthResult{
+				Success:          true,
+				Staff:            *st,
+				Permissions:      st.Permissions,
+				RequirePINChange: requireChange,
+			}, nil
 		}
 	}
 
-	_ = s.recordFailedAttempt("pin_auth_"+hashedInput, MaxGlobalPinAttempts)
+	// Failure: apply the exponential tarpit before returning. The delay makes
+	// brute-force attempts sequential and self-throttling without a lockout.
+	pinAuthMu.Lock()
+	pinAuthFailures++
+	failures := pinAuthFailures
+	pinAuthMu.Unlock()
 
-	attempt, err := s.staffRepo.GetLoginAttempt("pin_auth_" + hashedInput)
-	if err == nil && attempt != nil {
-		remaining := MaxGlobalPinAttempts - attempt.Attempts
-		if remaining > 0 {
-			return &domain.AuthResult{Success: false, Message: i18n.GetMessage("INVALID_PIN_REMAINING", remaining)}, nil
-		}
+	// Exponential backoff: 1s, 2s, 4s, 8s, 16s... capped at 15s
+	if failures > 5 {
+		failures = 5
 	}
+	delay := time.Duration(1<<uint(failures-1)) * time.Second
+	if delay > 15*time.Second || delay <= 0 {
+		delay = 15 * time.Second
+	}
+	time.Sleep(delay)
 
+	logger.Logger.Warn("SECURITY", "PIN authentication failed (tarpitted)")
 	return &domain.AuthResult{Success: false, Message: i18n.GetMessage("INVALID_PIN")}, nil
 }
 
@@ -658,6 +653,11 @@ func (s *staffService) SeedDefaultAdmin() error {
 	}
 
 	if count == 0 {
+		initialPIN, err := generateRandomPIN(6)
+		if err != nil {
+			return err
+		}
+
 		admin := domain.Staff{
 			Name:          "المدير",
 			Username:      "admin",
@@ -665,7 +665,7 @@ func (s *staffService) SeedDefaultAdmin() error {
 			Active:        true,
 			MustChangePin: true,
 		}
-		_, err := s.CreateStaff(admin, "0000")
+		_, err = s.CreateStaff(admin, initialPIN)
 		if err != nil {
 			return err
 		}
@@ -693,11 +693,41 @@ func (s *staffService) isValidIraqiPhone(phone string) bool {
 	return cleaned[0] == '0' && cleaned[1] == '7'
 }
 
-func (s *staffService) generateFastPIN(pin string) string {
-	const indexSalt = "baidar_pos_index_salt_v1_"
-	ws := sha256.New()
-	ws.Write([]byte(indexSalt + pin))
-	return fmt.Sprintf("%x", ws.Sum(nil))
+// pinAlreadyUsed reports whether the given PIN matches another staff member's
+// stored bcrypt hash (excluding excludeID). Unlike the legacy FastPIN index,
+// this never leaks recoverable PIN material into the database.
+func (s *staffService) pinAlreadyUsed(pin, excludeID string) (*domain.Staff, error) {
+	all, err := s.staffRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	for i := range all {
+		st := &all[i]
+		if st.PasswordHash == "" || st.ID == excludeID {
+			continue
+		}
+		if bcrypt.CompareHashAndPassword([]byte(st.PasswordHash), []byte(pin)) == nil {
+			return st, nil
+		}
+	}
+	return nil, nil
+}
+
+// generateRandomPIN returns a numeric PIN of the given length generated from a
+// cryptographically secure PRNG.
+func generateRandomPIN(length int) (string, error) {
+	if length <= 0 {
+		return "", errors.New("pin length must be positive")
+	}
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate random PIN: %w", err)
+	}
+	var sb strings.Builder
+	for _, b := range bytes {
+		sb.WriteByte('0' + b%10)
+	}
+	return sb.String(), nil
 }
 
 func (s *staffService) CheckUsingDefaultPassword(password string) bool {

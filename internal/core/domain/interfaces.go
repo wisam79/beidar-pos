@@ -109,6 +109,7 @@ type ShiftRepository interface {
 	Transaction(fn func(tx Tx) error) error
 	GetActiveShift() (*Shift, error)
 	UpdateShiftSales(saleTotal, cashAmount Amount, requireShift bool) error
+	UpdateShiftRefunds(totalRefund, cashRefund Amount) error
 	Save(shift *Shift) error
 	GetByID(id string) (*Shift, error)
 	GetShiftMovements(shiftID string) ([]CashMovement, error)
@@ -243,6 +244,7 @@ type SaleService interface {
 // PaymentService defines the business logic for payments
 type PaymentService interface {
 	CreatePayment(payment Payment) (*Payment, error)
+	CreatePaymentForced(payment Payment) error
 	GetPaymentsBySale(saleID string) ([]Payment, error)
 	GetPaymentsByCustomer(customerID string) ([]Payment, error)
 	DeletePayment(id uint) error

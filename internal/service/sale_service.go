@@ -11,6 +11,7 @@ import (
 	"beidar-desktop/pkg/logger"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func ErrSalesInsufficientStock(productName string, available, requested float64) *pkgerrors.AppError {
@@ -136,6 +137,13 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 
 	if len(sale.Items) == 0 {
 		return ErrEmptyCart()
+	}
+
+	// Never trust client-supplied timestamps, dates, or status.
+	sale.Date = time.Now().Format("2006-01-02")
+	sale.Timestamp = time.Now().UnixMilli()
+	if sale.Status != "completed" && sale.Status != "pending" {
+		sale.Status = "completed"
 	}
 
 	if sale.ID == "" {
@@ -270,6 +278,9 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		}
 
 		sale.Subtotal = calculatedSubtotal
+		if sale.Discount.IsNegative() {
+			return pkgerrors.NewAppError(pkgerrors.ModuleSales, "INVALID_PAYMENT", "قيمة الخصم لا يمكن أن تكون سالبة", "يجب أن تكون قيمة الخصم صفراً أو أكبر", "discount")
+		}
 		if sale.Discount > calculatedTotal {
 			return errors.New(i18n.GetMessage("DISCOUNT_EXCEEDS_TOTAL"))
 		}
@@ -287,47 +298,96 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 			sale.PointsAwarded = int(sale.Total.Div(1000).Cents())
 		}
 
+		if sale.PaymentMethod == "installment" {
+			if sale.InstallmentPlan != nil && sale.InstallmentPlan.DownPayment.IsNegative() {
+				return pkgerrors.NewAppError(
+					pkgerrors.ModuleSales,
+					"INVALID_PAYMENT",
+					"الدفعة الأولى لا يمكن أن تكون سالبة",
+					"يجب أن تكون الدفعة الأولى صفراً أو أكبر",
+					"installment",
+				)
+			}
+			if sale.InstallmentPlan != nil && sale.InstallmentPlan.DownPayment > sale.Total {
+				return pkgerrors.NewAppError(
+					pkgerrors.ModuleSales,
+					"INVALID_PAYMENT",
+					"قيمة الدفعة الأولى لا يمكن أن تتجاوز إجمالي الفاتورة",
+					"يجب أن تكون الدفعة الأولى أقل من أو تساوي إجمالي الفاتورة",
+					"installment",
+				)
+			}
+		}
+
 		if err := txSaleRepo.Create(sale); err != nil {
 			return fmt.Errorf("%s: %w", i18n.GetMessage("SAVE_SALE_FAILED", ""), err)
 		}
 
 		if sale.CustomerID != "" {
 			customer, err := txCustomerRepo.GetByID(sale.CustomerID)
-			if err == nil {
-				updates := map[string]interface{}{
-					"total_purchases": customer.TotalPurchases.Add(sale.Total).Cents(),
-					"last_visit":      time.Now().Format("2006-01-02"),
-					"points":          customer.Points + sale.PointsAwarded,
-				}
+			if err != nil {
+				return pkgerrors.NewAppError(
+					pkgerrors.ModuleSales,
+					"CUSTOMER_NOT_FOUND",
+					"العميل غير موجود",
+					"لا يمكن إتمام الفاتورة على عميل غير موجود",
+					"customerId",
+				)
+			}
 
-				var debtIncrease, installmentDebtIncrease domain.Amount
+			updates := map[string]interface{}{
+				"total_purchases": gorm.Expr("total_purchases + ?", sale.Total.Cents()),
+				"last_visit":      time.Now().Format("2006-01-02"),
+				"points":          gorm.Expr("points + ?", sale.PointsAwarded),
+			}
 
-				if sale.PaymentMethod == "credit" {
-					debtIncrease = sale.Total
-				} else if sale.PaymentMethod == "installment" {
-					if sale.InstallmentPlan != nil {
-						installmentDebtIncrease = sale.Total.Sub(sale.InstallmentPlan.DownPayment)
-					} else {
-						installmentDebtIncrease = sale.Total
-					}
-				} else if sale.PaymentMethod == "split" && sale.SplitDetails != nil {
-					debtIncrease = sale.SplitDetails["credit"]
-				}
+			var debtIncrease, installmentDebtIncrease domain.Amount
 
-				if debtIncrease > 0 {
-					updates["debt"] = customer.Debt.Add(debtIncrease).Cents()
+			if sale.PaymentMethod == "credit" {
+				debtIncrease = sale.Total
+			} else if sale.PaymentMethod == "installment" {
+				if sale.InstallmentPlan != nil {
+					installmentDebtIncrease = sale.Total.Sub(sale.InstallmentPlan.DownPayment)
+				} else {
+					installmentDebtIncrease = sale.Total
 				}
-				if installmentDebtIncrease > 0 {
-					updates["installment_debt"] = customer.InstallmentDebt.Add(installmentDebtIncrease).Cents()
-				}
+			} else if sale.PaymentMethod == "split" && sale.SplitDetails != nil {
+				debtIncrease = sale.SplitDetails["credit"]
+			}
 
-				if err := txCustomerRepo.Updates(customer.ID, updates); err != nil {
-					return err
-				}
+			if debtIncrease > 0 {
+				updates["debt"] = gorm.Expr("debt + ?", debtIncrease.Cents())
+			}
+			if installmentDebtIncrease > 0 {
+				updates["installment_debt"] = gorm.Expr("installment_debt + ?", installmentDebtIncrease.Cents())
+			}
+
+			if err := txCustomerRepo.Updates(customer.ID, updates); err != nil {
+				return err
 			}
 		}
 
 		if sale.PaymentMethod == "split" && sale.SplitDetails != nil {
+			for _, amount := range sale.SplitDetails {
+				if amount.IsNegative() {
+					return pkgerrors.NewAppError(
+						pkgerrors.ModuleSales,
+						"INVALID_PAYMENT",
+						"قيمة الدفعة المقسمة لا يمكن أن تكون سالبة",
+						"يجب أن تكون قيمة كل دفعة مقسمة صفراً أو أكبر",
+						"split",
+					)
+				}
+				if amount > sale.Total {
+					return pkgerrors.NewAppError(
+						pkgerrors.ModuleSales,
+						"INVALID_PAYMENT",
+						"قيمة الدفعة المقسمة تتجاوز إجمالي الفاتورة",
+						"لا يمكن أن تتجاوز قيمة الدفعة المقسمة إجمالي الفاتورة",
+						"split",
+					)
+				}
+			}
 			var splitSum domain.Amount
 			for _, amount := range sale.SplitDetails {
 				splitSum = splitSum.Add(amount)
@@ -401,6 +461,7 @@ func (s *saleService) ReturnSale(id string) error {
 		txProductRepo := s.productRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
 		txPaymentRepo := s.paymentRepo.WithTx(tx)
+		txShiftRepo := s.shiftRepo.WithTx(tx)
 
 		sale, err := txSaleRepo.GetByID(id)
 		if err != nil {
@@ -416,14 +477,20 @@ func (s *saleService) ReturnSale(id string) error {
 			productIDs[i] = item.ProductID
 		}
 		products, err := txProductRepo.GetByIDs(productIDs)
+		if err != nil {
+			return err
+		}
 		productMap := make(map[string]domain.Product)
-		if err == nil {
-			for _, prod := range products {
-				productMap[prod.ID] = prod
-			}
+		for _, prod := range products {
+			productMap[prod.ID] = prod
 		}
 
 		for _, item := range sale.Items {
+			// The product was deleted after the sale; skip restoring stock and the movement.
+			if _, exists := productMap[item.ProductID]; !exists {
+				continue
+			}
+
 			err = txProductRepo.UpdateStock(item.ProductID, item.Quantity)
 			if err != nil {
 				return err
@@ -466,12 +533,47 @@ func (s *saleService) ReturnSale(id string) error {
 					return err
 				}
 			case "installment":
-				installmentAmount := sale.Total
+				var paidSum domain.Amount
 				if sale.InstallmentPlan != nil {
-					installmentAmount = sale.Total.Sub(sale.InstallmentPlan.DownPayment)
+					for _, inst := range sale.InstallmentPlan.Schedule {
+						if inst.Status == "paid" {
+							paidSum = paidSum.Add(inst.Amount)
+						}
+					}
 				}
-				if err := txCustomerRepo.DecrementInstallmentDebt(sale.CustomerID, installmentAmount); err != nil {
-					return err
+
+			// Refund the full sale value plus all paid installments back to the customer in cash.
+			refundable := sale.Total.Add(paidSum)
+			refundPayment := domain.Payment{
+				SaleID:     sale.ID,
+				CustomerID: sale.CustomerID,
+				Amount:     -refundable,
+				Method:     "cash",
+				Note:       "استرداد فاتورة أقساط",
+				StaffID:    sale.StaffID,
+				Timestamp:  time.Now().UnixMilli(),
+			}
+				if err := txPaymentRepo.Create(&refundPayment); err != nil {
+					return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)
+				}
+
+				outstanding := sale.Total
+				if sale.InstallmentPlan != nil {
+					outstanding = sale.Total.Sub(sale.InstallmentPlan.DownPayment).Sub(paidSum)
+				}
+				if outstanding > 0 {
+					if err := txCustomerRepo.DecrementInstallmentDebt(sale.CustomerID, outstanding); err != nil {
+						return err
+					}
+				}
+			case "split":
+				if sale.SplitDetails != nil {
+					creditAmount := sale.SplitDetails["credit"]
+					if creditAmount > 0 {
+						if err := txCustomerRepo.DecrementDebt(sale.CustomerID, creditAmount); err != nil {
+							return err
+						}
+					}
 				}
 			}
 		}
@@ -490,6 +592,32 @@ func (s *saleService) ReturnSale(id string) error {
 			}
 		}
 
+		var totalRefund domain.Amount
+		var cashRefund domain.Amount
+		switch sale.PaymentMethod {
+		case "cash":
+			totalRefund = sale.Total
+			cashRefund = sale.Total
+		case "card":
+			totalRefund = sale.Total
+		case "installment":
+			totalRefund = sale.Total
+			cashRefund = sale.Total
+			if sale.InstallmentPlan != nil {
+				for _, inst := range sale.InstallmentPlan.Schedule {
+					if inst.Status == "paid" {
+						totalRefund = totalRefund.Add(inst.Amount)
+						cashRefund = cashRefund.Add(inst.Amount)
+					}
+				}
+			}
+		}
+		if totalRefund > 0 {
+			if err := txShiftRepo.UpdateShiftRefunds(totalRefund, cashRefund); err != nil {
+				return fmt.Errorf("%s: %w", i18n.GetMessage("SALE_PROCESS_FAILED", ""), err)
+			}
+		}
+
 		sale.Status = "returned"
 		if err := txSaleRepo.Update(sale); err != nil {
 			return err
@@ -504,11 +632,17 @@ func (s *saleService) ReturnSale(id string) error {
 }
 
 func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToReturn float64) error {
+	vatRate := float64(0)
+	if prefs, err := s.preferencesRepo.Get(); err == nil {
+		vatRate = prefs.TaxRate
+	}
+
 	err := s.saleRepo.Transaction(func(tx domain.Tx) error {
 		txSaleRepo := s.saleRepo.WithTx(tx)
 		txProductRepo := s.productRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
 		txPaymentRepo := s.paymentRepo.WithTx(tx)
+		txShiftRepo := s.shiftRepo.WithTx(tx)
 
 		item, err := txSaleRepo.GetSaleItem(saleID, productID)
 		if err != nil {
@@ -526,7 +660,13 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 
 		remainingQty := item.Quantity - item.ReturnedQty
 		if qtyToReturn > remainingQty {
-			return fmt.Errorf("لا يمكن إرجاع %.2f. المتبقي فقط %.2f", qtyToReturn, remainingQty)
+			return pkgerrors.NewAppError(
+				pkgerrors.ModuleSales,
+				"RETURN_QUANTITY_EXCEEDS_REMAINING",
+				fmt.Sprintf("لا يمكن إرجاع %.2f. المتبقي فقط %.2f", qtyToReturn, remainingQty),
+				"يرجى التحقق من الكمية المتبقية القابلة للإرجاع",
+				"quantity",
+			)
 		}
 
 		item.ReturnedQty += qtyToReturn
@@ -534,41 +674,57 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 			return err
 		}
 
-		err = txProductRepo.UpdateStock(productID, qtyToReturn)
-		if err != nil {
-			return err
+		// If the product was deleted after the sale, skip restoring stock and the movement.
+		product, productErr := txProductRepo.GetByID(productID)
+		if productErr != nil && !errors.Is(productErr, gorm.ErrRecordNotFound) {
+			return productErr
+		}
+		if productErr == nil {
+			err = txProductRepo.UpdateStock(productID, qtyToReturn)
+			if err != nil {
+				return err
+			}
+
+			productName := item.Name
+			if product != nil && product.Name != "" {
+				productName = product.Name
+			}
+
+			movement := domain.StockMovement{
+				ProductID:   item.ProductID,
+				ProductName: productName,
+				Type:        "return_partial",
+				Qty:         qtyToReturn,
+				Reason:      fmt.Sprintf("Partial Return: Sale #%s", saleID),
+				Timestamp:   time.Now().UnixMilli(),
+			}
+			if err := txProductRepo.CreateStockMovement(&movement); err != nil {
+				return err
+			}
 		}
 
-		movement := domain.StockMovement{
-			ProductID:   item.ProductID,
-			ProductName: item.Name,
-			Type:        "return_partial",
-			Qty:         qtyToReturn,
-			Reason:      fmt.Sprintf("Partial Return: Sale #%s", saleID),
-			Timestamp:   time.Now().UnixMilli(),
+		// Exact refund share in cents: item total (VAT-exclusive) + its VAT share.
+		itemShare := item.Total.Add(item.Total.Percentage(vatRate))
+		// Use integer arithmetic to avoid floating point errors
+		qtyToReturnScaled := int64(qtyToReturn * 1000 + 0.5)
+		itemQtyScaled := int64(item.Quantity * 1000 + 0.5)
+		if itemQtyScaled == 0 {
+			return pkgerrors.NewAppError(pkgerrors.ModuleSales, "INVALID_QUANTITY", "الكمية غير صالحة", "لا يمكن أن تكون الكمية صفراً", "quantity")
 		}
-		if err := txProductRepo.CreateStockMovement(&movement); err != nil {
-			return err
+		refundAmount := domain.Amount((itemShare.Cents() * qtyToReturnScaled) / itemQtyScaled)
+		if refundAmount.IsNegative() || refundAmount > itemShare {
+			return pkgerrors.NewAppError(
+				pkgerrors.ModuleSales,
+				"INVALID_REFUND",
+				"قيمة الاسترداد غير صالحة",
+				"لا يمكن استرداد أكثر مما دفعه العميل لهذا المنتج",
+				"refund",
+			)
 		}
 
 		allItems, err := txSaleRepo.GetSaleItems(saleID)
 		if err != nil {
 			return err
-		}
-
-		var sumItemTotals domain.Amount
-		for _, i := range allItems {
-			sumItemTotals = sumItemTotals.Add(i.Total)
-		}
-
-		var refundAmount domain.Amount
-		if item.Quantity > 0 {
-			returnedValue := item.Total.MulFloat(qtyToReturn / item.Quantity)
-			if sumItemTotals > 0 {
-				refundAmount = returnedValue.MulFloat(sale.Total.Float() / sumItemTotals.Float())
-			} else {
-				refundAmount = domain.Zero()
-			}
 		}
 
 		if sale.CustomerID != "" {
@@ -607,6 +763,16 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 		}
 		if err := txPaymentRepo.Create(&refundPayment); err != nil {
 			return err
+		}
+
+		if refundAmount > 0 {
+			cashRefund := domain.Zero()
+			if sale.PaymentMethod == "cash" {
+				cashRefund = refundAmount
+			}
+			if err := txShiftRepo.UpdateShiftRefunds(refundAmount, cashRefund); err != nil {
+				return fmt.Errorf("%s: %w", i18n.GetMessage("SALE_PROCESS_FAILED", ""), err)
+			}
 		}
 
 		// allItems already fetched above

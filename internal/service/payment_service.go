@@ -38,7 +38,21 @@ func NewPaymentService(
 	}
 }
 
+// CreatePayment records a payment against a customer's debt.
+// Overpayments are rejected unless the caller goes through CreatePaymentForced.
 func (s *paymentService) CreatePayment(payment domain.Payment) (*domain.Payment, error) {
+	return s.createPayment(payment, false)
+}
+
+// CreatePaymentForced records a payment even when it exceeds the customer's debt.
+// Intended for manager-confirmed overpayments (the frontend calls this when a
+// manager acknowledges the PAYMENT_EXCEEDS_DEBT error with allowForce).
+func (s *paymentService) CreatePaymentForced(payment domain.Payment) error {
+	_, err := s.createPayment(payment, true)
+	return err
+}
+
+func (s *paymentService) createPayment(payment domain.Payment, allowOverpay bool) (*domain.Payment, error) {
 	if payment.Amount <= 0 {
 		return nil, pkgerrors.NewAppError(
 			pkgerrors.ModulePayment,
@@ -68,24 +82,19 @@ func (s *paymentService) CreatePayment(payment domain.Payment) (*domain.Payment,
 				)
 			}
 
-			if customer.Debt >= 0 && payment.Amount > customer.Debt {
-				isAcknowledged := strings.Contains(payment.Note, "[OVERPAY_OK]")
-				if !isAcknowledged {
-					return &pkgerrors.AppError{
-						Module:  pkgerrors.ModulePayment,
-						Code:    "PAYMENT_EXCEEDS_DEBT",
-						Message: i18n.GetMessage("PAYMENT_EXCEEDS_DEBT", payment.Amount, customer.Debt),
-						Hint:    i18n.GetMessage("PAYMENT_EXCEEDS_DEBT_HINT", payment.Amount-customer.Debt),
-						Options: map[string]bool{"allowForce": true},
-					}
+			if !allowOverpay && customer.Debt >= 0 && payment.Amount > customer.Debt {
+				return &pkgerrors.AppError{
+					Module:  pkgerrors.ModulePayment,
+					Code:    "PAYMENT_EXCEEDS_DEBT",
+					Message: i18n.GetMessage("PAYMENT_EXCEEDS_DEBT", payment.Amount, customer.Debt),
+					Hint:    i18n.GetMessage("PAYMENT_EXCEEDS_DEBT_HINT", payment.Amount-customer.Debt),
+					Options: map[string]bool{"allowForce": true},
 				}
-				payment.Note = strings.Replace(payment.Note, "[OVERPAY_OK]", "", 1)
-				payment.Note = strings.TrimSpace(payment.Note)
 			}
 		}
 
 		if payment.SaleID != "" {
-			_, err := txSaleRepo.GetByID(payment.SaleID)
+			sale, err := txSaleRepo.GetByID(payment.SaleID)
 			if err != nil {
 				return pkgerrors.NewAppError(
 					pkgerrors.ModulePayment,
@@ -93,6 +102,26 @@ func (s *paymentService) CreatePayment(payment domain.Payment) (*domain.Payment,
 					i18n.GetMessage("PAYMENT_SALE_NOT_FOUND", payment.SaleID),
 					i18n.GetHint("PAYMENT_SALE_NOT_FOUND"),
 					"sale_id",
+				)
+			}
+
+			if sale.Status == "returned" || sale.Status == "partial_return" {
+				return pkgerrors.NewAppError(
+					pkgerrors.ModuleSales,
+					"SALE_RETURNED",
+					"لا يمكن تسجيل دفعة على فاتورة مرتجعة",
+					"أعد الفاتورة أولاً أو أنشئ دفعة عامة بدون ربط بفاتورة",
+					"saleId",
+				)
+			}
+
+			if sale.PaymentMethod == "installment" {
+				return pkgerrors.NewAppError(
+					pkgerrors.ModulePayment,
+					"USE_PAY_INSTALLMENT",
+					"هذه الفاتورة مبيعة بالأقساط. استخدم تحصيل الأقساط بدلاً من دفعة يدوية",
+					"تحصيل الأقساط يسجل الدفعة ويحدّث خطة الأقساط تلقائياً",
+					"saleId",
 				)
 			}
 		}
@@ -136,6 +165,7 @@ func (s *paymentService) DeletePayment(id uint) error {
 	return s.paymentRepo.Transaction(func(tx domain.Tx) error {
 		txPaymentRepo := s.paymentRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
+		txSaleRepo := s.saleRepo.WithTx(tx)
 
 		payment, err := txPaymentRepo.GetByID(id)
 		if err != nil {
@@ -160,9 +190,46 @@ func (s *paymentService) DeletePayment(id uint) error {
 			)
 		}
 
-		if payment.CustomerID != "" {
-			if err := txCustomerRepo.DecrementDebt(payment.CustomerID, -payment.Amount); err != nil {
-				return err
+		// Reverse the debt effect only when this payment actually affected a balance.
+		// Refund payments (Amount < 0) are skipped: the return flow already handled debt.
+		if payment.CustomerID != "" && payment.Amount > 0 {
+			if payment.SaleID == "" {
+				// Standalone payment (e.g. general debt payment): it decremented
+				// the customer's debt at creation, so add the amount back.
+				if err := txCustomerRepo.DecrementDebt(payment.CustomerID, -payment.Amount); err != nil {
+					return err
+				}
+			} else {
+				sale, saleErr := txSaleRepo.GetByID(payment.SaleID)
+				if saleErr != nil {
+					// Sale cannot be loaded: skip the debt adjustment (do not corrupt).
+				} else {
+					switch sale.PaymentMethod {
+					case "credit":
+						// The sale increased debt by sale.Total; this payment mirrors it.
+						if err := txCustomerRepo.DecrementDebt(payment.CustomerID, payment.Amount); err != nil {
+							return err
+						}
+					case "split":
+						// Only the credit leg affected debt; cash/card legs did not.
+						if payment.Method == "credit" {
+							if err := txCustomerRepo.DecrementDebt(payment.CustomerID, payment.Amount); err != nil {
+								return err
+							}
+						}
+					case "installment":
+						// The sale increased installment_debt by (Total - DownPayment).
+						reversal := payment.Amount
+						if sale.InstallmentPlan != nil {
+							reversal = sale.Total.Sub(sale.InstallmentPlan.DownPayment)
+						}
+						if reversal > 0 {
+							if err := txCustomerRepo.DecrementInstallmentDebt(payment.CustomerID, reversal); err != nil {
+								return err
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -194,6 +261,16 @@ func (s *paymentService) PayInstallment(saleID string, installmentIndex int, amo
 				i18n.GetMessage("PAYMENT_SALE_NOT_FOUND", saleID),
 				i18n.GetHint("PAYMENT_SALE_NOT_FOUND"),
 				"sale_id",
+			)
+		}
+
+		if sale.Status == "returned" || sale.Status == "partial_return" {
+			return pkgerrors.NewAppError(
+				pkgerrors.ModuleSales,
+				"SALE_RETURNED",
+				"لا يمكن تحصيل أقساط من فاتورة مرتجعة",
+				"أعد الفاتورة إلى الحالة النشطة أو أنشئ فاتورة جديدة",
+				"saleId",
 			)
 		}
 
@@ -352,11 +429,33 @@ func (s *paymentService) CalculateInstallmentPlan(total, downPayment domain.Amou
 	remaining := total - downPayment // cents
 	unit := domain.Amount(25000)     // 250 IQD in cents
 
+	if remaining <= 0 {
+		return nil, pkgerrors.NewAppError(
+			pkgerrors.ModulePayment,
+			"NO_INSTALLMENT_NEEDED",
+			"الدفعة الأولى تساوي إجمالي الفاتورة ولا حاجة لتقسيط",
+			"ادفع الفاتورة كاملة أو قلل الدفعة الأولى",
+			"installment",
+		)
+	}
+
 	rawPerMonth := remaining / domain.Amount(months)         // integer division (truncates toward zero)
 	roundedBase := rawPerMonth.RoundToNearest(unit)          // floor to nearest 25000 cents
 	
 	if roundedBase <= 0 {
 		roundedBase = rawPerMonth
+	}
+
+	if roundedBase <= 0 {
+		// remaining is smaller than the number of months (in cents):
+		// the plan would contain zero-amount installments which are un-payable.
+		return nil, pkgerrors.NewAppError(
+			pkgerrors.ModulePayment,
+			"INSTALLMENT_BELOW_MINIMUM",
+			"مبلغ القسط أقل من الحد الأدنى",
+			"قلل عدد الأشهر أو ادفع الفاتورة كاملة",
+			"installment",
+		)
 	}
 
 	schedule := make([]domain.Installment, months)

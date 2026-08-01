@@ -34,52 +34,19 @@ func (s *settingsService) GetPreferences() (*domain.AppPreferences, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Restore Gemini API key from secureconfig (encrypted storage)
-	hasPlaceholder := prefs.GeminiAPIKey == "********" || prefs.GeminiAPIKey == ""
-	if hasPlaceholder {
-		if key := secureconfig.GetGeminiAPIKey(); key != "" {
-			prefs.GeminiAPIKey = key
-		}
-	}
 
-	// Restore GeminiAPIKeys slice — if ANY element is a placeholder, attempt recovery
-	needsRecovery := false
-	for _, k := range prefs.GeminiAPIKeys {
-		if k == "********" || k == "" {
-			needsRecovery = true
-			break
-		}
+	// Mask sensitive fields before returning
+	if prefs.AdminPin != "" {
+		prefs.AdminPin = "********"
 	}
-	if needsRecovery {
-		if keys := secureconfig.GetGeminiAPIKeys(); len(keys) > 0 {
-			prefs.GeminiAPIKeys = keys
-		} else if key := secureconfig.GetGeminiAPIKey(); key != "" {
-			prefs.GeminiAPIKeys = []string{key}
-		}
+	if prefs.GeminiAPIKey != "" {
+		prefs.GeminiAPIKey = "********"
 	}
-
-	// Final fallback: if still no key, try environment variable
-	if prefs.GeminiAPIKey == "" || prefs.GeminiAPIKey == "********" {
-		if envKey := os.Getenv("GEMINI_API_KEY"); envKey != "" {
-			prefs.GeminiAPIKey = envKey
-			prefs.GeminiAPIKeys = []string{envKey}
-		}
+	if len(prefs.GeminiAPIKeys) > 0 {
+		prefs.GeminiAPIKeys = []string{"********"}
 	}
-
-	// Restore Grok API key from secureconfig (encrypted storage)
-	if prefs.GroqAPIKey == "********" || prefs.GroqAPIKey == "" {
-		if key := secureconfig.GetGroqAPIKey(); key != "" {
-			prefs.GroqAPIKey = key
-		}
-	}
-	if prefs.GroqAPIKey == "" || prefs.GroqAPIKey == "********" {
-		envKey := os.Getenv("GROQ_API_KEY")
-		if envKey == "" {
-			envKey = os.Getenv("grok")
-		}
-		if envKey != "" {
-			prefs.GroqAPIKey = envKey
-		}
+	if prefs.GroqAPIKey != "" {
+		prefs.GroqAPIKey = "********"
 	}
 
 	return prefs, nil

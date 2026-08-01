@@ -156,11 +156,11 @@ func TestCreatePaymentOverpay(t *testing.T) {
 		t.Fatal("Expected error when paying more than debt without ack")
 	}
 
-	// Test payment exceeding debt with ack (succeeds)
-	pay.Note = "[OVERPAY_OK]"
-	_, err = s.CreatePayment(pay)
+	// Test forced overpayment (succeeds)
+	pay.Note = ""
+	err = s.CreatePaymentForced(pay)
 	if err != nil {
-		t.Fatalf("CreatePayment with [OVERPAY_OK] failed: %v", err)
+		t.Fatalf("CreatePaymentForced failed: %v", err)
 	}
 }
 

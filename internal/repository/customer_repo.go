@@ -106,15 +106,18 @@ func (r *customerRepository) AdjustPoints(id string, delta int) error {
 }
 
 func (r *customerRepository) DecrementDebt(id string, amount domain.Amount) error {
+	// Clamp at zero so concurrent decrements can never push debt below 0
+	// (mirrors the CASE WHEN pattern used by DecrementPurchases).
 	return r.db.Model(&domain.Customer{}).
 		Where("id = ?", id).
-		UpdateColumn("debt", gorm.Expr("debt - ?", amount.Cents())).
+		UpdateColumn("debt", gorm.Expr("CASE WHEN debt - ? < 0 THEN 0 ELSE debt - ? END", amount.Cents(), amount.Cents())).
 		Error
 }
 
 func (r *customerRepository) DecrementInstallmentDebt(id string, amount domain.Amount) error {
+	// Clamp at zero to prevent negative installment balances.
 	return r.db.Model(&domain.Customer{}).
 		Where("id = ?", id).
-		UpdateColumn("installment_debt", gorm.Expr("installment_debt - ?", amount.Cents())).
+		UpdateColumn("installment_debt", gorm.Expr("CASE WHEN installment_debt - ? < 0 THEN 0 ELSE installment_debt - ? END", amount.Cents(), amount.Cents())).
 		Error
 }

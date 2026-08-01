@@ -162,6 +162,7 @@ func initServices(repos *appRepositories) *appServices {
 		statsService,
 		settingsService,
 		backupService,
+		staffService,
 	)
 
 	// Seed default admin if no staff exists
