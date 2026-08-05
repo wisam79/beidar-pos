@@ -76,7 +76,7 @@ func (r *shiftRepository) GetCashInAndOut(shiftID string) (cashIn domain.Amount,
 	return domain.Amount(inCents), domain.Amount(outCents), err
 }
 
-func (r *shiftRepository) UpdateShiftSales(saleTotal, cashAmount domain.Amount, requireShift bool) error {
+func (r *shiftRepository) UpdateShiftSales(saleTotal, cashAmount domain.Amount, isNewSale bool, requireShift bool) error {
 	var id string
 	err := r.db.Model(&domain.Shift{}).
 		Where("status = ?", "open").
@@ -92,17 +92,24 @@ func (r *shiftRepository) UpdateShiftSales(saleTotal, cashAmount domain.Amount, 
 		return nil
 	}
 
-	return r.db.Model(&domain.Shift{}).Where("id = ?", id).Updates(map[string]interface{}{
+	updates := map[string]interface{}{
 		"total_sales":      gorm.Expr("total_sales + ?", int64(saleTotal)),
 		"cash_sales":       gorm.Expr("cash_sales + ?", int64(cashAmount)),
-		"sales_count":      gorm.Expr("sales_count + 1"),
 		"expected_balance": gorm.Expr("expected_balance + ?", int64(cashAmount)),
-	}).Error
+	}
+
+	if isNewSale {
+		updates["sales_count"] = gorm.Expr("sales_count + 1")
+	}
+
+	return r.db.Model(&domain.Shift{}).Where("id = ?", id).Updates(updates).Error
 }
 
 // UpdateShiftRefunds decrements the active shift totals by the refunded amounts.
 // It no-ops when there is no open shift, mirroring UpdateShiftSales.
-func (r *shiftRepository) UpdateShiftRefunds(totalRefund, cashRefund domain.Amount) error {
+// The shift sales counter is only decremented on a full return (isFullReturn);
+// a partial return keeps the invoice counted as a sale.
+func (r *shiftRepository) UpdateShiftRefunds(totalRefund, cashRefund domain.Amount, isFullReturn bool) error {
 	var id string
 	err := r.db.Model(&domain.Shift{}).
 		Where("status = ?", "open").
@@ -115,12 +122,16 @@ func (r *shiftRepository) UpdateShiftRefunds(totalRefund, cashRefund domain.Amou
 		return nil
 	}
 
-	return r.db.Model(&domain.Shift{}).Where("id = ?", id).Updates(map[string]interface{}{
+	updates := map[string]interface{}{
 		"total_sales":      gorm.Expr("total_sales - ?", int64(totalRefund)),
 		"cash_sales":       gorm.Expr("cash_sales - ?", int64(cashRefund)),
-		"sales_count":      gorm.Expr("sales_count - 1"),
 		"expected_balance": gorm.Expr("expected_balance - ?", int64(cashRefund)),
-	}).Error
+	}
+	if isFullReturn {
+		updates["sales_count"] = gorm.Expr("sales_count - 1")
+	}
+
+	return r.db.Model(&domain.Shift{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *shiftRepository) Save(shift *domain.Shift) error {

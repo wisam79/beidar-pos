@@ -33,6 +33,7 @@ type SaleRepository interface {
 	Transaction(fn func(tx Tx) error) error
 	GetSales(page int, pageSize int, search string, statusFilter string, dateFilter string) (*PaginatedSales, error)
 	GetByID(id string) (*Sale, error)
+	GetForUpdate(id string) (*Sale, error)
 	Create(sale *Sale) error
 	Update(sale *Sale) error
 	GetSaleItems(saleID string) ([]SaleItem, error)
@@ -108,8 +109,8 @@ type ShiftRepository interface {
 	WithTx(tx Tx) ShiftRepository
 	Transaction(fn func(tx Tx) error) error
 	GetActiveShift() (*Shift, error)
-	UpdateShiftSales(saleTotal, cashAmount Amount, requireShift bool) error
-	UpdateShiftRefunds(totalRefund, cashRefund Amount) error
+	UpdateShiftSales(saleTotal, cashAmount Amount, isNewSale bool, requireShift bool) error
+	UpdateShiftRefunds(totalRefund, cashRefund Amount, isFullReturn bool) error
 	Save(shift *Shift) error
 	GetByID(id string) (*Shift, error)
 	GetShiftMovements(shiftID string) ([]CashMovement, error)
@@ -405,4 +406,3 @@ type AIService interface {
 	GenerateStream(prompt string, onChunk func(string), onError func(string), onComplete func()) error
 	CancelStream()
 }
-

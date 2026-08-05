@@ -2,9 +2,9 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
-	"time"
-
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"time"
 )
 
 type saleRepository struct {
@@ -108,6 +108,14 @@ func (r *saleRepository) GetSales(page int, pageSize int, search string, statusF
 func (r *saleRepository) GetByID(id string) (*domain.Sale, error) {
 	var sale domain.Sale
 	if err := r.db.Preload("Items").First(&sale, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &sale, nil
+}
+
+func (r *saleRepository) GetForUpdate(id string) (*domain.Sale, error) {
+	var sale domain.Sale
+	if err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).Preload("Items").First(&sale, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
 	return &sale, nil

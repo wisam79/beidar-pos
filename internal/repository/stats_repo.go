@@ -9,6 +9,12 @@ type statsRepository struct {
 	db *gorm.DB
 }
 
+// revenueStatuses lists the sale statuses that count toward revenue, orders,
+// profit/COGS, top products/customers and chart aggregates. "pending" is
+// deliberately excluded (a pending invoice is not yet realized) but "paid" is
+// included because a fully settled installment sale is a completed transaction.
+var revenueStatuses = []string{"completed", "paid", "partial_return"}
+
 func NewStatsRepository(db *gorm.DB) domain.StatsRepository {
 	return &statsRepository{db: db}
 }
@@ -19,18 +25,18 @@ func (r *statsRepository) GetBasicStats(today string) (totalRevenue domain.Amoun
 		Orders  int64
 	}
 	type prodStats struct {
-		Total     int64
-		LowStock  int64
+		Total    int64
+		LowStock int64
 	}
 
 	var allSales saleStats
-	err = r.db.Model(&domain.Sale{}).Where("status != ?", "returned").Select("COALESCE(SUM(total), 0) as revenue, COUNT(*) as orders").Scan(&allSales).Error
+	err = r.db.Model(&domain.Sale{}).Where("status IN ?", revenueStatuses).Select("COALESCE(SUM(total), 0) as revenue, COUNT(*) as orders").Scan(&allSales).Error
 	if err != nil {
 		return
 	}
 
 	var dailySales saleStats
-	err = r.db.Model(&domain.Sale{}).Where("date = ? AND status != ?", today, "returned").Select("COALESCE(SUM(total), 0) as revenue, COUNT(*) as orders").Scan(&dailySales).Error
+	err = r.db.Model(&domain.Sale{}).Where("date = ? AND status IN ?", today, revenueStatuses).Select("COALESCE(SUM(total), 0) as revenue, COUNT(*) as orders").Scan(&dailySales).Error
 	if err != nil {
 		return
 	}
@@ -60,7 +66,7 @@ func (r *statsRepository) GetTopSellingProducts(limit int) ([]domain.TopProduct,
 	var topProducts []domain.TopProduct
 	rows, err := r.db.Table("sale_items").
 		Joins("JOIN sales ON sales.id = sale_items.sale_id").
-		Where("sales.status != ?", "returned").
+		Where("sales.status IN ?", revenueStatuses).
 		Select("sale_items.name as label, sum(sale_items.quantity) as value").
 		Group("sale_items.name").
 		Order("value desc").
@@ -84,7 +90,7 @@ func (r *statsRepository) GetTopSellingProducts(limit int) ([]domain.TopProduct,
 func (r *statsRepository) GetProfitAndExpenses() (totalCOGS domain.Amount, totalExpenses domain.Amount, expenseBreakdown []domain.ChartDataPoint, err error) {
 	err = r.db.Table("sale_items").
 		Joins("JOIN sales ON sales.id = sale_items.sale_id").
-		Where("sales.status != ?", "returned").
+		Where("sales.status IN ?", revenueStatuses).
 		Select("CAST(COALESCE(SUM(sale_items.cost * sale_items.quantity), 0) AS INTEGER)").
 		Scan(&totalCOGS).Error
 	if err != nil {
@@ -122,7 +128,7 @@ func (r *statsRepository) GetProfitAndExpenses() (totalCOGS domain.Amount, total
 func (r *statsRepository) GetTopCustomers(limit int) ([]domain.TopCustomer, error) {
 	var customers []domain.TopCustomer
 	rows, err := r.db.Model(&domain.Sale{}).
-		Where("status != ? AND customer_name != '' AND customer_name NOT LIKE ?", "returned", "%Guest%").
+		Where("status IN ? AND customer_name != '' AND customer_name NOT LIKE ?", revenueStatuses, "%Guest%").
 		Select("customer_name, SUM(total) as total").
 		Group("customer_name").
 		Order("total desc").
@@ -147,7 +153,7 @@ func (r *statsRepository) GetChartData(startDate string, dateFormat string) ([]d
 	var results []domain.ChartDataResult
 
 	err := r.db.Table("sales").
-		Where("date >= ? AND status != ?", startDate, "returned").
+		Where("date >= ? AND status IN ?", startDate, revenueStatuses).
 		Select("strftime(?, date) as date_key, COALESCE(SUM(total), 0) as total", dateFormat).
 		Group("date_key").
 		Order("date_key asc").
@@ -158,7 +164,7 @@ func (r *statsRepository) GetChartData(startDate string, dateFormat string) ([]d
 
 func (r *statsRepository) GetMonthStats(startDate, endDate string) (revenue domain.Amount, orders int64, expenses domain.Amount, cogs domain.Amount, err error) {
 	err = r.db.Model(&domain.Sale{}).
-		Where("date >= ? AND date <= ? AND status != ?", startDate, endDate, "returned").
+		Where("date >= ? AND date <= ? AND status IN ?", startDate, endDate, revenueStatuses).
 		Select("COALESCE(SUM(total), 0)").
 		Scan(&revenue).Error
 	if err != nil {
@@ -166,7 +172,7 @@ func (r *statsRepository) GetMonthStats(startDate, endDate string) (revenue doma
 	}
 
 	err = r.db.Model(&domain.Sale{}).
-		Where("date >= ? AND date <= ? AND status != ?", startDate, endDate, "returned").
+		Where("date >= ? AND date <= ? AND status IN ?", startDate, endDate, revenueStatuses).
 		Count(&orders).Error
 	if err != nil {
 		return
@@ -182,7 +188,7 @@ func (r *statsRepository) GetMonthStats(startDate, endDate string) (revenue doma
 
 	err = r.db.Table("sale_items").
 		Joins("JOIN sales ON sales.id = sale_items.sale_id").
-		Where("sales.date >= ? AND sales.date <= ? AND sales.status != ?", startDate, endDate, "returned").
+		Where("sales.date >= ? AND sales.date <= ? AND sales.status IN ?", startDate, endDate, revenueStatuses).
 		Select("CAST(COALESCE(SUM(sale_items.cost * sale_items.quantity), 0) AS INTEGER)").
 		Scan(&cogs).Error
 

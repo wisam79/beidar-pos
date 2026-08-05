@@ -284,14 +284,14 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		if sale.Discount > calculatedTotal {
 			return errors.New(i18n.GetMessage("DISCOUNT_EXCEEDS_TOTAL"))
 		}
-		
+
 		taxableTotal := calculatedTotal.Sub(sale.Discount)
 		if vatRate > 0 {
 			sale.VAT = taxableTotal.Percentage(vatRate)
 		} else {
 			sale.VAT = domain.Zero()
 		}
-		
+
 		sale.Total = taxableTotal.Add(sale.VAT)
 
 		if sale.CustomerID != "" {
@@ -401,7 +401,7 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 					"split",
 				)
 			}
-			
+
 			for method, amount := range sale.SplitDetails {
 				if amount > 0 {
 					payment := domain.Payment{
@@ -419,16 +419,41 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 				}
 			}
 		} else {
-			payment := domain.Payment{
-				SaleID:     sale.ID,
-				CustomerID: sale.CustomerID,
-				Amount:     sale.Total,
-				Method:     sale.PaymentMethod,
-				Timestamp:  time.Now().UnixMilli(),
-				StaffID:    sale.StaffID,
+			paymentAmount := sale.Total
+			// For installments, the base ledger row reflects the financed part
+			// only; the down payment is recorded below as a separate cash row.
+			// This keeps the payment ledger exactly equal to the invoice total
+			// instead of double-counting the down payment.
+			if sale.PaymentMethod == "installment" && sale.InstallmentPlan != nil && sale.InstallmentPlan.DownPayment > 0 {
+				paymentAmount = sale.Total.Sub(sale.InstallmentPlan.DownPayment)
 			}
-			if err := txPaymentRepo.Create(&payment); err != nil {
-				return fmt.Errorf("%s: %w", i18n.GetMessage("SAVE_PAYMENT_FAILED", ""), err)
+			if paymentAmount > 0 {
+				payment := domain.Payment{
+					SaleID:     sale.ID,
+					CustomerID: sale.CustomerID,
+					Amount:     paymentAmount,
+					Method:     sale.PaymentMethod,
+					Timestamp:  time.Now().UnixMilli(),
+					StaffID:    sale.StaffID,
+				}
+				if err := txPaymentRepo.Create(&payment); err != nil {
+					return fmt.Errorf("%s: %w", i18n.GetMessage("SAVE_PAYMENT_FAILED", ""), err)
+				}
+			}
+
+			if sale.PaymentMethod == "installment" && sale.InstallmentPlan != nil && sale.InstallmentPlan.DownPayment > 0 {
+				dpPayment := domain.Payment{
+					SaleID:     sale.ID,
+					CustomerID: sale.CustomerID,
+					Amount:     sale.InstallmentPlan.DownPayment,
+					Method:     "cash",
+					Timestamp:  time.Now().UnixMilli(),
+					Note:       "الدفعة الأولى",
+					StaffID:    sale.StaffID,
+				}
+				if err := txPaymentRepo.Create(&dpPayment); err != nil {
+					return fmt.Errorf("%s: %w", i18n.GetMessage("SAVE_PAYMENT_FAILED", ""), err)
+				}
 			}
 		}
 
@@ -437,11 +462,13 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 			cashAmount = sale.Total
 		} else if sale.PaymentMethod == "split" && sale.SplitDetails != nil {
 			cashAmount = sale.SplitDetails["cash"]
+		} else if sale.PaymentMethod == "installment" && sale.InstallmentPlan != nil {
+			cashAmount = sale.InstallmentPlan.DownPayment
 		}
 
 		requireShift := requireShiftPref
 
-		if err := txShiftRepo.UpdateShiftSales(sale.Total, cashAmount, requireShift); err != nil {
+		if err := txShiftRepo.UpdateShiftSales(sale.Total, cashAmount, true, requireShift); err != nil {
 			return fmt.Errorf("%s: %w", i18n.GetMessage("SALE_PROCESS_FAILED", ""), err)
 		}
 
@@ -463,7 +490,7 @@ func (s *saleService) ReturnSale(id string) error {
 		txPaymentRepo := s.paymentRepo.WithTx(tx)
 		txShiftRepo := s.shiftRepo.WithTx(tx)
 
-		sale, err := txSaleRepo.GetByID(id)
+		sale, err := txSaleRepo.GetForUpdate(id)
 		if err != nil {
 			return ErrSalesNotFound(id)
 		}
@@ -515,10 +542,10 @@ func (s *saleService) ReturnSale(id string) error {
 		}
 
 		if sale.CustomerID != "" {
-			pointsToRevert := sale.PointsAwarded
-			if pointsToRevert == 0 {
-				pointsToRevert = int(sale.Total.Div(1000).Cents())
-			}
+			// Revert only the points that were awarded for the REMAINING total.
+			// Partial returns already reverted their own shares; using the original
+			// PointsAwarded here would double-revert after prior partial returns.
+			pointsToRevert := int(sale.Total.Div(1000).Cents())
 
 			if err := txCustomerRepo.DecrementPurchases(sale.CustomerID, sale.Total); err != nil {
 				return err
@@ -527,6 +554,10 @@ func (s *saleService) ReturnSale(id string) error {
 				return err
 			}
 
+			// Fraction of the original invoice that is still outstanding after
+			// any prior partial returns (1 when none happened).
+			splitRemaining := saleRemainingLegs(sale)
+
 			switch sale.PaymentMethod {
 			case "credit":
 				if err := txCustomerRepo.DecrementDebt(sale.CustomerID, sale.Total); err != nil {
@@ -534,27 +565,29 @@ func (s *saleService) ReturnSale(id string) error {
 				}
 			case "installment":
 				var paidSum domain.Amount
+				var refundable domain.Amount
 				if sale.InstallmentPlan != nil {
 					for _, inst := range sale.InstallmentPlan.Schedule {
 						if inst.Status == "paid" {
 							paidSum = paidSum.Add(inst.Amount)
 						}
 					}
+					refundable = sale.InstallmentPlan.DownPayment.Add(paidSum)
 				}
 
-			// Refund the full sale value plus all paid installments back to the customer in cash.
-			refundable := sale.Total.Add(paidSum)
-			refundPayment := domain.Payment{
-				SaleID:     sale.ID,
-				CustomerID: sale.CustomerID,
-				Amount:     -refundable,
-				Method:     "cash",
-				Note:       "استرداد فاتورة أقساط",
-				StaffID:    sale.StaffID,
-				Timestamp:  time.Now().UnixMilli(),
-			}
-				if err := txPaymentRepo.Create(&refundPayment); err != nil {
-					return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)
+				if refundable > 0 {
+					refundPayment := domain.Payment{
+						SaleID:     sale.ID,
+						CustomerID: sale.CustomerID,
+						Amount:     -refundable,
+						Method:     "cash",
+						Note:       "استرداد فاتورة أقساط",
+						StaffID:    sale.StaffID,
+						Timestamp:  time.Now().UnixMilli(),
+					}
+					if err := txPaymentRepo.Create(&refundPayment); err != nil {
+						return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)
+					}
 				}
 
 				outstanding := sale.Total
@@ -567,12 +600,11 @@ func (s *saleService) ReturnSale(id string) error {
 					}
 				}
 			case "split":
-				if sale.SplitDetails != nil {
-					creditAmount := sale.SplitDetails["credit"]
-					if creditAmount > 0 {
-						if err := txCustomerRepo.DecrementDebt(sale.CustomerID, creditAmount); err != nil {
-							return err
-						}
+				// Only the credit leg that is still outstanding affects debt:
+				// prior partial returns already relieved their proportional share.
+				if creditRemaining, ok := splitRemaining["credit"]; ok && creditRemaining > 0 {
+					if err := txCustomerRepo.DecrementDebt(sale.CustomerID, creditRemaining); err != nil {
+						return err
 					}
 				}
 			}
@@ -586,9 +618,32 @@ func (s *saleService) ReturnSale(id string) error {
 				Method:     sale.PaymentMethod,
 				Timestamp:  time.Now().UnixMilli(),
 				Note:       "استرجاع / Refund",
+				StaffID:    sale.StaffID,
 			}
 			if err := txPaymentRepo.Create(&refundPayment); err != nil {
 				return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)
+			}
+		} else if sale.PaymentMethod == "split" && sale.SplitDetails != nil {
+			splitRemaining := saleRemainingLegs(sale)
+			for method, amount := range sale.SplitDetails {
+				if amount > 0 && method != "credit" {
+					remaining := splitRemaining[method]
+					if remaining <= 0 {
+						continue
+					}
+					refundPayment := domain.Payment{
+						SaleID:     sale.ID,
+						CustomerID: sale.CustomerID,
+						Amount:     -remaining,
+						Method:     method,
+						Timestamp:  time.Now().UnixMilli(),
+						Note:       "استرجاع مقسم / Split Refund",
+						StaffID:    sale.StaffID,
+					}
+					if err := txPaymentRepo.Create(&refundPayment); err != nil {
+						return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)
+					}
+				}
 			}
 		}
 
@@ -601,19 +656,28 @@ func (s *saleService) ReturnSale(id string) error {
 		case "card":
 			totalRefund = sale.Total
 		case "installment":
-			totalRefund = sale.Total
-			cashRefund = sale.Total
 			if sale.InstallmentPlan != nil {
+				var paidSum domain.Amount
 				for _, inst := range sale.InstallmentPlan.Schedule {
 					if inst.Status == "paid" {
-						totalRefund = totalRefund.Add(inst.Amount)
-						cashRefund = cashRefund.Add(inst.Amount)
+						paidSum = paidSum.Add(inst.Amount)
 					}
 				}
+				totalRefund = sale.InstallmentPlan.DownPayment.Add(paidSum)
+				cashRefund = sale.InstallmentPlan.DownPayment.Add(paidSum)
+			}
+		case "split":
+			splitRemaining := saleRemainingLegs(sale)
+			if cash, ok := splitRemaining["cash"]; ok {
+				cashRefund = cashRefund.Add(cash)
+				totalRefund = totalRefund.Add(cash)
+			}
+			if card, ok := splitRemaining["card"]; ok {
+				totalRefund = totalRefund.Add(card)
 			}
 		}
 		if totalRefund > 0 {
-			if err := txShiftRepo.UpdateShiftRefunds(totalRefund, cashRefund); err != nil {
+			if err := txShiftRepo.UpdateShiftRefunds(totalRefund, cashRefund, true); err != nil {
 				return fmt.Errorf("%s: %w", i18n.GetMessage("SALE_PROCESS_FAILED", ""), err)
 			}
 		}
@@ -632,11 +696,6 @@ func (s *saleService) ReturnSale(id string) error {
 }
 
 func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToReturn float64) error {
-	vatRate := float64(0)
-	if prefs, err := s.preferencesRepo.Get(); err == nil {
-		vatRate = prefs.TaxRate
-	}
-
 	err := s.saleRepo.Transaction(func(tx domain.Tx) error {
 		txSaleRepo := s.saleRepo.WithTx(tx)
 		txProductRepo := s.productRepo.WithTx(tx)
@@ -649,7 +708,7 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 			return ErrSalesProductNotFound(productID)
 		}
 
-		sale, err := txSaleRepo.GetByID(saleID)
+		sale, err := txSaleRepo.GetForUpdate(saleID)
 		if err != nil {
 			return ErrSalesNotFound(saleID)
 		}
@@ -703,16 +762,47 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 			}
 		}
 
-		// Exact refund share in cents: item total (VAT-exclusive) + its VAT share.
-		itemShare := item.Total.Add(item.Total.Percentage(vatRate))
-		// Use integer arithmetic to avoid floating point errors
-		qtyToReturnScaled := int64(qtyToReturn * 1000 + 0.5)
-		itemQtyScaled := int64(item.Quantity * 1000 + 0.5)
+		// The refund is the returned quantity's proportional share of the CURRENT invoice
+		// total. sale.Total already includes VAT and the invoice-level discount, so
+		// allocating by remaining value guarantees the discount fairness, sale.Total never
+		// goes below zero, and no dependence on the current preference tax rate.
+		qtyToReturnScaled := int64(qtyToReturn*1000 + 0.5)
+		itemQtyScaled := int64(item.Quantity*1000 + 0.5)
 		if itemQtyScaled == 0 {
 			return pkgerrors.NewAppError(pkgerrors.ModuleSales, "INVALID_QUANTITY", "الكمية غير صالحة", "لا يمكن أن تكون الكمية صفراً", "quantity")
 		}
-		refundAmount := domain.Amount((itemShare.Cents() * qtyToReturnScaled) / itemQtyScaled)
-		if refundAmount.IsNegative() || refundAmount > itemShare {
+		itemShareCents := (item.Total.Cents() * qtyToReturnScaled) / itemQtyScaled
+
+		// Remaining invoice value BEFORE this return. For the returned item the
+		// current deduction is excluded so the ratio (share/remaining) is exact.
+		var remAllCents int64
+		for _, invItem := range sale.Items {
+			remQty := invItem.ReturnedQty
+			if invItem.ProductID == item.ProductID {
+				remQty = item.ReturnedQty - qtyToReturn
+			}
+			scaledQty := int64(invItem.Quantity*1000 + 0.5)
+			if scaledQty <= 0 {
+				continue
+			}
+			remScaledQty := int64((invItem.Quantity-remQty)*1000 + 0.5)
+			if remScaledQty < 0 {
+				remScaledQty = 0
+			}
+			if remScaledQty > scaledQty {
+				remScaledQty = scaledQty
+			}
+			remAllCents += (invItem.Total.Cents() * remScaledQty) / scaledQty
+		}
+		if remAllCents == 0 {
+			return pkgerrors.NewAppError(pkgerrors.ModuleSales, "INVALID_REFUND", "قيمة الاسترداد غير صالحة", "لا توجد قيمة متبقية للفاتورة", "refund")
+		}
+
+		refundAmount := domain.Amount((sale.Total.Cents() * itemShareCents) / remAllCents)
+		if refundAmount > sale.Total {
+			refundAmount = sale.Total
+		}
+		if refundAmount.IsNegative() || refundAmount.IsZero() {
 			return pkgerrors.NewAppError(
 				pkgerrors.ModuleSales,
 				"INVALID_REFUND",
@@ -747,30 +837,66 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 					return err
 				}
 			case "split":
-				if err := txCustomerRepo.DecrementDebt(sale.CustomerID, refundAmount); err != nil {
-					return err
+				if sale.SplitDetails != nil && sale.Total > 0 {
+					creditAmount := sale.SplitDetails["credit"]
+					if creditAmount > 0 {
+						creditShare := domain.Amount((int64(refundAmount) * int64(creditAmount)) / int64(sale.Total))
+						if creditShare > 0 {
+							if err := txCustomerRepo.DecrementDebt(sale.CustomerID, creditShare); err != nil {
+								return err
+							}
+						}
+					}
 				}
 			}
 		}
 
-		refundPayment := domain.Payment{
-			SaleID:     sale.ID,
-			CustomerID: sale.CustomerID,
-			Amount:     domain.Amount(-refundAmount.Cents()),
-			Method:     sale.PaymentMethod,
-			Timestamp:  time.Now().UnixMilli(),
-			Note:       fmt.Sprintf("Partial Return: %.2f x %s", qtyToReturn, item.Name),
-		}
-		if err := txPaymentRepo.Create(&refundPayment); err != nil {
-			return err
+		if sale.PaymentMethod == "split" && sale.SplitDetails != nil && sale.Total > 0 {
+			for method, amount := range sale.SplitDetails {
+				if amount > 0 && method != "credit" {
+					methodShare := domain.Amount((int64(refundAmount) * int64(amount)) / int64(sale.Total))
+					if methodShare > 0 {
+						refundPayment := domain.Payment{
+							SaleID:     sale.ID,
+							CustomerID: sale.CustomerID,
+							Amount:     domain.Amount(-methodShare.Cents()),
+							Method:     method,
+							Timestamp:  time.Now().UnixMilli(),
+							Note:       fmt.Sprintf("Partial Return: %.2f x %s", qtyToReturn, item.Name),
+							StaffID:    sale.StaffID,
+						}
+						if err := txPaymentRepo.Create(&refundPayment); err != nil {
+							return err
+						}
+					}
+				}
+			}
+		} else {
+			refundPayment := domain.Payment{
+				SaleID:     sale.ID,
+				CustomerID: sale.CustomerID,
+				Amount:     domain.Amount(-refundAmount.Cents()),
+				Method:     sale.PaymentMethod,
+				Timestamp:  time.Now().UnixMilli(),
+				Note:       fmt.Sprintf("Partial Return: %.2f x %s", qtyToReturn, item.Name),
+				StaffID:    sale.StaffID,
+			}
+			if err := txPaymentRepo.Create(&refundPayment); err != nil {
+				return err
+			}
 		}
 
 		if refundAmount > 0 {
 			cashRefund := domain.Zero()
 			if sale.PaymentMethod == "cash" {
 				cashRefund = refundAmount
+			} else if sale.PaymentMethod == "split" && sale.SplitDetails != nil && sale.Total > 0 {
+				cashAmount := sale.SplitDetails["cash"]
+				if cashAmount > 0 {
+					cashRefund = domain.Amount((int64(refundAmount) * int64(cashAmount)) / int64(sale.Total))
+				}
 			}
-			if err := txShiftRepo.UpdateShiftRefunds(refundAmount, cashRefund); err != nil {
+			if err := txShiftRepo.UpdateShiftRefunds(refundAmount, cashRefund, false); err != nil {
 				return fmt.Errorf("%s: %w", i18n.GetMessage("SALE_PROCESS_FAILED", ""), err)
 			}
 		}
@@ -789,6 +915,15 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 			newStatus = "returned"
 		}
 		sale.Status = newStatus
+
+		var refundVat domain.Amount
+		if sale.Total > 0 && sale.VAT > 0 {
+			refundVat = domain.Amount((sale.VAT.Cents() * refundAmount.Cents()) / sale.Total.Cents())
+		}
+		sale.Total = sale.Total.Sub(refundAmount)
+		sale.Subtotal = sale.Subtotal.Sub(refundAmount.Sub(refundVat))
+		sale.VAT = sale.VAT.Sub(refundVat)
+
 		if err := txSaleRepo.Update(sale); err != nil {
 			return err
 		}
@@ -799,6 +934,54 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 		s.productService.ClearCache()
 	}
 	return err
+}
+
+// saleRemainingLegs computes the outstanding amount of each split-payment leg
+// (cash, card, credit) after prior partial returns. Partial returns reduce
+// sale.Total proportionally, so each leg is scaled by (sale.Total / originalTotal).
+// The truncation remainder is allocated to the credit leg so all legs sum exactly
+// to the remaining invoice total.
+func saleRemainingLegs(sale *domain.Sale) map[string]domain.Amount {
+	remaining := make(map[string]domain.Amount)
+	if sale == nil || sale.SplitDetails == nil || len(sale.SplitDetails) == 0 {
+		return remaining
+	}
+
+	var originalTotal domain.Amount
+	for _, amount := range sale.SplitDetails {
+		originalTotal = originalTotal.Add(amount)
+	}
+	if originalTotal <= 0 {
+		return remaining
+	}
+
+	for method, amount := range sale.SplitDetails {
+		if amount <= 0 {
+			continue
+		}
+		leg := domain.Amount((int64(sale.Total) * int64(amount)) / int64(originalTotal))
+		if leg < 0 {
+			leg = 0
+		}
+		if leg > amount {
+			leg = amount
+		}
+		remaining[method] = leg
+	}
+
+	var allocated domain.Amount
+	for _, v := range remaining {
+		allocated = allocated.Add(v)
+	}
+	if diff := sale.Total.Sub(allocated); diff > 0 {
+		if credit, ok := remaining["credit"]; ok {
+			remaining["credit"] = credit.Add(diff)
+		} else {
+			remaining["cash"] = remaining["cash"].Add(diff)
+		}
+	}
+
+	return remaining
 }
 
 func (s *saleService) GetSaleItems(saleID string) ([]domain.SaleItem, error) {

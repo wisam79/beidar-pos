@@ -103,7 +103,7 @@ func TestShiftRepository(t *testing.T) {
 	})
 
 	t.Run("UpdateShiftSales", func(t *testing.T) {
-		err := repo.UpdateShiftSales(domain.Amount(20000), domain.Amount(15000), true)
+		err := repo.UpdateShiftSales(domain.Amount(20000), domain.Amount(15000), true, true)
 		if err != nil {
 			t.Fatalf("UpdateShiftSales failed: %v", err)
 		}

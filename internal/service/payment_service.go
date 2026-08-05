@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"beidar-desktop/internal/core/domain"
@@ -142,7 +141,7 @@ func (s *paymentService) createPayment(payment domain.Payment, allowOverpay bool
 			if prefs, err := s.preferencesRepo.Get(); err == nil {
 				requireShift = prefs.RequireShift
 			}
-			if err := txShiftRepo.UpdateShiftSales(0, payment.Amount, requireShift); err != nil {
+			if err := txShiftRepo.UpdateShiftSales(0, payment.Amount, false, requireShift); err != nil {
 				return err
 			}
 		}
@@ -165,7 +164,7 @@ func (s *paymentService) DeletePayment(id uint) error {
 	return s.paymentRepo.Transaction(func(tx domain.Tx) error {
 		txPaymentRepo := s.paymentRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
-		txSaleRepo := s.saleRepo.WithTx(tx)
+
 
 		payment, err := txPaymentRepo.GetByID(id)
 		if err != nil {
@@ -178,14 +177,12 @@ func (s *paymentService) DeletePayment(id uint) error {
 			)
 		}
 
-		isInstallmentPayment := payment.SaleID != "" && len(payment.Note) > 0 &&
-			(strings.Contains(payment.Note, "قسط") || payment.InstIndex >= 0 && strings.Contains(payment.Note, "قسط رقم"))
-		if isInstallmentPayment {
+		if payment.SaleID != "" {
 			return pkgerrors.NewAppError(
 				pkgerrors.ModulePayment,
-				"CANNOT_DELETE_INSTALLMENT_PAYMENT",
-				i18n.GetMessage("CANNOT_DELETE_INSTALLMENT_PAYMENT"),
-				i18n.GetHint("CANNOT_DELETE_INSTALLMENT_PAYMENT"),
+				"CANNOT_DELETE_SALE_PAYMENT",
+				"لا يمكن حذف دفعة مرتبطة بفاتورة مبيعات",
+				"الرجاء إرجاع الفاتورة بالكامل بدلاً من حذف الدفعة الخاصة بها",
 				"id",
 			)
 		}
@@ -193,43 +190,10 @@ func (s *paymentService) DeletePayment(id uint) error {
 		// Reverse the debt effect only when this payment actually affected a balance.
 		// Refund payments (Amount < 0) are skipped: the return flow already handled debt.
 		if payment.CustomerID != "" && payment.Amount > 0 {
-			if payment.SaleID == "" {
-				// Standalone payment (e.g. general debt payment): it decremented
-				// the customer's debt at creation, so add the amount back.
-				if err := txCustomerRepo.DecrementDebt(payment.CustomerID, -payment.Amount); err != nil {
-					return err
-				}
-			} else {
-				sale, saleErr := txSaleRepo.GetByID(payment.SaleID)
-				if saleErr != nil {
-					// Sale cannot be loaded: skip the debt adjustment (do not corrupt).
-				} else {
-					switch sale.PaymentMethod {
-					case "credit":
-						// The sale increased debt by sale.Total; this payment mirrors it.
-						if err := txCustomerRepo.DecrementDebt(payment.CustomerID, payment.Amount); err != nil {
-							return err
-						}
-					case "split":
-						// Only the credit leg affected debt; cash/card legs did not.
-						if payment.Method == "credit" {
-							if err := txCustomerRepo.DecrementDebt(payment.CustomerID, payment.Amount); err != nil {
-								return err
-							}
-						}
-					case "installment":
-						// The sale increased installment_debt by (Total - DownPayment).
-						reversal := payment.Amount
-						if sale.InstallmentPlan != nil {
-							reversal = sale.Total.Sub(sale.InstallmentPlan.DownPayment)
-						}
-						if reversal > 0 {
-							if err := txCustomerRepo.DecrementInstallmentDebt(payment.CustomerID, reversal); err != nil {
-								return err
-							}
-						}
-					}
-				}
+			// Standalone payment (e.g. general debt payment): it decremented
+			// the customer's debt at creation, so add the amount back.
+			if err := txCustomerRepo.DecrementDebt(payment.CustomerID, -payment.Amount); err != nil {
+				return err
 			}
 		}
 
@@ -367,7 +331,7 @@ func (s *paymentService) PayInstallment(saleID string, installmentIndex int, amo
 			if prefs, err := s.preferencesRepo.Get(); err == nil {
 				requireShift = prefs.RequireShift
 			}
-			if err := txShiftRepo.UpdateShiftSales(0, amount, requireShift); err != nil {
+			if err := txShiftRepo.UpdateShiftSales(0, amount, false, requireShift); err != nil {
 				return err
 			}
 		}
