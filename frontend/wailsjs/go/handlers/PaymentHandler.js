@@ -10,6 +10,10 @@ export function CreatePayment(arg1) {
   return window['go']['handlers']['PaymentHandler']['CreatePayment'](arg1);
 }
 
+export function CreatePaymentForced(arg1) {
+  return window['go']['handlers']['PaymentHandler']['CreatePaymentForced'](arg1);
+}
+
 export function DeletePayment(arg1) {
   return window['go']['handlers']['PaymentHandler']['DeletePayment'](arg1);
 }

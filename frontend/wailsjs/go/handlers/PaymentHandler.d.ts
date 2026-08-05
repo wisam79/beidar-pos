@@ -8,6 +8,8 @@ export function CalculateInstallmentPlan(arg1:domain.Amount,arg2:domain.Amount,a
 
 export function CreatePayment(arg1:domain.Payment):Promise<domain.Payment>;
 
+export function CreatePaymentForced(arg1:domain.Payment):Promise<void>;
+
 export function DeletePayment(arg1:number):Promise<void>;
 
 export function GetCustomerInstallments(arg1:string):Promise<Array<domain.Sale>>;
