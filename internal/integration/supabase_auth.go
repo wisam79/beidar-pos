@@ -72,15 +72,24 @@ func getPinnedClient() *http.Client {
 	return pinnedHTTPClient
 }
 
+const (
+	DefaultSupabaseURL     = "https://qiwfbilkcxqqlregduuz.supabase.co"
+	DefaultSupabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpd2ZiaWxrY3hxcWxyZWdkdXV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExOTcwMjEsImV4cCI6MjA5Njc3MzAyMX0.vKhaRj9YSNb7W_fF6Ssbb4fLQCyk3f4wbiKw4eqap1k"
+)
+
 func (s *cloudService) InitSecrets() {
 	if supabaseURL == "" {
-		if url, err := secureconfig.GetSupabaseURL(); err == nil {
+		if url, err := secureconfig.GetSupabaseURL(); err == nil && url != "" {
 			supabaseURL = url
+		} else {
+			supabaseURL = DefaultSupabaseURL
 		}
 	}
 	if supabaseKey == "" {
-		if key, err := secureconfig.GetSupabaseKey(); err == nil {
+		if key, err := secureconfig.GetSupabaseKey(); err == nil && key != "" {
 			supabaseKey = key
+		} else {
+			supabaseKey = DefaultSupabaseAnonKey
 		}
 	}
 	if supabaseURL != "" {
@@ -283,6 +292,7 @@ func (s *cloudService) CheckSessionValidity() *domain.SessionValidityResult {
 }
 
 func (s *cloudService) Register(email, password, storeName string) (*domain.SupabaseAuthResult, error) {
+	s.InitSecrets()
 	email = strings.TrimSpace(email)
 	password = strings.TrimSpace(password)
 	storeName = strings.TrimSpace(storeName)
@@ -378,6 +388,7 @@ func (s *cloudService) Register(email, password, storeName string) (*domain.Supa
 }
 
 func (s *cloudService) Login(email, password string) (*domain.SupabaseAuthResult, error) {
+	s.InitSecrets()
 	email = strings.TrimSpace(email)
 	password = strings.TrimSpace(password)
 

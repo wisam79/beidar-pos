@@ -10,6 +10,18 @@ interface CloudLoginScreenProps {
 
 // GridBackground removed for performance - was causing continuous GPU usage
 
+const parseErrorMessage = (err: unknown, defaultMsg: string): string => {
+    if (!err) return defaultMsg;
+    if (typeof err === 'string') return err;
+    if (err instanceof Error && err.message) return err.message;
+    if (typeof err === 'object') {
+        const obj = err as Record<string, unknown>;
+        if (typeof obj.message === 'string' && obj.message) return obj.message;
+        if (typeof obj.error === 'string' && obj.error) return obj.error;
+    }
+    return String(err) || defaultMsg;
+};
+
 export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess }) => {
     const [mode, setMode] = useState<'login' | 'register' | 'lan' | 'recovery'>('login');
     const [loading, setLoading] = useState(false);
@@ -35,23 +47,40 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
                 if (licStatus && licStatus.licensed) {
                     onSuccess();
                 } else {
-                    setError(licStatus?.message || 'لا يوجد ترخيص نشط مرتبط بحسابك');
+                    setError(licStatus?.message || 'لا يوجد ترخيص نشط مرتبط بهذا الحساب');
                 }
             } else {
-                setError(res?.message || 'فشل تسجيل الدخول');
+                setError(res?.message || 'اسم المستخدم أو كلمة المرور غير صحيحة');
             }
-        } catch (err) {
-            setError('خطأ في الاتصال');
-            console.error(err);
+        } catch (err: unknown) {
+            console.error('Login Error:', err);
+            setError(parseErrorMessage(err, 'فشل الاتصال بخادم تسجيل الدخول، يرجى التأكد من اتصال شبكة الإنترنت'));
         } finally {
             setLoading(false);
         }
     };
 
+    const cleanupUnlicensedAccount = async (reason: string) => {
+        try {
+            await api.cloud.deleteAccount();
+            setError(`فشل تفعيل الترخيص (${reason}). تم تصفية الحساب غير المفعل.`);
+        } catch {
+            setError(`فشل تفعيل الترخيص (${reason}). يرجى التواصل مع الدعم الفني.`);
+        }
+    };
+
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!licenseKey) {
-            setError('مفتاح الترخيص مطلوب للتسجيل');
+        if (!email.trim()) {
+            setError('البريد الإلكتروني مطلوب');
+            return;
+        }
+        if (!password.trim()) {
+            setError('كلمة المرور مطلوبة');
+            return;
+        }
+        if (!licenseKey.trim()) {
+            setError('مفتاح الترخيص مطلوب لإكمال التسجيل');
             return;
         }
         setLoading(true);
@@ -60,27 +89,27 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
         try {
             const regRes = await api.cloud.register(email, password, storeName);
             if (!regRes || !regRes.success) {
-                setError(regRes?.message || 'فشل إنشاء الحساب');
+                setError(regRes?.message || 'فشل إنشاء الحساب، يرجى التأكد من صحة البيانات وتوفر اتصال إنترنت');
                 setLoading(false);
                 return;
             }
 
-            const actRes = await api.license.activate(licenseKey);
-            if (actRes && actRes.licensed) {
-                onSuccess();
-            } else {
-                setError('فشل تفعيل الترخيص. جاري حذف الحساب...');
-                try {
-                    await api.cloud.deleteAccount();
-                    setError('فشل تفعيل الترخيص. تم إلغاء العملية.');
-                } catch (delErr) {
-                    setError('فشل تفعيل الترخيص وفشل حذف الحساب. يرجى الاتصال بالدعم.');
+            try {
+                const actRes = await api.license.activate(licenseKey);
+                if (actRes && actRes.licensed) {
+                    onSuccess();
+                } else {
+                    const failReason = actRes?.message || 'مفتاح الترخيص غير صالح أو مستخدم مسبقاً';
+                    await cleanupUnlicensedAccount(failReason);
                 }
+            } catch (actErr: unknown) {
+                const failReason = parseErrorMessage(actErr, 'تعذر الاتصال بخادم التراخيص لتفعيل المفتاح');
+                await cleanupUnlicensedAccount(failReason);
             }
 
-        } catch (err) {
-            setError('حدث خطأ غير متوقع');
-            console.error(err);
+        } catch (err: unknown) {
+            console.error('Registration Error:', err);
+            setError(parseErrorMessage(err, 'حدث خطأ أثناء التواصل مع خادم التسجيل السحابي'));
         } finally {
             setLoading(false);
         }
@@ -95,8 +124,7 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
             onSuccess();
         } catch (err: unknown) {
             console.error(err);
-            const msg = err instanceof Error ? err.message : String(err);
-            setError(msg || 'فشل الاتصال بالخادم');
+            setError(parseErrorMessage(err, 'فشل الاتصال بخادم الشبكة المحلية'));
         } finally {
             setLoading(false);
         }
@@ -114,15 +142,14 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
             const res = await api.cloud.recoverPassword(email);
             if (res && res.success) {
                 setError(''); // clear error
-                // Show success message using native system notification
                 desktopApi.notifications.show("استعادة الحساب", res.message, "info");
                 setMode('login'); // Return to login
             } else {
                 setError(res?.message || 'فشل إرسال رابط الاستعادة');
             }
-        } catch (err) {
+        } catch (err: unknown) {
             console.error(err);
-            setError('خطأ في الاتصال');
+            setError(parseErrorMessage(err, 'خطأ في الاتصال بخادم استعادة الحساب'));
         } finally {
             setLoading(false);
         }

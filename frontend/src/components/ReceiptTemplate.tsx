@@ -26,6 +26,15 @@ export const ReceiptTemplate: React.FC<ReceiptTemplateProps> = ({ sale, prefs, m
             pages.push(items.slice(i * ITEMS_PER_PAGE, (i + 1) * ITEMS_PER_PAGE));
         }
 
+        const getHeaderColor = (color?: string) => {
+            if (!color || color === '#000000' || color === '#000' || color === '#18181b' || color === '#0f172a' || color === '#111827') {
+                return '#059669'; // Default Beidar Emerald Green
+            }
+            return color;
+        };
+
+        const primaryColor = getHeaderColor(prefs.accentColor);
+
         return (
             <>
                 {pages.map((pageItems, pageIndex) => (
@@ -36,18 +45,38 @@ export const ReceiptTemplate: React.FC<ReceiptTemplateProps> = ({ sale, prefs, m
                         data-page-index={pageIndex}
                     >
                         <style>{`
+                            .a4-page, .a4-page * {
+                                color-scheme: light !important;
+                            }
+                            .a4-page table {
+                                background-color: #ffffff !important;
+                                color: #1e293b !important;
+                            }
+                            .a4-page th {
+                                background-color: ${primaryColor} !important;
+                                color: #ffffff !important;
+                            }
+                            .a4-page td {
+                                color: #1e293b !important;
+                            }
+                            .a4-page tr:nth-child(even) td {
+                                background-color: #f8fafc !important;
+                            }
+                            .a4-page tr:nth-child(odd) td {
+                                background-color: #ffffff !important;
+                            }
                             @media print {
                                 @page { size: A4 portrait; margin: 0; }
                                 html, body { margin: 0; padding: 0; }
                                 body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                                .print-bg-primary { background-color: ${prefs.accentColor} !important; color: white !important; }
+                                .print-bg-primary { background-color: ${primaryColor} !important; color: white !important; }
                             }
                         `}</style>
 
                         {/* ═══ HEADER ═══ */}
                         <div
-                            className={`${pageIndex === 0 ? 'h-28' : 'h-16'} w-full flex justify-between items-center px-10 print-bg-primary relative overflow-hidden`}
-                            style={{ background: `linear-gradient(135deg, ${prefs.accentColor} 0%, ${prefs.accentColor}dd 100%)`, color: 'white' }}
+                            className={`${pageIndex === 0 ? 'h-28' : 'h-16'} w-full flex justify-between items-center px-10 relative overflow-hidden`}
+                            style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`, color: 'white' }}
                         >
                             {/* Decorative Circles */}
                             <div className="absolute inset-0 opacity-10">
@@ -103,26 +132,27 @@ export const ReceiptTemplate: React.FC<ReceiptTemplateProps> = ({ sale, prefs, m
 
                         {/* ═══ ITEMS TABLE ═══ */}
                         <div className="px-10 py-4 flex-1 overflow-hidden">
-                            <table className="w-full text-right border-collapse">
+                            <table className="w-full text-right border-collapse" style={{ backgroundColor: '#ffffff' }}>
                                 <thead>
-                                    <tr style={{ backgroundColor: prefs.accentColor }} className="text-white print-bg-primary">
-                                        <th className="py-2.5 px-4 text-xs font-bold rounded-r-lg w-[5%]">#</th>
-                                        <th className="py-2.5 px-4 text-xs font-bold w-[45%]">المنتج</th>
-                                        <th className="py-2.5 px-4 text-xs font-bold text-center w-[12%]">الكمية</th>
-                                        <th className="py-2.5 px-4 text-xs font-bold text-center w-[18%]">السعر</th>
-                                        <th className="py-2.5 px-4 text-xs font-bold text-center rounded-l-lg w-[20%]">الإجمالي</th>
+                                    <tr style={{ backgroundColor: primaryColor, color: '#ffffff' }}>
+                                        <th className="py-3 px-4 text-xs font-bold rounded-r-lg w-[5%] tracking-wide" style={{ backgroundColor: primaryColor, color: '#ffffff' }}>#</th>
+                                        <th className="py-3 px-4 text-xs font-bold w-[45%] tracking-wide" style={{ backgroundColor: primaryColor, color: '#ffffff' }}>المنتج</th>
+                                        <th className="py-3 px-4 text-xs font-bold text-center w-[12%] tracking-wide" style={{ backgroundColor: primaryColor, color: '#ffffff' }}>الكمية</th>
+                                        <th className="py-3 px-4 text-xs font-bold text-center w-[18%] tracking-wide" style={{ backgroundColor: primaryColor, color: '#ffffff' }}>السعر</th>
+                                        <th className="py-3 px-4 text-xs font-bold text-center rounded-l-lg w-[20%] tracking-wide" style={{ backgroundColor: primaryColor, color: '#ffffff' }}>الإجمالي</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm">
                                     {pageItems.map((p, i) => {
                                         const globalIndex = pageIndex * ITEMS_PER_PAGE + i;
+                                        const rowBg = i % 2 === 0 ? '#f8fafc' : '#ffffff';
                                         return (
-                                            <tr key={i} className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-gray-50/40' : 'bg-white'}`}>
-                                                <td className="py-2.5 px-4 font-mono text-gray-400 text-xs">{globalIndex + 1}</td>
-                                                <td className="py-2.5 px-4 font-bold text-gray-800">{p.name}</td>
-                                                <td className="py-2.5 px-4 text-center font-mono text-gray-600">{p.qty}</td>
-                                                <td className="py-2.5 px-4 text-center font-mono text-gray-600">{formatCurrency(p.price, prefs.currency).replace(prefs.currency, '')}</td>
-                                                <td className="py-2.5 px-4 text-center font-bold font-mono text-gray-800">{formatCurrency(p.total || (p.price * p.qty), prefs.currency).replace(prefs.currency, '')}</td>
+                                            <tr key={i} className="border-b border-gray-200" style={{ backgroundColor: rowBg }}>
+                                                <td className="py-3 px-4 font-mono text-xs" style={{ backgroundColor: rowBg, color: '#64748b' }}>{globalIndex + 1}</td>
+                                                <td className="py-3 px-4 font-bold" style={{ backgroundColor: rowBg, color: '#0f172a' }}>{p.name}</td>
+                                                <td className="py-3 px-4 text-center font-mono font-medium" style={{ backgroundColor: rowBg, color: '#334155' }}>{p.qty}</td>
+                                                <td className="py-3 px-4 text-center font-mono font-medium" style={{ backgroundColor: rowBg, color: '#334155' }}>{formatCurrency(p.price, prefs.currency).replace(prefs.currency, '')}</td>
+                                                <td className="py-3 px-4 text-center font-bold font-mono" style={{ backgroundColor: rowBg, color: '#0f172a' }}>{formatCurrency(p.total || (p.price * p.qty), prefs.currency).replace(prefs.currency, '')}</td>
                                             </tr>
                                         );
                                     })}
@@ -195,8 +225,8 @@ export const ReceiptTemplate: React.FC<ReceiptTemplateProps> = ({ sale, prefs, m
                                             </div>
                                         )}
                                         <div
-                                            className="flex justify-between text-lg font-black text-white p-3 rounded-lg mt-3 shadow-md print-bg-primary"
-                                            style={{ background: `linear-gradient(135deg, ${prefs.accentColor} 0%, ${prefs.accentColor}cc 100%)` }}
+                                            className="flex justify-between text-lg font-black text-white p-3 rounded-lg mt-3 shadow-md"
+                                            style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}cc 100%)` }}
                                         >
                                             <span>الإجمالي النهائي</span>
                                             <span className="font-mono text-xl">{formatCurrency(sale.total, prefs.currency)}</span>

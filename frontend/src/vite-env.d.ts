@@ -15,10 +15,12 @@ interface Window {
     webkitAudioContext: typeof AudioContext;
     go: {
         handlers: {
-            BackupHandler: Record<string, unknown>;
-            SettingsHandler: Record<string, unknown>;
-            PaymentHandler: Record<string, unknown>;
-            AIHandler: Record<string, unknown>;
+            /* eslint-disable @typescript-eslint/no-explicit-any */
+            BackupHandler: Record<string, any>;
+            SettingsHandler: Record<string, any>;
+            PaymentHandler: Record<string, any>;
+            AIHandler: Record<string, any>;
+            /* eslint-enable @typescript-eslint/no-explicit-any */
         };
         main: {
             App: {
