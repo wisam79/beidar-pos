@@ -5,7 +5,6 @@ import (
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
 	"beidar-desktop/internal/testutil"
-	"beidar-desktop/pkg/print"
 	"net"
 	"os"
 	"path/filepath"
@@ -48,21 +47,6 @@ func TestGenerateQRCode(t *testing.T) {
 
 	if len(qrBase64) == 0 {
 		t.Errorf("Expected non-empty base64 string for QR code")
-	}
-}
-
-func TestBuildESCPOSReceipt(t *testing.T) {
-	if runtime.GOOS != "windows" {
-		t.Skip("Skipping print receipt test on non-Windows platforms")
-	}
-	items := []domain.ReceiptItem{
-		{Name: "تفاحة", Qty: 3, Price: 1500, Total: 4500},
-		{Name: "موز", Qty: 2, Price: 2000, Total: 4000},
-	}
-
-	receiptBytes := print.BuildESCPOSReceipt("بيدر تيست", items, 8500, "IQD")
-	if len(receiptBytes) == 0 {
-		t.Errorf("Expected non-empty ESC/POS receipt byte array")
 	}
 }
 
@@ -147,15 +131,6 @@ func TestPrintService_DirectPrinting(t *testing.T) {
 	_, _ = printService.GetAvailablePrinters()
 	_, _ = printService.GetDefaultPrinter()
 
-	// Test PrintReceiptDirect
-	receiptItems := []domain.ReceiptItem{
-		{Name: "Item A", Qty: 1, Price: 100, Total: 100},
-	}
-	err = printService.PrintReceiptDirect(addr, "Test Store", receiptItems, 100, "IQD")
-	if err != nil {
-		t.Errorf("PrintReceiptDirect failed: %v", err)
-	}
-
 	// Test TestPrinter
 	err = printService.TestPrinter(addr)
 	if err != nil {
@@ -175,4 +150,3 @@ func TestPrintService_DirectPrinting(t *testing.T) {
 		t.Errorf("PrintBitmapReceipt with prefix failed: %v", err)
 	}
 }
-

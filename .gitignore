@@ -21,6 +21,10 @@ build/windows/installer/tmp/
 coverage
 coverage.out
 coverage/
+*.coverage.out
+combined.out
+e2e_cov.out
+func_list.txt
 
 # Test leftovers
 ci_logs.txt

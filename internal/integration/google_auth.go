@@ -72,6 +72,10 @@ func getGoogleTokenPath() string {
 }
 
 func (s *cloudService) InitGoogleAuth() (string, error) {
+	if googleOauthConfig == nil {
+		return "", fmt.Errorf("Google OAuth configuration is missing. Please set up API keys first.")
+	}
+
 	authCodeChan = make(chan string)
 
 	// Generate secure state token
@@ -252,4 +256,25 @@ func loadToken() (*oauth2.Token, error) {
 	}
 
 	return token, nil
+}
+
+func (s *cloudService) GoogleDriveBackupNow() error {
+	if !s.IsGoogleConnected() {
+		return fmt.Errorf("Google Drive is not connected")
+	}
+
+	compressed, err := compressDatabaseForBackup()
+	if err != nil {
+		return fmt.Errorf("failed to compress database: %w", err)
+	}
+
+	hostname, _ := os.Hostname()
+	filename := fmt.Sprintf("beidar_backup_%s_%d.zip", hostname, time.Now().Unix())
+
+	_, err = s.UploadBackupToDrive(filename, string(compressed))
+	if err != nil {
+		return fmt.Errorf("failed to upload backup to Google Drive: %w", err)
+	}
+
+	return nil
 }

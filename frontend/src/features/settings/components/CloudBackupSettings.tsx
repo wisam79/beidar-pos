@@ -44,6 +44,11 @@ export function CloudBackupSettings() {
     const [authLoading, setAuthLoading] = useState(false);
     const [backupLoading, setBackupLoading] = useState(false);
     const [restoreLoading, setRestoreLoading] = useState<string | null>(null);
+    const [googleConnected, setGoogleConnected] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
+    const [showGoogleConfig, setShowGoogleConfig] = useState(false);
+    const [googleClientId, setGoogleClientId] = useState('');
+    const [googleClientSecret, setGoogleClientSecret] = useState('');
 
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -84,6 +89,9 @@ export function CloudBackupSettings() {
                 setCurrentUser(user as UserSession);
                 loadBackups();
             }
+            
+            const gConnected = await CloudHandler.IsGoogleConnected();
+            setGoogleConnected(gConnected);
         } catch (error) {
             console.error('Check login failed:', error);
         }
@@ -167,13 +175,67 @@ export function CloudBackupSettings() {
         setMessage(null);
         try {
             await CloudHandler.CloudBackupNow();
-            setMessage({ type: 'success', text: 'تم النسخ الاحتياطي بنجاح! ✅' });
+            setMessage({ type: 'success', text: 'تم النسخ الاحتياطي السحابي بنجاح! ✅' });
             loadBackups();
         } catch (error: unknown) {
             const msg = error instanceof Error ? error.message : String(error);
             setMessage({ type: 'error', text: 'فشل النسخ: ' + msg });
         } finally {
             setBackupLoading(false);
+        }
+    };
+
+    const handleGoogleBackup = async () => {
+        setGoogleLoading(true);
+        setMessage(null);
+        try {
+            await CloudHandler.GoogleDriveBackupNow();
+            setMessage({ type: 'success', text: 'تم النسخ الاحتياطي إلى Google Drive بنجاح! ✅' });
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : String(error);
+            setMessage({ type: 'error', text: 'فشل النسخ إلى Google Drive: ' + msg });
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
+
+    const handleConnectGoogle = async () => {
+        try {
+            const url = await CloudHandler.InitGoogleAuth();
+            if (url) {
+                window.open(url, '_blank');
+                setMessage({ type: 'success', text: 'تم فتح نافذة تسجيل الدخول. يرجى الانتظار...' });
+                
+                await CloudHandler.CompleteGoogleAuth();
+                setGoogleConnected(true);
+                setMessage({ type: 'success', text: 'تم ربط Google Drive بنجاح! ✅' });
+            }
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : String(error);
+            setMessage({ type: 'error', text: 'فشل ربط Google Drive: ' + msg });
+        }
+    };
+
+    const handleDisconnectGoogle = async () => {
+        try {
+            await CloudHandler.DisconnectGoogle();
+            setGoogleConnected(false);
+            setMessage({ type: 'success', text: 'تم فك ربط Google Drive بنجاح' });
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : String(error);
+            setMessage({ type: 'error', text: 'فشل فك الربط: ' + msg });
+        }
+    };
+
+    const handleSaveGoogleSecrets = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await (CloudHandler as any).SaveGoogleOAuthSecrets(googleClientId, googleClientSecret);
+            setMessage({ type: 'success', text: 'تم حفظ مفاتيح Google API بنجاح! ✅ يمكنك الآن الربط' });
+            setShowGoogleConfig(false);
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : String(error);
+            setMessage({ type: 'error', text: 'فشل حفظ المفاتيح: ' + msg });
         }
     };
 
@@ -348,7 +410,7 @@ export function CloudBackupSettings() {
                                 </div>
                             </div>
                             <h4 className="font-bold text-sm text-text-main mb-0.5">النسخ التلقائي</h4>
-                            <p className="text-[10px] text-text-muted">رفع نسخة للسحابة تلقائياً</p>
+                            <p className="text-[10px] text-text-muted">رفع نسخة للسحابة تلقائياً (كل 24 ساعة)</p>
                         </div>
 
                         {/* Backup Now Button */}

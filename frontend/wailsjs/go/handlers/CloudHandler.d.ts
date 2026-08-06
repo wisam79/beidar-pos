@@ -29,6 +29,8 @@ export function GetUserLicenseStatus():Promise<domain.LicenseResult>;
 
 export function GetZohoStatus():Promise<Record<string, any>>;
 
+export function GoogleDriveBackupNow():Promise<void>;
+
 export function InitGoogleAuth():Promise<string>;
 
 export function IsGoogleConnected():Promise<boolean>;
@@ -48,6 +50,8 @@ export function RecoverPassword(arg1:string):Promise<domain.SupabaseAuthResult>;
 export function Register(arg1:string,arg2:string,arg3:string):Promise<domain.SupabaseAuthResult>;
 
 export function RestoreCloudBackup(arg1:string):Promise<void>;
+
+export function SaveGoogleOAuthSecrets(arg1:string,arg2:string):Promise<void>;
 
 export function SetupZohoIntegration(arg1:string,arg2:string,arg3:string):Promise<void>;
 

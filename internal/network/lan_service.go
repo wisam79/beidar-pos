@@ -59,10 +59,9 @@ const (
 	connectRateMaxPerIP = 10
 )
 
-// allowConnectRateLimit reports whether the given remote address is still
-// within the allowed connect-attempt budget. False means the caller must
-// reject the attempt (HTTP 429) to slow down credential brute-forcing.
-func (s *lanService) allowConnectRateLimit(remoteAddr string) bool {
+// getConnectTarpitDelay calculates an exponential backoff delay based on connection attempts
+// from a specific IP. This implements Tarpitting to slow down brute-force attacks.
+func (s *lanService) getConnectTarpitDelay(remoteAddr string) time.Duration {
 	ip, _, err := net.SplitHostPort(remoteAddr)
 	if err != nil {
 		ip = remoteAddr
@@ -75,13 +74,16 @@ func (s *lanService) allowConnectRateLimit(remoteAddr string) bool {
 	entry, ok := s.connectRateLimits[ip]
 	if !ok || now.After(entry.expires) {
 		s.connectRateLimits[ip] = &connectRateEntry{count: 1, expires: now.Add(connectRateWindow)}
-		return true
+		return 0
 	}
 	entry.count++
-	if entry.count > connectRateMaxPerIP {
-		return false
+	
+	// Exponential delay: 1s, 2s, 4s, 8s, up to 15s max
+	delaySeconds := 1 << (entry.count - 1)
+	if delaySeconds > 15 {
+		delaySeconds = 15
 	}
-	return true
+	return time.Duration(delaySeconds) * time.Second
 }
 
 type lanService struct {

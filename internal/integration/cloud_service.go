@@ -11,6 +11,7 @@ type CloudService interface {
 	IsGoogleConnected() bool
 	DisconnectGoogle() error
 	UploadBackupToDrive(filename string, content string) (string, error)
+	GoogleDriveBackupNow() error
 
 	// Google OAuth Secrets Management
 	InitGoogleSecrets(clientID, clientSecret string)

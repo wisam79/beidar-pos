@@ -13,8 +13,6 @@ export function GetDefaultPrinter():Promise<string>;
 
 export function PrintBitmapReceipt(arg1:string,arg2:string):Promise<void>;
 
-export function PrintReceiptDirect(arg1:string,arg2:string,arg3:Array<domain.ReceiptItem>,arg4:domain.Amount,arg5:string):Promise<void>;
-
 export function Startup(arg1:context.Context):Promise<void>;
 
 export function TestPrinter(arg1:string):Promise<void>;

@@ -76,13 +76,6 @@ func (h *PrintHandler) GetDefaultPrinter() (string, error) {
 	return h.printService.GetDefaultPrinter()
 }
 
-func (h *PrintHandler) PrintReceiptDirect(printerName, storeName string, items []domain.ReceiptItem, total domain.Amount, currency string) error {
-	if err := auth.Require(); err != nil {
-		return err
-	}
-	return h.printService.PrintReceiptDirect(printerName, storeName, items, total, currency)
-}
-
 // TestPrinter prints a test page
 func (h *PrintHandler) TestPrinter(printerName string) error {
 	if err := auth.Require(); err != nil {

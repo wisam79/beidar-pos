@@ -54,6 +54,10 @@ export function GetZohoStatus() {
   return window['go']['handlers']['CloudHandler']['GetZohoStatus']();
 }
 
+export function GoogleDriveBackupNow() {
+  return window['go']['handlers']['CloudHandler']['GoogleDriveBackupNow']();
+}
+
 export function InitGoogleAuth() {
   return window['go']['handlers']['CloudHandler']['InitGoogleAuth']();
 }
@@ -92,6 +96,10 @@ export function Register(arg1, arg2, arg3) {
 
 export function RestoreCloudBackup(arg1) {
   return window['go']['handlers']['CloudHandler']['RestoreCloudBackup'](arg1);
+}
+
+export function SaveGoogleOAuthSecrets(arg1, arg2) {
+  return window['go']['handlers']['CloudHandler']['SaveGoogleOAuthSecrets'](arg1, arg2);
 }
 
 export function SetupZohoIntegration(arg1, arg2, arg3) {

@@ -23,6 +23,14 @@ func (h *CloudHandler) Startup(ctx context.Context) {
 	h.ctx = ctx
 }
 
+func (h *CloudHandler) SaveGoogleOAuthSecrets(clientID, clientSecret string) error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
+	h.cloudService.InitGoogleSecrets(clientID, clientSecret)
+	return nil
+}
+
 // Google Drive Auth & Backup
 func (h *CloudHandler) InitGoogleAuth() (string, error) {
 	if err := auth.RequirePermission(auth.PermSettings); err != nil {
@@ -54,6 +62,13 @@ func (h *CloudHandler) UploadBackupToDrive(filename string, content string) (str
 		return "", err
 	}
 	return h.cloudService.UploadBackupToDrive(filename, content)
+}
+
+func (h *CloudHandler) GoogleDriveBackupNow() error {
+	if err := auth.RequirePermission(auth.PermExportData); err != nil {
+		return err
+	}
+	return h.cloudService.GoogleDriveBackupNow()
 }
 
 // Supabase Auth

@@ -5,6 +5,22 @@ interface PrintPortalProps {
     onAfterPrint?: () => void;
 }
 
+// Waits for all images (e.g. async QR codes) inside the element to finish
+// loading so a captured bitmap never contains a spinner or a broken image.
+const waitForImages = async (el: HTMLElement, timeoutMs = 3000) => {
+    const imgs = Array.from(el.querySelectorAll('img'));
+    if (imgs.length === 0) return;
+    await Promise.race([
+        Promise.all(imgs.map(img => img.complete
+            ? Promise.resolve()
+            : new Promise<void>(res => {
+                img.onload = () => res();
+                img.onerror = () => res();
+            }))),
+        new Promise(res => setTimeout(res, timeoutMs)),
+    ]);
+};
+
 /**
  * PrintPortal - Uses direct DOM clone for thermal receipts and lazy image capture for A4
  * Uses direct window.print() on the main window for Wails compatibility
@@ -45,6 +61,7 @@ export const PrintPortal: React.FC<PrintPortalProps> = ({ children, onAfterPrint
                 if (isThermal) {
                     // THERMAL: Direct DOM Clone for maximum sharpness
                     // We clone the container's children directly
+                    await waitForImages(container);
                     const contentClone = container.cloneNode(true) as HTMLElement;
 
                     // Remove any inline styles that might conflict (optional, but safer)
@@ -90,6 +107,7 @@ export const PrintPortal: React.FC<PrintPortalProps> = ({ children, onAfterPrint
                         const { toPng } = await import('html-to-image');
                         for (let i = 0; i < pages.length; i++) {
                             const page = pages[i] as HTMLElement;
+                            await waitForImages(page);
                             const dataUrl = await toPng(page, {
                                 quality: 1.0,
                                 pixelRatio: 2,
@@ -101,6 +119,7 @@ export const PrintPortal: React.FC<PrintPortalProps> = ({ children, onAfterPrint
                     } else {
                         // Fallback
                         const { toPng } = await import('html-to-image');
+                        await waitForImages(container);
                         const dataUrl = await toPng(container, {
                             quality: 1.0,
                             pixelRatio: 2,
@@ -155,19 +174,28 @@ export const PrintPortal: React.FC<PrintPortalProps> = ({ children, onAfterPrint
 
                 document.body.appendChild(printContainer);
 
+                // Cleanup once (afterprint event or fallback timer), whichever
+                // fires first, so onAfterPrint is never called twice.
+                let cleaned = false;
+                const cleanup = () => {
+                    if (cleaned) return;
+                    cleaned = true;
+                    window.removeEventListener('afterprint', cleanup);
+                    if (document.body.contains(printContainer)) {
+                        document.body.removeChild(printContainer);
+                    }
+                    setPhase('done');
+                    onAfterPrint?.();
+                };
+
                 // Trigger print on current window
                 setTimeout(() => {
                     window.print();
-
-                    // Cleanup after print
-                    setTimeout(() => {
-                        if (document.body.contains(printContainer)) {
-                            document.body.removeChild(printContainer);
-                        }
-                        setPhase('done');
-                        onAfterPrint?.();
-                    }, 1000);
+                    // Fallback in case afterprint never fires (some WebView2 setups)
+                    setTimeout(cleanup, 10000);
                 }, 100);
+
+                window.addEventListener('afterprint', cleanup);
 
             } catch (err) {
                 console.error('Print capture failed:', err);

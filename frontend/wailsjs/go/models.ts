@@ -1297,24 +1297,6 @@ export namespace domain {
 	        this.totalUnpaid = source["totalUnpaid"];
 	    }
 	}
-	export class ReceiptItem {
-	    name: string;
-	    qty: number;
-	    price: number;
-	    total: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new ReceiptItem(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.qty = source["qty"];
-	        this.price = source["price"];
-	        this.total = source["total"];
-	    }
-	}
 	
 	
 	export class SessionValidityResult {

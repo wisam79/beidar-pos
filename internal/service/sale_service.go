@@ -8,10 +8,11 @@ import (
 	"beidar-desktop/internal/core/domain"
 	pkgerrors "beidar-desktop/pkg/errors"
 	"beidar-desktop/pkg/i18n"
-	"beidar-desktop/pkg/logger"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+
+	"beidar-desktop/pkg/auth"
 )
 
 func ErrSalesInsufficientStock(productName string, available, requested float64) *pkgerrors.AppError {
@@ -102,6 +103,7 @@ type saleService struct {
 	shiftRepo       domain.ShiftRepository
 	preferencesRepo domain.PreferencesRepository
 	productService  domain.ProductService
+	auditRepo       domain.AuditRepository
 }
 
 // NewSaleService creates a new instance of domain.SaleService
@@ -113,6 +115,7 @@ func NewSaleService(
 	shiftRepo domain.ShiftRepository,
 	preferencesRepo domain.PreferencesRepository,
 	productService domain.ProductService,
+	auditRepo domain.AuditRepository,
 ) domain.SaleService {
 	return &saleService{
 		saleRepo:        saleRepo,
@@ -122,6 +125,7 @@ func NewSaleService(
 		shiftRepo:       shiftRepo,
 		preferencesRepo: preferencesRepo,
 		productService:  productService,
+		auditRepo:       auditRepo,
 	}
 }
 
@@ -142,8 +146,20 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 	// Never trust client-supplied timestamps, dates, or status.
 	sale.Date = time.Now().Format("2006-01-02")
 	sale.Timestamp = time.Now().UnixMilli()
-	if sale.Status != "completed" && sale.Status != "pending" {
-		sale.Status = "completed"
+	sale.Status = "completed"
+
+	// Check permissions for discounts in the service layer
+	anyItemHasDiscount := false
+	for _, item := range sale.Items {
+		if item.Discount > 0 {
+			anyItemHasDiscount = true
+			break
+		}
+	}
+	if sale.Discount > 0 || anyItemHasDiscount {
+		if err := auth.RequirePermission(auth.PermDiscounts); err != nil {
+			return err
+		}
 	}
 
 	if sale.ID == "" {
@@ -467,12 +483,19 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		}
 
 		requireShift := requireShiftPref
-
 		if err := txShiftRepo.UpdateShiftSales(sale.Total, cashAmount, true, requireShift); err != nil {
 			return fmt.Errorf("%s: %w", i18n.GetMessage("SALE_PROCESS_FAILED", ""), err)
 		}
 
-		logger.LogSale("COMPLETED", sale.ID, sale.Total.Float(), sale.CustomerID)
+		if sale.Discount > 0 {
+			_ = s.auditRepo.WithTx(tx).Log(&domain.AuditLog{
+				StaffID:  sale.StaffID,
+				Action:   "SALE_DISCOUNT",
+				Entity:   "Sale",
+				EntityID: sale.ID,
+				Details:  fmt.Sprintf("تم تطبيق خصم بقيمة %s على الفاتورة", sale.Discount.String()),
+			})
+		}
 
 		return nil
 	})
@@ -518,7 +541,12 @@ func (s *saleService) ReturnSale(id string) error {
 				continue
 			}
 
-			err = txProductRepo.UpdateStock(item.ProductID, item.Quantity)
+			returnQty := item.Quantity - item.ReturnedQty
+			if returnQty <= 0 {
+				continue
+			}
+
+			err = txProductRepo.UpdateStock(item.ProductID, returnQty)
 			if err != nil {
 				return err
 			}
@@ -532,7 +560,7 @@ func (s *saleService) ReturnSale(id string) error {
 				ProductID:   item.ProductID,
 				ProductName: productName,
 				Type:        "return",
-				Qty:         item.Quantity,
+				Qty:         returnQty,
 				Reason:      "مرتجع فاتورة #" + sale.ID,
 				Timestamp:   time.Now().UnixMilli(),
 			}
@@ -560,8 +588,32 @@ func (s *saleService) ReturnSale(id string) error {
 
 			switch sale.PaymentMethod {
 			case "credit":
+				customer, err := txCustomerRepo.GetByID(sale.CustomerID)
+				if err != nil {
+					return err
+				}
+				refundAmount := domain.NewAmount(0)
+				if customer.Debt < sale.Total {
+					refundAmount = sale.Total.Sub(customer.Debt)
+				}
+				
 				if err := txCustomerRepo.DecrementDebt(sale.CustomerID, sale.Total); err != nil {
 					return err
+				}
+				
+				if refundAmount > 0 {
+					refundPayment := domain.Payment{
+						SaleID:     sale.ID,
+						CustomerID: sale.CustomerID,
+						Amount:     -refundAmount,
+						Method:     "cash",
+						Note:       "استرداد نقدي لمدفوعات آجل",
+						StaffID:    sale.StaffID,
+						Timestamp:  time.Now().UnixMilli(),
+					}
+					if err := txPaymentRepo.Create(&refundPayment); err != nil {
+						return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)
+					}
 				}
 			case "installment":
 				var paidSum domain.Amount
@@ -601,10 +653,30 @@ func (s *saleService) ReturnSale(id string) error {
 				}
 			case "split":
 				// Only the credit leg that is still outstanding affects debt:
-				// prior partial returns already relieved their proportional share.
 				if creditRemaining, ok := splitRemaining["credit"]; ok && creditRemaining > 0 {
-					if err := txCustomerRepo.DecrementDebt(sale.CustomerID, creditRemaining); err != nil {
-						return err
+					customer, err := txCustomerRepo.GetByID(sale.CustomerID)
+					if err == nil {
+						refundAmount := domain.NewAmount(0)
+						if customer.Debt < creditRemaining {
+							refundAmount = creditRemaining.Sub(customer.Debt)
+						}
+						
+						if err := txCustomerRepo.DecrementDebt(sale.CustomerID, creditRemaining); err != nil {
+							return err
+						}
+						
+						if refundAmount > 0 {
+							refundPayment := domain.Payment{
+								SaleID:     sale.ID,
+								CustomerID: sale.CustomerID,
+								Amount:     -refundAmount,
+								Method:     "cash",
+								Note:       "استرداد نقدي لمدفوعات آجل",
+								StaffID:    sale.StaffID,
+								Timestamp:  time.Now().UnixMilli(),
+							}
+							_ = txPaymentRepo.Create(&refundPayment)
+						}
 					}
 				}
 			}
@@ -686,6 +758,14 @@ func (s *saleService) ReturnSale(id string) error {
 		if err := txSaleRepo.Update(sale); err != nil {
 			return err
 		}
+
+		_ = s.auditRepo.WithTx(tx).Log(&domain.AuditLog{
+			StaffID:  sale.StaffID,
+			Action:   "RETURN_SALE",
+			Entity:   "Sale",
+			EntityID: sale.ID,
+			Details:  "تم استرجاع الفاتورة بالكامل",
+		})
 
 		return nil
 	})
@@ -927,6 +1007,14 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 		if err := txSaleRepo.Update(sale); err != nil {
 			return err
 		}
+
+		_ = s.auditRepo.WithTx(tx).Log(&domain.AuditLog{
+			StaffID:  sale.StaffID,
+			Action:   "RETURN_PARTIAL",
+			Entity:   "Sale",
+			EntityID: sale.ID,
+			Details:  fmt.Sprintf("تم استرجاع كمية %.2f من المنتج %s", qtyToReturn, item.Name),
+		})
 
 		return nil
 	})

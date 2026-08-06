@@ -1,8 +1,6 @@
 import * as PrintHandler from '../../../wailsjs/go/handlers/PrintHandler';
 import * as SettingsHandler from '../../../wailsjs/go/handlers/SettingsHandler';
 import * as CloudHandler from '../../../wailsjs/go/handlers/CloudHandler';
-import * as Models from '../../../wailsjs/go/models';
-import { ReceiptItem } from './types';
 
 export const print = {
     generatePDF: (saleId: string, format: 'thermal' | 'a4') => PrintHandler.GenerateInvoicePDF(saleId, format),
@@ -37,8 +35,6 @@ export const desktopApi = {
     printing: {
         getPrinters: () => PrintHandler.GetAvailablePrinters(),
         getDefault: () => PrintHandler.GetDefaultPrinter(),
-        printReceipt: (printer: string, store: string, items: ReceiptItem[], total: number) =>
-            PrintHandler.PrintReceiptDirect(printer, store, items as Models.domain.ReceiptItem[], total, ""),
         test: (printer: string) => PrintHandler.TestPrinter(printer),
     },
     ai: {

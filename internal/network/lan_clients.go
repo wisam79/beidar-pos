@@ -54,12 +54,15 @@ func (s *lanService) RegisterClient(deviceID, deviceName, ipAddress string) (str
 }
 
 // ValidateSessionToken checks if a session token is valid and returns the client
-func (s *lanService) ValidateSessionToken(token string) (*domain.ConnectedClient, error) {
+func (s *lanService) ValidateSessionToken(token string, requestIP string) (*domain.ConnectedClient, error) {
 	s.clientsMutex.RLock()
 	defer s.clientsMutex.RUnlock()
 
 	for _, client := range s.connectedClients {
 		if subtle.ConstantTimeCompare([]byte(client.SessionToken), []byte(token)) == 1 {
+			if requestIP != "" && client.IPAddress != requestIP {
+				return nil, fmt.Errorf("جلسة غير صالحة: تم رفض الوصول من عنوان IP مختلف")
+			}
 			if client.Status == "suspended" {
 				return nil, fmt.Errorf("جلستك معلّقة من قبل المدير")
 			}

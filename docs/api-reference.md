@@ -173,11 +173,10 @@ const result = await api.sales.process(data)
 
 | الدالة | المدخلات | المخرجات | الصلاحية |
 |--------|---------|---------|----------|
-| `GenerateInvoicePDF` | `saleID, format string` | `(string, error)` | PermSales |
+| `GenerateInvoicePDF` | `saleID, format string` | `(string, error)` | أي مستخدم مسجل (`auth.Require`) |
 | `GenerateQRCode` | `data string, size int` | `(string, error)` | — |
 | `GetAvailablePrinters` | — | `[]PrinterInfo` | — |
 | `GetDefaultPrinter` | — | `(string, error)` | — |
-| `PrintReceiptDirect` | `printerName, storeName string, items []ReceiptItem, total float64, currency string` | `error` | PermSales |
 | `TestPrinter` | `printerName string` | `error` | — |
 | `PrintBitmapReceipt` | `printerName, base64Image string` | `error` | — |
 

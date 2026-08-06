@@ -91,7 +91,13 @@ func (s *productService) CreateProduct(product *domain.Product) error {
 		return fmt.Errorf("اسم المنتج مطلوب")
 	}
 	if product.Price < 0 {
-		return fmt.Errorf("السعر يجب أن يكون رقماً موجباً")
+		return fmt.Errorf("سعر البيع لا يمكن أن يكون سالباً")
+	}
+	if product.Cost < 0 {
+		return fmt.Errorf("سعر التكلفة لا يمكن أن يكون سالباً")
+	}
+	if product.Stock < 0 {
+		return fmt.Errorf("الكمية بالمخزن لا يمكن أن تكون سالبة")
 	}
 
 	if product.ID == "" {
@@ -117,6 +123,15 @@ func (s *productService) CreateProduct(product *domain.Product) error {
 func (s *productService) UpdateProduct(product *domain.Product) error {
 	if product.ID == "" {
 		return fmt.Errorf("معرف المنتج مطلوب للتحديث")
+	}
+	if product.Price < 0 {
+		return fmt.Errorf("سعر البيع لا يمكن أن يكون سالباً")
+	}
+	if product.Cost < 0 {
+		return fmt.Errorf("سعر التكلفة لا يمكن أن يكون سالباً")
+	}
+	if product.Stock < 0 {
+		return fmt.Errorf("الكمية بالمخزن لا يمكن أن تكون سالبة")
 	}
 
 	existing, err := s.repo.GetByID(product.ID)

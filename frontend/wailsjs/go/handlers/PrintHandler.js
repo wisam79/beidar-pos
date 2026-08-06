@@ -22,10 +22,6 @@ export function PrintBitmapReceipt(arg1, arg2) {
   return window['go']['handlers']['PrintHandler']['PrintBitmapReceipt'](arg1, arg2);
 }
 
-export function PrintReceiptDirect(arg1, arg2, arg3, arg4, arg5) {
-  return window['go']['handlers']['PrintHandler']['PrintReceiptDirect'](arg1, arg2, arg3, arg4, arg5);
-}
-
 export function Startup(arg1) {
   return window['go']['handlers']['PrintHandler']['Startup'](arg1);
 }

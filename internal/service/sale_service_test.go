@@ -8,6 +8,7 @@ import (
 	"beidar-desktop/internal/repository"
 	"beidar-desktop/internal/service"
 	"beidar-desktop/internal/testutil"
+	"beidar-desktop/pkg/auth"
 	"beidar-desktop/pkg/errors"
 
 	"github.com/google/uuid"
@@ -31,9 +32,10 @@ func setupTestDB(t *testing.T) (service.SaleService, service.PaymentService, *go
 	shiftRepo := repository.NewShiftRepository(db)
 	saleRepo := repository.NewSaleRepository(db)
 	paymentRepo := repository.NewPaymentRepository(db)
+	auditRepo := repository.NewAuditRepository(db)
 
 	productService := service.NewProductService(productRepo)
-	saleService := service.NewSaleService(saleRepo, productRepo, customerRepo, paymentRepo, shiftRepo, prefRepo, productService)
+	saleService := service.NewSaleService(saleRepo, productRepo, customerRepo, paymentRepo, shiftRepo, prefRepo, productService, auditRepo)
 	paymentService := service.NewPaymentService(paymentRepo, customerRepo, saleRepo, shiftRepo, prefRepo)
 
 	return saleService, paymentService, db, cleanup
@@ -822,6 +824,10 @@ func TestSaleService_InstallmentAndDiscounts(t *testing.T) {
 			Discount:  domain.NewAmount(5000), // 5,000 IQD product-level discount
 		}},
 	}
+
+	// Set mock session to bypass discount permission check
+	auth.Set(&domain.Staff{Role: domain.RoleAdmin}, nil)
+	defer auth.Clear()
 
 	// 1. Process the sale
 	if err := saleService.ProcessSale(sale); err != nil {

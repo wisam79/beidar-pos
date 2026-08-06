@@ -36,7 +36,7 @@ func ResetDB() error {
 		&domain.Expense{}, &domain.Category{}, &domain.StockMovement{}, &domain.AppPreferences{},
 		&domain.Payment{}, &domain.ParkedSale{}, &domain.LoginAttempt{}, &domain.Staff{}, &domain.Shift{},
 		&domain.CashMovement{}, &domain.PurchaseOrder{}, &domain.PurchaseOrderItem{}, &domain.BlockedDevice{},
-		&domain.Discount{},
+		&domain.Discount{}, &domain.AuditLog{},
 	)
 	if err != nil {
 		return err
@@ -136,6 +136,7 @@ func InitDB() (*gorm.DB, error) {
 		&domain.PurchaseOrderItem{},
 		&domain.BlockedDevice{},
 		&domain.Discount{},
+		&domain.AuditLog{},
 	)
 
 	if err != nil {

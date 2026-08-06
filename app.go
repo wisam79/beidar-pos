@@ -59,6 +59,7 @@ type appRepositories struct {
 	backup      domain.BackupRepository
 	network     domain.NetworkRepository
 	discount    domain.DiscountRepository
+	audit       domain.AuditRepository
 }
 
 type appServices struct {
@@ -98,6 +99,7 @@ func initRepositories(db *gorm.DB) *appRepositories {
 		backup:      repository.NewBackupRepository(db),
 		network:     repository.NewNetworkRepository(db),
 		discount:    repository.NewDiscountRepository(db),
+		audit:       repository.NewAuditRepository(db),
 	}
 }
 
@@ -111,6 +113,7 @@ func initServices(repos *appRepositories) *appServices {
 		repos.shift,
 		repos.preferences,
 		productService,
+		repos.audit,
 	)
 	paymentService := service.NewPaymentService(
 		repos.payment,
@@ -281,9 +284,9 @@ func (a *App) ForceCloseApp() {
 	}
 }
 
-// startAutomatedBackups runs in a background goroutine and triggers a backup every 12 hours.
+// startAutomatedBackups runs in a background goroutine and triggers a backup every 24 hours.
 func (a *App) startAutomatedBackups() {
-	ticker := time.NewTicker(12 * time.Hour)
+	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()
 
 	for {

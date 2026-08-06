@@ -293,6 +293,22 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
     // ═══════════════════════════════════════════════════════════════════════════════
     // 🖨️ SILENT BITMAP PRINTING - Captures receipt as image for Arabic support
     // ═══════════════════════════════════════════════════════════════════════════════
+    // Waits for all images (e.g. the async QR code) inside the receipt to finish
+    // loading so the captured bitmap never contains a spinner or a broken image.
+    const waitForReceiptImages = useCallback(async (container: HTMLElement, timeoutMs = 3000) => {
+        const imgs = Array.from(container.querySelectorAll('img'));
+        if (imgs.length === 0) return;
+        await Promise.race([
+            Promise.all(imgs.map(img => img.complete
+                ? Promise.resolve()
+                : new Promise<void>(res => {
+                    img.onload = () => res();
+                    img.onerror = () => res();
+                }))),
+            new Promise(res => setTimeout(res, timeoutMs)),
+        ]);
+    }, []);
+
     const handleSilentBitmapPrint = useCallback(async () => {
         if (!silentPrintRef.current || !lastSaleForPrint || !prefs.autoPrint) return;
         if (prefs.autoPrintFormat !== 'thermal') return; // Only for thermal
@@ -312,9 +328,10 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
 
             setIsSilentPrinting(true);
 
-            // Wait for fonts to load
+            // Wait for fonts and any async images (QR code) to settle
             await document.fonts.ready;
             await new Promise(r => setTimeout(r, 200));
+            await waitForReceiptImages(silentPrintRef.current);
 
             // Capture receipt as PNG
             const { toPng } = await import('html-to-image');
@@ -342,10 +359,13 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
             setIsSilentPrinting(false);
             onAfterPrint();
         }
-    }, [lastSaleForPrint, prefs, onAfterPrint, notify]);
+    }, [lastSaleForPrint, prefs, onAfterPrint, notify, waitForReceiptImages]);
 
     // Track last printed sale to prevent double printing
     const lastPrintedSaleRef = useRef<string | null>(null);
+    // Holds a sale that arrived while another print was still in flight, so a
+    // rapid second sale is never silently dropped.
+    const pendingSaleRef = useRef<Sale | null>(null);
 
     // Trigger silent print when sale is ready
     useEffect(() => {
@@ -355,15 +375,26 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
                 return;
             }
             if (isSilentPrinting) {
+                // A print is already running: remember this sale for after it finishes
+                pendingSaleRef.current = lastSaleForPrint;
                 return;
             }
             lastPrintedSaleRef.current = lastSaleForPrint.id;
             handleSilentBitmapPrint();
-        } else {
-            // Reset when no sale
+            return;
+        }
+        // Current sale was cleared and no print is running: resume any pending sale
+        if (!lastSaleForPrint && !isSilentPrinting && pendingSaleRef.current) {
+            const pending = pendingSaleRef.current;
+            pendingSaleRef.current = null;
+            onPrintInvoice(pending);
+            return;
+        }
+        // Reset when no sale
+        if (!lastSaleForPrint) {
             lastPrintedSaleRef.current = null;
         }
-    }, [lastSaleForPrint, prefs.autoPrint, prefs.autoPrintFormat, handleSilentBitmapPrint, isSilentPrinting]);
+    }, [lastSaleForPrint, prefs.autoPrint, prefs.autoPrintFormat, handleSilentBitmapPrint, isSilentPrinting, onPrintInvoice]);
 
     // Show PrintPortal only for A4 or when NOT using silent thermal print
     const shouldShowPrintPortal = lastSaleForPrint && prefs.autoPrint && prefs.autoPrintFormat !== 'thermal';

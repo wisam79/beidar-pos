@@ -573,19 +573,23 @@ func (s *financeService) ReceivePurchaseOrder(orderID string, items []domain.Pur
 }
 
 func (s *financeService) PayPurchaseOrder(orderID string, amount domain.Amount, method string) error {
-	order, err := s.purchaseRepo.GetByID(orderID)
-	if err != nil {
-		return err
-	}
-
-	remaining := order.TotalAmount.Sub(order.PaidAmount)
-	if amount > remaining {
-		return fmt.Errorf("المبلغ أكبر من المتبقي (%s)", remaining.String())
+	if amount <= 0 {
+		return fmt.Errorf("مبلغ الدفع يجب أن يكون أكبر من صفر")
 	}
 
 	return s.purchaseRepo.Transaction(func(tx domain.Tx) error {
 		txPurchaseRepo := s.purchaseRepo.WithTx(tx)
 		txSupplierRepo := s.supplierRepo.WithTx(tx)
+
+		order, err := txPurchaseRepo.GetForUpdate(orderID)
+		if err != nil {
+			return err
+		}
+
+		remaining := order.TotalAmount.Sub(order.PaidAmount)
+		if amount > remaining {
+			return fmt.Errorf("المبلغ أكبر من المتبقي (%s)", remaining.String())
+		}
 
 		order.PaidAmount = order.PaidAmount.Add(amount)
 		if err := txPurchaseRepo.Update(order); err != nil {

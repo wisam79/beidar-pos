@@ -158,3 +158,29 @@ func TestCustomerRepository_AdjustPoints(t *testing.T) {
 		t.Errorf("Points after decrease = %d, want 120", got.Points)
 	}
 }
+
+func TestCustomerRepository_GetForUpdate(t *testing.T) {
+	repo, cleanup := setupCustomerTestDB(t)
+	defer cleanup()
+
+	c := &domain.Customer{
+		ID:    "cust_lock",
+		Name:  "Lock Test",
+		Phone: "5555",
+	}
+	if err := repo.Create(c); err != nil {
+		t.Fatalf("Failed to create customer: %v", err)
+	}
+
+	got, err := repo.GetForUpdate("cust_lock")
+	if err != nil {
+		t.Fatalf("GetForUpdate failed: %v", err)
+	}
+	if got.ID != "cust_lock" {
+		t.Errorf("Got customer %s, want cust_lock", got.ID)
+	}
+
+	if _, err := repo.GetForUpdate("missing"); err == nil {
+		t.Error("Expected error for nonexistent customer")
+	}
+}

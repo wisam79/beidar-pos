@@ -72,6 +72,7 @@ func SetupFullDB(t *testing.T) (*gorm.DB, func()) {
 		&domain.PurchaseOrderItem{},
 		&domain.BlockedDevice{},
 		&domain.Discount{},
+		&domain.AuditLog{},
 	)
 }
 

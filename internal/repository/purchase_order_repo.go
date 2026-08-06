@@ -3,6 +3,7 @@ package repository
 import (
 	"beidar-desktop/internal/core/domain"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type purchaseOrderRepository struct {
@@ -26,6 +27,14 @@ func (r *purchaseOrderRepository) Transaction(fn func(tx domain.Tx) error) error
 func (r *purchaseOrderRepository) GetByID(id string) (*domain.PurchaseOrder, error) {
 	var order domain.PurchaseOrder
 	if err := r.db.Preload("Items").First(&order, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
+func (r *purchaseOrderRepository) GetForUpdate(id string) (*domain.PurchaseOrder, error) {
+	var order domain.PurchaseOrder
+	if err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).Preload("Items").First(&order, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
 	return &order, nil

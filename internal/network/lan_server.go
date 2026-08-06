@@ -186,7 +186,12 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 				token = token[7:]
 			}
 
-			client, err := s.ValidateSessionToken(token)
+			ipAddress := r.RemoteAddr
+			if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+				ipAddress = host
+			}
+
+			client, err := s.ValidateSessionToken(token, ipAddress)
 			if err != nil {
 				http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusUnauthorized)
 				return
@@ -295,10 +300,9 @@ func (s *lanService) handleConnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Per-IP rate limit: slow down credential brute-forcing on /api/connect.
-	if !s.allowConnectRateLimit(r.RemoteAddr) {
-		http.Error(w, `{"error":"محاولات كثيرة، حاول لاحقاً"}`, http.StatusTooManyRequests)
-		return
+	// Per-IP rate limit: slow down credential brute-forcing on /api/connect with Tarpitting.
+	if delay := s.getConnectTarpitDelay(r.RemoteAddr); delay > 0 {
+		time.Sleep(delay)
 	}
 
 	// Cap request body size to protect against memory-exhaustion DoS.
@@ -324,7 +328,16 @@ func (s *lanService) handleConnect(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	token, err := s.RegisterClient(req.DeviceID, req.DeviceName, r.RemoteAddr)
+	// Store the host-only IP so subsequent session validation (which compares
+	// against the host portion of RemoteAddr) can match. Passing RemoteAddr
+	// verbatim would include the ephemeral client port and make every session
+	// validation fail with "different IP address".
+	clientIP := r.RemoteAddr
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		clientIP = host
+	}
+
+	token, err := s.RegisterClient(req.DeviceID, req.DeviceName, clientIP)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusForbidden)
 		return

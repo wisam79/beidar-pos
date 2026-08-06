@@ -3,6 +3,7 @@ package repository
 import (
 	"beidar-desktop/internal/core/domain"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type customerRepository struct {
@@ -32,6 +33,14 @@ func (r *customerRepository) GetAll() ([]domain.Customer, error) {
 func (r *customerRepository) GetByID(id string) (*domain.Customer, error) {
 	var customer domain.Customer
 	if err := r.db.First(&customer, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &customer, nil
+}
+
+func (r *customerRepository) GetForUpdate(id string) (*domain.Customer, error) {
+	var customer domain.Customer
+	if err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).First(&customer, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
 	return &customer, nil

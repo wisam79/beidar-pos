@@ -4,6 +4,12 @@ package domain
 
 // ---------- Repository Interfaces (in domain per Clean Architecture) ----------
 
+type AuditRepository interface {
+	WithTx(tx Tx) AuditRepository
+	Log(entry *AuditLog) error
+	GetRecent(limit int) ([]AuditLog, error)
+}
+
 // ProductRepository defines database operations for products
 type ProductRepository interface {
 	WithTx(tx Tx) ProductRepository
@@ -57,6 +63,7 @@ type CustomerRepository interface {
 	Transaction(fn func(tx Tx) error) error
 	GetAll() ([]Customer, error)
 	GetByID(id string) (*Customer, error)
+	GetForUpdate(id string) (*Customer, error)
 	GetByIDs(ids []string) ([]Customer, error)
 	GetByPhone(phone string) (*Customer, error)
 	Create(customer *Customer) error
@@ -150,6 +157,7 @@ type SupplierRepository interface {
 	Transaction(fn func(tx Tx) error) error
 	GetAll() ([]Supplier, error)
 	GetByID(id string) (*Supplier, error)
+	GetForUpdate(id string) (*Supplier, error)
 	Create(supplier *Supplier) error
 	Update(supplier *Supplier) error
 	UpdateBalance(id string, amount Amount) error
@@ -161,6 +169,7 @@ type PurchaseOrderRepository interface {
 	WithTx(tx Tx) PurchaseOrderRepository
 	Transaction(fn func(tx Tx) error) error
 	GetByID(id string) (*PurchaseOrder, error)
+	GetForUpdate(id string) (*PurchaseOrder, error)
 	GetPurchaseOrders(status string, supplierID string) ([]PurchaseOrder, error)
 	Create(order *PurchaseOrder) error
 	Update(order *PurchaseOrder) error
@@ -334,7 +343,6 @@ type PrintService interface {
 	GenerateQRCode(data string, size int) (string, error)
 	GetAvailablePrinters() ([]PrinterInfo, error)
 	GetDefaultPrinter() (string, error)
-	PrintReceiptDirect(printerName, storeName string, items []ReceiptItem, total Amount, currency string) error
 	TestPrinter(printerName string) error
 	PrintBitmapReceipt(printerName, base64Image string) error
 }

@@ -35,6 +35,16 @@ func GenerateInvoicePDF(sale domain.Sale, prefs domain.AppPreferences, format st
 		return "", fmt.Errorf("failed to create temp dir: %w", err)
 	}
 
+	// Clean up invoices older than a week to avoid unbounded temp-dir growth.
+	cutoff := time.Now().AddDate(0, 0, -7)
+	if entries, err := os.ReadDir(tempDir); err == nil {
+		for _, entry := range entries {
+			if info, err := entry.Info(); err == nil && info.ModTime().Before(cutoff) {
+				_ = os.Remove(filepath.Join(tempDir, entry.Name()))
+			}
+		}
+	}
+
 	filename := fmt.Sprintf("invoice_%s_%d.pdf", sale.ID, time.Now().Unix())
 	filePath := filepath.Join(tempDir, filename)
 
@@ -46,23 +56,51 @@ func GenerateInvoicePDFToPath(sale domain.Sale, prefs domain.AppPreferences, for
 	return generatePDF(sale, prefs, format, savePath)
 }
 
-// GetInvoicePDFBytes generates PDF and returns bytes for frontend download
-func GetInvoicePDFBytes(sale domain.Sale, prefs domain.AppPreferences, format string) ([]byte, error) {
-	tempPath, err := GenerateInvoicePDF(sale, prefs, format)
-	if err != nil {
-		return nil, err
-	}
-	defer os.Remove(tempPath)
-
-	return os.ReadFile(tempPath)
-}
-
 // Internal helper to generate PDF and save to path
 func generatePDF(sale domain.Sale, prefs domain.AppPreferences, format string, savePath string) (string, error) {
 	if format == "thermal" {
 		return generateThermalPDF(sale, prefs, savePath)
 	}
 	return generateA4PDF(sale, prefs, savePath)
+}
+
+// prepareTajawalFonts extracts the embedded Tajawal fonts to a temp directory
+// (gofpdf/Maroto require a filesystem path) and returns both font paths.
+// It returns a clear error instead of silently falling back to Helvetica,
+// which would render Arabic text as garbage in the PDF.
+func prepareTajawalFonts() (regularPath, boldPath string, err error) {
+	const regularName = "Tajawal-Regular.ttf"
+	const boldName = "Tajawal-Bold.ttf"
+
+	fontsDir := filepath.Join(os.TempDir(), "beidar-fonts")
+	if err := os.MkdirAll(fontsDir, 0755); err != nil {
+		return "", "", fmt.Errorf("failed to create fonts dir: %w", err)
+	}
+
+	extract := func(name string) (string, error) {
+		target := filepath.Join(fontsDir, name)
+		if _, err := os.Stat(target); err == nil {
+			return target, nil
+		}
+		data, rerr := embeddedFonts.ReadFile("fonts/" + name)
+		if rerr != nil {
+			return "", fmt.Errorf("embedded font %s is missing: %w", name, rerr)
+		}
+		if werr := os.WriteFile(target, data, 0644); werr != nil {
+			return "", fmt.Errorf("failed to extract font %s: %w", name, werr)
+		}
+		return target, nil
+	}
+
+	regularPath, err = extract(regularName)
+	if err != nil {
+		return "", "", err
+	}
+	boldPath, err = extract(boldName)
+	if err != nil {
+		return "", "", err
+	}
+	return regularPath, boldPath, nil
 }
 
 func generateThermalPDF(sale domain.Sale, prefs domain.AppPreferences, savePath string) (string, error) {
@@ -81,51 +119,29 @@ func generateThermalPDF(sale domain.Sale, prefs domain.AppPreferences, savePath 
 		Size:    gofpdf.SizeType{Wd: paperWidth, Ht: 200},
 	})
 	pdf.SetMargins(2, 2, 2)
+	lineWidth := paperWidth - 4 // 2mm margins on each side
 
-	fontFamily := "Helvetica" // Default fallback
-
-	// Helper to extract font
-	fontsDir := filepath.Join(os.TempDir(), "beidar-fonts")
-	_ = os.MkdirAll(fontsDir, 0755)
-
-	regularFontName := "Tajawal-Regular.ttf"
-	boldFontName := "Tajawal-Bold.ttf"
-	regularFontPath := filepath.Join(fontsDir, regularFontName)
-	boldFontPath := filepath.Join(fontsDir, boldFontName)
-
-	// Try extracting from embed if not exists
-	if _, err := os.Stat(regularFontPath); os.IsNotExist(err) {
-		if data, err := embeddedFonts.ReadFile("fonts/" + regularFontName); err == nil {
-			_ = os.WriteFile(regularFontPath, data, 0644)
-		}
+	// Arabic requires Tajawal; fail loudly instead of printing garbled text.
+	regularFontPath, boldFontPath, err := prepareTajawalFonts()
+	if err != nil {
+		return "", err
 	}
-	if _, err := os.Stat(boldFontPath); os.IsNotExist(err) {
-		if data, err := embeddedFonts.ReadFile("fonts/" + boldFontName); err == nil {
-			_ = os.WriteFile(boldFontPath, data, 0644)
-		}
-	}
-
-	if _, err := os.Stat(regularFontPath); err == nil {
-		if _, err := os.Stat(boldFontPath); err == nil {
-			pdf.AddUTF8Font("arabic", "", regularFontPath)
-			pdf.AddUTF8Font("arabic", "B", boldFontPath)
-			fontFamily = "arabic"
-		}
-	}
+	pdf.AddUTF8Font("arabic", "", regularFontPath)
+	pdf.AddUTF8Font("arabic", "B", boldFontPath)
 
 	pdf.AddPage()
-	pdf.SetFont(fontFamily, "B", 14)
+	pdf.SetFont("arabic", "B", 14)
 
 	// Header
 	pdf.CellFormat(0, 8, prefs.StoreName, "", 1, "C", false, 0, "")
-	pdf.SetFont(fontFamily, "", 10)
+	pdf.SetFont("arabic", "", 10)
 	pdf.CellFormat(0, 5, prefs.StoreAddress, "", 1, "C", false, 0, "")
 
 	// Invoice Info
 	pdf.Ln(5)
-	pdf.SetFont(fontFamily, "B", 10)
+	pdf.SetFont("arabic", "B", 10)
 	pdf.CellFormat(0, 5, fmt.Sprintf("Invoice #%s", sale.ID), "", 1, "R", false, 0, "")
-	pdf.SetFont(fontFamily, "", 9)
+	pdf.SetFont("arabic", "", 9)
 	pdf.CellFormat(0, 5, sale.Date, "", 1, "R", false, 0, "")
 
 	// Customer
@@ -136,17 +152,17 @@ func generateThermalPDF(sale domain.Sale, prefs domain.AppPreferences, savePath 
 
 	// Line separator
 	pdf.Ln(3)
-	pdf.Line(pdf.GetX(), pdf.GetY(), pdf.GetX()+76, pdf.GetY())
+	pdf.Line(pdf.GetX(), pdf.GetY(), pdf.GetX()+lineWidth, pdf.GetY())
 	pdf.Ln(3)
 
 	// Items Header
-	pdf.SetFont(fontFamily, "B", 9)
+	pdf.SetFont("arabic", "B", 9)
 	pdf.CellFormat(40, 5, "Product", "B", 0, "R", false, 0, "")
 	pdf.CellFormat(18, 5, "Qty", "B", 0, "C", false, 0, "")
 	pdf.CellFormat(18, 5, "Total", "B", 1, "L", false, 0, "")
 
 	// Items
-	pdf.SetFont(fontFamily, "", 9)
+	pdf.SetFont("arabic", "", 9)
 	for _, item := range sale.Items {
 		pdf.CellFormat(40, 5, item.Name, "", 0, "R", false, 0, "")
 		pdf.CellFormat(18, 5, fmt.Sprintf("%.0f", item.Quantity), "", 0, "C", false, 0, "")
@@ -155,27 +171,27 @@ func generateThermalPDF(sale domain.Sale, prefs domain.AppPreferences, savePath 
 
 	// Totals
 	pdf.Ln(3)
-	pdf.Line(pdf.GetX(), pdf.GetY(), pdf.GetX()+76, pdf.GetY())
+	pdf.Line(pdf.GetX(), pdf.GetY(), pdf.GetX()+lineWidth, pdf.GetY())
 	pdf.Ln(3)
 
-	pdf.SetFont(fontFamily, "B", 10)
+	pdf.SetFont("arabic", "B", 10)
 	pdf.CellFormat(0, 6, fmt.Sprintf("Subtotal: %.2f %s", sale.Subtotal.Float(), prefs.Currency), "", 1, "R", false, 0, "")
 
 	if sale.Discount > 0 {
 		pdf.CellFormat(0, 6, fmt.Sprintf("Discount: -%.2f %s", sale.Discount.Float(), prefs.Currency), "", 1, "R", false, 0, "")
 	}
 
-	pdf.SetFont(fontFamily, "B", 12)
+	pdf.SetFont("arabic", "B", 12)
 	pdf.CellFormat(0, 8, fmt.Sprintf("Total: %.2f %s", sale.Total.Float(), prefs.Currency), "", 1, "R", false, 0, "")
 
 	// Installment Schedule
 	if sale.InstallmentPlan != nil && len(sale.InstallmentPlan.Schedule) > 0 {
 		pdf.Ln(5)
-		pdf.SetFont(fontFamily, "B", 10)
+		pdf.SetFont("arabic", "B", 10)
 		pdf.CellFormat(0, 6, "Installment Schedule / جدول الأقساط", "B", 1, "C", false, 0, "")
 
 		pdf.Ln(2)
-		pdf.SetFont(fontFamily, "B", 8)
+		pdf.SetFont("arabic", "B", 8)
 
 		// Header
 		pdf.CellFormat(10, 5, "#", "B", 0, "C", false, 0, "")
@@ -184,7 +200,7 @@ func generateThermalPDF(sale domain.Sale, prefs domain.AppPreferences, savePath 
 		pdf.CellFormat(20, 5, "Status", "B", 1, "C", false, 0, "")
 
 		// Body
-		pdf.SetFont(fontFamily, "", 8)
+		pdf.SetFont("arabic", "", 8)
 		for _, inst := range sale.InstallmentPlan.Schedule {
 			statusMark := "Pending"
 			if inst.Status == "paid" {
@@ -212,7 +228,7 @@ func generateThermalPDF(sale domain.Sale, prefs domain.AppPreferences, savePath 
 	}
 
 	// Footer
-	pdf.SetFont(fontFamily, "", 8)
+	pdf.SetFont("arabic", "", 8)
 	pdf.CellFormat(0, 5, "Thank you for your purchase!", "", 1, "C", false, 0, "")
 
 	// Save PDF
@@ -224,44 +240,19 @@ func generateThermalPDF(sale domain.Sale, prefs domain.AppPreferences, savePath 
 }
 
 func generateA4PDF(sale domain.Sale, prefs domain.AppPreferences, savePath string) (string, error) {
-	// Set up fonts directory and paths
-	fontsDir := filepath.Join(os.TempDir(), "beidar-fonts")
-	_ = os.MkdirAll(fontsDir, 0755)
-
-	regularFontName := "Tajawal-Regular.ttf"
-	boldFontName := "Tajawal-Bold.ttf"
-	regularFontPath := filepath.Join(fontsDir, regularFontName)
-	boldFontPath := filepath.Join(fontsDir, boldFontName)
-
-	// Try extracting from embed if not exists
-	if _, err := os.Stat(regularFontPath); os.IsNotExist(err) {
-		if data, err := embeddedFonts.ReadFile("fonts/" + regularFontName); err == nil {
-			_ = os.WriteFile(regularFontPath, data, 0644)
-		}
-	}
-	if _, err := os.Stat(boldFontPath); os.IsNotExist(err) {
-		if data, err := embeddedFonts.ReadFile("fonts/" + boldFontName); err == nil {
-			_ = os.WriteFile(boldFontPath, data, 0644)
-		}
+	// Arabic requires Tajawal; fail loudly instead of printing garbled text.
+	regularFontPath, boldFontPath, err := prepareTajawalFonts()
+	if err != nil {
+		return "", err
 	}
 
 	m := pdf.NewMaroto(consts.Portrait, consts.A4)
 	m.SetBorder(false)
 
-	// Add Unicode Font for Arabic Support if available
-	hasArabic := false
-	if _, err := os.Stat(regularFontPath); err == nil {
-		if _, err := os.Stat(boldFontPath); err == nil {
-			m.AddUTF8Font("arabic", consts.Normal, regularFontPath)
-			m.AddUTF8Font("arabic", consts.Bold, boldFontPath)
-			hasArabic = true
-		}
-	}
+	m.AddUTF8Font("arabic", consts.Normal, regularFontPath)
+	m.AddUTF8Font("arabic", consts.Bold, boldFontPath)
 
-	fontFamily := "Helvetica"
-	if hasArabic {
-		fontFamily = "arabic"
-	}
+	fontFamily := "arabic"
 
 	// 1. Header (Store name & details)
 	m.Row(10, func() {
@@ -411,9 +402,15 @@ func generateA4PDF(sale domain.Sale, prefs domain.AppPreferences, savePath strin
 		})
 		m.Row(8, func() {
 			m.Col(2, func() { m.Text("#", props.Text{Align: consts.Center, Style: consts.Bold, Family: fontFamily, Size: 8}) })
-			m.Col(4, func() { m.Text("Due Date / تاريخ الاستحقاق", props.Text{Align: consts.Center, Style: consts.Bold, Family: fontFamily, Size: 8}) })
-			m.Col(3, func() { m.Text("Amount / المبلغ", props.Text{Align: consts.Center, Style: consts.Bold, Family: fontFamily, Size: 8}) })
-			m.Col(3, func() { m.Text("Status / الحالة", props.Text{Align: consts.Center, Style: consts.Bold, Family: fontFamily, Size: 8}) })
+			m.Col(4, func() {
+				m.Text("Due Date / تاريخ الاستحقاق", props.Text{Align: consts.Center, Style: consts.Bold, Family: fontFamily, Size: 8})
+			})
+			m.Col(3, func() {
+				m.Text("Amount / المبلغ", props.Text{Align: consts.Center, Style: consts.Bold, Family: fontFamily, Size: 8})
+			})
+			m.Col(3, func() {
+				m.Text("Status / الحالة", props.Text{Align: consts.Center, Style: consts.Bold, Family: fontFamily, Size: 8})
+			})
 		})
 		m.Line(1)
 		for _, inst := range sale.InstallmentPlan.Schedule {
@@ -422,9 +419,13 @@ func generateA4PDF(sale domain.Sale, prefs domain.AppPreferences, savePath strin
 				statusMark = "Paid / تم الدفع"
 			}
 			m.Row(6, func() {
-				m.Col(2, func() { m.Text(fmt.Sprintf("%d", inst.Number), props.Text{Align: consts.Center, Family: fontFamily, Size: 8}) })
+				m.Col(2, func() {
+					m.Text(fmt.Sprintf("%d", inst.Number), props.Text{Align: consts.Center, Family: fontFamily, Size: 8})
+				})
 				m.Col(4, func() { m.Text(inst.DueDate, props.Text{Align: consts.Center, Family: fontFamily, Size: 8}) })
-				m.Col(3, func() { m.Text(fmt.Sprintf("%.2f %s", inst.Amount.Float(), prefs.Currency), props.Text{Align: consts.Center, Family: fontFamily, Size: 8}) })
+				m.Col(3, func() {
+					m.Text(fmt.Sprintf("%.2f %s", inst.Amount.Float(), prefs.Currency), props.Text{Align: consts.Center, Family: fontFamily, Size: 8})
+				})
 				m.Col(3, func() { m.Text(statusMark, props.Text{Align: consts.Center, Family: fontFamily, Size: 8}) })
 			})
 		}
@@ -451,8 +452,7 @@ func generateA4PDF(sale domain.Sale, prefs domain.AppPreferences, savePath strin
 		})
 	})
 
-	err := m.OutputFileAndClose(savePath)
-	if err != nil {
+	if err := m.OutputFileAndClose(savePath); err != nil {
 		return "", fmt.Errorf("failed to save A4 PDF via Maroto: %w", err)
 	}
 
@@ -467,4 +467,3 @@ func GenerateQRCodeBase64(data string, size int) (string, error) {
 	}
 	return base64.StdEncoding.EncodeToString(png), nil
 }
-

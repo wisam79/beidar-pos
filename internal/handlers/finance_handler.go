@@ -126,6 +126,9 @@ func (h *FinanceHandler) UpdatePreferences(newPrefs domain.AppPreferences) error
 }
 
 func (h *FinanceHandler) VerifyAdminPin(pin string) (bool, error) {
+	if err := auth.Require(); err != nil {
+		return false, err
+	}
 	return h.financeService.VerifyAdminPin(pin)
 }
 
