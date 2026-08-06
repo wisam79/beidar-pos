@@ -233,7 +233,7 @@ func TestCheckFromURLInvalidJSON(t *testing.T) {
 func TestDownloadUpdateSuccess(t *testing.T) {
 	payload := []byte("fake-installer-bytes")
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write(payload)
+		_, _ = w.Write(payload)
 	}))
 	defer srv.Close()
 

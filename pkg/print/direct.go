@@ -113,7 +113,7 @@ func enumPrinterNames() ([]string, error) {
 
 	// Size-query call: fails with ERROR_INSUFFICIENT_BUFFER and reports the
 	// required buffer size in `needed`.
-	procEnumPrintersW.Call(
+		_, _, _ = procEnumPrintersW.Call(
 		flags, 0, 2, 0, 0,
 		uintptr(unsafe.Pointer(&needed)),
 		uintptr(unsafe.Pointer(&returned)),

@@ -469,7 +469,9 @@ func TestFinanceService(t *testing.T) {
 		defer cleanup()
 
 		shift, _ := s.OpenShift("staff-1", "A", domain.NewAmount(100))
-		s.CloseShift(shift.ID, domain.NewAmount(100), "C")
+		if _, err := s.CloseShift(shift.ID, domain.NewAmount(100), "C"); err != nil {
+			t.Fatalf("CloseShift failed: %v", err)
+		}
 
 		history, err := s.GetShiftHistory(10)
 		if err != nil {

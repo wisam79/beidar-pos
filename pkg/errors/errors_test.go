@@ -79,16 +79,17 @@ func TestAppError_Error_WithOptions_ReturnsJSON(t *testing.T) {
 }
 
 func TestAppError_ImplementsError(t *testing.T) {
-	var err error = pkgerrors.NewAppError(
+	appErr := pkgerrors.NewAppError(
 		pkgerrors.ModuleStaff,
 		"AUTH_FAILED",
 		"بيانات الدخول غير صحيحة",
 		"",
 		"",
 	)
-	if err == nil {
-		t.Error("Expected non-nil error")
+	if appErr == nil {
+		t.Fatal("Expected non-nil AppError")
 	}
+	var err error = appErr
 	if err.Error() == "" {
 		t.Error("Error() should return non-empty string")
 	}

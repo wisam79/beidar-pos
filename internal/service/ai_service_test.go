@@ -137,7 +137,7 @@ func TestGenerateStream(t *testing.T) {
 	backupPath := realConfigPath + ".testbackup"
 	if _, err := os.Stat(realConfigPath); err == nil {
 		_ = os.Rename(realConfigPath, backupPath)
-		defer os.Rename(backupPath, realConfigPath)
+		defer func() { _ = os.Rename(backupPath, realConfigPath) }()
 	}
 
 	// Unset environment keys that might override empty config
