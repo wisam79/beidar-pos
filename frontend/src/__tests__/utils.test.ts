@@ -213,7 +213,7 @@ describe('Date Formatting', () => {
         return d.toLocaleDateString('en-GB');
     };
 
-    const formatDateTime = (date: Date | string): string => {
+    const _formatDateTime = (date: Date | string): string => {
         const d = new Date(date);
         return d.toLocaleString('en-GB');
     };

@@ -70,7 +70,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                 } else {
                     setError("لم يتم العثور على كاميرا.");
                 }
-            } catch (err) {
+            } catch {
                 setError("فشل الوصول للكاميرا. يرجى التحقق من الصلاحيات.");
             }
         };
@@ -89,6 +89,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
             switchCamera();
             localStorage.setItem('preferred-camera-id', activeCameraId);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeCameraId]);
 
     const startScanner = async (cameraId: string) => {
@@ -159,19 +160,19 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                                 setFeedbackMessage(null);
                             }, result.success ? 800 : 2000);
                         }
-                    } catch (e) {
+                    } catch {
                         setIsProcessing(false);
                     }
                 },
-                (errorMessage: string) => { }
+                () => { }
             );
 
             try {
                 const capabilities = html5QrCode.getRunningTrackCameraCapabilities() as { torch?: boolean };
                 setHasTorch(!!capabilities.torch);
-            } catch (e) { setHasTorch(false); }
+            } catch { setHasTorch(false); }
 
-        } catch (err) {
+        } catch {
             isScanning.current = false;
             setError("تعذر تشغيل الكاميرا.");
         }

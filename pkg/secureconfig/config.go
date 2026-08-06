@@ -118,7 +118,10 @@ func Save(s *Secrets) error {
 	}
 	_ = os.MkdirAll(dir, 0755)
 
-	path := filepath.Join(dir, "secrets.enc")
+	path := configPath
+	if path == "" {
+		path = filepath.Join(dir, "secrets.enc")
+	}
 	data, err := json.Marshal(s)
 	if err != nil {
 		return err

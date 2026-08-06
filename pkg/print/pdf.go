@@ -78,8 +78,11 @@ func prepareTajawalFonts() (regularPath, boldPath string, err error) {
 	}
 
 	extract := func(name string) (string, error) {
-		target := filepath.Join(fontsDir, name)
-		if _, err := os.Stat(target); err == nil {
+		target, absErr := filepath.Abs(filepath.Join(fontsDir, name))
+		if absErr != nil {
+			target = filepath.Join(fontsDir, name)
+		}
+		if info, err := os.Stat(target); err == nil && info.Size() > 0 {
 			return target, nil
 		}
 		data, rerr := embeddedFonts.ReadFile("fonts/" + name)

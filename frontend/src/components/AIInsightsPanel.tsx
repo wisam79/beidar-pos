@@ -34,7 +34,7 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
             const result = await getQuickInsight(todayRevenue, ordersCount, lowStockCount);
             setInsight(result);
             setLastUpdate(new Date());
-        } catch (e) {
+        } catch {
             setInsight('تعذر الحصول على رؤية ذكية الآن');
         }
         setLoading(false);
@@ -62,7 +62,7 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
             );
             setDetailedAnalysis(result);
             setShowDetailed(true);
-        } catch (e) {
+        } catch {
             setDetailedAnalysis('تعذر تحميل التحليل المفصل');
         }
         setLoading(false);

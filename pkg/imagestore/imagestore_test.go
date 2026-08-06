@@ -65,6 +65,11 @@ func TestImageStore(t *testing.T) {
 		// Reset state
 		imageStoreDir = ""
 		dir, _ := GetImageStoreDir()
+		if entries, err := os.ReadDir(dir); err == nil {
+			for _, entry := range entries {
+				_ = os.Remove(filepath.Join(dir, entry.Name()))
+			}
+		}
 
 		// 1. Save valid base64 image
 		dummyPngData := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="

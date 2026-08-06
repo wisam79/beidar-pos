@@ -1,5 +1,4 @@
 import * as BackupHandler from '../../../wailsjs/go/handlers/BackupHandler';
-import * as App from '../../../wailsjs/go/main/App';
 import * as Models from '../../../wailsjs/go/models';
 
 export const db = {

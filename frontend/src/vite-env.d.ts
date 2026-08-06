@@ -15,10 +15,10 @@ interface Window {
     webkitAudioContext: typeof AudioContext;
     go: {
         handlers: {
-            BackupHandler: any;
-            SettingsHandler: any;
-            PaymentHandler: any;
-            AIHandler: any;
+            BackupHandler: Record<string, unknown>;
+            SettingsHandler: Record<string, unknown>;
+            PaymentHandler: Record<string, unknown>;
+            AIHandler: Record<string, unknown>;
         };
         main: {
             App: {

@@ -230,6 +230,7 @@ export function CloudBackupSettings() {
     const handleSaveGoogleSecrets = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (CloudHandler as any).SaveGoogleOAuthSecrets(googleClientId, googleClientSecret);
             setMessage({ type: 'success', text: 'تم حفظ مفاتيح Google API بنجاح! ✅ يمكنك الآن الربط' });
             setShowGoogleConfig(false);

@@ -11,15 +11,18 @@ func TestSecureConfig(t *testing.T) {
 	origConfigPath := configPath
 	origLoadedSecrets := loadedSecrets
 	origAppData := os.Getenv("APPDATA")
+	origXdg := os.Getenv("XDG_CONFIG_HOME")
 	defer func() {
 		configPath = origConfigPath
 		loadedSecrets = origLoadedSecrets
 		os.Setenv("APPDATA", origAppData)
+		os.Setenv("XDG_CONFIG_HOME", origXdg)
 	}()
 
 	// Setup a temporary config directory using APPDATA env var
 	tmpDir := t.TempDir()
 	os.Setenv("APPDATA", tmpDir)
+	os.Setenv("XDG_CONFIG_HOME", tmpDir)
 
 	// Recompute configPath to match the temp directory
 	configPath = filepath.Join(tmpDir, "BeidarPOS_V3", "secrets.enc")
