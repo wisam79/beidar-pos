@@ -4,8 +4,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['IBM Plex Sans Arabic', 'Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ['Cairo', 'Tajawal', 'IBM Plex Sans Arabic', 'Inter', 'system-ui', 'sans-serif'],
+        cairo: ['Cairo', 'sans-serif'],
+        tajawal: ['Tajawal', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Inter', 'monospace'],
         logo: ['Lemonada', 'cursive'],
       },
       fontSize: {
@@ -31,6 +34,10 @@ export default {
         'full': '9999px',
       },
       colors: {
+        obsidian: '#0d0f14',
+        charcoal: '#151821',
+        'amber-gold': '#f5b301',
+        'safety-orange': '#ff6d00',
         primary: 'var(--color-primary)',
         'primary-fg': 'var(--color-primary-fg)',
         bg: 'var(--color-bg)',
