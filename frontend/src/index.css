@@ -1,44 +1,43 @@
 /* Force CSS rebuild to apply new Tailwind config */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Lemonada:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Lemonada:wght@300..700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-bg: #f1f5f9; /* Slate-100: Clean light mode background */
+  --color-bg: #f1f5f9; /* Slate-100: Clean, stable background with excellent contrast for white cards */
   --color-sidebar: #ffffff;
   --color-sidebar-navy: #0b1329;
   --color-sidebar-navy-border: rgba(30, 41, 59, 0.4);
   --color-sidebar-navy-hover: rgba(30, 41, 59, 0.6);
   --color-sidebar-navy-text: #94a3b8;
   --color-sidebar-navy-text-hover: #f8fafc;
-  --color-surface: #ffffff;
+  --color-surface: #ffffff; /* Solid white: Maximum contrast against Slate-100 background */
   --color-surface-hover: #f8fafc;
   --color-surface-active: #e2e8f0;
-  --color-border: #cbd5e1;
-  --color-text-main: #0f172a;
-  --color-text-muted: #475569;
+  --color-border: #cbd5e1; /* Slate-300: High-contrast, clean, formal borders */
+  --color-text-main: #0f172a; /* Slate-900: Deep and authoritative */
+  --color-text-muted: #475569; /* Slate-600: Highly readable */
   --color-input-bg: #ffffff;
-  --color-primary: #f5b301; /* Amber/Gold Accent */
-  --color-primary-fg: #0d0f14;
-  --color-primary-dim: rgba(245, 179, 1, 0.12);
-  --color-primary-rgb: 245, 179, 1;
-  --color-secondary-accent: #ff6d00; /* Safety Orange Accent */
-  --color-danger: #ef4444;
-  --color-danger-dim: rgba(239, 68, 68, 0.12);
-  --color-success: #22c55e;
-  --color-success-dim: rgba(34, 197, 94, 0.12);
-  --color-warning: #eab308;
-  --color-warning-dim: rgba(234, 179, 8, 0.12);
-  --color-info: #3b82f6;
-  --color-info-dim: rgba(59, 130, 246, 0.12);
+  --color-primary: #1e40af; /* Blue-800: Classic royal/governmental blue */
+  --color-primary-fg: #ffffff;
+  --color-primary-dim: rgba(30, 64, 175, 0.08);
+  --color-primary-rgb: 30, 64, 175;
+  --color-danger: #b91c1c; /* Red-700: Formal danger red */
+  --color-danger-dim: rgba(185, 28, 28, 0.08);
+  --color-success: #047857; /* Emerald-700: Formal success green */
+  --color-success-dim: rgba(4, 120, 87, 0.08);
+  --color-warning: #b45309; /* Amber-700: Formal warning orange */
+  --color-warning-dim: rgba(180, 83, 9, 0.08);
+  --color-info: #1d4ed8; /* Blue-700: Formal info blue */
+  --color-info-dim: rgba(29, 78, 216, 0.08);
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0 4px 10px -2px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 10px 20px -3px rgba(15, 23, 42, 0.08);
-  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.08);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04); /* Sharper, cleaner shadow */
+  --shadow-md: 0 4px 10px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 20px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* Faster, more stable ease-out */
 
   /* 🚀 shadcn/ui Variable Mapping - Light Mode */
   --background: var(--color-bg);
@@ -64,32 +63,22 @@
 }
 
 [data-theme='dark'] {
-  --color-bg: #0d0f14; /* Obsidian base background - design.md §2.1 */
-  --color-sidebar: #151821; /* Charcoal surface */
-  --color-sidebar-navy: #0d0f14;
-  --color-sidebar-navy-border: #1e2330;
-  --color-sidebar-navy-hover: #1c202c;
-  --color-sidebar-navy-text: #8b90a0;
-  --color-sidebar-navy-text-hover: #f2f2f2;
-  --color-surface: #151821; /* Charcoal card/panel background */
-  --color-surface-hover: #1c202c;
-  --color-surface-active: #242938;
-  --color-border: #1e2330;
-  --color-text-main: #f2f2f2; /* High-contrast text */
-  --color-text-muted: #8b90a0; /* Muted gray text */
-  --color-input-bg: #11131a;
-  --color-primary: #f5b301; /* Amber/Gold signature POS accent */
-  --color-primary-fg: #0d0f14;
-  --color-primary-dim: rgba(245, 179, 1, 0.15);
-  --color-secondary-accent: #ff6d00; /* Safety Orange */
-  --color-danger: #ef4444;
-  --color-danger-dim: rgba(239, 68, 68, 0.15);
-  --color-success: #22c55e;
-  --color-success-dim: rgba(34, 197, 94, 0.15);
-  --color-warning: #eab308;
-  --color-warning-dim: rgba(234, 179, 8, 0.15);
-  --color-info: #3b82f6;
-  --color-info-dim: rgba(59, 130, 246, 0.15);
+  --color-bg: #141414; /* Antigravity deep charcoal background */
+  --color-sidebar: #1e1e1e; /* Antigravity clean editor surface */
+  --color-sidebar-navy: #141414;
+  --color-sidebar-navy-border: #2d2d2d; /* Subtle dark panel borders */
+  --color-sidebar-navy-hover: #262626;
+  --color-sidebar-navy-text: #8e8e8e;
+  --color-sidebar-navy-text-hover: #ffffff;
+  --color-surface: #1e1e1e; /* Antigravity card/editor panel background */
+  --color-surface-hover: #262626;
+  --color-surface-active: #2d2d2d;
+  --color-border: #2d2d2d; /* Subtle, stable panel borders instead of thick lines */
+  --color-text-main: #f3f4f6; /* High contrast text */
+  --color-text-muted: #8e8e8e; /* Muted gray text */
+  --color-input-bg: #181818;
+  --color-primary: #3b82f6; /* Antigravity signature blue accent */
+  --color-primary-dim: rgba(59, 130, 246, 0.12);
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.6);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55);
@@ -104,7 +93,7 @@
   --popover: var(--color-surface);
   --popover-foreground: var(--color-text-main);
   --primary: var(--color-primary);
-  --primary-foreground: #0d0f14;
+  --primary-foreground: #ffffff;
   --secondary: var(--color-surface-hover);
   --secondary-foreground: var(--color-text-main);
   --muted: var(--color-surface-hover);
