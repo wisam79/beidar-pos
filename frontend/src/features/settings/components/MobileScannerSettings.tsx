@@ -22,7 +22,6 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
     const fetchStatus = async () => {
         setIsLoading(true);
         try {
-            // Check if LAN server is running
             const status = await api.lan.getServerStatus();
             if (status.running) {
                 setServerStatus({ running: true, ip: status.localIP, port: status.port });
@@ -39,7 +38,6 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
     };
 
     const generateQR = async (ip: string, port: number) => {
-        // Payload for the mobile app
         const payload = {
             ip: ip,
             port: port,
@@ -47,7 +45,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
             name: 'Desktop POS'
         };
         try {
-            const url = await QRCode.toDataURL(JSON.stringify(payload), { width: 300, margin: 2 });
+            const url = await QRCode.toDataURL(JSON.stringify(payload), { width: 280, margin: 2 });
             setQrData(url);
         } catch (e) {
             console.error(e);
@@ -58,7 +56,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
         setIsLoading(true);
         try {
             await api.lan.startServer();
-            await new Promise(r => setTimeout(r, 1000)); // Wait for start
+            await new Promise(r => setTimeout(r, 1000));
             notify('تم تشغيل سيرفر الاتصال بنجاح', 'success');
             fetchStatus();
         } catch (e) {
@@ -73,59 +71,59 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
     }, []);
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-border">
-                <div>
-                    <h2 className="text-2xl font-bold flex items-center gap-3">
-                        <span className="p-2 bg-primary/10 rounded-lg text-primary">
-                            <Smartphone size={24} />
-                        </span>
-                        الماسح الضوئي بالجوال
-                    </h2>
-                    <p className="text-text-muted mt-1 text-sm">اجعل هاتفك قارئ باركود لاسلكي متصل بالنظام</p>
+        <div className="space-y-5 animate-in fade-in duration-300 pb-8 select-none">
+            {/* Header Banner */}
+            <div className="bg-surface border border-border/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <Smartphone size={22} />
+                    </div>
+                    <div>
+                        <h2 className="text-base font-black text-text-main">الماسح الضوئي بالجوال (Mobile Barcode)</h2>
+                        <p className="text-text-muted text-xs font-semibold">تحويل كاميرا الهاتف إلى قارئ باركود لاسلكي متصل بالنظام</p>
+                    </div>
                 </div>
                 <button
                     onClick={fetchStatus}
                     disabled={isLoading}
                     title="تحديث الحالة"
                     aria-label="تحديث الحالة"
-                    className="p-2 text-text-muted hover:text-primary hover:bg-surface rounded-lg transition-all"
+                    className="p-2.5 text-text-muted hover:text-emerald-400 hover:bg-surface-hover border border-border/60 rounded-xl transition-colors cursor-pointer"
                 >
-                    <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
+                    <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
                 </button>
             </div>
 
-            {/* Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-                {/* Right: Instructions & Controls */}
-                <div className="space-y-6">
-                    <div className={`p-6 rounded-lg border transition-all ${serverStatus.running
-                        ? 'bg-green-500/5 border-green-500/20'
-                        : 'bg-surface border-border'
+                {/* Instructions & Status */}
+                <div className="space-y-5">
+                    <div className={`p-5 rounded-2xl border ${serverStatus.running
+                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                        : 'bg-surface border-border/80'
                         }`}>
-                        <div className="flex items-start gap-4">
-                            <div className={`mt-1 p-2 rounded-full ${serverStatus.running ? 'bg-green-500/20 text-green-500' : 'bg-text-muted/10 text-text-muted'}`}>
-                                <Wifi size={24} />
+                        <div className="flex items-start gap-3.5">
+                            <div className={`p-2.5 rounded-xl border ${serverStatus.running ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' : 'bg-surface-hover border-border/60 text-text-muted'}`}>
+                                <Wifi size={22} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="font-bold text-lg mb-1">
-                                    {serverStatus.running ? 'الاتصال جاهز' : 'الخدمة متوقفة'}
+                                <h3 className="font-black text-base text-text-main mb-1">
+                                    {serverStatus.running ? 'خدمة الاتصال اللاسلكي متصلة' : 'خدمة الاتصال متوقفة حالياً'}
                                 </h3>
-                                <p className="text-sm text-text-muted mb-4 opacity-90 leading-relaxed">
+                                <p className="text-xs text-text-muted font-medium mb-3 leading-relaxed">
                                     {serverStatus.running
-                                        ? `النظام جاهز لاستقبال المسح. IP: ${serverStatus.ip}`
-                                        : 'يجب تشغيل خدمة الاتصال (LAN) أولاً لكي يتمكن الهاتف من العثور على الكمبيوتر.'}
+                                        ? `عنوان خادم الباركود: ${serverStatus.ip}`
+                                        : 'يجب تشغيل خدمة الشبكة المحلية (LAN) ليتمكن هاتفك المحمول من الاقتران بالنظام.'}
                                 </p>
 
                                 {!serverStatus.running && (
                                     <button
                                         onClick={startServer}
                                         disabled={isLoading}
-                                        className="bg-primary text-black px-6 py-2.5 rounded-lg font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+                                        className="bg-emerald-500 text-black px-5 py-2.5 min-h-[44px] rounded-xl font-black text-xs hover:bg-emerald-400 active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2 border border-emerald-400"
                                     >
-                                        تشغيل الخدمة
+                                        تشغيل الخدمة الآن
                                         {isLoading && <Loader2 size={16} className="animate-spin" />}
                                     </button>
                                 )}
@@ -133,50 +131,45 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
                         </div>
                     </div>
 
-                    <div className="bg-surface rounded-lg p-6 border border-border">
-                        <h4 className="font-bold flex items-center gap-2 mb-4">
-                            <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs">1</span>
-                            خطوات الربط
+                    <div className="bg-surface rounded-2xl p-5 sm:p-6 border border-border/80">
+                        <h4 className="font-black text-sm text-text-main flex items-center gap-2 mb-4">
+                            <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-mono font-black">1</span>
+                            خطوات ربط القارئ بالجوال
                         </h4>
-                        <ul className="space-y-4 text-sm text-text-muted">
-                            <li className="flex gap-3">
-                                <CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" />
-                                <span>حمل تطبيق <b>Beidar Scanner</b> على هاتفك.</span>
+                        <ul className="space-y-3.5 text-xs font-semibold text-text-muted">
+                            <li className="flex gap-3 items-center">
+                                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                                <span>تأكد من فتح تطبيق <b>Beidar Scanner</b> على الهاتف المحمول.</span>
                             </li>
-                            <li className="flex gap-3">
-                                <CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" />
-                                <span>تأكد أن الهاتف والكمبيوتر متصلان بنفس شبكة الواي فاي.</span>
+                            <li className="flex gap-3 items-center">
+                                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                                <span>تأكد من اتصال الكمبيوتر والهاتف بنفس شبكة الواي فاي المحلية.</span>
                             </li>
-                            <li className="flex gap-3">
-                                <CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" />
-                                <span>افتح التطبيق وامسح رمز QR الظاهر على اليسار.</span>
+                            <li className="flex gap-3 items-center">
+                                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                                <span>امسح كود QR الظاهر في اللوحة المقابلة بواسطة كاميرا التطبيق.</span>
                             </li>
                         </ul>
                     </div>
                 </div>
 
-                {/* Left: QR Code */}
-                <div className="flex flex-col items-center justify-center p-8 bg-white rounded-lg border-4 border-gray-100 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-emerald-400"></div>
-
+                {/* Left: QR Code Display */}
+                <div className="flex flex-col items-center justify-center p-6 bg-surface rounded-2xl border border-border/80 text-center">
                     {serverStatus.running && qrData ? (
                         <>
-                            <div className="relative">
-                                <img src={qrData} alt="Pairing QR" className="w-64 h-64 object-contain mix-blend-multiply opacity-90 group-hover:opacity-100 transition-opacity" />
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <Smartphone className="text-primary opacity-10 w-24 h-24" />
-                                </div>
+                            <div className="bg-white p-4 rounded-xl border border-gray-200">
+                                <img src={qrData} alt="Pairing QR" className="w-56 h-56 object-contain" />
                             </div>
-                            <p className="mt-6 text-gray-500 font-mono text-xs bg-gray-100 px-3 py-1 rounded-full">
+                            <p className="mt-4 text-emerald-400 font-mono text-xs font-black bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-xl dir-ltr">
                                 {serverStatus.ip}:{serverStatus.port}
                             </p>
                         </>
                     ) : (
-                        <div className="text-center py-12">
-                            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                                <QrCode size={40} />
+                        <div className="text-center py-10">
+                            <div className="w-16 h-16 bg-surface-hover rounded-2xl border border-border/60 flex items-center justify-center mx-auto mb-3 text-text-muted">
+                                <QrCode size={32} />
                             </div>
-                            <p className="text-gray-400 font-medium">رمز QR سيظهر هنا عند تشغيل الخدمة</p>
+                            <p className="text-text-muted text-xs font-bold">سيظهر رمز QR بمجرد تفعيل خدمة الاتصال</p>
                         </div>
                     )}
                 </div>

@@ -215,40 +215,40 @@ export const SettingsPage: React.FC = () => {
             <DiscountManager isOpen={showDiscountManager} onClose={() => setShowDiscountManager(false)} notify={notify} />
             <StaffManager isOpen={showStaffManager} onClose={() => setShowStaffManager(false)} notify={notify} />
 
-            <div className="flex gap-4 flex-1 min-h-0">
+            <div className="flex gap-4 flex-1 min-h-0 select-none">
                 {/* Sidebar - Redesigned & Organized */}
-                <div className="w-56 xl:w-60 shrink-0 flex flex-col h-full bg-surface border border-border rounded-lg p-3 shadow-xl shadow-black/5">
+                <div className="w-56 xl:w-64 shrink-0 flex flex-col h-full bg-surface border border-border/80 rounded-2xl p-3.5">
 
                     {/* Sidebar Header */}
-                    <div className="mb-3 pb-3 border-b border-border">
-                        <h1 className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-500 flex items-center gap-2">
-                            ⚙️ الإعدادات
+                    <div className="mb-3 pb-3 border-b border-border/60">
+                        <h1 className="text-lg font-black text-text-main flex items-center gap-2">
+                            <span className="text-emerald-400">⚙️</span> الإعدادات
                         </h1>
-                        <p className="text-[9px] text-text-muted mt-0.5">تخصيص النظام</p>
+                        <p className="text-[10px] text-text-muted mt-0.5 font-bold">تخصيص الخيارات والنظام</p>
                     </div>
 
                     {/* Save Button */}
                     <button
                         onClick={handleSave}
                         disabled={!hasChanges}
-                        className={`w-full mb-4 px-3 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all duration-300 text-xs shadow-md ${hasChanges
-                            ? 'bg-gradient-to-r from-primary to-emerald-400 text-black hover:scale-[1.02] active:scale-95 shadow-primary/30'
-                            : 'bg-surface text-text-muted border border-border cursor-not-allowed opacity-70'
+                        className={`w-full mb-3.5 min-h-[48px] px-4 py-3 rounded-xl font-black flex items-center justify-center gap-2 transition-all duration-150 text-xs cursor-pointer active:scale-[0.98] ${hasChanges
+                            ? 'bg-emerald-500 text-black border border-emerald-400 hover:bg-emerald-400'
+                            : 'bg-surface-hover text-text-muted border border-border/60 cursor-not-allowed opacity-60'
                             }`}
                     >
-                        <Save size={16} className={hasChanges ? 'animate-pulse' : ''} />
+                        <Save size={18} className={hasChanges ? 'animate-pulse' : ''} />
                         {hasChanges ? 'حفظ التغييرات' : 'محفوظ ✓'}
                     </button>
 
                     {/* Navigation Items Grouped */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-3.5">
                         {menuGroups.map((group, idx) => (
                             <div key={idx} className="space-y-1">
-                                <h3 className="text-[9px] font-black text-text-muted uppercase tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
-                                    <span className="w-1 h-1 rounded-full bg-primary/50"></span>
+                                <h3 className="text-[10px] font-black text-text-muted uppercase tracking-widest px-2 mb-1 flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                                     {group.title}
                                 </h3>
-                                <div className="space-y-0.5">
+                                <div className="space-y-1">
                                     {group.items.map(item => (
                                         <SidebarItem
                                             key={item.id}
@@ -263,25 +263,21 @@ export const SettingsPage: React.FC = () => {
                     </div>
 
                     {/* Pro Badge - Bottom Footer */}
-                    <div className="pt-3 mt-auto border-t border-border">
-                        <div
-                            className="relative bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/10 rounded-lg p-3 overflow-hidden group hover:border-amber-500/30 transition-all cursor-default"
-                        >
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-md flex items-center justify-center shadow-md shadow-amber-500/20 group-hover:scale-110 transition-transform duration-500">
-                                    <Sparkles size={14} className="text-black" />
-                                </div>
-                                <div>
-                                    <h5 className="font-bold text-amber-500 text-[10px]">النسخة الذهبية</h5>
-                                    <p className="text-[8px] text-text-muted">Pro Edition</p>
-                                </div>
+                    <div className="pt-3 mt-auto border-t border-border/60">
+                        <div className="bg-surface-hover/70 border border-amber-500/30 rounded-xl p-3 flex items-center gap-2.5">
+                            <div className="w-8 h-8 bg-amber-500/15 border border-amber-500/30 text-amber-400 rounded-lg flex items-center justify-center font-black">
+                                <Sparkles size={16} />
+                            </div>
+                            <div>
+                                <h5 className="font-black text-amber-400 text-xs">النسخة الاحترافية</h5>
+                                <p className="text-[9px] text-text-muted font-bold">Pro Edition</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 bg-surface border border-border shadow-sm overflow-hidden relative">
+                {/* Content Pane */}
+                <div className="flex-1 bg-surface border border-border/80 rounded-2xl overflow-hidden relative">
                     <div className="absolute inset-0 overflow-y-auto custom-scrollbar p-5">
 
                         {activeTab === 'store' && (

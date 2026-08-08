@@ -191,7 +191,7 @@ describe('ProductCard Component', () => {
         );
 
         expect(screen.getByText('3')).toBeInTheDocument();
-        const statusSpan = container.querySelector('.bg-warning\\/15');
+        const statusSpan = container.querySelector('.bg-amber-500\\/15');
         expect(statusSpan).toBeInTheDocument();
     });
 
@@ -218,7 +218,7 @@ describe('ProductCard Component', () => {
             />
         );
 
-        const checkOverlay = container.querySelector('.bg-primary\\/10');
+        const checkOverlay = container.querySelector('.bg-emerald-500\\/20');
         expect(checkOverlay).toBeInTheDocument();
     });
 

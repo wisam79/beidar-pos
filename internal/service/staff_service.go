@@ -653,11 +653,6 @@ func (s *staffService) SeedDefaultAdmin() error {
 	}
 
 	if count == 0 {
-		initialPIN, err := generateRandomPIN(6)
-		if err != nil {
-			return err
-		}
-
 		admin := domain.Staff{
 			Name:          "المدير",
 			Username:      "admin",
@@ -665,11 +660,29 @@ func (s *staffService) SeedDefaultAdmin() error {
 			Active:        true,
 			MustChangePin: true,
 		}
-		_, err = s.CreateStaff(admin, initialPIN)
+		_, err = s.CreateStaff(admin, "0000")
 		if err != nil {
 			return err
 		}
+		return nil
 	}
+
+	// Auto-heal: if admin was seeded with the old random PIN and never
+	// logged in, reset their password to "0000" so the user can access
+	// the app. This covers existing installations that hit the bug.
+	admin, err := s.staffRepo.GetByUsername("admin")
+	if err != nil {
+		return nil // no admin user found — nothing to heal
+	}
+	if admin.LastLogin == 0 && admin.MustChangePin && admin.Role == domain.RoleAdmin {
+		hash, err := bcrypt.GenerateFromPassword([]byte("0000"), bcrypt.DefaultCost)
+		if err != nil {
+			return nil
+		}
+		admin.PasswordHash = string(hash)
+		_ = s.staffRepo.Update(admin)
+	}
+
 	return nil
 }
 

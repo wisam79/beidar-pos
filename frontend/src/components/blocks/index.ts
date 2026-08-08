@@ -8,8 +8,8 @@ export { PageShell } from './PageShell';
 export { SectionCard } from './SectionCard';
 
 // Data Display
-export { StatsGrid, StatCard } from './StatsGrid';
-export type { StatColor } from './StatsGrid';
+export { StatsGrid, StatCard, MiniCard } from './StatsGrid';
+export type { StatColor, MiniCardProps } from './StatsGrid';
 
 // Navigation & Filtering
 export { FilterBar, SearchInput, SegmentedControl } from './FilterBar';

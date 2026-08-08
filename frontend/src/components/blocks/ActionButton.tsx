@@ -22,26 +22,29 @@ interface ActionButtonProps {
 
 const variantClasses: Record<ButtonVariant, string> = {
     primary: `
-        bg-primary text-primary-fg hover:brightness-[1.03]
-        shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30
-        border border-primary/10
+        bg-emerald-500 text-black hover:bg-emerald-400
+        border border-emerald-400/60
+        active:scale-[0.98]
     `,
     secondary: `
         bg-surface hover:bg-surface-hover text-text-main
-        border border-border
-        shadow-sm hover:shadow-md
+        border border-border/80
+        active:scale-[0.98]
     `,
     danger: `
-        bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white
-        border border-red-500/20 shadow-sm
+        bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white
+        border border-red-500/30
+        active:scale-[0.98]
     `,
     ghost: `
         bg-transparent hover:bg-surface-hover text-text-muted hover:text-text-main
         border border-transparent
+        active:scale-[0.98]
     `,
     icon: `
         bg-surface hover:bg-surface-hover text-text-muted hover:text-text-main
-        border border-border shadow-sm
+        border border-border/80
+        active:scale-[0.98]
     `,
 };
 
@@ -66,17 +69,17 @@ export const ActionButton = memo(({
             title={title}
             className={`
                 ${variantClasses[variant]}
-                ${isIconOnly ? 'w-11 h-11 p-0 justify-center' : 'px-5 py-2.5 gap-2'}
-                rounded-full font-black text-sm
-                flex items-center justify-center
-                transition-all duration-300 ease-[var(--ease-spring)]
-                active:scale-95 touch-target
+                ${isIconOnly ? 'w-12 h-12 p-0 justify-center' : 'px-6 py-3 min-h-[48px] gap-2.5'}
+                rounded-2xl font-black text-sm select-none
+                flex items-center justify-center tracking-tight
+                transition-all duration-150 ease-out
+                touch-target outline-none cursor-pointer
                 disabled:opacity-40 disabled:pointer-events-none
                 ${block ? 'w-full' : ''}
                 ${className}
             `}
         >
-            {Icon && <Icon size={isIconOnly ? 20 : 16} />}
+            {Icon && <Icon size={isIconOnly ? 22 : 18} className="shrink-0" />}
             {children}
         </button>
     );

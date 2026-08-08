@@ -65,15 +65,8 @@ const App = () => {
 
   // Global native desktop hardening
   useEffect(() => {
-    // 1. Block right click globally except for input text selection
-    const preventContextMenu = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (['INPUT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable) {
-        return;
-      }
-      e.preventDefault();
-    };
-    document.addEventListener('contextmenu', preventContextMenu);
+    // Allow native/context menu interactions
+    // (Right click enabled)
 
     // 2. Block pinch-to-zoom and Ctrl+Wheel zoom gestures
     const preventZoom = (e: WheelEvent) => {
@@ -133,7 +126,6 @@ const App = () => {
     document.addEventListener('focusin', disableInputAssist);
 
     return () => {
-      document.removeEventListener('contextmenu', preventContextMenu);
       document.removeEventListener('wheel', preventZoom);
       window.removeEventListener('keydown', preventKeys);
       window.removeEventListener('keydown', preventBackspace);

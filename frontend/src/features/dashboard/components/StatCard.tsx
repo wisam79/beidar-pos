@@ -26,44 +26,41 @@ export const StatCard: React.FC<StatCardProps> = ({
     onClick,
     variant = 'default',
 }) => {
-    // تنسيقات بسيطة بدون تدرجات مفرطة
     const iconBgColors = {
-        default: 'bg-primary/10 text-primary',
-        primary: 'bg-primary/15 text-primary',
-        danger: 'bg-red-500/10 text-red-500',
+        default: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+        primary: 'bg-primary/10 border-primary/20 text-primary',
+        danger: 'bg-red-500/10 border-red-500/20 text-red-400',
     };
 
     const borderColors = {
-        default: 'border-border hover:border-primary/30',
-        primary: 'border-primary/20 hover:border-primary/40',
-        danger: 'border-red-500/20 hover:border-red-500/40',
+        default: 'border-border/80 hover:border-emerald-500/30',
+        primary: 'border-border/80 hover:border-primary/40',
+        danger: 'border-red-500/30 hover:border-red-500/50',
     };
 
     return (
         <div
             onClick={onClick}
             className={`
-                bg-surface border rounded-xl p-3 
-                flex flex-col justify-between 
-                cursor-pointer transition-all duration-200
-                hover:shadow-sm
+                bg-surface border rounded-2xl p-4 sm:p-4.5 
+                flex flex-col justify-between select-none
+                transition-transform duration-150
+                ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''}
                 ${borderColors[variant]}
             `}
         >
-            {/* أيقونة بسيطة */}
-            <div className={`p-1.5 rounded-lg w-fit ${iconBgColors[variant]}`}>
+            <div className={`p-2.5 rounded-xl border w-fit ${iconBgColors[variant]}`}>
                 {icon}
             </div>
 
-            {/* المحتوى */}
-            <div className="mt-2">
-                <p className="text-[11px] text-text-muted font-bold mb-1">{label}</p>
-                <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-black text-text-main font-mono leading-none">
+            <div className="mt-3">
+                <p className="text-[11px] text-text-muted font-extrabold mb-1">{label}</p>
+                <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl font-black text-text-main font-mono leading-none tracking-tight">
                         {value}
                     </span>
                     {subtext && (
-                        <span className="text-[11px] text-text-muted">{subtext}</span>
+                        <span className="text-[10px] text-text-muted font-bold">{subtext}</span>
                     )}
                 </div>
             </div>

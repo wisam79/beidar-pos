@@ -46,8 +46,8 @@ func TestStaffCRUDAndAuth(t *testing.T) {
 		if !admin.MustChangePin {
 			t.Error("Seeded admin must require a PIN change on first login")
 		}
-		if bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte("0000")) == nil {
-			t.Error("Seeded admin must not use the default PIN '0000'")
+		if bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte("0000")) != nil {
+			t.Error("Seeded admin must use initial PIN '0000'")
 		}
 	})
 

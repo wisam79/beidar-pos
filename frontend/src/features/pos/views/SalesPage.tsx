@@ -424,7 +424,7 @@ export const SalesPage: React.FC = () => {
                 </div>
             )}
 
-            <div className={`flex flex-col bg-surface  border-l border-border h-full transition-all duration-300 ${isZenMode ? 'w-full rounded-none shadow-none' : 'w-[380px] lg:w-[420px] xl:w-[480px] 2xl:w-[520px] rounded-l-2xl shadow-2xl overflow-hidden'}`}>
+            <div className={`flex flex-col bg-surface border-l border-border/80 h-full transition-all duration-300 ${isZenMode ? 'w-full rounded-none' : 'w-[380px] lg:w-[420px] xl:w-[480px] 2xl:w-[520px] rounded-l-2xl overflow-hidden'}`}>
                 {!isZenMode && (
                     <div className={`border-b transition-all shrink-0 ${activeShift ? 'bg-green-500/5 border-green-500/20' : 'bg-black/5 dark:bg-white/[0.01] border-border'}`}>
                         <button

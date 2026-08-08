@@ -169,34 +169,33 @@ export const Modal = memo(({ title, description, onClose, children, footer, open
 
     return createPortal(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="absolute inset-0 bg-black/70  transition-opacity duration-300 animate-in fade-in" />
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in" />
             <div
                 className={`
                     relative w-full ${maxWidth} 
-                    bg-surface border border-border
-                    rounded-[32px]
+                    bg-surface border-t border-t-white/30 dark:border-t-white/10 border-x border-x-border/60 border-b-[4px] border-b-black/80
+                    rounded-[32px] shadow-2xl
                     flex flex-col max-h-[90vh] 
                     animate-scale-in
-                    overflow-hidden
+                    overflow-hidden select-none
                     ${className}
                 `}
-                style={{ boxShadow: 'var(--shadow-xl)' }}
                 onClick={e => e.stopPropagation()}
             >
                 {(title || description) && (
-                    <div className="px-8 py-6 border-b border-border/80 flex justify-between items-center shrink-0 bg-surface">
+                    <div className="px-7 py-5 border-b border-border/60 flex justify-between items-center shrink-0 bg-surface-hover/80 min-h-[64px]">
                         <div>
-                            {title && <h2 className="text-lg font-black text-text-main tracking-tight">{title}</h2>}
-                            {description && <p className="mt-1 text-sm text-text-muted">{description}</p>}
+                            {title && <h2 className="text-xl font-extrabold text-text-main tracking-tight">{title}</h2>}
+                            {description && <p className="mt-1 text-xs text-text-muted font-medium">{description}</p>}
                         </div>
                         <div className="flex items-center gap-3">
                             <Kbd>ESC</Kbd>
-                            <button onClick={onClose} title="إغلاق" aria-label="إغلاق" className="hover:bg-bg rounded-full p-2 text-text-muted hover:text-text-main transition-colors"><X size={20} /></button>
+                            <button onClick={onClose} title="إغلاق" aria-label="إغلاق" className="w-10 h-10 flex items-center justify-center bg-surface border border-border/60 hover:bg-surface-hover rounded-2xl text-text-muted hover:text-emerald-400 transition-colors touch-target cursor-pointer"><X size={22} /></button>
                         </div>
                     </div>
                 )}
-                <div className="p-8 overflow-y-auto custom-scrollbar flex-1">{children}</div>
-                {footer && <div className="flex justify-end gap-2 border-t border-border/80 p-6 bg-surface">{footer}</div>}
+                <div className="p-6 lg:p-8 overflow-y-auto custom-scrollbar flex-1">{children}</div>
+                {footer && <div className="flex justify-end gap-3 border-t border-border/60 p-6 bg-surface-hover/50">{footer}</div>}
             </div>
         </div>,
         document.body

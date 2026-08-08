@@ -110,27 +110,30 @@ export const StatCard = memo(({
     const c = colorMap[color];
 
     return (
-        <Card
+        <div
             onClick={onClick}
-            interactive={!!onClick}
-            className="p-5 rounded-3xl flex items-center gap-4 group"
+            className={`
+                bg-surface rounded-2xl p-4 sm:p-5 flex items-center gap-4 group transition-colors duration-150 select-none
+                border border-border/80 hover:border-border
+                ${onClick ? 'cursor-pointer active:scale-[0.98] touch-target' : ''}
+            `}
         >
-            {/* Icon */}
-            <div className={`w-12 h-12 rounded-2xl ${c.iconBg} border ${c.iconBorder} flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm`}>
+            {/* Icon Pod */}
+            <div className={`w-12 h-12 rounded-xl ${c.iconBg} border ${c.iconBorder} flex items-center justify-center shrink-0`}>
                 <Icon size={22} className={c.iconText} />
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0 text-start">
-                <span className="text-[10px] font-black text-text-muted uppercase block leading-tight tracking-wider">{label}</span>
-                <div className="flex items-center justify-start gap-2 mt-1">
+                <span className="text-xs font-extrabold text-text-muted block leading-tight tracking-tight">{label}</span>
+                <div className="flex items-center justify-start gap-2.5 mt-1">
                     <span className={`font-mono font-black text-2xl ${c.valueText} leading-none tracking-tight`}>{value}</span>
                     {trend}
                 </div>
-                {subtitle && <span className="text-[9px] text-text-muted font-bold block mt-1">{subtitle}</span>}
+                {subtitle && <span className="text-[11px] text-text-muted font-semibold block mt-1">{subtitle}</span>}
                 {children}
             </div>
-        </Card>
+        </div>
     );
 });
 StatCard.displayName = 'StatCard';
@@ -164,3 +167,76 @@ export const StatsGrid = memo(({ children, columns = 4, visible = true, classNam
     );
 });
 StatsGrid.displayName = 'StatsGrid';
+
+// ═══════════════════════════════════════════════════════
+//  MiniCard Component - Touch-Optimized Compact Tile
+// ═══════════════════════════════════════════════════════
+
+export interface MiniCardProps {
+    icon?: LucideIcon;
+    label: string;
+    value: React.ReactNode;
+    subtitle?: string;
+    badge?: React.ReactNode;
+    color?: StatColor;
+    onClick?: () => void;
+    active?: boolean;
+    className?: string;
+}
+
+export const MiniCard = memo(({
+    icon: Icon,
+    label,
+    value,
+    subtitle,
+    badge,
+    color = 'primary',
+    onClick,
+    active,
+    className = ''
+}: MiniCardProps) => {
+    const c = colorMap[color];
+
+    return (
+        <div
+            onClick={onClick}
+            className={`
+                bg-surface border rounded-2xl p-3.5 flex items-center justify-between gap-3 
+                select-none transition-colors duration-150 relative overflow-hidden
+                ${active
+                    ? 'border-emerald-500/50 bg-emerald-500/5'
+                    : 'border-border/80 hover:border-border hover:bg-surface-hover/60'
+                }
+                ${onClick ? 'cursor-pointer active:scale-[0.98] min-h-[48px]' : ''}
+                ${className}
+            `}
+        >
+            <div className="flex items-center gap-3 min-w-0">
+                {Icon && (
+                    <div className={`w-9 h-9 rounded-xl ${c.iconBg} border ${c.iconBorder} flex items-center justify-center shrink-0`}>
+                        <Icon size={18} className={c.iconText} />
+                    </div>
+                )}
+                <div className="min-w-0">
+                    <p className="text-[11px] font-extrabold text-text-muted truncate leading-tight">{label}</p>
+
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <span className="font-mono font-black text-sm sm:text-base text-text-main leading-tight truncate">
+                            {value}
+                        </span>
+                        {subtitle && (
+                            <span className="text-[10px] text-text-muted font-bold truncate">{subtitle}</span>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {badge && (
+                <div className="shrink-0">
+                    {badge}
+                </div>
+            )}
+        </div>
+    );
+});
+MiniCard.displayName = 'MiniCard';

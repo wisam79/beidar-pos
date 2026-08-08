@@ -20,8 +20,8 @@ export const TabNav = memo(<T extends string>({
     onChange,
     className = '',
 }: TabNavProps<T>) => (
-    <div className={`flex border-b border-border bg-surface-hover px-6 h-12 w-full select-none ${className}`}>
-        <div className="flex gap-6 h-full items-center">
+    <div className={`flex border-b border-border/80 bg-surface/60 px-3 h-13 w-full select-none shrink-0 overflow-x-auto no-scrollbar items-center ${className}`}>
+        <div className="flex gap-2 h-full items-center">
             {tabs.map(tab => {
                 const Icon = tab.icon;
                 const isActive = active === tab.id;
@@ -29,17 +29,14 @@ export const TabNav = memo(<T extends string>({
                     <button
                         key={tab.id}
                         onClick={() => onChange(tab.id)}
-                        className={`relative h-full flex items-center gap-2 px-1 pb-0.5 text-xs font-black transition-all duration-200 touch-target focus:outline-none ${
+                        className={`flex items-center gap-2 px-4 py-2 min-h-[40px] rounded-xl text-xs md:text-sm font-extrabold transition-colors touch-target outline-none cursor-pointer ${
                             isActive
-                                ? 'text-primary'
-                                : 'text-text-muted hover:text-text-main'
+                                ? 'bg-emerald-500 text-black font-black'
+                                : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                         }`}
                     >
-                        {Icon && <Icon size={14} className={isActive ? 'text-primary' : 'text-text-muted/80'} />}
+                        {Icon && <Icon size={16} className={isActive ? 'text-black' : 'text-text-muted'} />}
                         <span>{tab.label}</span>
-                        {isActive && (
-                            <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary rounded-t-full" />
-                        )}
                     </button>
                 );
             })}

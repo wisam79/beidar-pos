@@ -145,7 +145,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
             <div className="z-20 flex shrink-0 items-center border-b bg-surface px-4 py-4">
                 <div className={`flex flex-1 items-center justify-between ${isZenMode ? 'max-w-4xl mx-auto w-full' : ''}`}>
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
                             <ShoppingCart size={22} />
                         </div>
                         <div>
@@ -208,7 +208,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                                 key={method}
                                 type="button"
                                 onClick={() => setPaymentMethod(method)}
-                                className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.98] ${paymentMethod === method ? 'border bg-surface text-text-main shadow-xs' : 'text-text-muted hover:text-text-main'}`}
+                                className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.98] ${paymentMethod === method ? 'border border-border bg-surface text-text-main font-black' : 'text-text-muted hover:text-text-main'}`}
                             >
                                 {t(`sales.${method}`)}
                             </button>

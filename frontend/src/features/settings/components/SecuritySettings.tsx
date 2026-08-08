@@ -24,69 +24,66 @@ export const SecuritySettings = ({
     onResetDatabase
 }: SecuritySettingsProps) => {
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            {/* Hero Header - Ultra Compact */}
-            <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 text-text-main shadow-sm">
-                <div className="absolute top-0 right-0 p-1 opacity-10">
-                    <ShieldCheck size={50} className="text-primary" />
-                </div>
-                <div className="relative z-10 flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg border border-primary/20 text-primary">
-                        <ShieldCheck size={18} />
+        <div className="space-y-5 animate-in fade-in duration-300 pb-8 select-none">
+            {/* Header Banner */}
+            <div className="bg-surface border border-border/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <ShieldCheck size={22} />
                     </div>
                     <div>
-                        <h2 className="text-base font-bold tracking-tight">الأمان والبيانات</h2>
-                        <p className="text-text-muted text-[10px] opacity-90">حماية النظام، إدارة الصلاحيات، والنسخ الاحتياطي</p>
+                        <h2 className="text-base font-black text-text-main">الأمان وإدارة البيانات</h2>
+                        <p className="text-text-muted text-xs font-semibold">تغيير الرمز السري، والنسخ الاحتياطي، وصلاحيات الموظفين</p>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                 {/* Access Control & PIN */}
-                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
-                            <Lock size={24} />
+                <div className="bg-surface border border-border/80 rounded-2xl p-5 sm:p-6">
+                    <div className="flex items-center gap-3 mb-5">
+                        <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <Lock size={20} />
                         </div>
-                        <h3 className="text-xl font-bold">حماية الوصول</h3>
+                        <h3 className="text-base font-black text-text-main">حماية الوصول والرمز السري</h3>
                     </div>
 
                     <div className="space-y-4">
                         <SettingInput
-                            label="رمز المدير (PIN)"
+                            label="رمز المدير (Admin PIN)"
                             value={prefs.adminPin}
                             onChange={(v: string) => handleChange('adminPin', v)}
                             type="password"
                             placeholder="أدخل 4-6 أرقام"
                             icon={Lock}
                             error={errors.adminPin}
-                            help="يُطلب عند العمليات الحساسة مثل الحذف والتهيئة"
+                            help="يُطلب عند العمليات الحساسة كالحذف والتهيئة"
                         />
                         <SettingInput
-                            label="قفل تلقائي بعد"
+                            label="القفل التلقائي للشاشة"
                             value={prefs.autoLockTime}
                             onChange={(v: string) => handleChange('autoLockTime', Number(v))}
                             type="number"
                             suffix="دقيقة"
                             icon={Clock}
-                            help="0 = معطل • عند الخمول يُقفل النظام تلقائياً"
+                            help="0 = معطل • عند الخمول يُقفل التطبيق تلقائياً"
                         />
                     </div>
                 </div>
 
                 {/* Automation & Backups */}
-                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
-                            <Clock size={24} />
+                <div className="bg-surface border border-border/80 rounded-2xl p-5 sm:p-6">
+                    <div className="flex items-center gap-3 mb-5">
+                        <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            <Clock size={20} />
                         </div>
-                        <h3 className="text-xl font-bold">النسخ الاحتياطي التلقائي</h3>
+                        <h3 className="text-base font-black text-text-main">النسخ الاحتياطي التلقائي</h3>
                     </div>
 
                     <SettingToggle
-                        label="نسخ احتياطي يومي"
-                        description="سيتم أخذ نسخة احتياطية من قاعدة البيانات تلقائياً عند فتح التطبيق مرة واحدة يومياً."
+                        label="نسخ احتياطي يومي تلقائي"
+                        description="أخذ نسخة احتياطية من كافة البيانات يومياً فور فتح النظام"
                         value={prefs.autoBackup}
                         onChange={(v) => handleChange('autoBackup', v)}
                         icon={Download}
@@ -95,96 +92,88 @@ export const SecuritySettings = ({
 
 
                 {/* Staff Management */}
-                <div className="bg-surface border border-border rounded-lg p-6 shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-primary/10 rounded-lg text-primary">
-                            <Users size={24} />
+                <div className="bg-surface border border-border/80 rounded-2xl p-5 sm:p-6 md:col-span-2">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            <Users size={20} />
                         </div>
-                        <h3 className="text-xl font-bold">الموظفين والصلاحيات</h3>
+                        <div>
+                            <h3 className="text-base font-black text-text-main">إدارة الكادر والصلاحيات</h3>
+                            <p className="text-xs text-text-muted font-medium">إضافة مستخدمين، وتحديد الأدوار وصلاحيات البيع والإلغاء</p>
+                        </div>
                     </div>
 
-                    <div className="flex-1 flex flex-col gap-4">
-                        <p className="text-sm text-text-muted leading-relaxed">
-                            إدارة حسابات الموظفين وتحديد صلاحيات دقيقة لكل مستخدم لضمان أمان البيانات وتنظيم العمل.
-                        </p>
-
-                        <button
-                            onClick={openStaffManager}
-                            className="w-full mt-auto flex items-center justify-between p-5 bg-surface border border-border hover:border-primary/30 rounded-lg hover:shadow-lg hover:shadow-primary/5 transition-all group cursor-pointer hover:bg-surface-hover"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:scale-110 transition-transform">
-                                    <Users size={24} />
-                                </div>
-                                <div className="text-right">
-                                    <h5 className="font-bold text-text-main mb-1">إدارة الموظفين</h5>
-                                    <p className="text-[10px] text-text-muted">إضافة، تعديل، وحذف المستخدمين</p>
-                                </div>
+                    <button
+                        onClick={openStaffManager}
+                        className="w-full flex items-center justify-between p-4 bg-surface-hover/60 border border-border/60 hover:border-emerald-500/40 rounded-xl transition-colors group cursor-pointer"
+                    >
+                        <div className="flex items-center gap-3.5">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                <Users size={20} />
                             </div>
-                            <ChevronLeft size={20} className="text-primary opacity-50 group-hover:opacity-100 group-hover:-translate-x-1 transition-all" />
-                        </button>
-                    </div>
+                            <div className="text-right">
+                                <h5 className="font-black text-text-main text-sm">فتح لوحة التحكم بالموظفين</h5>
+                                <p className="text-[11px] text-text-muted font-bold">إضافة وتعديل أدوار الكاشير والمدراء</p>
+                            </div>
+                        </div>
+                        <ChevronLeft size={20} className="text-text-muted group-hover:text-emerald-400 transition-colors" />
+                    </button>
                 </div>
             </div>
 
-            <h3 className="text-xl font-bold mt-8 mb-4 px-2 flex items-center gap-2">
-                <Database size={24} className="text-primary" />
-                إدارة البيانات
+            <h3 className="text-base font-black mt-6 mb-3 px-1 flex items-center gap-2 text-text-main">
+                <Database size={20} className="text-emerald-400" />
+                إدارة قاعدة البيانات والحفظ
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Export */}
                 <button
                     onClick={onExportBackup}
-                    className="flex items-center gap-4 p-6 bg-surface border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all group text-right shadow-sm hover:shadow-md"
+                    className="flex items-center gap-4 p-4 sm:p-5 bg-surface border border-border/80 rounded-2xl hover:border-emerald-500/40 transition-colors text-right cursor-pointer"
                 >
-                    <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                        <Download size={28} />
+                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                        <Download size={24} />
                     </div>
                     <div className="flex-1">
-                        <h5 className="font-bold text-text-main text-lg mb-1">تصدير نسخة احتياطية</h5>
-                        <p className="text-xs text-text-muted leading-relaxed opacity-80">حفظ نسخة كاملة من قاعدة البيانات كملف JSON آمن</p>
+                        <h5 className="font-black text-text-main text-sm mb-0.5">تصدير نسخة احتياطية</h5>
+                        <p className="text-xs text-text-muted font-medium">حفظ نسخة احتياطية كاملة من البيانات كملف خارجي</p>
                     </div>
                 </button>
 
                 {/* Import */}
                 <button
                     onClick={onRestoreBackup}
-                    className="flex items-center gap-4 p-6 bg-surface border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all group text-right shadow-sm hover:shadow-md"
+                    className="flex items-center gap-4 p-4 sm:p-5 bg-surface border border-border/80 rounded-2xl hover:border-blue-500/40 transition-colors text-right cursor-pointer"
                 >
-                    <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                        <Upload size={28} />
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                        <Upload size={24} />
                     </div>
                     <div className="flex-1">
-                        <h5 className="font-bold text-text-main text-lg mb-1">استعادة نسخة احتياطية</h5>
-                        <p className="text-xs text-text-muted leading-relaxed opacity-80">استرجاع البيانات من ملف محفوظ مسبقاً</p>
+                        <h5 className="font-black text-text-main text-sm mb-0.5">استعادة نسخة احتياطية</h5>
+                        <p className="text-xs text-text-muted font-medium">استرجاع قاعدة البيانات من ملف محفوظ سابقاً</p>
                     </div>
                 </button>
             </div>
 
             {/* Danger Zone */}
-            <div className="mt-8 bg-red-500/5 rounded-lg border border-red-500/20 p-8 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/50 to-transparent opacity-50" />
-
-                <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="mt-6 bg-red-500/10 rounded-2xl border border-red-500/20 p-5 sm:p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-5">
                     <div className="flex-1">
-                        <h4 className="font-black text-2xl text-red-600 mb-2 flex items-center gap-3">
-                            <AlertTriangle size={28} /> منطقة الخطر
+                        <h4 className="font-black text-base text-red-400 mb-1 flex items-center gap-2">
+                            <AlertTriangle size={22} /> منطقة العمليات الحساسة (Danger Zone)
                         </h4>
-                        <p className="text-sm text-text-muted leading-relaxed max-w-xl">
-                            الإجراءات هنا حرجة جداً ولا يمكن التراجع عنها. تأكد تماماً قبل القيام بأي عملية، وينصح دائماً بأخذ نسخة احتياطية أولاً.
+                        <p className="text-xs text-text-muted font-medium leading-relaxed max-w-xl">
+                            تهيئة النظام ستؤدي لمسح جميع الفواتير والمنتجات وإعادة التطبيق لحالة ضبط المصنع.
                         </p>
                     </div>
 
                     <button
                         onClick={onResetDatabase}
-                        className="flex-shrink-0 flex items-center gap-4 px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg shadow-red-500/20 hover:shadow-red-600/30 transition-all transform hover:scale-[1.02] active:scale-95"
+                        className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 min-h-[48px] bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-xs transition-transform active:scale-[0.98] cursor-pointer"
                     >
-                        <Trash2 size={24} />
-                        <div className="text-right">
-                            <h5 className="font-bold text-sm">تهيئة النظام بالكامل</h5>
-                            <p className="text-[10px] text-red-200">Factory Reset</p>
-                        </div>
+                        <Trash2 size={18} />
+                        <span>تهيئة النظام ومسح البيانات</span>
                     </button>
                 </div>
             </div>

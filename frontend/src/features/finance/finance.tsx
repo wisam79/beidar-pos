@@ -320,12 +320,12 @@ export const FinancePage: React.FC = () => {
                     <Button
                         onClick={() => setShowStats(!showStats)}
                         variant={showStats ? 'secondary' : 'primary'}
-                        className={`h-10 w-10 p-0 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                            !showStats ? 'bg-gradient-to-br from-primary to-emerald-500 border-transparent text-black hover:scale-105 shadow-md shadow-primary/25' : ''
+                        className={`h-10 w-10 p-0 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
+                            showStats ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-surface border-border/80 text-text-muted hover:text-text-main'
                         }`}
                         title={showStats ? 'إخفاء الإحصائيات' : 'عرض التحليل المالي'}
                     >
-                        <LayoutDashboard size={showStats ? 18 : 20} />
+                        <LayoutDashboard size={18} />
                     </Button>
                 </div>
             } />
@@ -339,7 +339,7 @@ export const FinancePage: React.FC = () => {
             </StatsGrid>
 
             {/* Main Content */}
-            <div className="flex-1 min-h-0 bg-surface border border-border rounded-2xl flex flex-col overflow-hidden shadow-sm">
+            <div className="flex-1 min-h-0 bg-surface border border-border/80 rounded-2xl flex flex-col overflow-hidden">
                 {/* Tab Navigation */}
                 <TabNav
                     tabs={[

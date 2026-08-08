@@ -123,7 +123,7 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
                 <button
                     type="button"
                     onClick={() => setSelectedCategory(t('common.all'))}
-                    className={`h-10 whitespace-nowrap rounded-full px-5 text-xs font-black transition active:scale-[0.98] ${selectedCategory === t('common.all') ? 'bg-primary text-primary-fg shadow-sm' : 'bg-surface text-text-muted hover:bg-surface-hover hover:text-text-main shadow-sm'}`}
+                    className={`h-10 whitespace-nowrap rounded-xl px-5 text-xs font-black transition active:scale-[0.98] border ${selectedCategory === t('common.all') ? 'bg-emerald-500 text-black border-emerald-400' : 'bg-surface text-text-muted border-border/80 hover:bg-surface-hover hover:text-text-main'}`}
                 >
                     {t('common.all')}
                 </button>
@@ -132,7 +132,7 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
                         key={category.id || category.name}
                         type="button"
                         onClick={() => setSelectedCategory(category.name)}
-                        className={`h-10 whitespace-nowrap rounded-full px-5 text-xs font-black transition active:scale-[0.98] ${selectedCategory === category.name ? 'bg-primary text-primary-fg shadow-sm' : 'bg-surface text-text-muted hover:bg-surface-hover hover:text-text-main shadow-sm'}`}
+                        className={`h-10 whitespace-nowrap rounded-xl px-5 text-xs font-black transition active:scale-[0.98] border ${selectedCategory === category.name ? 'bg-emerald-500 text-black border-emerald-400' : 'bg-surface text-text-muted border-border/80 hover:bg-surface-hover hover:text-text-main'}`}
                     >
                         {category.name}
                     </button>

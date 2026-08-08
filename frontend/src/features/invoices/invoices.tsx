@@ -203,7 +203,7 @@ export const InvoicesPage: React.FC = () => {
             </StatsGrid>
 
             {/* Invoices Table - Standard Unified Style */}
-            <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+            <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden flex-1 flex flex-col min-h-0">
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {salesData.length === 0 ? (
                         <EmptyState

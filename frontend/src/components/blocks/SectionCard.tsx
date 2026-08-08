@@ -27,19 +27,19 @@ export const SectionCard = memo(({
     noPadding,
     className = '',
 }: SectionCardProps) => (
-    <div className={`bg-surface border border-border rounded-3xl shadow-sm flex flex-col overflow-hidden ${className}`}>
+    <div className={`bg-surface border border-border/80 rounded-2xl flex flex-col overflow-hidden ${className}`}>
         {/* Optional Header */}
         {(title || headerActions) && (
-            <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between shrink-0 bg-surface-hover">
-                <div className="flex items-center gap-2.5">
+            <div className="px-5 py-3.5 border-b border-border/60 flex items-center justify-between shrink-0 bg-surface/50 min-h-[52px]">
+                <div className="flex items-center gap-3">
                     {Icon && (
-                        <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                            <Icon size={16} />
+                        <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                            <Icon size={18} />
                         </div>
                     )}
                     <div>
-                        {title && <h3 className="text-sm font-black text-text-main tracking-tight">{title}</h3>}
-                        {subtitle && <p className="text-[10px] text-text-muted mt-0.5">{subtitle}</p>}
+                        {title && <h3 className="text-sm font-extrabold text-text-main tracking-tight">{title}</h3>}
+                        {subtitle && <p className="text-xs text-text-muted mt-0.5 font-medium">{subtitle}</p>}
                     </div>
                 </div>
                 {headerActions}
@@ -47,7 +47,7 @@ export const SectionCard = memo(({
         )}
 
         {/* Body */}
-        <div className={noPadding ? '' : 'p-4'}>
+        <div className={noPadding ? '' : 'p-5 lg:p-6'}>
             {children}
         </div>
     </div>

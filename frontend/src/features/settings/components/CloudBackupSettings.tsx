@@ -299,7 +299,7 @@ export function CloudBackupSettings() {
     };
 
     return (
-        <div className="space-y-5 animate-in fade-in duration-500 pb-10">
+        <div className="space-y-5 animate-in fade-in duration-300 pb-8 select-none">
             {/* Confirm Modal */}
             <ConfirmModal
                 isOpen={confirmState.open}
@@ -310,56 +310,45 @@ export function CloudBackupSettings() {
                 onCancel={closeConfirm}
             />
 
-            {/* Hero Header - Ultra Compact */}
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 text-text-main shadow-sm">
-                <div className="absolute top-0 right-0 p-1 opacity-10">
-                    <Cloud size={50} className="text-primary" />
-                </div>
-                <div className="relative z-10 flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 dark:bg-white/5 rounded-lg border border-primary/20 dark:border-white/10 text-primary">
-                        <Cloud size={18} />
+            {/* Header Banner */}
+            <div className="bg-surface border border-border/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <Cloud size={22} />
                     </div>
                     <div>
-                        <h2 className="text-base font-bold tracking-tight">إعدادات الحساب</h2>
-                        <p className="text-text-muted text-[10px] opacity-90">إدارة حسابك السحابي والنسخ الاحتياطي</p>
+                        <h2 className="text-base font-black text-text-main">الحساب والنسخ الاحتياطي السحابي</h2>
+                        <p className="text-text-muted text-xs font-semibold">إدارة حساب الترخيص والنسخ السحابي الآمن</p>
                     </div>
                 </div>
             </div>
 
             {/* Status Message */}
             {message && (
-                <div className={`p-3 rounded-xl flex items-center gap-3 animate-in fade-in shadow-sm ${message.type === 'success'
-                    ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30'
-                    : 'bg-red-500/10 text-red-600 border border-red-500/30'
+                <div className={`p-3.5 rounded-xl flex items-center gap-2.5 ${message.type === 'success'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-red-500/10 text-red-400 border border-red-500/30'
                     }`}>
                     {message.type === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
-                    <span className="text-sm font-medium">{message.text}</span>
+                    <span className="text-xs font-black">{message.text}</span>
                 </div>
             )}
 
             {/* Not Logged In State */}
             {!isLoggedIn && (
-                <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-                    <div className="p-5 border-b border-border bg-amber-500/5">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2.5 bg-amber-500/10 rounded-xl">
-                                <AlertCircle size={20} className="text-amber-500" />
-                            </div>
-                            <h3 className="font-bold text-text-main">تسجيل الدخول مطلوب</h3>
+                <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                            <AlertCircle size={20} className="text-amber-400" />
                         </div>
-                        <p className="text-sm text-text-muted leading-relaxed">
-                            يجب تسجيل الدخول بحسابك المرخص لاستخدام النسخ الاحتياطي السحابي.
-                            يتم استخدام نفس الحساب المستخدم لتفعيل الترخيص.
-                        </p>
+                        <div>
+                            <h3 className="font-black text-text-main text-base">تسجيل الدخول غير متاح حالياً</h3>
+                            <p className="text-xs text-text-muted font-medium mt-0.5">يلزم تسجيل الدخول بنفس الحساب المعتمد لترخيص النسخة السحابية.</p>
+                        </div>
                     </div>
-                    <div className="p-4 bg-primary/5">
-                        <div className="flex items-start gap-2.5 text-sm text-primary">
-                            <Info size={16} className="mt-0.5 shrink-0" />
-                            <p>
-                                <strong>ملاحظة:</strong> إذا كنت قد سجلت الدخول سابقاً ولكن الجلسة انتهت،
-                                يرجى إعادة تشغيل التطبيق وتسجيل الدخول مرة أخرى من الشاشة الرئيسية.
-                            </p>
-                        </div>
+                    <div className="p-3 bg-surface-hover/60 border border-border/60 rounded-xl text-xs text-text-muted font-bold flex items-center gap-2">
+                        <Info size={16} className="shrink-0 text-emerald-400" />
+                        <span>إذا قمت بتفعيل الترخيص من الشاشة الرئيسية، ستنشط هذه اللوحة تلقائياً.</span>
                     </div>
                 </div>
             )}
@@ -368,60 +357,60 @@ export function CloudBackupSettings() {
             {isLoggedIn && currentUser && (
                 <>
                     {/* User Info Card */}
-                    <div className="bg-surface border border-border rounded-2xl p-4 shadow-sm">
+                    <div className="bg-surface border border-border/80 rounded-2xl p-5">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-gradient-to-br from-primary to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                                    <User size={22} className="text-black" />
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-11 h-11 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
+                                    <User size={22} />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-text-main">{currentUser.store_name || 'متجري'}</p>
-                                    <p className="text-xs text-text-muted">{currentUser.email}</p>
+                                    <p className="font-black text-text-main text-sm">{currentUser.store_name || 'متجري'}</p>
+                                    <p className="text-xs font-mono font-semibold text-text-muted">{currentUser.email}</p>
                                     <div className="flex items-center gap-1.5 mt-1">
-                                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                                        <span className="text-[10px] text-emerald-600 font-medium">متصل</span>
+                                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                                        <span className="text-[10px] text-emerald-400 font-bold">الحساب نشط (Licensed)</span>
                                     </div>
                                 </div>
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-xl transition-colors flex items-center gap-1.5 font-medium"
+                                className="px-3.5 py-2 text-xs text-red-400 hover:text-red-300 bg-red-500/10 border border-red-500/20 rounded-xl transition-colors flex items-center gap-1.5 font-black cursor-pointer"
                             >
-                                <LogOut size={16} />
-                                خروج
+                                <LogOut size={14} />
+                                تسجيل الخروج
                             </button>
                         </div>
                     </div>
 
                     {/* Quick Actions Grid */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {/* Auto Sync Toggle */}
-                        <div className={`p-4 rounded-2xl border transition-all cursor-pointer ${autoSync
-                            ? 'bg-primary/10 border-primary/30'
-                            : 'bg-surface border-border hover:border-primary/20'
+                        <div className={`p-4 rounded-2xl border transition-colors cursor-pointer ${autoSync
+                            ? 'bg-emerald-500/10 border-emerald-500/30'
+                            : 'bg-surface border-border/80 hover:border-emerald-500/30'
                             }`}
                             onClick={handleAutoSyncToggle}
                         >
-                            <div className="flex items-center justify-between mb-3">
-                                <div className={`p-2 rounded-lg ${autoSync ? 'bg-primary text-black' : 'bg-surface-active text-text-muted'}`}>
-                                    <RefreshCw size={18} className={autoSync ? 'animate-spin-slow' : ''} />
+                            <div className="flex items-center justify-between mb-2">
+                                <div className={`p-2 rounded-xl border ${autoSync ? 'bg-emerald-500 text-black border-emerald-400' : 'bg-surface-hover text-text-muted border-border/60'}`}>
+                                    <RefreshCw size={18} className={autoSync ? 'animate-spin' : ''} />
                                 </div>
-                                <div className={`w-10 h-6 rounded-full p-1 transition-colors ${autoSync ? 'bg-primary' : 'bg-surface-active'}`}>
-                                    <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${autoSync ? 'translate-x-4' : 'translate-x-0'}`} />
-                                </div>
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${autoSync ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-hover text-text-muted border-border/60'}`}>
+                                    {autoSync ? 'مفعل' : 'معطل'}
+                                </span>
                             </div>
-                            <h4 className="font-bold text-sm text-text-main mb-0.5">النسخ التلقائي</h4>
-                            <p className="text-[10px] text-text-muted">رفع نسخة للسحابة تلقائياً (كل 24 ساعة)</p>
+                            <h4 className="font-black text-xs text-text-main mb-0.5">النسخ السحابي التلقائي</h4>
+                            <p className="text-[11px] text-text-muted font-medium">رفع نسخة مشفرة تلقائياً كل 24 ساعة</p>
                         </div>
 
                         {/* Backup Now Button */}
                         <button
                             onClick={handleBackup}
                             disabled={backupLoading}
-                            className="p-4 rounded-2xl bg-gradient-to-r from-primary to-emerald-400 text-black shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] transition-all disabled:opacity-70 disabled:cursor-not-allowed text-right font-bold"
+                            className="p-4 rounded-2xl bg-emerald-500 text-black border border-emerald-400 hover:bg-emerald-400 transition-transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed text-right font-black cursor-pointer min-h-[80px]"
                         >
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="p-2 bg-white/20 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="p-2 bg-black/10 rounded-xl">
                                     {backupLoading ? (
                                         <Loader2 size={18} className="animate-spin" />
                                     ) : (
@@ -429,24 +418,24 @@ export function CloudBackupSettings() {
                                     )}
                                 </div>
                             </div>
-                            <h4 className="font-bold text-sm mb-0.5">نسخ احتياطي الآن</h4>
-                            <p className="text-[10px] opacity-80">رفع البيانات للسحابة</p>
+                            <h4 className="font-black text-xs mb-0.5">رفع نسخة سحابية فورية</h4>
+                            <p className="text-[10px] opacity-80 font-bold">إنشاء وحفظ نسخة جديدة بالسحابة</p>
                         </button>
                     </div>
 
                     {/* Backups List */}
-                    <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-                        <div className="p-3 border-b border-border flex items-center justify-between">
+                    <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden">
+                        <div className="p-3.5 border-b border-border/60 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <Database size={16} className="text-primary" />
-                                <span className="font-bold text-sm">النسخ الاحتياطية</span>
-                                <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                                <Database size={16} className="text-emerald-400" />
+                                <span className="font-black text-xs text-text-main">سجل النسخ المحفوظة بالسحابة</span>
+                                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-lg font-bold">
                                     {backups.length} نسخة
                                 </span>
                             </div>
                             <button
                                 onClick={loadBackups}
-                                className="p-1.5 hover:bg-surface-active rounded-lg transition-colors"
+                                className="p-1.5 hover:bg-surface-hover rounded-xl border border-border/60 transition-colors cursor-pointer"
                                 title="تحديث القائمة"
                             >
                                 <RefreshCw size={14} className="text-text-muted" />
@@ -454,35 +443,35 @@ export function CloudBackupSettings() {
                         </div>
                         <div className="max-h-52 overflow-y-auto custom-scrollbar">
                             {backups.length === 0 ? (
-                                <div className="p-8 text-center">
-                                    <Cloud size={32} className="mx-auto mb-2 text-text-muted opacity-50" />
-                                    <p className="text-sm text-text-muted">لا توجد نسخ احتياطية بعد</p>
-                                    <p className="text-[10px] text-text-muted opacity-70">اضغط "نسخ احتياطي الآن" لإنشاء أول نسخة</p>
+                                <div className="p-6 text-center">
+                                    <Cloud size={28} className="mx-auto mb-2 text-text-muted opacity-50" />
+                                    <p className="text-xs font-bold text-text-muted">لا توجد نسخ احتياطية سحابية بعد</p>
+                                    <p className="text-[10px] text-text-muted opacity-70">اضغط "رفع نسخة سحابية فورية" للتخزين بالسحابة</p>
                                 </div>
                             ) : (
                                 backups.map((backup, idx) => (
                                     <div
                                         key={backup.id}
-                                        className={`p-3 flex items-center justify-between gap-3 hover:bg-surface-active/50 transition-colors ${idx !== backups.length - 1 ? 'border-b border-border' : ''
+                                        className={`p-3.5 flex items-center justify-between gap-3 hover:bg-surface-hover/60 transition-colors ${idx !== backups.length - 1 ? 'border-b border-border/40' : ''
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                                                <Database size={18} className="text-primary" />
+                                            <div className="w-9 h-9 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
+                                                <Database size={16} />
                                             </div>
                                             <div>
-                                                <p className="font-medium text-sm text-text-main">{backup.store_name}</p>
-                                                <p className="text-[10px] text-text-muted">{formatDate(backup.created_at)}</p>
+                                                <p className="font-black text-xs text-text-main">{backup.store_name}</p>
+                                                <p className="text-[10px] text-text-muted font-mono">{formatDate(backup.created_at)}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[10px] bg-surface-active text-text-muted px-2 py-1 rounded-full font-medium">
+                                            <span className="text-[10px] bg-surface-hover border border-border/60 text-text-muted px-2 py-0.5 rounded-lg font-mono font-bold">
                                                 {formatSize(backup.size_bytes)}
                                             </span>
                                             <button
                                                 onClick={() => confirmRestore(backup.id)}
                                                 disabled={restoreLoading === backup.id}
-                                                className="p-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-50"
+                                                className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-colors disabled:opacity-50 cursor-pointer"
                                                 title="استعادة"
                                             >
                                                 {restoreLoading === backup.id ? (
@@ -493,7 +482,7 @@ export function CloudBackupSettings() {
                                             </button>
                                             <button
                                                 onClick={() => confirmDelete(backup.id)}
-                                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                className="p-2 text-red-400 hover:bg-red-500/10 border border-red-500/20 rounded-xl transition-colors cursor-pointer"
                                                 title="حذف"
                                             >
                                                 <Trash2 size={14} />
@@ -507,27 +496,27 @@ export function CloudBackupSettings() {
                 </>
             )}
 
-            <div className="bg-surface border border-border rounded-2xl p-4">
+            <div className="bg-surface border border-border/80 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-3">
-                    <Info size={16} className="text-primary" />
-                    <span className="font-bold text-sm text-text-main">معلومات مهمة</span>
+                    <Info size={16} className="text-emerald-400" />
+                    <span className="font-black text-xs text-text-main">مواصفات التخزين السحابي</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-surface rounded-xl p-3 border border-border">
-                        <p className="text-[10px] text-text-muted mb-1">الحد الأقصى</p>
-                        <p className="text-sm font-bold text-text-main">3 نسخ / 5MB</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-surface-hover/60 rounded-xl p-2.5 border border-border/60 text-center">
+                        <p className="text-[10px] text-text-muted font-bold">الحد الأقصى</p>
+                        <p className="text-xs font-black text-text-main">3 نسخ / 5MB</p>
                     </div>
-                    <div className="bg-surface rounded-xl p-3 border border-border">
-                        <p className="text-[10px] text-text-muted mb-1">مدة الاحتفاظ</p>
-                        <p className="text-sm font-bold text-text-main">30 يوم</p>
+                    <div className="bg-surface-hover/60 rounded-xl p-2.5 border border-border/60 text-center">
+                        <p className="text-[10px] text-text-muted font-bold">مدة الاحتفاظ</p>
+                        <p className="text-xs font-black text-text-main">30 يوم</p>
                     </div>
-                    <div className="bg-surface rounded-xl p-3 border border-border">
-                        <p className="text-[10px] text-text-muted mb-1">الجلسات</p>
-                        <p className="text-sm font-bold text-text-main">جهاز واحد</p>
+                    <div className="bg-surface-hover/60 rounded-xl p-2.5 border border-border/60 text-center">
+                        <p className="text-[10px] text-text-muted font-bold">الجلسات النشطة</p>
+                        <p className="text-xs font-black text-text-main">جهاز واحد</p>
                     </div>
-                    <div className="bg-surface rounded-xl p-3 border border-border">
-                        <p className="text-[10px] text-text-muted mb-1">الاستعادة</p>
-                        <p className="text-sm font-bold text-text-main">من أي جهاز</p>
+                    <div className="bg-surface-hover/60 rounded-xl p-2.5 border border-border/60 text-center">
+                        <p className="text-[10px] text-text-muted font-bold">استعادة البيانات</p>
+                        <p className="text-xs font-black text-text-main">أي كمبيوتر</p>
                     </div>
                 </div>
             </div>

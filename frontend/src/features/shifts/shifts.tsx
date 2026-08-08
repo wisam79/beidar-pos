@@ -57,13 +57,13 @@ export const ShiftsPage: React.FC = () => {
                 actions={
                     <button
                         onClick={() => setShowStats(!showStats)}
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
-                            ? 'bg-surface border border-border text-text-muted hover:text-text-main'
-                            : 'bg-gradient-to-br from-primary to-emerald-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer border ${showStats
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                            : 'bg-surface border-border/80 text-text-muted hover:text-text-main'
                             }`}
                         title={showStats ? 'إخفاء الإحصائيات' : 'عرض التحليل'}
                     >
-                        <TrendingUp size={showStats ? 18 : 20} />
+                        <TrendingUp size={18} />
                     </button>
                 }
             />

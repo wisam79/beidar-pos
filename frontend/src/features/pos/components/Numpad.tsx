@@ -125,7 +125,7 @@ export const Numpad: React.FC<NumpadProps> = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-6 gap-1.5">
+            <div className="grid grid-cols-6 gap-2">
                 {quickItems.map((amount) => {
                     const selected = mode === 'payment' ? amount === total : amount === currentValue;
                     return (
@@ -133,7 +133,11 @@ export const Numpad: React.FC<NumpadProps> = ({
                             key={amount}
                             type="button"
                             onClick={() => (mode === 'payment' ? handleQuickAmount(amount) : handleIncrement(amount - currentValue))}
-                            className={`rounded-xl px-2 py-2 text-[10px] font-bold transition active:scale-[0.98] ${selected ? 'bg-primary text-white' : 'border bg-primary-dim text-primary hover:bg-primary/15'}`}
+                            className={`rounded-2xl px-2 py-3 min-h-[44px] text-xs font-black transition-colors active:scale-[0.98] touch-target outline-none cursor-pointer border ${
+                                selected
+                                    ? 'bg-emerald-500 text-black border-emerald-400 font-black'
+                                    : 'bg-surface hover:bg-surface-hover text-emerald-400 border-border/80'
+                            }`}
                         >
                             {mode === 'payment' ? `${amount / 1000}K` : amount}
                         </button>
@@ -141,24 +145,49 @@ export const Numpad: React.FC<NumpadProps> = ({
                 })}
             </div>
 
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2.5">
                 {DIGITS.map((digit) => (
-                    <Button key={digit} variant="secondary" onClick={() => handleDigit(digit)} className="h-14 text-2xl font-bold">
+                    <button
+                        key={digit}
+                        type="button"
+                        onClick={() => handleDigit(digit)}
+                        className="h-14 min-h-[56px] rounded-2xl bg-surface hover:bg-surface-hover text-text-main font-mono font-black text-2xl border border-border/80 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer select-none"
+                    >
                         {digit}
-                    </Button>
+                    </button>
                 ))}
-                <Button variant="soft" onClick={handleBackspace} title="مسح" className="h-14">
-                    <Delete size={22} />
-                </Button>
-                <Button variant="soft" onClick={handleClear} title="إلغاء" className="h-14">
-                    <X size={22} />
-                </Button>
-                <Button variant="primary" onClick={handleExact} title="المبلغ المضبوط" className="h-14">
-                    <CornerDownLeft size={22} />
-                </Button>
-                <Button variant="primary" onClick={onConfirm} className="h-14">
-                    <Check size={22} />
-                </Button>
+                <button
+                    type="button"
+                    onClick={handleBackspace}
+                    title="مسح"
+                    className="h-14 min-h-[56px] rounded-2xl bg-surface hover:bg-surface-hover text-amber-400 border border-border/80 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
+                >
+                    <Delete size={24} />
+                </button>
+                <button
+                    type="button"
+                    onClick={handleClear}
+                    title="تفريغ"
+                    className="h-14 min-h-[56px] rounded-2xl bg-surface hover:bg-surface-hover text-red-400 border border-border/80 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
+                >
+                    <X size={24} />
+                </button>
+                <button
+                    type="button"
+                    onClick={handleExact}
+                    title="المبلغ المضبوط"
+                    className="h-14 min-h-[56px] rounded-2xl bg-surface hover:bg-surface-hover text-blue-400 border border-border/80 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
+                >
+                    <CornerDownLeft size={24} />
+                </button>
+                <button
+                    type="button"
+                    onClick={onConfirm}
+                    title="تأكيد"
+                    className="h-14 min-h-[56px] rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-black border border-emerald-400 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
+                >
+                    <Check size={26} strokeWidth={3} />
+                </button>
             </div>
         </div>
     );

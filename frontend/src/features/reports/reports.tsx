@@ -8,7 +8,8 @@ import {
 } from 'lucide-react';
 import { formatCurrency, getLocalDateString } from '../../core/utils';
 import { PageHeader, Card, SpotlightCard } from '../../components/ui';
-import { PageShell, LoadingState, TabNav, SegmentedControl } from '../../components/blocks';
+import { PageShell, LoadingState, TabNav, SegmentedControl, StatsGrid, StatCard } from '../../components/blocks';
+import { DataTable, ColumnDef } from '../../components/shared/DataTable';
 import { SalesAreaChart } from '../../components/charts';
 import { CustomerRank } from './components/ReportsComponents';
 import { forecastSales } from '../../core/ai';
@@ -264,25 +265,25 @@ export const ReportsPage: React.FC = () => {
                         <div className="relative">
                             <button
                                 onClick={() => setShowExportMenu(!showExportMenu)}
-                                className="bg-surface hover:bg-surface-hover text-text-main px-4 py-2.5 rounded-xl border border-border text-sm font-bold flex items-center gap-2 transition-all active:scale-95"
+                                className="bg-surface hover:bg-surface-hover text-text-main px-4 py-2.5 min-h-[44px] rounded-xl border border-border/80 text-sm font-extrabold flex items-center gap-2 transition-colors active:scale-[0.98] cursor-pointer select-none"
                                 title="تصدير التقرير"
                             >
-                                <Download size={18} />
+                                <Download size={18} className="text-emerald-400" />
                                 <span className="hidden sm:inline">تصدير</span>
                             </button>
                             {showExportMenu && (
-                                <div className="absolute left-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                <div className="absolute left-0 top-full mt-2 w-48 bg-surface border border-border/80 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 p-1">
                                     <button
                                         onClick={() => handleExport('excel')}
-                                        className="w-full flex items-center gap-2 px-4 py-3 hover:bg-bg text-right text-sm font-bold"
+                                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 min-h-[40px] hover:bg-surface-hover text-right text-xs font-extrabold rounded-lg text-text-main cursor-pointer"
                                     >
-                                        <Download size={14} className="text-emerald-500" /> تصدير Excel
+                                        <Download size={15} className="text-emerald-400" /> تصدير Excel
                                     </button>
                                     <button
                                         onClick={() => handleExport('pdf')}
-                                        className="w-full flex items-center gap-2 px-4 py-3 hover:bg-bg text-right text-sm font-bold"
+                                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 min-h-[40px] hover:bg-surface-hover text-right text-xs font-extrabold rounded-lg text-text-main cursor-pointer"
                                     >
-                                        <Download size={14} className="text-red-500" /> تصدير PDF
+                                        <Download size={15} className="text-red-400" /> تصدير PDF
                                     </button>
                                 </div>
                             )}
@@ -299,7 +300,7 @@ export const ReportsPage: React.FC = () => {
             />
 
             {/* Tab Content */}
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-hidden pt-3">
                 {activeTab === 'overview' && dashboardStats && (
                     <OverviewTab stats={dashboardStats as DashboardStats} currency={currency} prefs={prefs} forecast={forecast} isForecasting={isForecasting} handleForecast={handleForecast} />
                 )}
@@ -341,161 +342,134 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
     const revenue = stats.totalRevenue || 0;
     const netProfit = stats.netProfit || 0;
     const totalExpenses = stats.totalExpenses || 0;
-    const grossProfit = stats.grossProfit || 0;
     const completedCount = stats.totalOrders || 0;
 
     // Calc margins
     const profitMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
     const avgOrderValue = completedCount > 0 ? revenue / completedCount : 0;
 
-    // Expense Ratio
-    const expenseRatio = revenue > 0 ? Math.round((totalExpenses / revenue) * 100) : 0;
-
     const chartData = stats.chartData || [];
     const productPerformance = stats.topSelling || [];
     const topCustomers = stats.topCustomers || [];
 
     return (
-        <div className="h-full overflow-y-auto custom-scrollbar pb-4 animate-in fade-in duration-300">
+        <div className="h-full overflow-y-auto custom-scrollbar pb-4 space-y-4 animate-in fade-in duration-200 select-none">
+            {/* KPI Cards - Top Row */}
+            <StatsGrid columns={4}>
+                <StatCard
+                    label="إجمالي الإيرادات"
+                    value={formatCurrency(revenue, currency).replace(currency, '')}
+                    icon={Wallet}
+                    color="emerald"
+                    subtitle={currency}
+                />
+                <StatCard
+                    label="صافي الربح"
+                    value={formatCurrency(netProfit, currency).replace(currency, '')}
+                    icon={Activity}
+                    color={netProfit >= 0 ? "emerald" : "red"}
+                    subtitle={`هامش ${profitMargin.toFixed(1)}%`}
+                />
+                <StatCard
+                    label="المصروفات"
+                    value={formatCurrency(totalExpenses, currency).replace(currency, '')}
+                    icon={TrendingDown}
+                    color="red"
+                    subtitle={currency}
+                />
+                <StatCard
+                    label="متوسط الطلب"
+                    value={formatCurrency(avgOrderValue, currency).replace(currency, '')}
+                    icon={ShoppingBag}
+                    color="purple"
+                    subtitle={`${completedCount} طلب مكتمل`}
+                />
+            </StatsGrid>
+
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                {/* KPI Cards - Top Row */}
-                <div className="bg-surface border border-border rounded-xl p-5 hover:border-primary/30 transition-all group shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted group-hover:text-primary group-hover:bg-primary/5 group-hover:border-primary/20 flex items-center justify-center transition-all duration-200">
-                            <Wallet size={18} />
-                        </div>
-                        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">إجمالي الإيرادات</p>
-                    </div>
-                    <div>
-                        <p className="text-xl font-black text-text-main font-mono">{formatCurrency(revenue, currency).replace(currency, '')}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                            <div className="h-1.5 flex-1 bg-secondary rounded-full overflow-hidden">
-                                <div className="h-full bg-primary w-full" />
-                            </div>
-                            <p className="text-[10px] text-text-muted">{currency}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-surface border border-border rounded-xl p-5 hover:border-primary/30 transition-all group shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted group-hover:text-primary group-hover:bg-primary/5 group-hover:border-primary/20 flex items-center justify-center transition-all duration-200">
-                            <Activity size={18} />
-                        </div>
-                        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">صافي الربح</p>
-                    </div>
-                    <div>
-                        <p className="text-xl font-black text-text-main font-mono">{formatCurrency(netProfit, currency).replace(currency, '')}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                            <ArrowUpRight size={14} className={profitMargin > 0 ? 'text-emerald-500' : 'text-red-500 rotate-90'} />
-                            <p className={`text-xs font-bold ${profitMargin > 0 ? 'text-emerald-500' : 'text-red-500'}`}>هامش {profitMargin.toFixed(1)}%</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-surface border border-border rounded-xl p-5 hover:border-primary/30 transition-all group shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted group-hover:text-primary group-hover:bg-primary/5 group-hover:border-primary/20 flex items-center justify-center transition-all duration-200">
-                            <TrendingDown size={18} />
-                        </div>
-                        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">المصروفات</p>
-                    </div>
-                    <div>
-                        <p className="text-xl font-black text-text-main font-mono">{formatCurrency(totalExpenses, currency).replace(currency, '')}</p>
-                        <p className="text-xs text-text-muted mt-2">{expenseRatio}% من الدخل</p>
-                    </div>
-                </div>
-
-                <div className="bg-surface border border-border rounded-xl p-5 hover:border-primary/30 transition-all group shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted group-hover:text-primary group-hover:bg-primary/5 group-hover:border-primary/20 flex items-center justify-center transition-all duration-200">
-                            <ShoppingBag size={18} />
-                        </div>
-                        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">متوسط الطلب</p>
-                    </div>
-                    <div>
-                        <p className="text-xl font-black text-text-main font-mono">{formatCurrency(avgOrderValue, currency).replace(currency, '')}</p>
-                        <p className="text-xs text-text-muted mt-2">{completedCount} طلب مكتمل</p>
-                    </div>
-                </div>
-
                 {/* Revenue Chart */}
-                <SpotlightCard className="lg:col-span-3 bg-surface p-6 rounded-xl border border-border flex flex-col min-h-[350px]" spotlightColor="var(--color-primary-dim)">
-                    <div className="flex justify-between items-start mb-5 shrink-0">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
-                                <TrendingUp size={22} />
+                <div className="lg:col-span-3 bg-surface border border-border/80 p-5 rounded-2xl flex flex-col min-h-[350px]">
+                    <div className="flex justify-between items-start mb-4 shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                                <TrendingUp size={20} />
                             </div>
                             <div>
                                 <h3 className="text-text-main font-black text-base">تحليل الإيرادات</h3>
-                                <p className="text-text-muted text-xs">الأداء خلال الفترة المحددة</p>
+                                <p className="text-text-muted text-xs font-medium">الأداء خلال الفترة المحددة</p>
                             </div>
                         </div>
-                        <div className="text-left px-4 py-2 bg-surface hover:bg-surface-hover rounded-xl border border-border shadow-sm">
-                            <p className="text-[10px] text-text-muted font-bold">أعلى قيمة</p>
-                            <p className="text-primary font-black font-mono text-base">{formatCurrency(Math.max(0, ...chartData.map((d) => d.value)), currency)}</p>
+                        <div className="text-left px-4 py-2 bg-surface-hover/80 rounded-xl border border-border/60">
+                            <p className="text-[10px] text-text-muted font-extrabold">أعلى قيمة</p>
+                            <p className="text-emerald-400 font-black font-mono text-base">{formatCurrency(Math.max(0, ...chartData.map((d) => d.value)), currency)}</p>
                         </div>
                     </div>
                     <div className="flex-1 min-h-0"><SalesAreaChart data={chartData} /></div>
-                </SpotlightCard>
+                </div>
 
                 {/* AI Forecast */}
-                <Card className="lg:col-span-1 p-5 bg-surface border-border flex flex-col h-full hover:border-primary/30 transition-all">
-                    <div className="flex justify-between items-center mb-4 shrink-0">
+                <div className="lg:col-span-1 p-5 bg-surface border border-border/80 rounded-2xl flex flex-col h-full justify-between">
+                    <div className="flex justify-between items-center mb-3 shrink-0">
                         <h3 className="text-text-main font-black text-sm flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-bg border border-border/60 flex items-center justify-center">
-                                <Sparkles size={14} className="text-text-muted" />
+                            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+                                <Sparkles size={16} />
                             </div>
                             التوقعات الذكية
                         </h3>
-                        <button onClick={handleForecast} disabled={isForecasting} className="p-1.5 rounded-lg text-text-muted hover:bg-bg transition-all active:scale-95 border border-border bg-surface" title="تحديث التوقعات">
-                            <RefreshCw size={12} className={isForecasting ? 'animate-spin' : ''} />
+                        <button onClick={handleForecast} disabled={isForecasting} className="w-8 h-8 rounded-xl text-text-muted hover:text-emerald-400 bg-surface-hover border border-border/60 flex items-center justify-center transition-colors touch-target cursor-pointer" title="تحديث التوقعات">
+                            <RefreshCw size={15} className={isForecasting ? 'animate-spin text-emerald-400' : ''} />
                         </button>
                     </div>
-                    <div className="flex-1 flex items-center justify-center bg-bg/40 rounded-lg p-4 border border-border/60 overflow-y-auto no-scrollbar">
+                    <div className="flex-1 flex items-center justify-center bg-surface-hover/40 rounded-xl p-4 border border-border/40 overflow-y-auto no-scrollbar min-h-[180px]">
                         {forecast ? (
-                            <p className="text-text-main text-xs leading-relaxed text-center">{forecast}</p>
+                            <p className="text-text-main text-xs font-bold leading-relaxed text-center">{forecast}</p>
                         ) : (
                             <div className="text-center">
-                                <Sparkles size={20} className="mx-auto mb-2 text-text-muted/30" />
-                                <p className="text-text-muted text-[11px]">اضغط لتحليل البيانات وتوقع المبيعات</p>
+                                <Sparkles size={24} className="mx-auto mb-2 text-emerald-400/40" />
+                                <p className="text-text-muted text-xs font-extrabold">اضغط لتحليل البيانات وتوقع المبيعات</p>
                             </div>
                         )}
                     </div>
-                </Card>
+                </div>
 
                 {/* Top Products */}
-                <Card className="lg:col-span-2 p-5 bg-surface border-border hover:border-primary/30 transition-all flex flex-col justify-between">
+                <div className="lg:col-span-2 p-5 bg-surface border border-border/80 rounded-2xl flex flex-col justify-between">
                     <div className="flex items-center gap-3 mb-4 shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
-                            <ShoppingBag size={18} />
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                            <ShoppingBag size={20} />
                         </div>
-                        <h3 className="text-text-main font-black text-sm">المنتجات الأكثر مبيعاً</h3>
+                        <div>
+                            <h3 className="text-text-main font-black text-sm">المنتجات الأكثر مبيعاً</h3>
+                            <p className="text-text-muted text-xs font-medium">أعلى 5 منتجات طلباً</p>
+                        </div>
                     </div>
                     <div className="space-y-2">
                         {productPerformance.slice(0, 5).map((p, i: number) => (
-                            <div key={i} className="flex items-center gap-3 p-2 rounded-xl bg-bg/30 hover:bg-bg transition-colors border border-transparent hover:border-border">
-                                <span className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-black ${i === 0 ? 'bg-primary text-primary-fg' : 'bg-surface border border-border text-text-muted'}`}>{i + 1}</span>
-                                <span className="text-text-main text-xs font-bold truncate flex-1">{p.label}</span>
-                                <span className="text-text-main font-black text-xs font-mono">{p.value}</span>
+                            <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-surface-hover/60 border border-border/40">
+                                <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black ${i === 0 ? 'bg-emerald-500 text-black' : 'bg-surface border border-border/60 text-text-muted'}`}>{i + 1}</span>
+                                <span className="text-text-main text-xs font-extrabold truncate flex-1">{p.label}</span>
+                                <span className="text-emerald-400 font-black text-xs font-mono">{p.value} قطعة</span>
                             </div>
                         ))}
                     </div>
-                </Card>
+                </div>
 
                 {/* Top Customers */}
-                <Card className="lg:col-span-2 p-6 bg-surface border-border hover:border-primary/30 transition-all flex flex-col justify-between">
-                    <div className="flex items-center gap-3 mb-5 shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
-                            <Users size={18} />
+                <div className="lg:col-span-2 p-5 bg-surface border border-border/80 rounded-2xl flex flex-col justify-between">
+                    <div className="flex items-center gap-3 mb-4 shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+                            <Users size={20} />
                         </div>
-                        <h3 className="text-text-main font-black text-sm">أفضل العملاء</h3>
+                        <div>
+                            <h3 className="text-text-main font-black text-sm">أفضل العملاء</h3>
+                            <p className="text-text-muted text-xs font-medium">أعلى العملاء إراداً</p>
+                        </div>
                     </div>
                     <div className="space-y-2">
                         {topCustomers.length === 0 ? (
-                            <div className="py-8 text-center text-text-muted">
+                            <div className="py-6 text-center text-text-muted">
                                 <Users size={24} className="mx-auto mb-2 opacity-30" />
-                                <p className="text-xs">لا توجد بيانات كافية</p>
+                                <p className="text-xs font-bold">لا توجد بيانات كافية</p>
                             </div>
                         ) : (
                             topCustomers.slice(0, 5).map((c, i: number) => (
@@ -503,7 +477,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                             ))
                         )}
                     </div>
-                </Card>
+                </div>
             </div>
         </div>
     );
@@ -588,49 +562,51 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
     ], [currency]);
 
     return (
-        <div className="h-full flex flex-col gap-4 animate-in fade-in duration-300">
-            {/* Stats Row - Unified */}
-            <div className="grid grid-cols-3 gap-3 shrink-0">
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
-                        <Receipt size={22} />
-                    </div>
-                    <div>
-                        <p className="text-[10px] text-text-muted font-bold uppercase">إجمالي المبيعات</p>
-                        <p className="text-primary font-black text-xl font-mono">{formatCurrency(stats.total, currency).replace(currency, '')}</p>
-                    </div>
-                </div>
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
-                        <FileText size={22} />
-                    </div>
-                    <div>
-                        <p className="text-[10px] text-text-muted font-bold uppercase">عدد الفواتير</p>
-                        <p className="text-text-main font-black text-xl font-mono">{stats.count}</p>
-                    </div>
-                </div>
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center">
-                        <Activity size={22} />
-                    </div>
-                    <div>
-                        <p className="text-[10px] text-text-muted font-bold uppercase">متوسط الفاتورة</p>
-                        <p className="text-text-main font-black text-xl font-mono">{formatCurrency(stats.avgValue, currency).replace(currency, '')}</p>
-                    </div>
-                </div>
-            </div>
+        <div className="h-full flex flex-col gap-4 animate-in fade-in duration-300 select-none">
+            {/* Stats Row - Unified 3D Tactile */}
+            <StatsGrid columns={3}>
+                <StatCard
+                    label="إجمالي المبيعات"
+                    value={formatCurrency(stats.total, currency).replace(currency, '')}
+                    icon={Receipt}
+                    color="emerald"
+                    subtitle={currency}
+                />
+                <StatCard
+                    label="عدد الفواتير"
+                    value={stats.count}
+                    icon={FileText}
+                    color="blue"
+                    subtitle="فاتورة مكتملة"
+                />
+                <StatCard
+                    label="متوسط الفاتورة"
+                    value={formatCurrency(stats.avgValue, currency).replace(currency, '')}
+                    icon={Activity}
+                    color="purple"
+                    subtitle={currency}
+                />
+            </StatsGrid>
 
             {/* Filters */}
-            <div className="flex gap-2 shrink-0 justify-between">
-                <div className="flex bg-bg p-1 rounded-xl border border-border">
-                    {(['all', 'completed', 'pending', 'returned'] as const).map(f => (
-                        <button key={f} onClick={() => { setFilter(f); setPagination(p => ({ ...p, pageIndex: 0 })); }} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${filter === f ? 'bg-primary text-primary-fg' : 'text-text-muted hover:text-text-main'}`}>
-                            {f === 'all' ? 'الكل' : f === 'completed' ? 'مكتمل' : f === 'pending' ? 'معلق' : 'مرتجع'}
-                        </button>
-                    ))}
-                </div>
-                <div className="flex gap-2">
-                    <select value={dateFilter} onChange={e => { setDateFilter(e.target.value); setPagination(p => ({ ...p, pageIndex: 0 })); }} className="bg-surface border border-border rounded-xl px-4 py-2 text-sm text-text-main" aria-label="تصفية حسب الفترة الزمنية">
+            <div className="flex flex-col sm:flex-row gap-3 shrink-0 justify-between items-center bg-surface border-t border-t-white/30 dark:border-t-white/10 border-x border-x-border/60 border-b-[3px] border-b-black/60 dark:border-b-black/80 p-3.5 rounded-3xl shadow-md">
+                <SegmentedControl
+                    options={[
+                        { id: 'all', label: 'الكل' },
+                        { id: 'completed', label: 'مكتمل' },
+                        { id: 'pending', label: 'معلق' },
+                        { id: 'returned', label: 'مرتجع' },
+                    ]}
+                    value={filter}
+                    onChange={(v) => { setFilter(v as 'all' | 'completed' | 'pending' | 'returned'); setPagination(p => ({ ...p, pageIndex: 0 })); }}
+                />
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <select
+                        value={dateFilter}
+                        onChange={e => { setDateFilter(e.target.value); setPagination(p => ({ ...p, pageIndex: 0 })); }}
+                        className="bg-input-bg border border-border/80 rounded-2xl px-5 py-2.5 min-h-[44px] text-sm font-extrabold text-text-main outline-none focus:border-emerald-500 shadow-inner touch-target cursor-pointer w-full sm:w-auto"
+                        aria-label="تصفية حسب الفترة الزمنية"
+                    >
                         <option value="all">كل الفترات</option>
                         <option value="today">اليوم</option>
                         <option value="week">هذا الأسبوع</option>
@@ -640,7 +616,7 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
 
             {/* Sales Table */}
             <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-                {isLoading && <div className="absolute inset-0 bg-surface  flex items-center justify-center z-10"><RefreshCw className="animate-spin text-primary" /></div>}
+                {isLoading && <div className="absolute inset-0 bg-surface/80 backdrop-blur-xs flex items-center justify-center z-10"><RefreshCw className="animate-spin text-emerald-400" size={32} /></div>}
                 <DataTable
                     data={sales}
                     columns={columns}
@@ -680,55 +656,66 @@ const InventoryReportTab: React.FC<InventoryReportTabProps> = ({ products, stock
     }), [products, lowStockProducts, outOfStockProducts]);
 
     return (
-        <div className="h-full flex flex-col gap-4">
+        <div className="h-full flex flex-col gap-5 select-none">
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-4 shrink-0">
-                <div className="bg-surface border border-border rounded-xl p-4 text-center group hover:border-primary/20 transition-all shadow-sm">
-                    <Package size={20} className="mx-auto mb-2 text-text-muted" />
-                    <p className="text-[10px] text-text-muted uppercase font-bold">إجمالي المنتجات</p>
-                    <p className="text-text-main font-black text-xl font-mono">{stats.totalProducts}</p>
-                </div>
-                <div className="bg-surface border border-border rounded-xl p-4 text-center group hover:border-primary/20 transition-all shadow-sm">
-                    <DollarSign size={20} className="mx-auto mb-2 text-text-muted" />
-                    <p className="text-[10px] text-text-muted uppercase font-bold">قيمة المخزون</p>
-                    <p className="text-primary font-black text-xl font-mono">{formatCurrency(stats.totalValue, currency).replace(currency, '')}</p>
-                </div>
-                <div className="bg-surface border border-amber-500/20 rounded-xl p-4 text-center hover:bg-amber-500/[0.02] transition-all shadow-sm">
-                    <AlertTriangle size={20} className="mx-auto mb-2 text-amber-500" />
-                    <p className="text-[10px] text-text-muted uppercase font-bold">مخزون منخفض</p>
-                    <p className="text-amber-600 dark:text-amber-400 font-black text-xl font-mono">{stats.lowStock}</p>
-                </div>
-                <div className="bg-surface border border-red-500/20 rounded-xl p-4 text-center hover:bg-red-500/[0.02] transition-all shadow-sm">
-                    <TrendingDown size={20} className="mx-auto mb-2 text-red-500" />
-                    <p className="text-[10px] text-text-muted uppercase font-bold">نفذ من المخزون</p>
-                    <p className="text-red-600 dark:text-red-400 font-black text-xl font-mono">{stats.outOfStock}</p>
-                </div>
-            </div>
+            <StatsGrid columns={4}>
+                <StatCard
+                    label="إجمالي المنتجات"
+                    value={stats.totalProducts}
+                    icon={Package}
+                    color="blue"
+                    subtitle="مادة بالمخزن"
+                />
+                <StatCard
+                    label="قيمة المخزون"
+                    value={formatCurrency(stats.totalValue, currency).replace(currency, '')}
+                    icon={DollarSign}
+                    color="emerald"
+                    subtitle={currency}
+                />
+                <StatCard
+                    label="مخزون منخفض"
+                    value={stats.lowStock}
+                    icon={AlertTriangle}
+                    color="amber"
+                    subtitle="بحاجة لإعادة التزويد"
+                />
+                <StatCard
+                    label="نفذ من المخزون"
+                    value={stats.outOfStock}
+                    icon={TrendingDown}
+                    color="red"
+                    subtitle="رصيد 0"
+                />
+            </StatsGrid>
 
             {/* Content Grid */}
-            <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-5 min-h-0">
                 {/* Low Stock Alert */}
-                <div className="bg-surface border border-border rounded-xl p-4 flex flex-col overflow-hidden">
-                    <h3 className="font-bold text-text-main text-xs flex items-center gap-2 mb-3 shrink-0">
-                        <AlertTriangle size={16} className="text-amber-500" /> تنبيهات المخزون
+                <div className="bg-surface border border-border/80 rounded-2xl p-5 flex flex-col overflow-hidden">
+                    <h3 className="font-black text-text-main text-sm flex items-center gap-2.5 mb-3 shrink-0">
+                        <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            <AlertTriangle size={18} />
+                        </div>
+                        تنبيهات المخزون المنخفض
                     </h3>
                     <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
                         {lowStockProducts.length === 0 ? (
-                            <div className="py-8 text-center text-text-muted text-sm">
-                                <Package size={24} className="mx-auto mb-2 opacity-30" />
-                                جميع المنتجات بمخزون كافٍ
+                            <div className="py-10 text-center text-text-muted text-xs font-bold">
+                                <Package size={28} className="mx-auto mb-2 opacity-30 text-emerald-400" />
+                                جميع المنتجات بمخزون كافٍ وممتاز
                             </div>
                         ) : (
                             lowStockProducts.slice(0, 10).map(p => (
-                                <div key={p.id} className={`flex items-center justify-between p-3 rounded-xl border ${p.stock === 0 ? 'bg-red-500/5 border-red-500/30' : 'bg-amber-500/5 border-amber-500/30'}`}>
+                                <div key={p.id} className={`flex items-center justify-between p-3 rounded-xl border ${p.stock === 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xl">{p.image}</span>
                                         <div>
-                                            <p className="text-text-main font-bold text-sm">{p.name}</p>
-                                            <p className="text-text-muted text-xs">الحد الأدنى: {p.minStock}</p>
+                                            <p className="text-text-main font-extrabold text-xs">{p.name}</p>
+                                            <p className="text-text-muted text-[11px] font-medium">الحد الأدنى: {p.minStock}</p>
                                         </div>
                                     </div>
-                                    <span className={`font-black text-lg font-mono ${p.stock === 0 ? 'text-red-500' : 'text-amber-500'}`}>{p.stock}</span>
+                                    <span className={`font-black text-lg font-mono ${p.stock === 0 ? 'text-red-400' : 'text-amber-400'}`}>{p.stock}</span>
                                 </div>
                             ))
                         )}
@@ -736,24 +723,27 @@ const InventoryReportTab: React.FC<InventoryReportTabProps> = ({ products, stock
                 </div>
 
                 {/* Recent Stock Movements */}
-                <div className="bg-surface border border-border rounded-xl p-4 flex flex-col overflow-hidden">
-                    <h3 className="font-bold text-text-main text-xs flex items-center gap-2 mb-3 shrink-0">
-                        <Activity size={16} className="text-blue-500" /> حركة المخزون الأخيرة
+                <div className="bg-surface border border-border/80 rounded-2xl p-5 flex flex-col overflow-hidden">
+                    <h3 className="font-black text-text-main text-sm flex items-center gap-2.5 mb-3 shrink-0">
+                        <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            <Activity size={18} />
+                        </div>
+                        حركة المخزون الأخيرة
                     </h3>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pb-2">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pb-1">
                         {stockMovements.length === 0 ? (
-                            <div className="py-8 text-center text-text-muted text-sm">
-                                <Activity size={24} className="mx-auto mb-2 opacity-30" />
-                                لا توجد حركات
+                            <div className="py-10 text-center text-text-muted text-xs font-bold">
+                                <Activity size={28} className="mx-auto mb-2 opacity-30" />
+                                لا توجد حركات مسجلة
                             </div>
                         ) : (
                             stockMovements.slice(0, 10).map((m, i) => (
-                                <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-bg border border-border">
+                                <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-surface-hover/80 border border-border/40">
                                     <div>
-                                        <p className="text-text-main text-sm font-bold">{m.productName}</p>
-                                        <p className="text-text-muted text-xs">{m.reason}</p>
+                                        <p className="text-text-main text-sm font-extrabold">{m.productName}</p>
+                                        <p className="text-text-muted text-xs font-medium">{m.reason}</p>
                                     </div>
-                                    <span className={`font-bold font-mono ${m.type === 'in' || m.type === 'restock' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                    <span className={`font-black font-mono text-base ${m.type === 'in' || m.type === 'restock' ? 'text-emerald-400' : 'text-red-400'}`}>
                                         {m.type === 'in' || m.type === 'restock' ? '+' : '-'}{m.qty}
                                     </span>
                                 </div>
@@ -775,8 +765,6 @@ interface CustomersReportTabProps {
     sales: Sale[];
     currency: string;
 }
-
-import { DataTable, ColumnDef } from '../../components/shared/DataTable';
 
 const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sales, currency }) => {
     const customerStats = useMemo(() => {
@@ -802,22 +790,22 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
         {
             header: 'العميل',
             accessorKey: 'name',
-            cell: ({ getValue }) => <span className="font-bold text-text-main block min-w-[120px]">{String(getValue())}</span>,
+            cell: ({ getValue }) => <span className="font-extrabold text-text-main block min-w-[140px]">{String(getValue())}</span>,
         },
         {
             header: 'الهاتف',
             accessorKey: 'phone',
-            cell: ({ getValue }) => <span className="text-text-muted font-mono">{(getValue() as string) || '-'}</span>,
+            cell: ({ getValue }) => <span className="text-text-muted font-mono font-bold">{(getValue() as string) || '-'}</span>,
         },
         {
             header: 'عدد الطلبات',
             accessorKey: 'orderCount',
-            cell: ({ getValue }) => <span className="text-text-main font-mono">{Number(getValue())}</span>,
+            cell: ({ getValue }) => <span className="text-text-main font-mono font-black">{Number(getValue())}</span>,
         },
         {
             header: 'إجمالي المشتريات',
             accessorKey: 'totalSpent',
-            cell: ({ getValue }) => <span className="text-success font-mono font-bold">{formatCurrency(Number(getValue()), currency)}</span>,
+            cell: ({ getValue }) => <span className="text-emerald-400 font-mono font-black">{formatCurrency(Number(getValue()), currency)}</span>,
         },
         {
             header: 'الديون المستحقة',
@@ -825,7 +813,7 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
             cell: ({ getValue }) => {
                 const val = Number(getValue());
                 return (
-                    <span className={`font-mono font-bold ${val > 0 ? 'text-danger' : 'text-text-muted'}`}>
+                    <span className={`font-mono font-black ${val > 0 ? 'text-red-400' : 'text-text-muted'}`}>
                         {val > 0 ? formatCurrency(val, currency) : '-'}
                     </span>
                 );
@@ -834,31 +822,31 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
     ], [currency]);
 
     return (
-        <div className="h-full flex flex-col gap-4">
+        <div className="h-full flex flex-col gap-5 select-none">
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 shrink-0">
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><Users size={22} /></div>
-                    <div>
-                        <p className="text-[10px] text-text-muted font-bold uppercase">إجمالي العملاء</p>
-                        <p className="text-text-main font-black text-xl font-mono">{customers.length}</p>
-                    </div>
-                </div>
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><Wallet size={22} /></div>
-                    <div>
-                        <p className="text-[10px] text-text-muted font-bold uppercase">إجمالي المشتريات</p>
-                        <p className="text-primary font-black text-xl font-mono">{formatCurrency(totalSpent, currency).replace(currency, '')}</p>
-                    </div>
-                </div>
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><CreditCard size={22} /></div>
-                    <div>
-                        <p className="text-[10px] text-text-muted font-bold uppercase">إجمالي الديون</p>
-                        <p className="text-red-600 dark:text-red-400 font-black text-xl font-mono">{formatCurrency(totalDebt, currency).replace(currency, '')}</p>
-                    </div>
-                </div>
-            </div>
+            <StatsGrid columns={3}>
+                <StatCard
+                    label="إجمالي العملاء"
+                    value={customers.length}
+                    icon={Users}
+                    color="purple"
+                    subtitle="عميل مسجل"
+                />
+                <StatCard
+                    label="إجمالي المشتريات"
+                    value={formatCurrency(totalSpent, currency).replace(currency, '')}
+                    icon={Wallet}
+                    color="emerald"
+                    subtitle={currency}
+                />
+                <StatCard
+                    label="إجمالي الديون"
+                    value={formatCurrency(totalDebt, currency).replace(currency, '')}
+                    icon={CreditCard}
+                    color="red"
+                    subtitle={currency}
+                />
+            </StatsGrid>
 
             {/* Customer List */}
             <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -896,61 +884,61 @@ const StaffReportTab: React.FC<StaffReportTabProps> = ({ staffList, sales, curre
     const totalSalesValue = useMemo(() => staffStats.reduce((sum, s) => sum + s.totalSales, 0), [staffStats]);
 
     return (
-        <div className="h-full flex flex-col gap-4">
+        <div className="h-full flex flex-col gap-5 select-none">
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 shrink-0">
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><UserCheck size={22} /></div>
-                    <div>
-                        <p className="text-[10px] text-text-muted font-bold uppercase">عدد الموظفين</p>
-                        <p className="text-text-main font-black text-xl font-mono">{staffList.length}</p>
-                    </div>
-                </div>
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><Receipt size={22} /></div>
-                    <div>
-                        <p className="text-[10px] text-text-muted font-bold uppercase">إجمالي المبيعات</p>
-                        <p className="text-primary font-black text-xl font-mono">{formatCurrency(totalSalesValue, currency).replace(currency, '')}</p>
-                    </div>
-                </div>
-                <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-bg border border-border/60 text-text-muted flex items-center justify-center"><Activity size={22} /></div>
-                    <div>
-                        <p className="text-[10px] text-text-muted font-bold uppercase">متوسط للموظف</p>
-                        <p className="text-text-main font-black text-xl font-mono">{formatCurrency(staffList.length > 0 ? totalSalesValue / staffList.length : 0, currency).replace(currency, '')}</p>
-                    </div>
-                </div>
-            </div>
+            <StatsGrid columns={3}>
+                <StatCard
+                    label="عدد الموظفين"
+                    value={staffList.length}
+                    icon={UserCheck}
+                    color="blue"
+                    subtitle="موظف مسجل"
+                />
+                <StatCard
+                    label="إجمالي المبيعات"
+                    value={formatCurrency(totalSalesValue, currency).replace(currency, '')}
+                    icon={Receipt}
+                    color="emerald"
+                    subtitle={currency}
+                />
+                <StatCard
+                    label="متوسط للموظف"
+                    value={formatCurrency(staffList.length > 0 ? totalSalesValue / staffList.length : 0, currency).replace(currency, '')}
+                    icon={Activity}
+                    color="purple"
+                    subtitle={currency}
+                />
+            </StatsGrid>
 
             {/* Staff Performance */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {staffStats.map((s, i) => {
                     const percentage = totalSalesValue > 0 ? (s.totalSales / totalSalesValue) * 100 : 0;
                     return (
-                        <div key={s.id} className="bg-surface border border-border rounded-xl p-4 hover:border-primary/25 transition-colors shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold ${i === 0 ? 'bg-primary text-primary-fg' : 'bg-bg border border-border text-text-muted'}`}>
+                        <div key={s.id} className="bg-surface border border-border/80 rounded-2xl p-5 flex flex-col justify-between">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${i === 0 ? 'bg-emerald-500 text-black' : 'bg-surface-hover border border-border/60 text-text-muted'}`}>
                                     {i + 1}
                                 </div>
                                 <div>
-                                    <p className="text-text-main font-bold text-sm">{s.name}</p>
-                                    <p className="text-text-muted text-xs">{s.role === 'admin' ? 'مدير' : s.role === 'manager' ? 'مشرف' : 'كاشير'}</p>
+                                    <p className="text-text-main font-extrabold text-sm">{s.name}</p>
+                                    <p className="text-text-muted text-[11px] font-semibold">{s.role === 'admin' ? 'مدير' : s.role === 'manager' ? 'مشرف' : 'كاشير'}</p>
                                 </div>
                             </div>
-                            <div className="space-y-3">
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-text-muted">المبيعات</span>
-                                    <span className="text-primary font-bold font-mono">{formatCurrency(s.totalSales, currency).replace(currency, '')}</span>
+                            <div className="space-y-2 pt-1">
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-text-muted font-extrabold">المبيعات</span>
+                                    <span className="text-emerald-400 font-black text-xs font-mono">{formatCurrency(s.totalSales, currency).replace(currency, '')}</span>
                                 </div>
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-text-muted">عدد الفواتير</span>
-                                    <span className="text-text-main font-bold font-mono">{s.salesCount}</span>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-text-muted font-extrabold">عدد الفواتير</span>
+                                    <span className="text-text-main font-black text-xs font-mono">{s.salesCount}</span>
                                 </div>
-                                <div className="w-full h-1.5 bg-bg rounded-full overflow-hidden">
-                                    <div className="h-full bg-primary rounded-full transition-all duration-500"
+                                <div className="w-full h-1.5 bg-surface-hover rounded-full overflow-hidden border border-border/40">
+                                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-300"
                                         style={{ width: `${percentage}%` }} />
                                 </div>
-                                <p className="text-[10px] text-text-muted text-center">{percentage.toFixed(1)}% من الإجمالي</p>
+                                <p className="text-[10px] text-text-muted text-center font-extrabold">{percentage.toFixed(1)}% من الإجمالي</p>
                             </div>
                         </div>
                     );
@@ -965,7 +953,7 @@ const StaffReportTab: React.FC<StaffReportTabProps> = ({ staffList, sales, curre
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
-    const { comparison: data, isLoading, isError, refetch } = useMonthlyComparison();
+    const { comparison: data, isLoading, isError } = useMonthlyComparison();
 
     useEffect(() => {
         if (isError) console.error('Failed to load monthly comparison');
@@ -974,119 +962,119 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
     if (isLoading) {
         return (
             <div className="h-full flex items-center justify-center">
-                <RefreshCw size={32} className="text-primary animate-spin" />
+                <RefreshCw size={32} className="text-emerald-400 animate-spin" />
             </div>
         );
     }
 
     const ChangeIndicator = ({ value, label }: { value: number; label: string }) => (
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${value >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+        <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border ${value >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
             {value >= 0 ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
-            <span className="font-bold">{Math.abs(value).toFixed(1)}%</span>
-            <span className="text-xs opacity-70">{label}</span>
+            <span className="font-black text-sm">{Math.abs(value).toFixed(1)}%</span>
+            <span className="text-xs font-extrabold opacity-80">{label}</span>
         </div>
     );
 
     const MonthCard = ({ month, isCurrent }: { month: MonthData; isCurrent: boolean }) => (
-        <div className={`bg-surface border rounded-lg p-6 ${isCurrent ? 'border-primary/50 shadow-lg shadow-primary/10' : 'border-border'}`}>
-            <div className="flex items-center gap-3 mb-6">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isCurrent ? 'bg-gradient-to-br from-primary to-emerald-400' : 'bg-bg'}`}>
-                    <Calendar size={24} className={isCurrent ? 'text-white' : 'text-text-muted'} />
+        <div className={`bg-surface border rounded-2xl p-5 ${isCurrent ? 'border-emerald-500/40' : 'border-border/80'}`}>
+            <div className="flex items-center gap-3 mb-5">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isCurrent ? 'bg-emerald-500 text-black' : 'bg-surface-hover text-text-muted border border-border/60'}`}>
+                    <Calendar size={24} />
                 </div>
                 <div>
                     <h3 className="text-text-main font-black text-lg">{month.label}</h3>
-                    <p className="text-text-muted text-xs">{isCurrent ? 'الشهر الحالي' : 'الشهر السابق'}</p>
+                    <p className="text-text-muted text-xs font-extrabold">{isCurrent ? 'الشهر الحالي' : 'الشهر السابق'}</p>
                 </div>
             </div>
 
-            <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-bg rounded-lg">
+            <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-surface-hover/50 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2">
-                        <Wallet size={18} className="text-blue-500" />
-                        <span className="text-text-muted text-sm">الإيرادات</span>
+                        <Wallet size={18} className="text-blue-400" />
+                        <span className="text-text-muted text-xs font-extrabold">الإيرادات</span>
                     </div>
-                    <span className="text-blue-500 font-black text-lg font-mono">{formatCurrency(month.revenue, currency).replace(currency, '')}</span>
+                    <span className="text-blue-400 font-black text-base font-mono">{formatCurrency(month.revenue, currency).replace(currency, '')}</span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-bg rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-surface-hover/50 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2">
-                        <Activity size={18} className="text-emerald-500" />
-                        <span className="text-text-muted text-sm">صافي الربح</span>
+                        <Activity size={18} className="text-emerald-400" />
+                        <span className="text-text-muted text-xs font-extrabold">صافي الربح</span>
                     </div>
-                    <span className={`font-black text-lg font-mono ${month.netProfit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                    <span className={`font-black text-base font-mono ${month.netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         {formatCurrency(month.netProfit, currency).replace(currency, '')}
                     </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-bg rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-surface-hover/50 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2">
-                        <Receipt size={18} className="text-purple-500" />
-                        <span className="text-text-muted text-sm">عدد الطلبات</span>
+                        <Receipt size={18} className="text-purple-400" />
+                        <span className="text-text-muted text-xs font-extrabold">عدد الطلبات</span>
                     </div>
-                    <span className="text-purple-500 font-black text-lg font-mono">{month.orders}</span>
+                    <span className="text-purple-400 font-black text-base font-mono">{month.orders}</span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-bg rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-surface-hover/50 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2">
-                        <ShoppingBag size={18} className="text-amber-500" />
-                        <span className="text-text-muted text-sm">متوسط الطلب</span>
+                        <ShoppingBag size={18} className="text-amber-400" />
+                        <span className="text-text-muted text-xs font-extrabold">متوسط الطلب</span>
                     </div>
-                    <span className="text-amber-500 font-black text-lg font-mono">{formatCurrency(month.avgOrder, currency).replace(currency, '')}</span>
+                    <span className="text-amber-400 font-black text-base font-mono">{formatCurrency(month.avgOrder, currency).replace(currency, '')}</span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-bg rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-surface-hover/50 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2">
-                        <TrendingDown size={18} className="text-red-500" />
-                        <span className="text-text-muted text-sm">المصروفات</span>
+                        <TrendingDown size={18} className="text-red-400" />
+                        <span className="text-text-muted text-xs font-extrabold">المصروفات</span>
                     </div>
-                    <span className="text-red-500 font-black text-lg font-mono">{formatCurrency(month.expenses, currency).replace(currency, '')}</span>
+                    <span className="text-red-400 font-black text-base font-mono">{formatCurrency(month.expenses, currency).replace(currency, '')}</span>
                 </div>
             </div>
         </div>
     );
 
     return (
-        <div className="h-full overflow-y-auto custom-scrollbar pb-4 animate-in fade-in duration-300">
+        <div className="h-full overflow-y-auto custom-scrollbar pb-4 space-y-5 animate-in fade-in duration-200 select-none">
             {/* Change Indicators */}
-            <div className="flex gap-4 mb-6 justify-center flex-wrap">
+            <div className="flex gap-3 justify-center flex-wrap">
                 <ChangeIndicator value={data.revenueChange} label="الإيرادات" />
                 <ChangeIndicator value={data.profitChange} label="الأرباح" />
                 <ChangeIndicator value={data.ordersChange} label="الطلبات" />
             </div>
 
             {/* Month Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <MonthCard month={data.currentMonth} isCurrent={true} />
                 <MonthCard month={data.previousMonth} isCurrent={false} />
             </div>
 
             {/* Visual Comparison Bar */}
-            <div className="mt-6 bg-surface border border-border rounded-lg p-6">
-                <h3 className="text-text-main font-black mb-4 flex items-center gap-2">
-                    <BarChart3 size={20} className="text-primary" />
+            <div className="bg-surface border border-border/80 rounded-2xl p-5">
+                <h3 className="text-text-main font-black text-base mb-4 flex items-center gap-2">
+                    <BarChart3 size={20} className="text-emerald-400" />
                     مقارنة الإيرادات
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <div>
-                        <div className="flex justify-between text-sm mb-2">
+                        <div className="flex justify-between text-xs mb-1.5 font-extrabold">
                             <span className="text-text-muted">{data.currentMonth.label}</span>
-                            <span className="text-blue-500 font-mono font-bold">{formatCurrency(data.currentMonth.revenue, currency)}</span>
+                            <span className="text-emerald-400 font-mono font-black text-sm">{formatCurrency(data.currentMonth.revenue, currency)}</span>
                         </div>
-                        <div className="h-8 bg-bg rounded-lg overflow-hidden">
+                        <div className="h-7 bg-surface-hover rounded-xl overflow-hidden border border-border/40">
                             <div
-                                className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-lg transition-all duration-700"
+                                className="h-full bg-emerald-500 rounded-xl transition-all duration-500"
                                 style={{ width: `${Math.min(100, (data.currentMonth.revenue / Math.max(data.currentMonth.revenue, data.previousMonth.revenue)) * 100)}%` }}
                             />
                         </div>
                     </div>
                     <div>
-                        <div className="flex justify-between text-sm mb-2">
+                        <div className="flex justify-between text-xs mb-1.5 font-extrabold">
                             <span className="text-text-muted">{data.previousMonth.label}</span>
-                            <span className="text-text-main font-mono font-bold">{formatCurrency(data.previousMonth.revenue, currency)}</span>
+                            <span className="text-text-main font-mono font-black text-sm">{formatCurrency(data.previousMonth.revenue, currency)}</span>
                         </div>
-                        <div className="h-8 bg-bg rounded-xl overflow-hidden">
+                        <div className="h-7 bg-surface-hover rounded-xl overflow-hidden border border-border/40">
                             <div
-                                className="h-full bg-gradient-to-r from-gray-400 to-gray-500 rounded-xl transition-all duration-700"
+                                className="h-full bg-gray-500/40 rounded-xl transition-all duration-500"
                                 style={{ width: `${Math.min(100, (data.previousMonth.revenue / Math.max(data.currentMonth.revenue, data.previousMonth.revenue)) * 100)}%` }}
                             />
                         </div>

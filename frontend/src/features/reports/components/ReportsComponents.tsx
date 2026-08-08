@@ -95,14 +95,14 @@ const rankColors = {
 
 export const CustomerRank: React.FC<CustomerRankProps> = ({ rank, name, total, currency = 'IQD' }) => {
     return (
-        <div className="flex justify-between items-center bg-bg p-3.5 rounded-lg border border-border hover:border-primary/30 transition-colors">
-            <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-md flex items-center justify-center font-bold text-sm ${rankColors[rank as keyof typeof rankColors] || 'bg-surface-hover text-text-muted'}`}>
+        <div className="flex justify-between items-center bg-surface-hover/80 p-3.5 rounded-2xl border border-border/40 hover:border-emerald-500/30 transition-colors">
+            <div className="flex items-center gap-3.5">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm ${rankColors[rank as keyof typeof rankColors] || 'bg-surface border border-border text-text-muted'}`}>
                     {rank}
                 </div>
-                <span className="text-text-main text-sm font-bold">{name}</span>
+                <span className="text-text-main text-sm font-extrabold">{name}</span>
             </div>
-            <span className="text-primary font-bold text-sm font-mono">
+            <span className="text-emerald-400 font-black text-sm font-mono">
                 {formatCurrency(total, currency).replace(currency, '')}
             </span>
         </div>
