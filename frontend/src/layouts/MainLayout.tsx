@@ -1,6 +1,5 @@
 import React from 'react';
 import { NativeTitleBar } from '../components/NativeTitleBar';
-import { TouchDock } from '../components/TouchDock';
 import { AppProviders } from '../components/providers';
 import { useAppStore } from '../store/appStore';
 import { useAuth } from '../core/AuthContext';
@@ -49,7 +48,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <div className="flex flex-col flex-1 h-full overflow-hidden relative">
                 <AppProviders aiContext={aiContext} onNavigate={onNavigate} onLock={() => setAppState('login')}>
                     <main className="flex-1 flex flex-col h-full relative overflow-hidden bg-bg transition-all duration-200">
-                        <div className={`w-full h-full animate-fade-in flex flex-col ${activeView === 'sales' ? 'p-0' : 'p-4 max-w-[1920px] mx-auto'}`}>
+                        <div className={`w-full h-full animate-fade-in flex flex-col ${activeView === 'sales' ? 'p-0' : 'px-4 py-3'}`}>
                             {children}
                         </div>
                     </main>

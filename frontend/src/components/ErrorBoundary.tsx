@@ -98,9 +98,9 @@ Timestamp: ${new Date().toISOString()}
         <div className="min-h-screen bg-bg flex flex-col items-center justify-center text-center p-6 animate-scale-in">
           {/* Error Icon with Glow */}
           <div className="relative mb-6">
-            <div className="absolute inset-0 bg-red-500/20 blur-2xl rounded-full animate-pulse" />
-            <div className="relative w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20">
-              <AlertTriangle size={48} className="text-red-500" />
+            <div className="absolute inset-0 bg-danger/20 blur-2xl rounded-full animate-pulse" />
+            <div className="relative w-24 h-24 bg-danger/10 rounded-full flex items-center justify-center border border-danger/20">
+              <AlertTriangle size={48} className="text-danger" />
             </div>
           </div>
 
@@ -152,9 +152,9 @@ Timestamp: ${new Date().toISOString()}
               <summary className="text-text-muted text-sm cursor-pointer hover:text-text-main transition-colors mb-2">
                 تفاصيل الخطأ (للمطورين)
               </summary>
-              <div className="p-4 bg-bg rounded-xl border border-red-500/30 overflow-auto" dir="ltr">
+              <div className="p-4 bg-bg rounded-xl border border-danger/30 overflow-auto" dir="ltr">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-red-400 text-xs font-bold">Error Details</span>
+                  <span className="text-danger text-xs font-bold">Error Details</span>
                   <button
                     onClick={this.handleCopyError}
                     className="text-text-muted hover:text-primary transition-colors p-1 rounded"
@@ -163,7 +163,7 @@ Timestamp: ${new Date().toISOString()}
                     {copied ? <CheckCircle size={14} className="text-primary" /> : <Copy size={14} />}
                   </button>
                 </div>
-                <p className="text-red-400 font-mono text-xs whitespace-pre-wrap">
+                <p className="text-danger font-mono text-xs whitespace-pre-wrap">
                   {error.toString()}
                 </p>
                 {error.stack && (

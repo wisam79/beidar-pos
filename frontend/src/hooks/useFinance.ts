@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { api } from '../core/api';
 
 export const useExpenses = (month?: string) => {
@@ -15,7 +15,6 @@ export const usePurchaseOrders = (statusFilter?: string) => {
     return useQuery({
         queryKey: ['purchaseOrders', statusFilter],
         queryFn: async () => {
-            // Note: The API for purchase orders may vary, assuming a list function
             const data = await api.purchaseOrders.list(statusFilter);
             return data || [];
         }
@@ -38,6 +37,7 @@ export const useFinanceData = () => {
                 sales: saData?.data || [],
                 purchaseOrders: poData || []
             };
-        }
+        },
+        placeholderData: keepPreviousData,
     });
 };

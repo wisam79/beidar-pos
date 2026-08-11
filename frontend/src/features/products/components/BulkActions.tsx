@@ -27,13 +27,13 @@ export const BulkActions = memo(({
             <div className="flex gap-2">
                 <button
                     onClick={onPrintSelected}
-                    className="px-3 py-1.5 bg-primary/20 text-primary rounded-lg text-xs font-bold hover:bg-primary hover:text-black transition-colors"
+                    className="px-3 py-1.5 bg-primary/20 text-primary rounded-lg text-xs font-bold hover:bg-primary hover:text-primary-fg transition-colors"
                 >
                     طباعة المحدد
                 </button>
                 <button
                     onClick={onDeleteSelected}
-                    className="px-3 py-1.5 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold hover:bg-red-500 hover:text-white transition-colors"
+                    className="px-3 py-1.5 bg-danger/10 text-danger rounded-lg text-xs font-bold hover:bg-danger hover:text-white transition-colors"
                 >
                     حذف المحدد
                 </button>

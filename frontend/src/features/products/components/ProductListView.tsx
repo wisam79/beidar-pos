@@ -81,7 +81,7 @@ export const ProductListView = memo(({
                                 key={p.id}
                                 data-index={virtualRow.index}
                                 ref={measureElement}
-                                className={`border-b border-border/30 hover:bg-surface-hover/80 transition-colors cursor-pointer group h-[64px] ${p.id && selectedIds.includes(p.id) ? 'bg-emerald-500/10' : ''}`}
+                                className={`border-b border-border/30 hover:bg-surface-hover/80 transition-colors cursor-pointer group h-[64px] ${p.id && selectedIds.includes(p.id) ? 'bg-success/10' : ''}`}
                                 onClick={() => onEditProduct(p)}
                             >
                                 <td className="text-right pr-4" onClick={e => e.stopPropagation()}>
@@ -89,7 +89,7 @@ export const ProductListView = memo(({
                                         type="checkbox"
                                         checked={p.id ? selectedIds.includes(p.id) : false}
                                         onChange={() => p.id && onToggleSelect(p.id)}
-                                        className="w-5 h-5 rounded-lg accent-emerald-500 cursor-pointer touch-target"
+                                        className="w-5 h-5 rounded-lg accent-success cursor-pointer touch-target"
                                         aria-label="تحديد المنتج"
                                     />
                                 </td>
@@ -99,11 +99,11 @@ export const ProductListView = memo(({
                                             {resolveImage(p.image) ? (
                                                 <img src={resolveImage(p.image) || ''} className="w-full h-full object-cover" alt={p.name} />
                                             ) : (
-                                                <span className="font-black text-emerald-400">{p.name.charAt(0)}</span>
+                                                <span className="font-black text-success">{p.name.charAt(0)}</span>
                                             )}
                                         </div>
                                         <div>
-                                            <p className="font-extrabold text-text-main text-sm group-hover:text-emerald-400 transition-colors">{p.name}</p>
+                                            <p className="font-extrabold text-text-main text-sm group-hover:text-success transition-colors">{p.name}</p>
                                             <p className="text-[11px] text-text-muted font-mono">{p.barcode}</p>
                                         </div>
                                     </div>
@@ -112,15 +112,15 @@ export const ProductListView = memo(({
                                     {p.category}<br /><span className="text-[10px] opacity-70 font-semibold">{p.supplier}</span>
                                 </td>
                                 <td className="text-center py-2">
-                                    <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black font-mono border ${abcClass === 'A' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : abcClass === 'B' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                                    <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black font-mono border ${abcClass === 'A' ? 'bg-success/10 text-success border-success/20' : abcClass === 'B' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
                                         {abcClass}
                                     </span>
                                 </td>
                                 <td className="text-left py-2">
                                     <div className="flex flex-col">
-                                        <span className="font-mono font-black text-sm text-emerald-400">{formatCurrency(p.price, currency).replace(currency, '')}</span>
+                                        <span className="font-mono font-black text-sm text-success">{formatCurrency(p.price, currency).replace(currency, '')}</span>
                                         {p.cost > 0 && (
-                                            <span className="text-[10px] text-emerald-400/90 font-extrabold">
+                                            <span className="text-[10px] text-success/90 font-extrabold">
                                                 {((p.price - p.cost) / p.cost * 100).toFixed(0)}% هامش
                                             </span>
                                         )}
@@ -128,9 +128,9 @@ export const ProductListView = memo(({
                                 </td>
                                 <td className="text-center py-2">
                                     <div className="flex items-center justify-center gap-1.5 bg-surface-hover rounded-xl p-1 w-fit mx-auto border border-border/60 shadow-inner" onClick={e => e.stopPropagation()}>
-                                        <button aria-label="إنقاص المخزون" onClick={() => onUpdateStock(p, -1)} className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors touch-target"><Minus size={14} strokeWidth={2.5} /></button>
+                                        <button aria-label="إنقاص المخزون" onClick={() => onUpdateStock(p, -1)} className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors touch-target"><Minus size={14} strokeWidth={2.5} /></button>
                                         <span className="font-mono font-black w-8 text-center text-sm text-text-main">{p.stock}</span>
-                                        <button aria-label="زيادة المخزون" onClick={() => onUpdateStock(p, 1)} className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors touch-target"><Plus size={14} strokeWidth={2.5} /></button>
+                                        <button aria-label="زيادة المخزون" onClick={() => onUpdateStock(p, 1)} className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-success hover:bg-success/10 rounded-lg transition-colors touch-target"><Plus size={14} strokeWidth={2.5} /></button>
                                     </div>
                                 </td>
                                 <td className="text-center py-2">
@@ -138,8 +138,8 @@ export const ProductListView = memo(({
                                 </td>
                                 <td className="text-center py-2 pl-4">
                                     <div className="flex justify-center gap-1.5">
-                                        <button aria-label="طباعة الباركود" onClick={(e) => { e.stopPropagation(); onAddToPrintQueue(p, 1); }} className="w-9 h-9 flex items-center justify-center hover:bg-surface-hover rounded-xl text-text-muted hover:text-emerald-400 border border-transparent hover:border-border/60 transition-colors touch-target"><Printer size={16} /></button>
-                                        <button aria-label="حذف المنتج" onClick={(e) => { e.stopPropagation(); if (p.id) onDeleteProduct(p.id); }} className="w-9 h-9 flex items-center justify-center hover:bg-red-500/10 rounded-xl text-text-muted hover:text-red-400 border border-transparent hover:border-red-500/20 transition-colors touch-target"><Trash2 size={16} /></button>
+                                        <button aria-label="طباعة الباركود" onClick={(e) => { e.stopPropagation(); onAddToPrintQueue(p, 1); }} className="w-9 h-9 flex items-center justify-center hover:bg-surface-hover rounded-xl text-text-muted hover:text-success border border-transparent hover:border-border/60 transition-colors touch-target"><Printer size={16} /></button>
+                                        <button aria-label="حذف المنتج" onClick={(e) => { e.stopPropagation(); if (p.id) onDeleteProduct(p.id); }} className="w-9 h-9 flex items-center justify-center hover:bg-danger/10 rounded-xl text-text-muted hover:text-danger border border-transparent hover:border-danger/20 transition-colors touch-target"><Trash2 size={16} /></button>
                                     </div>
                                 </td>
                             </tr>

@@ -61,7 +61,7 @@ export const PaymentConfirmModal: React.FC<PaymentConfirmModalProps> = ({
                 // Success Animation
                 <div className="flex flex-col items-center justify-center animate-in zoom-in duration-500">
                     <div className="w-32 h-32 bg-primary rounded-full flex items-center justify-center mb-6 shadow-[0_0_60px_rgba(16,185,129,0.5)]">
-                        <Check size={64} className="text-black" strokeWidth={3} />
+                        <Check size={64} className="text-primary-fg" strokeWidth={3} />
                     </div>
                     <h2 className="text-3xl font-black text-white mb-2">تم بنجاح!</h2>
                     <p className="text-white/60">جاري الإنتقال...</p>
@@ -72,15 +72,15 @@ export const PaymentConfirmModal: React.FC<PaymentConfirmModalProps> = ({
                 <div className="w-full max-w-md bg-surface  border border-border/80 rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
                     {/* Header */}
                     <div className="bg-primary p-6 text-center relative">
-                        <button onClick={onClose} title="إغلاق" className="absolute top-4 left-4 text-black/50 hover:text-black p-2 rounded-full hover:bg-black/10 transition-colors">
+                        <button onClick={onClose} title="إغلاق" className="absolute top-4 left-4 text-primary-fg/50 hover:text-primary-fg p-2 rounded-full hover:bg-black/10 transition-colors">
                             <X size={20} />
                         </button>
-                        <div className="inline-flex items-center gap-2 text-black font-bold bg-black/10 px-4 py-1.5 rounded-full mb-3">
+                        <div className="inline-flex items-center gap-2 text-primary-fg font-bold bg-black/10 px-4 py-1.5 rounded-full mb-3">
                             {paymentIcon}
                             <span>{paymentLabel}</span>
                         </div>
-                        <h2 className="text-4xl font-black text-black">{formatCurrency(total)}</h2>
-                        {discount > 0 && <p className="text-black/60 text-sm mt-1">خصم: {formatCurrency(discount)}</p>}
+                        <h2 className="text-4xl font-black text-primary-fg">{formatCurrency(total)}</h2>
+                        {discount > 0 && <p className="text-primary-fg/60 text-sm mt-1">خصم: {formatCurrency(discount)}</p>}
                     </div>
 
                     {/* Customer */}
@@ -104,7 +104,7 @@ export const PaymentConfirmModal: React.FC<PaymentConfirmModalProps> = ({
                         <button
                             onClick={handleConfirm}
                             disabled={isProcessing}
-                            className="w-full bg-primary hover:bg-emerald-400 text-black font-black text-xl py-5 rounded-2xl shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-3"
+                            className="w-full bg-primary hover:bg-success text-primary-fg font-black text-xl py-5 rounded-2xl shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-3"
                         >
                             {isProcessing ? (
                                 <div className="w-6 h-6 border-3 border-black/20 border-t-black rounded-full animate-spin" />

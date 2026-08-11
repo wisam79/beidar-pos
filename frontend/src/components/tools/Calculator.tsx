@@ -162,7 +162,7 @@ export const Calculator = () => {
     );
 
     return (
-        <div className="w-80 bg-gradient-to-b from-surface to-surface/80  rounded-b-2xl p-4 shadow-2xl select-none font-sans">
+        <div className="w-80 bg-surface  rounded-b-2xl p-4 shadow-2xl select-none font-sans">
             {/* Display Area */}
             {/* FORCE LTR direction for math expressions so they read correctly (5 + 9, not 9 + 5) */}
             <div className="min-h-28 flex flex-col justify-end items-end mb-3 relative group px-2" dir="ltr">
@@ -175,7 +175,7 @@ export const Calculator = () => {
                     >
                         <Clock size={14} />
                     </button>
-                    <button onClick={backspace} className="p-1.5 hover:bg-surface-hover rounded-lg text-text-muted hover:text-red-400" title="مسح">
+                    <button onClick={backspace} className="p-1.5 hover:bg-surface-hover rounded-lg text-text-muted hover:text-danger" title="مسح">
                         <Delete size={14} />
                     </button>
                     <button
@@ -187,7 +187,7 @@ export const Calculator = () => {
                         className="p-1.5 hover:bg-surface-hover rounded-lg text-text-muted"
                         title="نسخ"
                     >
-                        {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                        {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                     </button>
                 </div>
 
@@ -196,7 +196,7 @@ export const Calculator = () => {
                     <div className="absolute inset-0 bg-surface z-20  rounded-xl flex flex-col p-2 overflow-y-auto custom-scrollbar border border-white/10" dir="rtl">
                         <div className="flex justify-between items-center pb-2 border-b border-white/10 mb-2">
                             <span className="text-xs font-bold text-text-muted">السجل</span>
-                            <button onClick={() => { setHistory([]); localStorage.removeItem('beidar_calc_history'); }} className="text-[10px] text-red-400">مسح</button>
+                            <button onClick={() => { setHistory([]); localStorage.removeItem('beidar_calc_history'); }} className="text-[10px] text-danger">مسح</button>
                         </div>
                         {history.length ? history.map((h, i) => (
                             <div key={i} onClick={() => { setExpression(h.result); setShowHistory(false); }} className="text-right p-2 rounded-lg hover:bg-surface-hover cursor-pointer" dir="ltr">
@@ -226,7 +226,7 @@ export const Calculator = () => {
 
             {/* Buttons Grid */}
             <div className="grid grid-cols-4 gap-2">
-                <Button label={expression ? "C" : "AC"} onClick={clearAll} className="bg-surface-hover text-text-main hover:bg-surface-active font-bold text-red-400" />
+                <Button label={expression ? "C" : "AC"} onClick={clearAll} className="bg-surface-hover text-text-main hover:bg-surface-active font-bold text-danger" />
                 <Button label="+/−" onClick={toggleSign} className="bg-surface-hover text-text-main hover:bg-surface-active font-bold" />
                 <Button label="%" onClick={inputPercent} className="bg-surface-hover text-text-main hover:bg-surface-active font-bold" />
                 <Button label="÷" onClick={() => inputOperator('/')} className="bg-surface-active text-primary hover:bg-primary/10 font-bold text-xl" />

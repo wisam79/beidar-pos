@@ -26,6 +26,13 @@ export const queryClient = new QueryClient({
     },
 });
 
+/** Global helper to invalidate ALL queries (active + cached).
+ * Active queries refetch immediately; inactive ones are marked stale
+ * and refetch automatically the next time their screen mounts. */
+export const invalidateAllData = () => {
+    queryClient.invalidateQueries();
+};
+
 
 // Query Keys - Centralized for consistency
 export const queryKeys = {
@@ -40,6 +47,9 @@ export const queryKeys = {
     },
     sales: {
         all: ['sales'] as const,
+        list: (page = 0, pageSize = 100, search = '', status = '', date = '') =>
+            ['sales', 'list', page, pageSize, search, status, date] as const,
+        installments: (customerId: string) => ['sales', 'installments', customerId] as const,
         parked: () => [...queryKeys.sales.all, 'parked'] as const,
         parkedCount: () => [...queryKeys.sales.all, 'parkedCount'] as const,
     },

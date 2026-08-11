@@ -94,10 +94,10 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         <div className="fixed inset-0 bg-black/70  z-[200] flex items-center justify-center p-4">
             <div className="bg-surface rounded-3xl border border-border shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 fade-in duration-300">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 p-6 border-b border-border">
+                <div className="bg-warning/20 p-6 border-b border-border">
                     <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-amber-500/20 rounded-2xl flex items-center justify-center">
-                            <Shield size={28} className="text-amber-400" />
+                        <div className="w-14 h-14 bg-warning/20 rounded-2xl flex items-center justify-center">
+                            <Shield size={28} className="text-warning" />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-text-main">تغيير رمز PIN</h2>
@@ -154,8 +154,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                                     key={i}
                                     className={`w-14 h-16 rounded-2xl border-2 flex items-center justify-center text-2xl font-bold transition-all ${confirmPin.length > i
                                             ? pinsMatch && confirmPin.length === 4
-                                                ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
-                                                : 'border-amber-500 bg-amber-500/10 text-amber-400'
+                                                ? 'border-success bg-success/10 text-success'
+                                                : 'border-warning bg-warning/10 text-warning'
                                             : 'border-border bg-bg text-text-muted'
                                         }`}
                                 >
@@ -183,11 +183,11 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
                     {/* Validation hints */}
                     <div className="bg-bg/50 rounded-xl p-4 space-y-2">
-                        <div className={`flex items-center gap-2 text-xs ${isNotDefault ? 'text-emerald-400' : 'text-text-muted'}`}>
+                        <div className={`flex items-center gap-2 text-xs ${isNotDefault ? 'text-success' : 'text-text-muted'}`}>
                             <Check size={14} className={isNotDefault ? 'opacity-100' : 'opacity-30'} />
                             لا يمكن استخدام 0000
                         </div>
-                        <div className={`flex items-center gap-2 text-xs ${pinsMatch ? 'text-emerald-400' : 'text-text-muted'}`}>
+                        <div className={`flex items-center gap-2 text-xs ${pinsMatch ? 'text-success' : 'text-text-muted'}`}>
                             <Check size={14} className={pinsMatch ? 'opacity-100' : 'opacity-30'} />
                             الرمزان متطابقان
                         </div>
@@ -195,7 +195,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
                     {/* Error */}
                     {error && (
-                        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
+                        <div className="p-3 bg-danger/10 border border-danger/30 rounded-xl text-danger text-sm text-center">
                             {error}
                         </div>
                     )}
@@ -215,7 +215,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                             type="submit"
                             disabled={!canSubmit || loading}
                             className={`flex-1 p-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${canSubmit
-                                ? 'bg-gradient-to-r from-primary to-emerald-400 text-black hover:shadow-lg'
+                                ? 'bg-primary text-primary-fg hover:shadow-lg'
                                 : 'bg-surface-hover text-text-muted cursor-not-allowed'
                                 }`}
                         >

@@ -20,7 +20,6 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [pin, setPin] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [loadingStaff, setLoadingStaff] = useState(true);
@@ -106,40 +105,6 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
         setMode('password');
     };
 
-    // Handle PIN input
-    const handlePinChange = (value: string) => {
-        const digits = value.replace(/\D/g, '').slice(0, 4);
-        setPin(digits);
-        setError('');
-
-        // Auto-submit when 4 digits entered
-        if (digits.length === 4) {
-            handlePINLogin(digits);
-        }
-    };
-
-    // Login with password
-    const handlePasswordLogin = async (e?: React.FormEvent) => {
-        e?.preventDefault();
-        if (!username.trim() || !password.trim()) {
-            setError('الرجاء إدخال اسم المستخدم وكلمة المرور');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-
-        const result = await login(username, password);
-
-        if (result.success) {
-            onLoginSuccess();
-        } else {
-            setError(result.message || 'فشل تسجيل الدخول');
-        }
-
-        setLoading(false);
-    };
-
     // Login with PIN
     const handlePINLogin = async (pinValue: string) => {
         setLoading(true);
@@ -161,9 +126,9 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
     // Role badge colors
     const getRoleBadge = (role: string) => {
         const badges: Record<string, { bg: string; text: string; label: string }> = {
-            admin: { bg: 'bg-amber-500/20', text: 'text-amber-400', label: 'مدير' },
-            manager: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'مشرف' },
-            cashier: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: 'كاشير' },
+            admin: { bg: 'bg-warning/20', text: 'text-warning', label: 'مدير' },
+            manager: { bg: 'bg-primary/20', text: 'text-primary', label: 'مشرف' },
+            cashier: { bg: 'bg-success/20', text: 'text-success', label: 'كاشير' },
             viewer: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'مشاهد' },
         };
         return badges[role] || badges.viewer;
@@ -185,7 +150,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none bg-mesh z-0">
                 <div className="absolute top-1/4 -right-32 w-96 h-96 bg-primary/10 rounded-full blur-[120px]" />
-                <div className="absolute bottom-1/4 -left-32 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px]" />
+                <div className="absolute bottom-1/4 -left-32 w-96 h-96 bg-success/10 rounded-full blur-[120px]" />
             </div>
 
             {/* Main Content Area - Centered */}
@@ -194,10 +159,10 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                 <div className="w-full max-w-md">
                     {/* Logo/Brand */}
                     <div className="text-center mb-8">
-                        <div className="w-20 h-20 bg-gradient-to-br from-primary via-emerald-400 to-cyan-400 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-[0_20px_60px_-20px_var(--color-primary)]">
-                            <Lock size={40} className="text-black" />
+                        <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center mx-auto mb-4">
+                            <Lock size={40} className="text-primary-fg" />
                         </div>
-                        <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-emerald-400 to-cyan-400">
+                        <h1 className="text-3xl font-black text-primary">
                             Beidar POS
                         </h1>
                         <p className="text-text-muted mt-2">تسجيل الدخول للمتابعة</p>
@@ -282,7 +247,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                 {/* First-time login hint (Redesigned) */}
                                 {selectedStaff?.username === 'admin' && selectedStaff?.lastLogin === 0 && (
                                     <div className="mb-4 flex justify-center animate-pulse">
-                                        <span className="text-[10px] text-amber-400 bg-amber-400/10 px-3 py-1.5 rounded-full border border-amber-400/20 shadow-sm flex items-center gap-2">
+                                        <span className="text-[10px] text-warning bg-warning/10 px-3 py-1.5 rounded-full border border-warning/20 shadow-sm flex items-center gap-2">
                                             <span>🔑 الرمز الافتراضي:</span>
                                             <span className="font-mono font-bold tracking-widest">0000</span>
                                         </span>
@@ -291,7 +256,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
 
                                 {/* Error */}
                                 {error && (
-                                    <div className="p-2 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs mb-4 text-center">
+                                    <div className="p-2 bg-danger/10 border border-danger/30 rounded-xl text-danger text-xs mb-4 text-center">
                                         {error}
                                     </div>
                                 )}
@@ -337,7 +302,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                         type="button"
                                         onClick={() => { setPassword(''); setError(''); }}
                                         disabled={loading}
-                                        className="h-14 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 text-sm font-bold transition-all active:scale-95 disabled:opacity-50"
+                                        className="h-14 rounded-xl bg-danger/10 border border-danger/30 hover:bg-danger/20 text-danger text-sm font-bold transition-all active:scale-95 disabled:opacity-50"
                                     >
                                         مسح
                                     </button>
@@ -424,7 +389,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
 
                                 {/* Error Message */}
                                 {error && (
-                                    <div className="p-2 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs mb-4 text-center">
+                                    <div className="p-2 bg-danger/10 border border-danger/30 rounded-xl text-danger text-xs mb-4 text-center">
                                         {error}
                                     </div>
                                 )}
@@ -456,7 +421,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                         type="button"
                                         onClick={() => { setPin(''); setError(''); }}
                                         disabled={loading}
-                                        className="h-14 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 text-sm font-bold transition-all active:scale-95 disabled:opacity-50"
+                                        className="h-14 rounded-xl bg-danger/10 border border-danger/30 hover:bg-danger/20 text-danger text-sm font-bold transition-all active:scale-95 disabled:opacity-50"
                                     >
                                         مسح
                                     </button>

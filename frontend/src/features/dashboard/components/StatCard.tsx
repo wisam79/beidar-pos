@@ -27,15 +27,15 @@ export const StatCard: React.FC<StatCardProps> = ({
     variant = 'default',
 }) => {
     const iconBgColors = {
-        default: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+        default: 'bg-primary/10 border-primary/20 text-primary',
         primary: 'bg-primary/10 border-primary/20 text-primary',
-        danger: 'bg-red-500/10 border-red-500/20 text-red-400',
+        danger: 'bg-danger/10 border-danger/20 text-danger',
     };
 
     const borderColors = {
-        default: 'border-border/80 hover:border-emerald-500/30',
+        default: 'border-border/80 hover:border-primary/30',
         primary: 'border-border/80 hover:border-primary/40',
-        danger: 'border-red-500/30 hover:border-red-500/50',
+        danger: 'border-border/80 hover:border-danger/40',
     };
 
     return (

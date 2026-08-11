@@ -82,10 +82,6 @@ func StartImageServer() error {
 	return nil
 }
 
-// StopImageServer is an empty stub because images are served natively via Wails AssetHandler
-func StopImageServer() {
-}
-
 // GetImageURL returns the local Wails asset path for an image filename
 func GetImageURL(filename string) string {
 	if filename == "" {

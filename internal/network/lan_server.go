@@ -212,8 +212,6 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 					r.URL.Path == "/api/stats/comparison" ||
 					r.URL.Path == "/api/expenses" ||
 					r.URL.Path == "/api/stock/movements" ||
-					r.URL.Path == "/api/sales/return" ||
-					r.URL.Path == "/api/sales/return-partial" ||
 					r.URL.Path == "/api/admin/clients" ||
 					r.URL.Path == "/api/admin/blocked" {
 					http.Error(w, `{"error":"غير مصرح لك بهذه العملية - صلاحيات المدير مطلوبة"}`, http.StatusForbidden)
@@ -254,21 +252,64 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/admin/blocked", authMiddleware(s.handleAdminBlocked))
 
 	// Protected Data Endpoints
-	mux.HandleFunc("/api/products", authMiddleware(s.handleProducts))
+	mux.HandleFunc("/api/products", authMiddleware(s.notifyDataChange(s.handleProducts)))
 	mux.HandleFunc("/api/products/detail", authMiddleware(s.handleProductDetail))
 	mux.HandleFunc("/api/products/search", authMiddleware(s.handleProductSearch))
-	mux.HandleFunc("/api/sales", authMiddleware(s.handleSales))
-	mux.HandleFunc("/api/sales/process", authMiddleware(s.handleProcessSale))
-	mux.HandleFunc("/api/customers", authMiddleware(s.handleCustomers))
-	mux.HandleFunc("/api/suppliers", authMiddleware(s.handleSuppliers))
-	mux.HandleFunc("/api/categories", authMiddleware(s.handleCategories))
-	mux.HandleFunc("/api/expenses", authMiddleware(s.handleExpenses))
+	mux.HandleFunc("/api/sales", authMiddleware(s.notifyDataChange(s.handleSales)))
+	mux.HandleFunc("/api/sales/process", authMiddleware(s.notifyDataChange(s.handleProcessSale)))
+	mux.HandleFunc("/api/sales/return", authMiddleware(s.notifyDataChange(s.handleSalesReturn)))
+	mux.HandleFunc("/api/sales/return-partial", authMiddleware(s.notifyDataChange(s.handleSalesReturnPartial)))
+	mux.HandleFunc("/api/customers", authMiddleware(s.notifyDataChange(s.handleCustomers)))
+	mux.HandleFunc("/api/suppliers", authMiddleware(s.notifyDataChange(s.handleSuppliers)))
+	mux.HandleFunc("/api/categories", authMiddleware(s.notifyDataChange(s.handleCategories)))
+	mux.HandleFunc("/api/expenses", authMiddleware(s.notifyDataChange(s.handleExpenses)))
 	mux.HandleFunc("/api/stats/dashboard", authMiddleware(s.handleDashboardStats))
 	mux.HandleFunc("/api/stats/comparison", authMiddleware(s.handleMonthlyComparisonStats))
-	mux.HandleFunc("/api/preferences", authMiddleware(s.handlePreferences))
+	mux.HandleFunc("/api/preferences", authMiddleware(s.notifyDataChange(s.handlePreferences)))
 	mux.HandleFunc("/api/stock/movements", authMiddleware(s.handleStockMovements))
 	mux.HandleFunc("/api/database/export", authMiddleware(s.handleDatabaseExport))
 	mux.HandleFunc("/api/remote-scan", corsMiddleware(s.requireServerSecret(s.handleRemoteScan)))
+}
+
+// statusWriter captures the HTTP status code so we can tell whether a write
+// request actually succeeded before broadcasting a data-change event.
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *statusWriter) WriteHeader(code int) {
+	w.status = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *statusWriter) Write(b []byte) (int, error) {
+	if w.status == 0 {
+		w.status = http.StatusOK
+	}
+	return w.ResponseWriter.Write(b)
+}
+
+// notifyDataChange emits a "data-changed" Wails event after a successful (2xx)
+// write request (POST/DELETE) so the server's own UI refreshes when a LAN
+// client modifies data. Read-only requests pass through untouched.
+func (s *lanService) notifyDataChange(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet || r.Method == http.MethodOptions {
+			next(w, r)
+			return
+		}
+		rw := &statusWriter{ResponseWriter: w}
+		next(rw, r)
+		if rw.status >= 200 && rw.status < 300 {
+			s.ctxMutex.RLock()
+			ctx := s.ctx
+			s.ctxMutex.RUnlock()
+			if ctx != nil {
+				runtime.EventsEmit(ctx, "data-changed", r.URL.Path)
+			}
+		}
+	}
 }
 
 // requireServerSecret gates an endpoint behind the shared server secret, read
@@ -568,6 +609,55 @@ func (s *lanService) handleProcessSale(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "processed"})
+}
+
+func (s *lanService) handleSalesReturn(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Missing id", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.saleService.ReturnSale(id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "returned"})
+}
+
+func (s *lanService) handleSalesReturnPartial(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	saleID := r.URL.Query().Get("saleId")
+	productID := r.URL.Query().Get("productId")
+	qtyStr := r.URL.Query().Get("qty")
+
+	if saleID == "" || productID == "" || qtyStr == "" {
+		http.Error(w, "Missing parameters", http.StatusBadRequest)
+		return
+	}
+
+	qty, err := strconv.ParseFloat(qtyStr, 64)
+	if err != nil {
+		http.Error(w, "Invalid quantity", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.saleService.ReturnSalePartial(saleID, productID, qty); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "returned"})
 }
 
 func (s *lanService) handleCustomers(w http.ResponseWriter, r *http.Request) {

@@ -7,8 +7,8 @@ import {
     Calendar, FileText, UserCheck, Receipt, LucideIcon
 } from 'lucide-react';
 import { formatCurrency, getLocalDateString } from '../../core/utils';
-import { PageHeader, Card, SpotlightCard } from '../../components/ui';
-import { PageShell, LoadingState, TabNav, SegmentedControl, StatsGrid, StatCard } from '../../components/blocks';
+import { PageHeader } from '../../components/ui';
+import { PageShell, LoadingState, TabNav, SegmentedControl, StatsGrid, StatCard, FilterBar } from '../../components/blocks';
 import { DataTable, ColumnDef } from '../../components/shared/DataTable';
 import { SalesAreaChart } from '../../components/charts';
 import { CustomerRank } from './components/ReportsComponents';
@@ -17,6 +17,7 @@ import { api, Sale, Product, Customer, Staff, StockMovement, DashboardStats } fr
 import { AppPreferences } from '../../core/types';
 import { logger } from '../../core/logger';
 import { usePreferences } from '../../components/PreferencesContext';
+import { queryKeys } from '../../core/queryClient';
 import { exportSalesReport, exportFinancialSummary, exportInventoryReport, exportCustomersReport } from '../../core/export';
 import { useDashboardStats, useProducts, useCustomers, useMonthlyComparison, useStockMovements, MonthData } from '../../hooks';
 
@@ -42,12 +43,12 @@ interface Analytics {
 }
 
 const TABS: { id: TabId; label: string; icon: LucideIcon; color: string }[] = [
-    { id: 'overview', label: 'نظرة عامة', icon: BarChart3, color: 'from-blue-500 to-cyan-400' },
-    { id: 'sales', label: 'المبيعات', icon: Receipt, color: 'from-emerald-500 to-teal-400' },
-    { id: 'inventory', label: 'المخزون', icon: Package, color: 'from-orange-500 to-amber-400' },
-    { id: 'customers', label: 'العملاء', icon: Users, color: 'from-purple-500 to-pink-400' },
-    { id: 'staff', label: 'الموظفين', icon: UserCheck, color: 'from-rose-500 to-red-400' },
-    { id: 'monthly', label: 'المقارنة الشهرية', icon: Calendar, color: 'from-cyan-500 to-blue-400' },
+    { id: 'overview', label: 'نظرة عامة', icon: BarChart3, color: 'from-primary to-primary' },
+    { id: 'sales', label: 'المبيعات', icon: Receipt, color: 'from-success to-success' },
+    { id: 'inventory', label: 'المخزون', icon: Package, color: 'from-warning to-warning' },
+    { id: 'customers', label: 'العملاء', icon: Users, color: 'from-primary to-danger' },
+    { id: 'staff', label: 'الموظفين', icon: UserCheck, color: 'from-danger to-danger' },
+    { id: 'monthly', label: 'المقارنة الشهرية', icon: Calendar, color: 'from-primary to-primary' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────────
@@ -65,7 +66,7 @@ export const ReportsPage: React.FC = () => {
     // ── React Query data fetching ──────────────────────────────────────────────
     const { stats: dashboardStats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useDashboardStats(dateRange);
     const { data: sales = [], isLoading: salesLoading, isError: salesError } = useQuery({
-        queryKey: ['reports', 'sales'],
+        queryKey: queryKeys.sales.list(0, 100, '', '', ''),
         queryFn: () => api.sales.list(0, 100, '', '', '').then(r => r.data),
     });
     const { data: expenses = [], isLoading: expensesLoading, isError: expensesError } = useQuery({
@@ -111,7 +112,7 @@ export const ReportsPage: React.FC = () => {
             s.items?.forEach((p) => (cogs += (p.cost || 0) * p.qty));
         });
 
-        const totalExpenses = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+        const totalExpenses = Math.round(filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0));
         const grossProfit = revenue - cogs;
         const netProfit = grossProfit - totalExpenses;
         const profitMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
@@ -130,12 +131,12 @@ export const ReportsPage: React.FC = () => {
 
             let val: number;
             if (dateRange === 'year') {
-                val = completedSales
+                val = Math.round(completedSales
                     .filter((s) => new Date(s.date).getMonth() === d.getMonth() && new Date(s.date).getFullYear() === d.getFullYear())
-                    .reduce((sum, s) => sum + s.total, 0);
+                    .reduce((sum, s) => sum + s.total, 0));
             } else {
                 const str = getLocalDateString(d);
-                val = completedSales.filter((s) => s.date.startsWith(str)).reduce((sum, s) => sum + s.total, 0);
+                val = Math.round(completedSales.filter((s) => s.date.startsWith(str)).reduce((sum, s) => sum + s.total, 0));
             }
             return { label, value: val, formattedValue: formatCurrency(val, prefs?.currency) };
         }).reverse();
@@ -156,7 +157,7 @@ export const ReportsPage: React.FC = () => {
             return acc;
         }, {});
         const categoryLabels: Record<string, string> = { rent: 'إيجار', salary: 'رواتب', bills: 'فواتير', maintenance: 'صيانة', other: 'أخرى' };
-        const categoryColors: Record<string, string> = { rent: 'bg-blue-500', salary: 'bg-purple-500', bills: 'bg-amber-500', maintenance: 'bg-cyan-500', other: 'bg-gray-500' };
+        const categoryColors: Record<string, string> = { rent: 'bg-primary', salary: 'bg-primary', bills: 'bg-warning', maintenance: 'bg-primary', other: 'bg-gray-500' };
         const expenseBreakdown = Object.entries(expenseCategories)
             .map(([cat, amount]) => ({
                 label: categoryLabels[cat] || cat,
@@ -191,7 +192,7 @@ export const ReportsPage: React.FC = () => {
     };
 
     // Loading State
-    if (loading) return <LoadingState icon={BarChart3} title="جاري تحميل التقارير..." subtitle="تحليل البيانات" />;
+    if (loading && !dashboardStats) return <LoadingState icon={BarChart3} title="جاري تحميل التقارير..." subtitle="تحليل البيانات" />;
 
     const currency = prefs?.currency || 'IQD';
     const storeName = prefs?.storeName;
@@ -268,7 +269,7 @@ export const ReportsPage: React.FC = () => {
                                 className="bg-surface hover:bg-surface-hover text-text-main px-4 py-2.5 min-h-[44px] rounded-xl border border-border/80 text-sm font-extrabold flex items-center gap-2 transition-colors active:scale-[0.98] cursor-pointer select-none"
                                 title="تصدير التقرير"
                             >
-                                <Download size={18} className="text-emerald-400" />
+                                <Download size={18} className="text-success" />
                                 <span className="hidden sm:inline">تصدير</span>
                             </button>
                             {showExportMenu && (
@@ -277,13 +278,13 @@ export const ReportsPage: React.FC = () => {
                                         onClick={() => handleExport('excel')}
                                         className="w-full flex items-center gap-2.5 px-3.5 py-2.5 min-h-[40px] hover:bg-surface-hover text-right text-xs font-extrabold rounded-lg text-text-main cursor-pointer"
                                     >
-                                        <Download size={15} className="text-emerald-400" /> تصدير Excel
+                                        <Download size={15} className="text-success" /> تصدير Excel
                                     </button>
                                     <button
                                         onClick={() => handleExport('pdf')}
                                         className="w-full flex items-center gap-2.5 px-3.5 py-2.5 min-h-[40px] hover:bg-surface-hover text-right text-xs font-extrabold rounded-lg text-text-main cursor-pointer"
                                     >
-                                        <Download size={15} className="text-red-400" /> تصدير PDF
+                                        <Download size={15} className="text-danger" /> تصدير PDF
                                     </button>
                                 </div>
                             )}
@@ -300,7 +301,7 @@ export const ReportsPage: React.FC = () => {
             />
 
             {/* Tab Content */}
-            <div className="flex-1 min-h-0 overflow-hidden pt-3">
+            <div className="flex-1 min-h-0 overflow-hidden pt-2">
                 {activeTab === 'overview' && dashboardStats && (
                     <OverviewTab stats={dashboardStats as DashboardStats} currency={currency} prefs={prefs} forecast={forecast} isForecasting={isForecasting} handleForecast={handleForecast} />
                 )}
@@ -388,10 +389,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 {/* Revenue Chart */}
-                <div className="lg:col-span-3 bg-surface border border-border/80 p-5 rounded-2xl flex flex-col min-h-[350px]">
+                <div className="lg:col-span-3 bg-surface border border-border/80 p-5 rounded-2xl flex flex-col min-h-[280px]">
                     <div className="flex justify-between items-start mb-4 shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-xl bg-success/10 border border-success/20 text-success flex items-center justify-center">
                                 <TrendingUp size={20} />
                             </div>
                             <div>
@@ -401,7 +402,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                         </div>
                         <div className="text-left px-4 py-2 bg-surface-hover/80 rounded-xl border border-border/60">
                             <p className="text-[10px] text-text-muted font-extrabold">أعلى قيمة</p>
-                            <p className="text-emerald-400 font-black font-mono text-base">{formatCurrency(Math.max(0, ...chartData.map((d) => d.value)), currency)}</p>
+                            <p className="text-success font-black font-mono text-base">{formatCurrency(Math.max(0, ...chartData.map((d) => d.value)), currency)}</p>
                         </div>
                     </div>
                     <div className="flex-1 min-h-0"><SalesAreaChart data={chartData} /></div>
@@ -411,21 +412,21 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                 <div className="lg:col-span-1 p-5 bg-surface border border-border/80 rounded-2xl flex flex-col h-full justify-between">
                     <div className="flex justify-between items-center mb-3 shrink-0">
                         <h3 className="text-text-main font-black text-sm flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
                                 <Sparkles size={16} />
                             </div>
                             التوقعات الذكية
                         </h3>
-                        <button onClick={handleForecast} disabled={isForecasting} className="w-8 h-8 rounded-xl text-text-muted hover:text-emerald-400 bg-surface-hover border border-border/60 flex items-center justify-center transition-colors touch-target cursor-pointer" title="تحديث التوقعات">
-                            <RefreshCw size={15} className={isForecasting ? 'animate-spin text-emerald-400' : ''} />
+                        <button onClick={handleForecast} disabled={isForecasting} className="w-8 h-8 rounded-xl text-text-muted hover:text-success bg-surface-hover border border-border/60 flex items-center justify-center transition-colors touch-target cursor-pointer" title="تحديث التوقعات">
+                            <RefreshCw size={15} className={isForecasting ? 'animate-spin text-success' : ''} />
                         </button>
                     </div>
-                    <div className="flex-1 flex items-center justify-center bg-surface-hover/40 rounded-xl p-4 border border-border/40 overflow-y-auto no-scrollbar min-h-[180px]">
+                    <div className="flex-1 flex items-center justify-center bg-surface-hover/40 rounded-xl p-4 border border-border/40 overflow-y-auto no-scrollbar min-h-[120px]">
                         {forecast ? (
                             <p className="text-text-main text-xs font-bold leading-relaxed text-center">{forecast}</p>
                         ) : (
                             <div className="text-center">
-                                <Sparkles size={24} className="mx-auto mb-2 text-emerald-400/40" />
+                                <Sparkles size={24} className="mx-auto mb-2 text-success/40" />
                                 <p className="text-text-muted text-xs font-extrabold">اضغط لتحليل البيانات وتوقع المبيعات</p>
                             </div>
                         )}
@@ -435,7 +436,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                 {/* Top Products */}
                 <div className="lg:col-span-2 p-5 bg-surface border border-border/80 rounded-2xl flex flex-col justify-between">
                     <div className="flex items-center gap-3 mb-4 shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-success/10 border border-success/20 text-success flex items-center justify-center">
                             <ShoppingBag size={20} />
                         </div>
                         <div>
@@ -446,9 +447,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                     <div className="space-y-2">
                         {productPerformance.slice(0, 5).map((p, i: number) => (
                             <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-surface-hover/60 border border-border/40">
-                                <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black ${i === 0 ? 'bg-emerald-500 text-black' : 'bg-surface border border-border/60 text-text-muted'}`}>{i + 1}</span>
+                                <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black ${i === 0 ? 'bg-success text-primary-fg' : 'bg-surface border border-border/60 text-text-muted'}`}>{i + 1}</span>
                                 <span className="text-text-main text-xs font-extrabold truncate flex-1">{p.label}</span>
-                                <span className="text-emerald-400 font-black text-xs font-mono">{p.value} قطعة</span>
+                                <span className="text-success font-black text-xs font-mono">{p.value} قطعة</span>
                             </div>
                         ))}
                     </div>
@@ -457,7 +458,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
                 {/* Top Customers */}
                 <div className="lg:col-span-2 p-5 bg-surface border border-border/80 rounded-2xl flex flex-col justify-between">
                     <div className="flex items-center gap-3 mb-4 shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
                             <Users size={20} />
                         </div>
                         <div>
@@ -589,7 +590,7 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
             </StatsGrid>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 shrink-0 justify-between items-center bg-surface border-t border-t-white/30 dark:border-t-white/10 border-x border-x-border/60 border-b-[3px] border-b-black/60 dark:border-b-black/80 p-3.5 rounded-3xl shadow-md">
+            <FilterBar className="justify-between">
                 <SegmentedControl
                     options={[
                         { id: 'all', label: 'الكل' },
@@ -604,7 +605,7 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
                     <select
                         value={dateFilter}
                         onChange={e => { setDateFilter(e.target.value); setPagination(p => ({ ...p, pageIndex: 0 })); }}
-                        className="bg-input-bg border border-border/80 rounded-2xl px-5 py-2.5 min-h-[44px] text-sm font-extrabold text-text-main outline-none focus:border-emerald-500 shadow-inner touch-target cursor-pointer w-full sm:w-auto"
+                        className="bg-input-bg border border-border/80 rounded-2xl px-5 py-2.5 min-h-[44px] text-sm font-extrabold text-text-main outline-none focus:border-success shadow-inner touch-target cursor-pointer w-full sm:w-auto"
                         aria-label="تصفية حسب الفترة الزمنية"
                     >
                         <option value="all">كل الفترات</option>
@@ -612,11 +613,11 @@ const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
                         <option value="week">هذا الأسبوع</option>
                     </select>
                 </div>
-            </div>
+            </FilterBar>
 
             {/* Sales Table */}
             <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-                {isLoading && <div className="absolute inset-0 bg-surface/80 backdrop-blur-xs flex items-center justify-center z-10"><RefreshCw className="animate-spin text-emerald-400" size={32} /></div>}
+                {isLoading && <div className="absolute inset-0 bg-surface/80 backdrop-blur-xs flex items-center justify-center z-10"><RefreshCw className="animate-spin text-success" size={32} /></div>}
                 <DataTable
                     data={sales}
                     columns={columns}
@@ -650,13 +651,13 @@ const InventoryReportTab: React.FC<InventoryReportTabProps> = ({ products, stock
 
     const stats = useMemo(() => ({
         totalProducts: products.length,
-        totalValue: products.reduce((sum, p) => sum + (p.stock * p.cost), 0),
+        totalValue: Math.round(products.reduce((sum, p) => sum + (p.stock * p.cost), 0)),
         lowStock: lowStockProducts.length,
         outOfStock: outOfStockProducts.length,
     }), [products, lowStockProducts, outOfStockProducts]);
 
     return (
-        <div className="h-full flex flex-col gap-5 select-none">
+        <div className="h-full flex flex-col gap-4 select-none">
             {/* Stats */}
             <StatsGrid columns={4}>
                 <StatCard
@@ -690,11 +691,11 @@ const InventoryReportTab: React.FC<InventoryReportTabProps> = ({ products, stock
             </StatsGrid>
 
             {/* Content Grid */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-5 min-h-0">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
                 {/* Low Stock Alert */}
                 <div className="bg-surface border border-border/80 rounded-2xl p-5 flex flex-col overflow-hidden">
                     <h3 className="font-black text-text-main text-sm flex items-center gap-2.5 mb-3 shrink-0">
-                        <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <div className="p-1.5 rounded-lg bg-warning/10 text-warning border border-warning/20">
                             <AlertTriangle size={18} />
                         </div>
                         تنبيهات المخزون المنخفض
@@ -702,12 +703,12 @@ const InventoryReportTab: React.FC<InventoryReportTabProps> = ({ products, stock
                     <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
                         {lowStockProducts.length === 0 ? (
                             <div className="py-10 text-center text-text-muted text-xs font-bold">
-                                <Package size={28} className="mx-auto mb-2 opacity-30 text-emerald-400" />
+                                <Package size={28} className="mx-auto mb-2 opacity-30 text-success" />
                                 جميع المنتجات بمخزون كافٍ وممتاز
                             </div>
                         ) : (
                             lowStockProducts.slice(0, 10).map(p => (
-                                <div key={p.id} className={`flex items-center justify-between p-3 rounded-xl border ${p.stock === 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}>
+                                <div key={p.id} className={`flex items-center justify-between p-3 rounded-xl border ${p.stock === 0 ? 'bg-danger/10 border-danger/30' : 'bg-warning/10 border-warning/30'}`}>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xl">{p.image}</span>
                                         <div>
@@ -715,7 +716,7 @@ const InventoryReportTab: React.FC<InventoryReportTabProps> = ({ products, stock
                                             <p className="text-text-muted text-[11px] font-medium">الحد الأدنى: {p.minStock}</p>
                                         </div>
                                     </div>
-                                    <span className={`font-black text-lg font-mono ${p.stock === 0 ? 'text-red-400' : 'text-amber-400'}`}>{p.stock}</span>
+                                    <span className={`font-black text-lg font-mono ${p.stock === 0 ? 'text-danger' : 'text-warning'}`}>{p.stock}</span>
                                 </div>
                             ))
                         )}
@@ -725,7 +726,7 @@ const InventoryReportTab: React.FC<InventoryReportTabProps> = ({ products, stock
                 {/* Recent Stock Movements */}
                 <div className="bg-surface border border-border/80 rounded-2xl p-5 flex flex-col overflow-hidden">
                     <h3 className="font-black text-text-main text-sm flex items-center gap-2.5 mb-3 shrink-0">
-                        <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
                             <Activity size={18} />
                         </div>
                         حركة المخزون الأخيرة
@@ -743,7 +744,7 @@ const InventoryReportTab: React.FC<InventoryReportTabProps> = ({ products, stock
                                         <p className="text-text-main text-sm font-extrabold">{m.productName}</p>
                                         <p className="text-text-muted text-xs font-medium">{m.reason}</p>
                                     </div>
-                                    <span className={`font-black font-mono text-base ${m.type === 'in' || m.type === 'restock' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    <span className={`font-black font-mono text-base ${m.type === 'in' || m.type === 'restock' ? 'text-success' : 'text-danger'}`}>
                                         {m.type === 'in' || m.type === 'restock' ? '+' : '-'}{m.qty}
                                     </span>
                                 </div>
@@ -770,15 +771,15 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
     const customerStats = useMemo(() => {
         const stats = customers.map(c => {
             const customerSales = sales.filter(s => s.customerId === c.id);
-            const totalSpent = customerSales.reduce((sum, s) => sum + (s.status === 'completed' ? s.total : 0), 0);
-            const pendingDebt = customerSales.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.total, 0);
+            const totalSpent = Math.round(customerSales.reduce((sum, s) => sum + (s.status === 'completed' ? s.total : 0), 0));
+            const pendingDebt = Math.round(customerSales.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.total, 0));
             return { ...c, totalSpent, pendingDebt, orderCount: customerSales.length };
         });
         return stats.sort((a, b) => b.totalSpent - a.totalSpent);
     }, [customers, sales]);
 
-    const totalDebt = useMemo(() => customerStats.reduce((sum, c) => sum + c.pendingDebt, 0), [customerStats]);
-    const totalSpent = useMemo(() => customerStats.reduce((sum, c) => sum + c.totalSpent, 0), [customerStats]);
+    const totalDebt = useMemo(() => Math.round(customerStats.reduce((sum, c) => sum + c.pendingDebt, 0)), [customerStats]);
+    const totalSpent = useMemo(() => Math.round(customerStats.reduce((sum, c) => sum + c.totalSpent, 0)), [customerStats]);
 
     interface CustomerStat extends Customer {
         totalSpent: number;
@@ -805,7 +806,7 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
         {
             header: 'إجمالي المشتريات',
             accessorKey: 'totalSpent',
-            cell: ({ getValue }) => <span className="text-emerald-400 font-mono font-black">{formatCurrency(Number(getValue()), currency)}</span>,
+            cell: ({ getValue }) => <span className="text-success font-mono font-black">{formatCurrency(Number(getValue()), currency)}</span>,
         },
         {
             header: 'الديون المستحقة',
@@ -813,7 +814,7 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
             cell: ({ getValue }) => {
                 const val = Number(getValue());
                 return (
-                    <span className={`font-mono font-black ${val > 0 ? 'text-red-400' : 'text-text-muted'}`}>
+                    <span className={`font-mono font-black ${val > 0 ? 'text-danger' : 'text-text-muted'}`}>
                         {val > 0 ? formatCurrency(val, currency) : '-'}
                     </span>
                 );
@@ -822,7 +823,7 @@ const CustomersReportTab: React.FC<CustomersReportTabProps> = ({ customers, sale
     ], [currency]);
 
     return (
-        <div className="h-full flex flex-col gap-5 select-none">
+        <div className="h-full flex flex-col gap-4 select-none">
             {/* Stats */}
             <StatsGrid columns={3}>
                 <StatCard
@@ -876,15 +877,15 @@ const StaffReportTab: React.FC<StaffReportTabProps> = ({ staffList, sales, curre
         return staffList.map(s => {
             // Note: staffId is the field name from backend
             const staffSales = sales.filter(sale => sale.staffId === s.id && sale.status === 'completed');
-            const totalSales = staffSales.reduce((sum, sale) => sum + sale.total, 0);
+            const totalSales = Math.round(staffSales.reduce((sum, sale) => sum + sale.total, 0));
             return { ...s, salesCount: staffSales.length, totalSales };
         }).sort((a, b) => b.totalSales - a.totalSales);
     }, [staffList, sales]);
 
-    const totalSalesValue = useMemo(() => staffStats.reduce((sum, s) => sum + s.totalSales, 0), [staffStats]);
+    const totalSalesValue = useMemo(() => Math.round(staffStats.reduce((sum, s) => sum + s.totalSales, 0)), [staffStats]);
 
     return (
-        <div className="h-full flex flex-col gap-5 select-none">
+        <div className="h-full flex flex-col gap-4 select-none">
             {/* Stats */}
             <StatsGrid columns={3}>
                 <StatCard
@@ -917,7 +918,7 @@ const StaffReportTab: React.FC<StaffReportTabProps> = ({ staffList, sales, curre
                     return (
                         <div key={s.id} className="bg-surface border border-border/80 rounded-2xl p-5 flex flex-col justify-between">
                             <div className="flex items-center gap-3 mb-3">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${i === 0 ? 'bg-emerald-500 text-black' : 'bg-surface-hover border border-border/60 text-text-muted'}`}>
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${i === 0 ? 'bg-success text-primary-fg' : 'bg-surface-hover border border-border/60 text-text-muted'}`}>
                                     {i + 1}
                                 </div>
                                 <div>
@@ -928,14 +929,14 @@ const StaffReportTab: React.FC<StaffReportTabProps> = ({ staffList, sales, curre
                             <div className="space-y-2 pt-1">
                                 <div className="flex justify-between items-center text-xs">
                                     <span className="text-text-muted font-extrabold">المبيعات</span>
-                                    <span className="text-emerald-400 font-black text-xs font-mono">{formatCurrency(s.totalSales, currency).replace(currency, '')}</span>
+                                    <span className="text-success font-black text-xs font-mono">{formatCurrency(s.totalSales, currency).replace(currency, '')}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-xs">
                                     <span className="text-text-muted font-extrabold">عدد الفواتير</span>
                                     <span className="text-text-main font-black text-xs font-mono">{s.salesCount}</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-surface-hover rounded-full overflow-hidden border border-border/40">
-                                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                                    <div className="h-full bg-success rounded-full transition-all duration-300"
                                         style={{ width: `${percentage}%` }} />
                                 </div>
                                 <p className="text-[10px] text-text-muted text-center font-extrabold">{percentage.toFixed(1)}% من الإجمالي</p>
@@ -962,13 +963,13 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
     if (isLoading) {
         return (
             <div className="h-full flex items-center justify-center">
-                <RefreshCw size={32} className="text-emerald-400 animate-spin" />
+                <RefreshCw size={32} className="text-success animate-spin" />
             </div>
         );
     }
 
     const ChangeIndicator = ({ value, label }: { value: number; label: string }) => (
-        <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border ${value >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+        <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border ${value >= 0 ? 'bg-success/10 border-success/20 text-success' : 'bg-danger/10 border-danger/20 text-danger'}`}>
             {value >= 0 ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
             <span className="font-black text-sm">{Math.abs(value).toFixed(1)}%</span>
             <span className="text-xs font-extrabold opacity-80">{label}</span>
@@ -976,9 +977,9 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
     );
 
     const MonthCard = ({ month, isCurrent }: { month: MonthData; isCurrent: boolean }) => (
-        <div className={`bg-surface border rounded-2xl p-5 ${isCurrent ? 'border-emerald-500/40' : 'border-border/80'}`}>
+        <div className={`bg-surface border rounded-2xl p-5 ${isCurrent ? 'border-success/40' : 'border-border/80'}`}>
             <div className="flex items-center gap-3 mb-5">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isCurrent ? 'bg-emerald-500 text-black' : 'bg-surface-hover text-text-muted border border-border/60'}`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isCurrent ? 'bg-success text-primary-fg' : 'bg-surface-hover text-text-muted border border-border/60'}`}>
                     <Calendar size={24} />
                 </div>
                 <div>
@@ -990,51 +991,51 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
             <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-surface-hover/50 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2">
-                        <Wallet size={18} className="text-blue-400" />
+                        <Wallet size={18} className="text-primary" />
                         <span className="text-text-muted text-xs font-extrabold">الإيرادات</span>
                     </div>
-                    <span className="text-blue-400 font-black text-base font-mono">{formatCurrency(month.revenue, currency).replace(currency, '')}</span>
+                    <span className="text-primary font-black text-base font-mono">{formatCurrency(month.revenue, currency).replace(currency, '')}</span>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-surface-hover/50 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2">
-                        <Activity size={18} className="text-emerald-400" />
+                        <Activity size={18} className="text-success" />
                         <span className="text-text-muted text-xs font-extrabold">صافي الربح</span>
                     </div>
-                    <span className={`font-black text-base font-mono ${month.netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <span className={`font-black text-base font-mono ${month.netProfit >= 0 ? 'text-success' : 'text-danger'}`}>
                         {formatCurrency(month.netProfit, currency).replace(currency, '')}
                     </span>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-surface-hover/50 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2">
-                        <Receipt size={18} className="text-purple-400" />
+                        <Receipt size={18} className="text-primary" />
                         <span className="text-text-muted text-xs font-extrabold">عدد الطلبات</span>
                     </div>
-                    <span className="text-purple-400 font-black text-base font-mono">{month.orders}</span>
+                    <span className="text-primary font-black text-base font-mono">{month.orders}</span>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-surface-hover/50 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2">
-                        <ShoppingBag size={18} className="text-amber-400" />
+                        <ShoppingBag size={18} className="text-warning" />
                         <span className="text-text-muted text-xs font-extrabold">متوسط الطلب</span>
                     </div>
-                    <span className="text-amber-400 font-black text-base font-mono">{formatCurrency(month.avgOrder, currency).replace(currency, '')}</span>
+                    <span className="text-warning font-black text-base font-mono">{formatCurrency(month.avgOrder, currency).replace(currency, '')}</span>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-surface-hover/50 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2">
-                        <TrendingDown size={18} className="text-red-400" />
+                        <TrendingDown size={18} className="text-danger" />
                         <span className="text-text-muted text-xs font-extrabold">المصروفات</span>
                     </div>
-                    <span className="text-red-400 font-black text-base font-mono">{formatCurrency(month.expenses, currency).replace(currency, '')}</span>
+                    <span className="text-danger font-black text-base font-mono">{formatCurrency(month.expenses, currency).replace(currency, '')}</span>
                 </div>
             </div>
         </div>
     );
 
     return (
-        <div className="h-full overflow-y-auto custom-scrollbar pb-4 space-y-5 animate-in fade-in duration-200 select-none">
+        <div className="h-full overflow-y-auto custom-scrollbar pb-4 space-y-4 animate-in fade-in duration-200 select-none">
             {/* Change Indicators */}
             <div className="flex gap-3 justify-center flex-wrap">
                 <ChangeIndicator value={data.revenueChange} label="الإيرادات" />
@@ -1043,7 +1044,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
             </div>
 
             {/* Month Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <MonthCard month={data.currentMonth} isCurrent={true} />
                 <MonthCard month={data.previousMonth} isCurrent={false} />
             </div>
@@ -1051,18 +1052,18 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
             {/* Visual Comparison Bar */}
             <div className="bg-surface border border-border/80 rounded-2xl p-5">
                 <h3 className="text-text-main font-black text-base mb-4 flex items-center gap-2">
-                    <BarChart3 size={20} className="text-emerald-400" />
+                    <BarChart3 size={20} className="text-success" />
                     مقارنة الإيرادات
                 </h3>
                 <div className="space-y-3">
                     <div>
                         <div className="flex justify-between text-xs mb-1.5 font-extrabold">
                             <span className="text-text-muted">{data.currentMonth.label}</span>
-                            <span className="text-emerald-400 font-mono font-black text-sm">{formatCurrency(data.currentMonth.revenue, currency)}</span>
+                            <span className="text-success font-mono font-black text-sm">{formatCurrency(data.currentMonth.revenue, currency)}</span>
                         </div>
                         <div className="h-7 bg-surface-hover rounded-xl overflow-hidden border border-border/40">
                             <div
-                                className="h-full bg-emerald-500 rounded-xl transition-all duration-500"
+                                className="h-full bg-success rounded-xl transition-all duration-500"
                                 style={{ width: `${Math.min(100, (data.currentMonth.revenue / Math.max(data.currentMonth.revenue, data.previousMonth.revenue)) * 100)}%` }}
                             />
                         </div>

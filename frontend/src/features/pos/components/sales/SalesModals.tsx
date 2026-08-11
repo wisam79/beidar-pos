@@ -223,7 +223,7 @@ const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
                                 <p className="text-[10px] text-text-muted">{c.phone}</p>
                             </div>
                             {c.debt > 0 && (
-                                <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-1 rounded-lg font-bold border border-red-500/20">
+                                <span className="text-[10px] bg-danger/10 text-danger px-2 py-1 rounded-lg font-bold border border-danger/20">
                                     دين: {formatCurrency(c.debt, prefs.currency)}
                                 </span>
                             )}
@@ -431,8 +431,8 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
                             {/* Barcode - Read only */}
                             <div className="bg-bg rounded-2xl border border-border p-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                                        <ScanLine size={18} className="text-purple-500" />
+                                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                                        <ScanLine size={18} className="text-primary" />
                                     </div>
                                     <div className="flex-1">
                                         <label className="text-[10px] font-bold text-text-muted block mb-1">الباركود</label>
@@ -590,9 +590,9 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
 
                         {/* Status Badge */}
                         <div className="flex justify-center">
-                            <span className={`px-4 py-2 rounded-full text-xs font-bold ${scannedInvoice.status === 'completed' ? 'bg-emerald-500/20 text-emerald-500' :
-                                scannedInvoice.status === 'returned' ? 'bg-red-500/20 text-red-500' :
-                                    'bg-amber-500/20 text-amber-500'
+                            <span className={`px-4 py-2 rounded-full text-xs font-bold ${scannedInvoice.status === 'completed' ? 'bg-success/20 text-success' :
+                                scannedInvoice.status === 'returned' ? 'bg-danger/20 text-danger' :
+                                    'bg-warning/20 text-warning'
                                 }`}>
                                 {scannedInvoice.status === 'completed' ? '✓ مكتملة' :
                                     scannedInvoice.status === 'returned' ? '↩ مرتجعة' : '⏳ معلقة'}
@@ -621,7 +621,7 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
                                             notify('فشل إرجاع الفاتورة', 'error');
                                         }
                                     }}
-                                    className="bg-red-500/10 border border-red-500/30 text-red-500 py-3 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                                    className="bg-danger/10 border border-danger/30 text-danger py-3 rounded-xl font-bold hover:bg-danger hover:text-white transition-all flex items-center justify-center gap-2"
                                 >
                                     ↩ إرجاع
                                 </button>

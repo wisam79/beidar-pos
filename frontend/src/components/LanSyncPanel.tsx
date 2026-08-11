@@ -258,7 +258,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             {/* Hero Header - Ultra Compact */}
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 text-text-main shadow-sm">
+            <div className="relative overflow-hidden rounded-xl bg-primary/10 border border-primary/20 p-3 text-text-main shadow-sm">
                 <div className="absolute top-0 right-0 p-1 opacity-10">
                     <Wifi size={50} className="text-primary" />
                 </div>
@@ -274,12 +274,12 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
             </div>
 
             {/* Current Mode Status Card */}
-            <div className={`p-6 rounded-3xl border shadow-sm transition-all ${mode === 'server' ? 'bg-gradient-to-br from-primary/10 to-transparent border-primary/20 shadow-primary/5' :
+            <div className={`p-6 rounded-3xl border shadow-sm transition-all ${mode === 'server' ? 'bg-primary/10 border-primary/20 shadow-primary/5' :
                 mode === 'client' ? 'bg-surface-active/50 border-border' :
                     'bg-surface border-border'
                 }`}>
                 <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${mode === 'server' ? 'bg-primary text-black shadow-primary/30' :
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${mode === 'server' ? 'bg-primary text-primary-fg shadow-primary/30' :
                         mode === 'client' ? 'bg-surface-active border border-border text-text-main' :
                             'bg-surface-active text-text-muted'
                         }`}>
@@ -313,7 +313,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                 <div>
                                     <p className="text-xs font-bold text-text-muted mb-2">عنوان IP للاتصال (اعطه للكاشير)</p>
                                     <div className="flex items-center gap-3">
-                                        <code className="bg-black/80 text-emerald-400 px-4 py-2 rounded-lg text-lg font-mono tracking-wider shadow-inner" dir="ltr">
+                                        <code className="bg-black/80 text-success px-4 py-2 rounded-lg text-lg font-mono tracking-wider shadow-inner" dir="ltr">
                                             {serverStatus.localIP}
                                         </code>
                                         <div className="h-8 w-px bg-border mx-2" />
@@ -322,7 +322,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                 </div>
                                 <button
                                     onClick={copyAddress}
-                                    className="p-3 bg-surface-active hover:bg-emerald-500 hover:text-white rounded-xl transition-all group border border-border"
+                                    className="p-3 bg-surface-active hover:bg-success hover:text-white rounded-xl transition-all group border border-border"
                                     title="نسخ العنوان"
                                 >
                                     {copied ? <Check size={20} /> : <Copy size={20} />}
@@ -341,7 +341,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                     <div className="w-px bg-border" />
                                     <button
                                         onClick={() => setActiveTab('blocked')}
-                                        className={`flex-1 py-3 text-sm font-bold transition-all ${activeTab === 'blocked' ? 'bg-surface text-red-500 border-t-2 border-red-500' : 'text-text-muted hover:bg-surface'}`}
+                                        className={`flex-1 py-3 text-sm font-bold transition-all ${activeTab === 'blocked' ? 'bg-surface text-danger border-t-2 border-danger' : 'text-text-muted hover:bg-surface'}`}
                                     >
                                         <Shield size={14} className="inline ml-2" /> المحظورون ({blockedDevices.length})
                                     </button>
@@ -359,7 +359,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                                 {connectedClients.map((client) => (
                                                     <div key={client.deviceId} className="flex items-center justify-between p-3 bg-surface rounded-xl border border-border hover:border-border/80 transition-all">
                                                         <div className="flex items-center gap-3">
-                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${client.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${client.status === 'active' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
                                                                 <Monitor size={20} />
                                                             </div>
                                                             <div>
@@ -373,11 +373,11 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                                         </div>
                                                         <div className="flex items-center gap-1">
                                                             {client.status === 'suspended' ? (
-                                                                <button onClick={() => handleResumeClient(client.deviceId)} className="p-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-lg transition-colors" title="استئناف"><Play size={14} /></button>
+                                                                <button onClick={() => handleResumeClient(client.deviceId)} className="p-2 bg-success/10 hover:bg-success text-success hover:text-white rounded-lg transition-colors" title="استئناف"><Play size={14} /></button>
                                                             ) : (
-                                                                <button onClick={() => handleSuspendClient(client.deviceId)} className="p-2 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-white rounded-lg transition-colors" title="تعليق مؤقت"><Ban size={14} /></button>
+                                                                <button onClick={() => handleSuspendClient(client.deviceId)} className="p-2 bg-warning/10 hover:bg-warning text-warning hover:text-white rounded-lg transition-colors" title="تعليق مؤقت"><Ban size={14} /></button>
                                                             )}
-                                                            <button onClick={() => handleDisconnectClient(client.deviceId)} className="p-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-colors" title="فصل"><UserX size={14} /></button>
+                                                            <button onClick={() => handleDisconnectClient(client.deviceId)} className="p-2 bg-danger/10 hover:bg-danger text-danger hover:text-white rounded-lg transition-colors" title="فصل"><UserX size={14} /></button>
                                                             <button onClick={() => handleBlockDevice(client.deviceId, client.deviceName)} className="p-2 bg-slate-500/10 hover:bg-slate-800 text-slate-500 hover:text-white rounded-lg transition-colors" title="حظر دائم"><Shield size={14} /></button>
                                                         </div>
                                                     </div>
@@ -393,17 +393,17 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                         ) : (
                                             <div className="space-y-2">
                                                 {blockedDevices.map((device) => (
-                                                    <div key={device.id} className="flex items-center justify-between p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
+                                                    <div key={device.id} className="flex items-center justify-between p-3 bg-danger/5 border border-danger/10 rounded-xl">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center">
+                                                            <div className="w-10 h-10 rounded-full bg-danger/10 text-danger flex items-center justify-center">
                                                                 <Ban size={20} />
                                                             </div>
                                                             <div>
                                                                 <p className="font-bold text-text-main text-sm">{device.deviceName}</p>
-                                                                <p className="text-[10px] text-red-400">محظور: {formatTime(device.blockedAt)}</p>
+                                                                <p className="text-[10px] text-danger">محظور: {formatTime(device.blockedAt)}</p>
                                                             </div>
                                                         </div>
-                                                        <button onClick={() => handleUnblockDevice(device.id)} className="p-2 bg-white/50 hover:bg-emerald-500 hover:text-white text-text-muted rounded-lg transition-colors" title="إلغاء الحظر"><Trash2 size={14} /></button>
+                                                        <button onClick={() => handleUnblockDevice(device.id)} className="p-2 bg-white/50 hover:bg-success hover:text-white text-text-muted rounded-lg transition-colors" title="إلغاء الحظر"><Trash2 size={14} /></button>
                                                     </div>
                                                 ))}
                                             </div>
@@ -415,7 +415,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                             <button
                                 onClick={handleStopServer}
                                 disabled={loading}
-                                className="w-full py-4 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 border border-red-500/20 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+                                className="w-full py-4 bg-danger/10 hover:bg-danger hover:text-white text-danger border border-danger/20 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
                             >
                                 <PowerOff size={18} /> إيقاف خدمة الخادم
                             </button>
@@ -428,7 +428,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                             <button
                                 onClick={handleStartServer}
                                 disabled={loading || clientStatus?.connected}
-                                className="px-8 py-4 bg-gradient-to-r from-primary to-emerald-400 text-black rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.01] transition-all flex items-center justify-center gap-3 mx-auto disabled:opacity-50 disabled:transform-none disabled:shadow-none"
+                                className="px-8 py-4 bg-primary text-primary-fg rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.01] transition-all flex items-center justify-center gap-3 mx-auto disabled:opacity-50 disabled:transform-none disabled:shadow-none"
                             >
                                 {loading ? <RefreshCw size={20} className="animate-spin" /> : <Power size={20} />}
                                 تشغيل كخادم رئيسي
@@ -441,9 +441,9 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
             {/* Divider if standalone */}
             {mode === 'standalone' && (
                 <div className="flex items-center gap-4 px-8 opacity-50">
-                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                    <div className="flex-1 h-px bg-transparent" />
                     <span className="text-xs font-bold text-text-muted uppercase tracking-widest">خيارات الاتصال</span>
-                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                    <div className="flex-1 h-px bg-transparent" />
                 </div>
             )}
 
@@ -457,21 +457,21 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
 
                     {mode === 'client' ? (
                         <div className="space-y-6">
-                            <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl flex items-center justify-between">
+                            <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                                        <Wifi size={24} className="text-blue-500 animate-pulse" />
+                                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                                        <Wifi size={24} className="text-primary animate-pulse" />
                                     </div>
                                     <div>
                                         <p className="text-sm text-text-muted mb-1">متصل بالخادم:</p>
-                                        <code className="text-xl font-mono font-bold text-blue-500 tracking-wider" dir="ltr">{clientStatus?.serverAddress}</code>
+                                        <code className="text-xl font-mono font-bold text-primary tracking-wider" dir="ltr">{clientStatus?.serverAddress}</code>
                                     </div>
                                 </div>
                             </div>
                             <button
                                 onClick={handleDisconnect}
                                 disabled={loading}
-                                className="w-full py-4 bg-surface hover:bg-red-500 hover:text-white text-text-muted border border-border rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+                                className="w-full py-4 bg-surface hover:bg-danger hover:text-white text-text-muted border border-border rounded-xl font-bold transition-all flex items-center justify-center gap-2"
                             >
                                 <WifiOff size={18} /> قطع الاتصال بالخادم
                             </button>
@@ -509,7 +509,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-3 h-3 rounded-full ${selectedServer?.serverIP === server.serverIP ? 'bg-primary ring-2 ring-primary/30' : 'bg-emerald-400'}`} />
+                                                    <div className={`w-3 h-3 rounded-full ${selectedServer?.serverIP === server.serverIP ? 'bg-primary ring-2 ring-primary/30' : 'bg-success'}`} />
                                                     <div>
                                                         <span className={`font-bold text-sm block ${selectedServer?.serverIP === server.serverIP ? 'text-primary' : 'text-text-main'}`}>{server.serverName}</span>
                                                         <span className="text-[10px] text-text-muted">تم اكتشافه تلقائياً</span>
@@ -566,7 +566,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                                 <button
                                     onClick={handleConnectToServer}
                                     disabled={loading || (!selectedServer && !manualIp)}
-                                    className="flex-[2] py-3 bg-primary hover:brightness-110 text-black rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
+                                    className="flex-[2] py-3 bg-primary hover:brightness-110 text-primary-fg rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
                                 >
                                     {loading ? <RefreshCw size={18} className="animate-spin" /> : <Wifi size={18} />}
                                     اتصال بالخادم
@@ -580,7 +580,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                             </p>
                             <button
                                 onClick={() => { setShowConnectForm(true); handleScanServers(); }}
-                                className="px-8 py-4 bg-surface hover:bg-primary hover:text-black text-primary border-2 border-dashed border-primary/30 hover:border-primary rounded-xl font-bold transition-all flex items-center justify-center gap-3 mx-auto group shadow-md"
+                                className="px-8 py-4 bg-surface hover:bg-primary hover:text-primary-fg text-primary border-2 border-dashed border-primary/30 hover:border-primary rounded-xl font-bold transition-all flex items-center justify-center gap-3 mx-auto group shadow-md"
                             >
                                 <Wifi size={20} className="group-hover:animate-pulse" />
                                 الاتصال بسيرفر رئيسي

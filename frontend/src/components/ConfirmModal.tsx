@@ -37,24 +37,24 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     if (!isOpen) return null;
 
     const icons = {
-        confirm: <AlertCircle className="text-emerald-400" size={36} />,
-        warning: <AlertTriangle className="text-amber-400" size={36} />,
-        error: <X className="text-red-400" size={36} />,
-        info: <Info className="text-blue-400" size={36} />
+        confirm: <AlertCircle className="text-success" size={36} />,
+        warning: <AlertTriangle className="text-warning" size={36} />,
+        error: <X className="text-danger" size={36} />,
+        info: <Info className="text-primary" size={36} />
     };
 
     const iconBg = {
-        confirm: 'bg-emerald-500/10 border-emerald-500/20',
-        warning: 'bg-amber-500/10 border-amber-500/20',
-        error: 'bg-red-500/10 border-red-500/20',
-        info: 'bg-blue-500/10 border-blue-500/20'
+        confirm: 'bg-success/10 border-success/20',
+        warning: 'bg-warning/10 border-warning/20',
+        error: 'bg-danger/10 border-danger/20',
+        info: 'bg-primary/10 border-primary/20'
     };
 
     const confirmBtnStyle = {
-        confirm: 'bg-emerald-500 text-black font-black hover:bg-emerald-400 border-t border-t-white/40 border-b-[3px] border-b-emerald-700 shadow-emerald-500/20',
-        warning: 'bg-amber-500 text-black font-black hover:bg-amber-400 border-t border-t-white/40 border-b-[3px] border-b-amber-700',
-        error: 'bg-red-500 text-white font-black hover:bg-red-600 border-t border-t-white/40 border-b-[3px] border-b-red-700',
-        info: 'bg-blue-500 text-white font-black hover:bg-blue-600 border-t border-t-white/40 border-b-[3px] border-b-blue-700'
+        confirm: 'bg-success text-primary-fg font-black hover:bg-success border-t border-t-white/40 border-b-[3px] border-b-success shadow-success/20',
+        warning: 'bg-warning text-primary-fg font-black hover:bg-warning border-t border-t-white/40 border-b-[3px] border-b-warning',
+        error: 'bg-danger text-white font-black hover:bg-danger border-t border-t-white/40 border-b-[3px] border-b-danger',
+        info: 'bg-primary text-white font-black hover:bg-primary border-t border-t-white/40 border-b-[3px] border-b-primary'
     };
 
     return createPortal(

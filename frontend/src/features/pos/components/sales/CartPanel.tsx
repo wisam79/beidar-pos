@@ -53,7 +53,7 @@ const CartItemsList: React.FC<CartItemsListProps> = ({ cart, prefs, updateQty, r
         getScrollElement: () => parentRef.current,
         estimateSize: () => 88,
         overscan: 3,
-        gap: 12,
+        gap: 10,
     });
 
     if (cart.length === 0) {
@@ -142,14 +142,14 @@ export const CartPanel: React.FC<CartPanelProps> = ({
 
     return (
         <>
-            <div className="z-20 flex shrink-0 items-center border-b bg-surface px-4 py-4">
+            <div className="z-20 flex shrink-0 items-center border-b bg-surface px-4 py-2.5">
                 <div className={`flex flex-1 items-center justify-between ${isZenMode ? 'max-w-4xl mx-auto w-full' : ''}`}>
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
-                            <ShoppingCart size={22} />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                            <ShoppingCart size={18} />
                         </div>
                         <div>
-                            <h2 className="text-base font-bold text-text-main">سلة المشتريات</h2>
+                            <h2 className="text-sm font-bold text-text-main">سلة المشتريات</h2>
                             <p className="text-xs text-text-muted">
                                 <span className="font-mono font-bold text-primary">{quantity}</span> منتج
                                 {selectedCustomer && <span> • {selectedCustomer.name}</span>}
@@ -161,7 +161,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                             <Button 
                                 variant="icon" 
                                 onClick={handleParkSale} 
-                                className="bg-background/50 border-border/50 text-text-muted hover:text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/20 transition-all duration-200"
+                                className="bg-background/50 border-border/50 text-text-muted hover:text-warning hover:bg-warning/10 hover:border-warning/20 transition-all duration-200"
                                 title="تعليق البيع" 
                                 aria-label="تعليق البيع"
                             >
@@ -180,7 +180,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                         <Button 
                             variant="icon" 
                             onClick={() => { setCart([]); setReceivedAmount(0); }} 
-                            className="bg-background/50 border-border/50 text-text-muted hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/20 transition-all duration-200"
+                            className="bg-background/50 border-border/50 text-text-muted hover:text-danger hover:bg-danger/10 hover:border-danger/20 transition-all duration-200"
                             title="إفراغ السلة" 
                             aria-label="إفراغ السلة"
                         >
@@ -200,52 +200,68 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                 isZenMode={isZenMode}
             />
 
-            <div className="z-30 relative shrink-0 border-t bg-surface px-4 py-3">
-                <div className={`space-y-3 ${isZenMode ? 'max-w-4xl mx-auto w-full' : ''}`}>
-                    <div className="grid grid-cols-3 gap-1 rounded-xl border bg-bg p-1">
+            <div className="z-30 relative shrink-0 border-t bg-surface px-4 py-3 shadow-lg">
+                <div className={`space-y-2.5 ${isZenMode ? 'max-w-4xl mx-auto w-full' : ''}`}>
+                    {/* 1. Payment Method Pills Selector */}
+                    <div className="grid grid-cols-3 gap-1 rounded-xl border border-border/60 bg-bg p-1 shadow-3xs">
                         {(['cash', 'card', 'credit'] as const).map((method) => (
                             <button
                                 key={method}
                                 type="button"
                                 onClick={() => setPaymentMethod(method)}
-                                className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.98] ${paymentMethod === method ? 'border border-border bg-surface text-text-main font-black' : 'text-text-muted hover:text-text-main'}`}
+                                className={`h-10 rounded-lg text-xs font-bold transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center ${
+                                    paymentMethod === method
+                                        ? 'bg-primary text-primary-fg font-black shadow-md shadow-primary/20 ring-1 ring-white/20'
+                                        : 'text-text-muted hover:text-text-main hover:bg-surface/50'
+                                }`}
                             >
                                 {t(`sales.${method}`)}
                             </button>
                         ))}
                     </div>
 
+                    {/* 2. Inputs Row: Discount & Received Amount + Change */}
                     <div className="flex items-center gap-2">
-                        <div className="relative w-28 shrink-0">
+                        {/* Discount Input */}
+                        <div className="flex items-center rounded-xl border border-danger/30 bg-danger/5 px-2.5 h-10 w-28 shrink-0">
+                            <span className="text-[11px] font-bold text-danger shrink-0 ml-1">خصم:</span>
                             <input
                                 type="number"
-                                className="h-10 w-full rounded-xl border border-danger/30 bg-danger-dim px-3 pr-10 text-center text-sm font-bold text-danger outline-none transition focus:border-danger"
-                                placeholder="خصم"
+                                className="w-full bg-transparent text-center font-mono font-bold text-xs text-danger outline-none"
+                                placeholder="0"
                                 value={discount > 0 ? discount : ''}
                                 onChange={(e) => setDiscount(Number(e.target.value))}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-danger/60">د.ع</span>
                         </div>
 
+                        {/* Received Amount Input */}
                         {paymentMethod === 'cash' ? (
                             <>
-                                <input
-                                    type="number"
-                                    className="h-10 flex-1 min-w-0 rounded-xl border bg-input-bg px-3 text-center text-sm font-bold text-text-main outline-none transition focus:border-primary"
-                                    placeholder="المبلغ المستلم"
-                                    value={receivedAmount > 0 ? receivedAmount : ''}
-                                    onChange={(e) => setReceivedAmount(Number(e.target.value))}
-                                />
+                                <div className="flex items-center rounded-xl border border-primary/30 bg-bg px-2.5 h-10 flex-1 min-w-0 focus-within:border-primary transition-all">
+                                    <span className="text-[11px] font-bold text-text-muted shrink-0 ml-1">المستلم:</span>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-transparent text-center font-mono font-bold text-xs text-text-main outline-none"
+                                        placeholder="0"
+                                        value={receivedAmount > 0 ? receivedAmount : ''}
+                                        onChange={(e) => setReceivedAmount(Number(e.target.value))}
+                                    />
+                                </div>
+
+                                {/* Change Amount Badge */}
                                 {receivedAmount > 0 && (
-                                    <div className={`flex h-10 shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border px-3 text-sm font-bold ${change >= 0 ? 'border-success/30 bg-success-dim text-success' : 'border-danger/30 bg-danger-dim text-danger'}`}>
+                                    <div className={`flex h-10 shrink-0 items-center gap-1 rounded-xl border px-2.5 text-xs font-bold whitespace-nowrap ${
+                                        change >= 0 ? 'border-success/30 bg-success/10 text-success' : 'border-danger/30 bg-danger/10 text-danger'
+                                    }`}>
                                         <span className="text-[10px] opacity-70">الباقي:</span>
-                                        <span className="tabular-nums">{formatCurrency(Math.abs(change), '')}</span>
+                                        <span className="font-mono font-black text-xs">{formatCurrency(Math.abs(change), '')}</span>
                                     </div>
                                 )}
                             </>
                         ) : <div className="flex-1" />}
                     </div>
 
+                    {/* 3. Quick Cash Smart Amounts */}
                     {paymentMethod === 'cash' && (
                         <div className="grid grid-cols-4 gap-1.5">
                             {smartAmounts.map((amount) => (
@@ -253,7 +269,11 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                                     key={amount}
                                     type="button"
                                     onClick={() => handleQuickCash(amount)}
-                                    className={`py-2 text-[11px] font-bold font-mono rounded-lg transition active:scale-[0.98] ${amount === total ? 'bg-primary text-white' : 'border border-border bg-surface-hover text-text-muted hover:bg-surface-active hover:text-text-main'}`}
+                                    className={`h-9 text-xs font-bold font-mono rounded-lg transition-all active:scale-[0.98] cursor-pointer ${
+                                        amount === receivedAmount || (receivedAmount === 0 && amount === total)
+                                            ? 'bg-primary text-primary-fg font-black shadow-sm'
+                                            : 'border border-border/80 bg-bg hover:bg-surface-active text-text-muted hover:text-text-main'
+                                    }`}
                                 >
                                     {amount >= 1000 ? `${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}k` : amount}
                                 </button>
@@ -261,27 +281,61 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                         </div>
                     )}
 
-                    <div className="flex shrink-0 items-center gap-2">
-                        <div className="flex h-14 flex-1 min-w-0 items-center justify-between rounded-xl border-2 border-primary/30 bg-primary-dim px-4">
-                            <span className="shrink-0 text-xs font-bold text-primary">الإجمالي</span>
-                            <div className="flex min-w-0 items-center gap-2">
-                                <span className="truncate tabular-nums text-3xl font-black text-text-main" title={formattedTotal}>{formattedTotal}</span>
-                                <span className="shrink-0 rounded-lg bg-primary/20 px-2 py-1 text-sm font-bold text-primary">{prefs.currency}</span>
-                            </div>
+                    {/* 4. Dedicated Total Amount Banner (Zero Truncation Guaranteed) */}
+                    <div className="flex items-center justify-between rounded-xl border-2 border-primary/30 bg-primary/10 px-3.5 py-2 shadow-inner">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-primary">الإجمالي الكلي</span>
+                            <span className="text-[10px] font-bold text-text-muted">({cart.length} منتج)</span>
                         </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                            <Button variant="icon" onClick={() => setShowSplitModal(true)} title="دفع مجزأ" className="shrink-0">
-                                <Split size={18} />
-                            </Button>
-                            {selectedCustomer && (
-                                <Button variant="icon" onClick={() => { setInstConfig({ downPayment: 0, months: 3 }); setShowInstallmentModal(true); }} title="أقساط" className="shrink-0">
-                                    <Calculator size={18} />
-                                </Button>
+                        <div className="flex items-center gap-1.5" dir="ltr">
+                            <span className="font-mono font-black text-xl lg:text-2xl text-text-main tracking-tight whitespace-nowrap" title={formattedTotal}>
+                                {formattedTotal}
+                            </span>
+                            <span className="text-xs font-black text-primary bg-primary/20 px-2 py-0.5 rounded-md shrink-0">
+                                {prefs.currency}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* 5. Main Primary Action Bar (Checkout & Payment Options) */}
+                    <div className="flex items-center gap-2 pt-0.5">
+                        <button
+                            type="button"
+                            onClick={() => setShowSplitModal(true)}
+                            title="دفع مجزأ"
+                            className="h-12 px-3 rounded-xl border border-border/80 bg-surface hover:bg-surface-hover hover:border-primary/40 text-text-main font-bold text-xs flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-3xs"
+                        >
+                            <Split size={16} />
+                            <span className="hidden sm:inline">مجزأ</span>
+                        </button>
+
+                        {selectedCustomer && (
+                            <button
+                                type="button"
+                                onClick={() => { setInstConfig({ downPayment: 0, months: 3 }); setShowInstallmentModal(true); }}
+                                title="أقساط"
+                                className="h-12 px-3 rounded-xl border border-border/80 bg-surface hover:bg-surface-hover hover:border-primary/40 text-text-main font-bold text-xs flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-3xs"
+                            >
+                                <Calculator size={16} />
+                                <span className="hidden sm:inline">أقساط</span>
+                            </button>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={handleCheckout}
+                            disabled={cart.length === 0 || isProcessing}
+                            className="h-12 flex-1 rounded-xl bg-success hover:brightness-110 active:scale-[0.98] text-white font-black text-base flex items-center justify-center gap-2 transition-all shadow-md shadow-success/20 disabled:opacity-50 disabled:shadow-none cursor-pointer"
+                        >
+                            {isProcessing ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                <>
+                                    <Check size={20} strokeWidth={3} />
+                                    <span>{paymentMethod === 'credit' ? 'تسجيل دين' : 'إتمام البيع'}</span>
+                                </>
                             )}
-                            <Button variant="primary" onClick={handleCheckout} disabled={cart.length === 0 || isProcessing} className="h-14 w-32 shrink-0 whitespace-nowrap text-sm">
-                                {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Check size={20} strokeWidth={3} /><span>{paymentMethod === 'credit' ? 'دين' : 'بيع'}</span></>}
-                            </Button>
-                        </div>
+                        </button>
                     </div>
                 </div>
             </div>

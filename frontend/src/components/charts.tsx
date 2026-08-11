@@ -269,7 +269,7 @@ export const BarChart = memo(({ data }: { data: { label: string, value: number }
                 <div key={i} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end relative">
                     <div className="w-full bg-surface-active rounded-t-lg relative h-full flex items-end overflow-hidden border-x border-t border-border">
                         <div
-                            className="w-full bg-gradient-to-t from-primary/40 to-blue-500/40 rounded-t-lg transition-all duration-700 group-hover:from-primary group-hover:to-blue-500 relative"
+                            className="w-full bg-primary/40 rounded-t-lg transition-all duration-700 relative"
                             style={{ height: `${(d.value / max) * 100}%` }}
                         >
                             <div className="absolute top-0 w-full h-[1px] bg-white/30"></div>
@@ -292,17 +292,15 @@ export const DonutChart = memo(({ data }: { data: { label: string, value: number
 
     const gapPercent = data.length > 1 ? 0.015 : 0;
 
-    const colorMap: Record<string, string> = {
-        'bg-blue-500': '#3B82F6',
-        'bg-purple-500': '#A855F7',
-        'bg-orange-500': '#F97316',
-        'bg-green-500': '#22C55E',
-        'bg-emerald-500': '#10B981',
-        'bg-red-500': '#EF4444',
-        'bg-amber-500': '#F59E0B',
-        'bg-cyan-500': '#06B6D4',
-        'bg-gray-500': '#6B7280',
-    };
+    const palette = [
+        'var(--color-primary)',
+        'var(--color-success)',
+        'var(--color-warning)',
+        'var(--color-danger)',
+        'var(--color-info)',
+        '#64748b',
+    ];
+    const sliceColor = (i: number) => palette[i % palette.length];
 
     if (total === 0) return (
         <div className="w-full h-full flex flex-col items-center justify-center relative p-4">
@@ -337,7 +335,7 @@ export const DonutChart = memo(({ data }: { data: { label: string, value: number
                         const drawPercent = Math.max(0, slicePercent - gapPercent);
                         const dashArray = `${drawPercent * 100.53} ${100.53 - (drawPercent * 100.53)}`;
                         const offset = 25.13 - (cumulativePercent * 100.53);
-                        const strokeColor = colorMap[slice.color] || '#6B7280';
+                        const strokeColor = sliceColor(i);
 
                         cumulativePercent += slicePercent;
 
@@ -381,7 +379,7 @@ export const DonutChart = memo(({ data }: { data: { label: string, value: number
             {/* Legend - Compact */}
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
                 {data.filter(d => d.value > 0).map((slice, i) => {
-                    const strokeColor = colorMap[slice.color] || '#6B7280';
+                    const strokeColor = sliceColor(i);
                     const percent = Math.round((slice.value / total) * 100);
                     return (
                         <div

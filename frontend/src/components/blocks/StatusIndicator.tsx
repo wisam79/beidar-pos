@@ -14,10 +14,10 @@ interface StatusIndicatorProps {
 }
 
 const statusMap: Record<StatusState, { bg: string; text: string; defaultLabel: string }> = {
-    online: { bg: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', defaultLabel: 'متصل' },
-    offline: { bg: 'bg-rose-500', text: 'text-rose-600 dark:text-rose-400', defaultLabel: 'غير متصل' },
-    busy: { bg: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', defaultLabel: 'مشغول' },
-    idle: { bg: 'bg-blue-500', text: 'text-blue-600 dark:text-blue-400', defaultLabel: 'خامل' },
+    online: { bg: 'bg-success', text: 'text-success dark:text-success', defaultLabel: 'متصل' },
+    offline: { bg: 'bg-danger', text: 'text-danger dark:text-danger', defaultLabel: 'غير متصل' },
+    busy: { bg: 'bg-warning', text: 'text-warning dark:text-warning', defaultLabel: 'مشغول' },
+    idle: { bg: 'bg-primary', text: 'text-primary dark:text-primary', defaultLabel: 'خامل' },
 };
 
 export const StatusIndicator = memo(({

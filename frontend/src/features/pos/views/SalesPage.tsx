@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useDeferredValue } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, ScanLine, User, Clock } from 'lucide-react';
-import { formatCurrency, generateId, getLocalDateString, playBeep, triggerConfetti } from '../../../core/utils';
+import { formatCurrency, generateId, getLocalDateString, playBeep } from '../../../core/utils';
 import { logger } from '../../../core/logger';
 import { Modal } from '../../../components/ui';
 import { ScanResult } from '../../../components/BarcodeScannerOverlay';
 import { Numpad } from '../components/Numpad';
 import { api, ParkedSaleDB, type ModelSale } from '../../../core/api';
 import { Product, Sale, CartItem } from '../../../core/types';
+import { invalidateAllData } from '../../../core/queryClient';
 import { useInvalidateProducts, useProducts, useCustomers, useParkedSales, useUsbScannerDetection } from '../../../hooks';
 import { useCart } from '../hooks/useCart';
 import { usePreferences } from '../../../components/PreferencesContext';
@@ -52,6 +53,7 @@ export const SalesPage: React.FC = () => {
     });
 
     const [searchQuery, setSearchQuery] = useState('');
+    const deferredSearchQuery = useDeferredValue(searchQuery);
     const [selectedCategory, setSelectedCategory] = useState('الكل');
     const [isWholesale, setIsWholesale] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -84,7 +86,7 @@ export const SalesPage: React.FC = () => {
     const whatsappReceiptRef = useRef<HTMLDivElement>(null);
 
     const { products, filteredProducts, categories } = useProducts({
-        search: searchQuery,
+        search: deferredSearchQuery,
         category: selectedCategory,
     });
 
@@ -170,13 +172,14 @@ export const SalesPage: React.FC = () => {
             await api.sales.process(sale as unknown as ModelSale);
             setCart([]); setDiscount(0); setSelectedCustomer(null); setPaymentMethod('cash'); setShowSplitModal(false); setShowInstallmentModal(false);
             setReceivedAmount(0);
-            triggerConfetti(); notify('تم البيع بنجاح', 'success');
+            notify('تم البيع بنجاح', 'success');
 
             if (prefs.autoPrint) {
                 setLastSaleForPrint(sale as Sale);
             }
 
             invalidateProducts();
+            invalidateAllData();
             setLastCompletedSale(sale as Sale);
             setTimeout(() => searchRef.current?.focus(), 100);
         } catch (e: unknown) {
@@ -424,15 +427,15 @@ export const SalesPage: React.FC = () => {
                 </div>
             )}
 
-            <div className={`flex flex-col bg-surface border-l border-border/80 h-full transition-all duration-300 ${isZenMode ? 'w-full rounded-none' : 'w-[380px] lg:w-[420px] xl:w-[480px] 2xl:w-[520px] rounded-l-2xl overflow-hidden'}`}>
+            <div className={`flex flex-col bg-surface border-l border-border/80 h-full transition-all duration-300 ${isZenMode ? 'w-full rounded-none' : 'w-[390px] lg:w-[430px] xl:w-[470px] 2xl:w-[510px] rounded-l-2xl overflow-hidden'}`}>
                 {!isZenMode && (
-                    <div className={`border-b transition-all shrink-0 ${activeShift ? 'bg-green-500/5 border-green-500/20' : 'bg-black/5 dark:bg-white/[0.01] border-border'}`}>
+                    <div className={`border-b transition-all shrink-0 ${activeShift ? 'bg-success/5 border-success/20' : 'bg-black/5 dark:bg-white/[0.01] border-border'}`}>
                         <button
                             onClick={() => setShowShiftPanel(!showShiftPanel)}
                             className="w-full px-3 py-1.5 flex items-center justify-between hover:bg-white/5 transition-colors"
                         >
                             <div className="flex items-center gap-2">
-                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${activeShift ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-400'}`}>
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${activeShift ? 'bg-success/20 text-success' : 'bg-gray-500/20 text-gray-400'}`}>
                                     <Clock size={14} />
                                 </div>
                                 <span className="text-xs font-medium text-text-main">
@@ -441,8 +444,8 @@ export const SalesPage: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-2">
                                 {activeShift && (
-                                    <span className="px-1.5 py-0.5 bg-green-500/20 text-green-500 text-[10px] rounded-full flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                                    <span className="px-1.5 py-0.5 bg-success/20 text-success text-[10px] rounded-full flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
                                         {activeShift.salesCount}
                                     </span>
                                 )}
@@ -483,7 +486,7 @@ export const SalesPage: React.FC = () => {
                                 />
                                 <Search className="absolute left-4.5 top-4 text-text-muted opacity-70" size={20} />
                             </div>
-                            <button onClick={() => setIsScannerOpen(true)} className="p-3.5 bg-purple-500/10 border border-purple-500/20 text-purple-500 rounded-xl hover:bg-purple-500 hover:text-white transition-all btn-press touch-target shadow-sm" title="ماسح الباركود" aria-label="ماسح الباركود">
+                            <button onClick={() => setIsScannerOpen(true)} className="p-3.5 bg-primary/10 border border-primary/20 text-primary rounded-xl hover:bg-primary hover:text-primary-fg transition-all btn-press touch-target shadow-sm" title="ماسح الباركود" aria-label="ماسح الباركود">
                                 <ScanLine size={22} />
                             </button>
                             <button onClick={() => setShowCustomerModal(true)} className={`p-3.5 rounded-xl border transition-all btn-press touch-target shadow-sm ${selectedCustomer ? 'bg-primary/10 text-primary border-primary/20' : 'bg-surface text-text-muted border-border hover:text-text-main'}`} title="اختر العميل" aria-label="اختر العميل">

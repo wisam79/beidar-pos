@@ -39,8 +39,6 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsReturn
         enabled = true,
     } = options;
 
-    const queryClient = useQueryClient();
-
     // Main query - fetches all products (for POS, we load all for fast filtering)
     const {
         data,

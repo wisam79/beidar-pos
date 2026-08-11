@@ -46,6 +46,10 @@ export function Logout() {
   return window['go']['handlers']['StaffHandler']['Logout']();
 }
 
+export function RestoreSession(arg1) {
+  return window['go']['handlers']['StaffHandler']['RestoreSession'](arg1);
+}
+
 export function Startup(arg1) {
   return window['go']['handlers']['StaffHandler']['Startup'](arg1);
 }

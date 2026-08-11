@@ -22,8 +22,8 @@ interface ActionButtonProps {
 
 const variantClasses: Record<ButtonVariant, string> = {
     primary: `
-        bg-emerald-500 text-black hover:bg-emerald-400
-        border border-emerald-400/60
+        bg-success text-primary-fg hover:bg-success
+        border border-success/60
         active:scale-[0.98]
     `,
     secondary: `
@@ -32,8 +32,8 @@ const variantClasses: Record<ButtonVariant, string> = {
         active:scale-[0.98]
     `,
     danger: `
-        bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white
-        border border-red-500/30
+        bg-danger/10 text-danger hover:bg-danger hover:text-white
+        border border-danger/30
         active:scale-[0.98]
     `,
     ghost: `

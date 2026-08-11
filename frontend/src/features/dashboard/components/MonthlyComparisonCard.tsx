@@ -16,7 +16,7 @@ interface MonthlyComparisonCardProps {
 const TrendBadge = ({ percent }: { percent: number }) => {
     const isPositive = percent > 0;
     const isNeutral = percent === 0;
-    const colorClass = isPositive ? 'text-emerald-500 bg-emerald-500/10' : isNeutral ? 'text-gray-500 bg-gray-500/10' : 'text-red-500 bg-red-500/10';
+    const colorClass = isPositive ? 'text-success bg-success/10' : isNeutral ? 'text-gray-500 bg-gray-500/10' : 'text-danger bg-danger/10';
     const Icon = isPositive ? ArrowUpRight : isNeutral ? Minus : ArrowDownRight;
 
     return (

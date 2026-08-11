@@ -51,12 +51,12 @@ export const QuickActionsBar = memo(({ setView }: QuickActionsBarProps) => {
     return (
         <div className="relative">
             {/* الخلفية مع التدرج - يعمل في كلا الوضعين */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 rounded-2xl" />
+            <div className="absolute inset-0 bg-primary/5 rounded-2xl" />
 
             {/* الشريط الرئيسي */}
             <div className="relative bg-surface border border-border rounded-2xl p-2 shadow-sm">
                 {/* خط علوي مضيء */}
-                <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                <div className="absolute top-0 left-4 right-4 h-px bg-transparent" />
 
                 <div className="grid grid-cols-6 gap-2">
                     {actions.map((action) => (
@@ -116,16 +116,16 @@ export const QuickActionsBar = memo(({ setView }: QuickActionsBarProps) => {
                                 <span className="
                                     absolute top-2 left-2 
                                     w-2 h-2 
-                                    bg-red-500 rounded-full 
+                                    bg-danger rounded-full 
                                     animate-pulse 
-                                    shadow-lg shadow-red-500/50
+                                    shadow-lg shadow-danger/50
                                 " />
                             )}
 
                             {/* تأثير الحافة السفلية عند التحويم */}
                             <div className="
                                 absolute bottom-0 left-2 right-2 h-0.5 
-                                bg-gradient-to-r from-transparent via-primary to-transparent
+                                bg-transparent
                                 opacity-0 group-hover:opacity-60
                                 transition-opacity
                                 rounded-full
@@ -135,7 +135,7 @@ export const QuickActionsBar = memo(({ setView }: QuickActionsBarProps) => {
                 </div>
 
                 {/* خط سفلي */}
-                <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                <div className="absolute bottom-0 left-4 right-4 h-px bg-transparent" />
             </div>
         </div>
     );

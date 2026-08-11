@@ -392,7 +392,7 @@ export const BarcodeDesigner: React.FC<BarcodeDesignerProps> = ({ onClose, initi
                                                 </div>
                                                 <button
                                                     onClick={() => onRemoveFromQueue && onRemoveFromQueue(idx)}
-                                                    className="p-1.5 hover:bg-red-500/10 rounded-lg text-text-muted hover:text-red-500 transition-colors"
+                                                    className="p-1.5 hover:bg-danger/10 rounded-lg text-text-muted hover:text-danger transition-colors"
                                                     aria-label="حذف العنصر"
                                                 >
                                                     <Trash2 size={14} />
@@ -606,7 +606,7 @@ export const BarcodeDesigner: React.FC<BarcodeDesignerProps> = ({ onClose, initi
                             {queue.length > 0 && (
                                 <button
                                     onClick={onClearQueue}
-                                    className="px-4 bg-red-500/10 text-red-500 py-3 rounded-xl font-bold border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"
+                                    className="px-4 bg-danger/10 text-danger py-3 rounded-xl font-bold border border-danger/20 hover:bg-danger hover:text-white transition-all"
                                     title="مسح القائمة"
                                 >
                                     <Trash2 size={16} />

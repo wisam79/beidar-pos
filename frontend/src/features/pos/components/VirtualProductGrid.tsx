@@ -14,7 +14,7 @@ interface VirtualProductGridProps {
 }
 
 // Fixed card height + gap for accurate virtualization
-const CARD_HEIGHT = 230; // ProductCard is 220px + 10px gap
+const CARD_HEIGHT = 184; // ProductCard is 172px + 12px gap
 const GAP = 12;
 
 /**

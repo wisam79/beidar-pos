@@ -33,7 +33,7 @@ export const SectionCard = memo(({
             <div className="px-5 py-3.5 border-b border-border/60 flex items-center justify-between shrink-0 bg-surface/50 min-h-[52px]">
                 <div className="flex items-center gap-3">
                     {Icon && (
-                        <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                        <div className="p-2 rounded-xl bg-success/10 text-success border border-success/20 shrink-0">
                             <Icon size={18} />
                         </div>
                     )}

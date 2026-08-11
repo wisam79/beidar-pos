@@ -278,17 +278,17 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4">
-                <div className="bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20 p-4 rounded-2xl">
+                <div className="bg-warning/10 border border-warning/20 p-4 rounded-2xl">
                     <p className="text-xs text-text-muted font-bold">الأوامر المعلقة</p>
-                    <p className="text-2xl font-black text-orange-500">{stats.pending}</p>
+                    <p className="text-2xl font-black text-warning">{stats.pending}</p>
                 </div>
-                <div className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 p-4 rounded-2xl">
+                <div className="bg-primary/10 border border-primary/20 p-4 rounded-2xl">
                     <p className="text-xs text-text-muted font-bold">إجمالي المشتريات</p>
-                    <p className="text-2xl font-black text-blue-500">{formatCurrency(stats.totalValue, currency)}</p>
+                    <p className="text-2xl font-black text-primary">{formatCurrency(stats.totalValue, currency)}</p>
                 </div>
-                <div className="bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20 p-4 rounded-2xl">
+                <div className="bg-danger/10 border border-danger/20 p-4 rounded-2xl">
                     <p className="text-xs text-text-muted font-bold">المستحق للموردين</p>
-                    <p className="text-2xl font-black text-red-500">{formatCurrency(stats.totalUnpaid, currency)}</p>
+                    <p className="text-2xl font-black text-danger">{formatCurrency(stats.totalUnpaid, currency)}</p>
                 </div>
             </div>
 
@@ -323,7 +323,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                                     </div>
                                     <div className="text-left">
                                         <p className="text-xs text-text-muted">المدفوع</p>
-                                        <p className="font-bold font-mono text-lg text-green-500">{formatCurrency(order.paidAmount || 0, currency)}</p>
+                                        <p className="font-bold font-mono text-lg text-success">{formatCurrency(order.paidAmount || 0, currency)}</p>
                                     </div>
                                     {expandedOrder === order.id ? <ChevronUp size={20} className="text-text-muted" /> : <ChevronDown size={20} className="text-text-muted" />}
                                 </div>
@@ -366,24 +366,24 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                                     <div className="flex gap-2 flex-wrap">
                                         {(order.status === 'pending' || order.status === 'partial') && (
                                             <>
-                                                <button onClick={() => openReceiveModal(order)} aria-label="استلام البضاعة" className="flex-1 py-2.5 bg-green-500/10 text-green-500 border border-green-500/20 rounded-xl text-sm font-bold hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2">
+                                                <button onClick={() => openReceiveModal(order)} aria-label="استلام البضاعة" className="flex-1 py-2.5 bg-success/10 text-success border border-success/20 rounded-xl text-sm font-bold hover:bg-success hover:text-white transition-all flex items-center justify-center gap-2">
                                                     <Truck size={16} aria-hidden="true" /> استلام البضاعة
                                                 </button>
-                                                <button onClick={() => openPayModal(order)} aria-label="تسجيل دفعة" className="flex-1 py-2.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-xl text-sm font-bold hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center gap-2">
+                                                <button onClick={() => openPayModal(order)} aria-label="تسجيل دفعة" className="flex-1 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-bold hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
                                                     <DollarSign size={16} aria-hidden="true" /> تسجيل دفعة
                                                 </button>
-                                                <button onClick={() => handleCancelOrder(order)} aria-label="إلغاء الأمر" className="py-2.5 px-4 bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded-xl text-sm font-bold hover:bg-orange-500 hover:text-white transition-all">
+                                                <button onClick={() => handleCancelOrder(order)} aria-label="إلغاء الأمر" className="py-2.5 px-4 bg-warning/10 text-warning border border-warning/20 rounded-xl text-sm font-bold hover:bg-warning hover:text-white transition-all">
                                                     <X size={16} aria-hidden="true" />
                                                 </button>
                                             </>
                                         )}
                                         {order.status === 'pending' && (
-                                            <button onClick={() => handleDeleteOrder(order)} aria-label="حذف الأمر" className="py-2.5 px-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl text-sm font-bold hover:bg-red-500 hover:text-white transition-all">
+                                            <button onClick={() => handleDeleteOrder(order)} aria-label="حذف الأمر" className="py-2.5 px-4 bg-danger/10 text-danger border border-danger/20 rounded-xl text-sm font-bold hover:bg-danger hover:text-white transition-all">
                                                 <Trash2 size={16} aria-hidden="true" />
                                             </button>
                                         )}
                                         {order.status === 'received' && (order.totalAmount || 0) > (order.paidAmount || 0) && (
-                                            <button onClick={() => openPayModal(order)} className="flex-1 py-2.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-xl text-sm font-bold hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center gap-2">
+                                            <button onClick={() => openPayModal(order)} className="flex-1 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-bold hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
                                                 <DollarSign size={16} /> تسديد المتبقي ({formatCurrency((order.totalAmount || 0) - (order.paidAmount || 0), currency)})
                                             </button>
                                         )}
@@ -471,7 +471,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                                             aria-label="سعر الشراء"
                                         />
                                         <span className="font-mono text-sm font-bold w-24 text-left">{formatCurrency(item.quantity * item.unitCost, currency)}</span>
-                                        <button onClick={() => removeItemFromOrder(item.productId)} aria-label="إزالة المنتج" className="text-red-500 hover:bg-red-500/10 p-1 rounded">
+                                        <button onClick={() => removeItemFromOrder(item.productId)} aria-label="إزالة المنتج" className="text-danger hover:bg-danger/10 p-1 rounded">
                                             <Trash2 size={14} aria-hidden="true" />
                                         </button>
                                     </div>
@@ -530,7 +530,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                                 );
                             })}
                         </div>
-                        <button onClick={handleReceiveOrder} className="w-full bg-green-500 text-white py-4 rounded-xl font-black hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                        <button onClick={handleReceiveOrder} className="w-full bg-success text-white py-4 rounded-xl font-black hover:brightness-110 transition-all flex items-center justify-center gap-2">
                             <Check size={20} /> تأكيد الاستلام
                         </button>
                     </div>
@@ -543,7 +543,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                     <div className="space-y-4 pt-2">
                         <div className="bg-bg border border-border rounded-xl p-4 text-center">
                             <p className="text-xs text-text-muted">المتبقي</p>
-                            <p className="text-2xl font-black text-red-500 font-mono">{formatCurrency((selectedOrder.totalAmount || 0) - (selectedOrder.paidAmount || 0), currency)}</p>
+                            <p className="text-2xl font-black text-danger font-mono">{formatCurrency((selectedOrder.totalAmount || 0) - (selectedOrder.paidAmount || 0), currency)}</p>
                         </div>
                         <div>
                             <label className="text-xs font-bold text-text-muted mb-1 block">المبلغ</label>
@@ -564,7 +564,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                                 <option value="check">شيك</option>
                             </select>
                         </div>
-                        <button onClick={handlePayOrder} disabled={payAmount <= 0} className="w-full bg-blue-500 text-white py-4 rounded-xl font-black hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
+                        <button onClick={handlePayOrder} disabled={payAmount <= 0} className="w-full bg-primary text-white py-4 rounded-xl font-black hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
                             <DollarSign size={20} /> تسجيل الدفعة
                         </button>
                     </div>

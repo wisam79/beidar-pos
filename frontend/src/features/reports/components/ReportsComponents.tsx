@@ -21,10 +21,10 @@ export interface MetricCardProps {
 }
 
 const metricCardColors = {
-    blue: 'text-blue-500 bg-blue-500/10 border-blue-500/20 hover:border-blue-500/40 hover:shadow-blue-500/10',
-    emerald: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-emerald-500/10',
-    red: 'text-red-500 bg-red-500/10 border-red-500/20 hover:border-red-500/40 hover:shadow-red-500/10',
-    purple: 'text-purple-500 bg-purple-500/10 border-purple-500/20 hover:border-purple-500/40 hover:shadow-purple-500/10',
+    blue: 'text-primary bg-primary/10 border-primary/20 hover:border-primary/40 hover:shadow-primary/10',
+    emerald: 'text-success bg-success/10 border-success/20 hover:border-success/40 hover:shadow-success/10',
+    red: 'text-danger bg-danger/10 border-danger/20 hover:border-danger/40 hover:shadow-danger/10',
+    purple: 'text-primary bg-primary/10 border-primary/20 hover:border-primary/40 hover:shadow-primary/10',
 };
 
 export const MetricCard: React.FC<MetricCardProps> = ({ icon, label, value, subtext, trend, color }) => {
@@ -41,8 +41,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({ icon, label, value, subt
                 <p className={`font-mono font-black text-xl ${textColor}`}>{value}</p>
                 {subtext && (
                     <p className="text-[10px] text-text-muted font-medium flex items-center gap-1 mt-0.5">
-                        {trend === 'up' && <ArrowUpRight size={10} className="text-emerald-500" />}
-                        {trend === 'down' && <ArrowDownRight size={10} className="text-red-500" />}
+                        {trend === 'up' && <ArrowUpRight size={10} className="text-success" />}
+                        {trend === 'down' && <ArrowDownRight size={10} className="text-danger" />}
                         {subtext}
                     </p>
                 )}
@@ -88,21 +88,21 @@ export interface CustomerRankProps {
 }
 
 const rankColors = {
-    1: 'bg-amber-500 text-black',
+    1: 'bg-warning text-primary-fg',
     2: 'bg-gray-400 text-black',
-    3: 'bg-orange-700 text-white',
+    3: 'bg-warning text-white',
 };
 
 export const CustomerRank: React.FC<CustomerRankProps> = ({ rank, name, total, currency = 'IQD' }) => {
     return (
-        <div className="flex justify-between items-center bg-surface-hover/80 p-3.5 rounded-2xl border border-border/40 hover:border-emerald-500/30 transition-colors">
+        <div className="flex justify-between items-center bg-surface-hover/80 p-3.5 rounded-2xl border border-border/40 hover:border-success/30 transition-colors">
             <div className="flex items-center gap-3.5">
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm ${rankColors[rank as keyof typeof rankColors] || 'bg-surface border border-border text-text-muted'}`}>
                     {rank}
                 </div>
                 <span className="text-text-main text-sm font-extrabold">{name}</span>
             </div>
-            <span className="text-emerald-400 font-black text-sm font-mono">
+            <span className="text-success font-black text-sm font-mono">
                 {formatCurrency(total, currency).replace(currency, '')}
             </span>
         </div>

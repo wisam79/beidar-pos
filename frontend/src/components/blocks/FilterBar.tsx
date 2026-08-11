@@ -19,12 +19,12 @@ interface SearchInputProps {
 export const SearchInput = memo(({ value, onChange, placeholder = 'بحث...', className = '' }: SearchInputProps) => (
     <div className={`relative group flex-1 min-w-[220px] ${className}`}>
         <input
-            className="w-full h-11 bg-input-bg text-text-main border border-border/80 rounded-xl pr-11 pl-4 outline-none focus:border-emerald-500 transition-colors text-sm font-extrabold placeholder:text-text-muted/70 touch-target"
+            className="w-full h-11 bg-input-bg text-text-main border border-border/80 rounded-xl pr-11 pl-4 outline-none focus:border-success transition-colors text-sm font-extrabold placeholder:text-text-muted/70 touch-target"
             placeholder={placeholder}
             value={value}
             onChange={e => onChange(e.target.value)}
         />
-        <Search className="absolute right-3.5 top-3 text-text-muted group-focus-within:text-emerald-400 transition-colors pointer-events-none" size={18} />
+        <Search className="absolute right-3.5 top-3 text-text-muted group-focus-within:text-success transition-colors pointer-events-none" size={18} />
     </div>
 ));
 SearchInput.displayName = 'SearchInput';
@@ -60,7 +60,7 @@ export const SegmentedControl = memo(<T extends string>({
                     onClick={() => onChange(opt.id)}
                     className={`px-4 py-2 min-h-[40px] rounded-lg font-extrabold text-xs md:text-sm whitespace-nowrap transition-colors touch-target outline-none cursor-pointer select-none ${
                         isActive
-                            ? 'bg-emerald-500 text-black font-black'
+                            ? 'bg-success text-primary-fg font-black'
                             : 'text-text-muted hover:text-text-main hover:bg-surface'
                     }`}
                 >

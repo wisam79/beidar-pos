@@ -31,11 +31,11 @@ export const TabNav = memo(<T extends string>({
                         onClick={() => onChange(tab.id)}
                         className={`flex items-center gap-2 px-4 py-2 min-h-[40px] rounded-xl text-xs md:text-sm font-extrabold transition-colors touch-target outline-none cursor-pointer ${
                             isActive
-                                ? 'bg-emerald-500 text-black font-black'
+                                ? 'bg-success text-primary-fg font-black'
                                 : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                         }`}
                     >
-                        {Icon && <Icon size={16} className={isActive ? 'text-black' : 'text-text-muted'} />}
+                        {Icon && <Icon size={16} className={isActive ? 'text-primary-fg' : 'text-text-muted'} />}
                         <span>{tab.label}</span>
                     </button>
                 );

@@ -39,15 +39,15 @@ interface TouchDockProps {
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { id: 'dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard', color: 'text-emerald-500' },
+    { id: 'dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard', color: 'text-success' },
     { id: 'sales', icon: ShoppingBag, labelKey: 'nav.sales', permission: Permissions.SALES, color: 'text-primary' },
-    { id: 'products', icon: Package, labelKey: 'nav.products', permission: Permissions.PRODUCTS, color: 'text-blue-500' },
-    { id: 'inventory', icon: Layers, labelKey: 'nav.inventory', permission: Permissions.INVENTORY, color: 'text-amber-500' },
-    { id: 'invoices', icon: FileText, labelKey: 'nav.invoices', permission: Permissions.INVOICES, color: 'text-teal-500' },
-    { id: 'customers', icon: UserCircle2, labelKey: 'nav.customers', permission: Permissions.CUSTOMERS, color: 'text-purple-500' },
-    { id: 'finance', icon: Wallet2, labelKey: 'nav.finance', permission: Permissions.FINANCE, color: 'text-emerald-500' },
-    { id: 'shifts', icon: Clock, labelKey: 'nav.shifts', permission: Permissions.FINANCE, color: 'text-indigo-500' },
-    { id: 'reports', icon: BarChart3, labelKey: 'nav.reports', permission: Permissions.REPORTS, color: 'text-sky-500' },
+    { id: 'products', icon: Package, labelKey: 'nav.products', permission: Permissions.PRODUCTS, color: 'text-primary' },
+    { id: 'inventory', icon: Layers, labelKey: 'nav.inventory', permission: Permissions.INVENTORY, color: 'text-warning' },
+    { id: 'invoices', icon: FileText, labelKey: 'nav.invoices', permission: Permissions.INVOICES, color: 'text-success' },
+    { id: 'customers', icon: UserCircle2, labelKey: 'nav.customers', permission: Permissions.CUSTOMERS, color: 'text-primary' },
+    { id: 'finance', icon: Wallet2, labelKey: 'nav.finance', permission: Permissions.FINANCE, color: 'text-success' },
+    { id: 'shifts', icon: Clock, labelKey: 'nav.shifts', permission: Permissions.FINANCE, color: 'text-primary' },
+    { id: 'reports', icon: BarChart3, labelKey: 'nav.reports', permission: Permissions.REPORTS, color: 'text-primary' },
     { id: 'settings', icon: Settings, labelKey: 'nav.settings', permission: Permissions.SETTINGS, color: 'text-slate-400' },
 ];
 
@@ -89,7 +89,7 @@ export const TouchDock: React.FC<TouchDockProps> = React.memo(({
                                 className={cn(
                                     'group relative flex items-center gap-2 h-11 px-3.5 rounded-xl font-bold text-xs transition-all duration-150 active:scale-95 touch-target outline-none',
                                     isActive
-                                        ? 'bg-primary text-black shadow-md shadow-primary/20 scale-[1.02]'
+                                        ? 'bg-primary text-primary-fg shadow-md shadow-primary/20 scale-[1.02]'
                                         : 'bg-surface/60 hover:bg-surface-hover text-text-muted hover:text-text-main border border-border/50'
                                 )}
                                 aria-label={label}
@@ -100,7 +100,7 @@ export const TouchDock: React.FC<TouchDockProps> = React.memo(({
                                     strokeWidth={isActive ? 2.4 : 2}
                                     className={cn('shrink-0 transition-transform group-hover:scale-110', !isActive && item.color)}
                                 />
-                                <span className={cn('whitespace-nowrap font-bold', isActive ? 'text-black' : 'text-text-main')}>
+                                <span className={cn('whitespace-nowrap font-bold', isActive ? 'text-primary-fg' : 'text-text-main')}>
                                     {label}
                                 </span>
 
@@ -128,10 +128,10 @@ export const TouchDock: React.FC<TouchDockProps> = React.memo(({
                     <button
                         type="button"
                         onClick={onToggleAI}
-                        className="flex items-center gap-1.5 h-11 px-3 rounded-xl bg-gradient-to-r from-purple-500/15 to-indigo-500/15 hover:from-purple-500/25 hover:to-indigo-500/25 border border-purple-500/30 text-purple-400 font-bold text-xs transition-all active:scale-95 touch-target"
+                        className="flex items-center gap-1.5 h-11 px-3 rounded-xl bg-primary/15 hover:from-primary/25 hover:to-primary/25 border border-primary/30 text-primary font-bold text-xs transition-all active:scale-95 touch-target"
                         aria-label="المستشار الذكي"
                     >
-                        <Sparkles size={16} className="text-purple-400 animate-pulse" />
+                        <Sparkles size={16} className="text-primary animate-pulse" />
                         <span className="hidden sm:inline">الذكاء الاصطناعي</span>
                     </button>
                 </Tooltip>

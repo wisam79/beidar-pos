@@ -40,12 +40,11 @@ describe('CartItemRow Component', () => {
 
         expect(screen.getByText('شاي لبتون')).toBeInTheDocument();
         expect(screen.getByText('5,000 IQD')).toBeInTheDocument();
-        expect(screen.getByText('خصم -500')).toBeInTheDocument();
-        expect(screen.getByText('6281006112345')).toBeInTheDocument();
+        expect(screen.getByText('-500')).toBeInTheDocument();
         // qty: 3
         expect(screen.getByText('3')).toBeInTheDocument();
         // total: 5000 * 3 - 500 = 14500
-        expect(screen.getByText('14,500')).toBeInTheDocument();
+        expect(screen.getByText('14,500 IQD')).toBeInTheDocument();
     });
 
     it('should trigger onEdit when clicking the row', () => {
@@ -191,7 +190,7 @@ describe('ProductCard Component', () => {
         );
 
         expect(screen.getByText('3')).toBeInTheDocument();
-        const statusSpan = container.querySelector('.bg-amber-500\\/15');
+        const statusSpan = container.querySelector('.bg-warning\\/15');
         expect(statusSpan).toBeInTheDocument();
     });
 
@@ -218,7 +217,7 @@ describe('ProductCard Component', () => {
             />
         );
 
-        const checkOverlay = container.querySelector('.bg-emerald-500\\/20');
+        const checkOverlay = container.querySelector('.bg-success\\/20');
         expect(checkOverlay).toBeInTheDocument();
     });
 

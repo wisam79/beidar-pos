@@ -43,7 +43,7 @@ export const ProductFilters = memo(({
         <div className="flex flex-col xl:flex-row gap-2 items-center w-full animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="relative group w-full xl:w-auto xl:flex-1">
                 <input
-                    className="w-full bg-input-bg text-text-main border border-border rounded-xl pl-9 pr-3 py-2.5 outline-none focus:border-primary transition-all text-sm font-bold placeholder:text-text-muted focus:shadow-[0_0_15px_var(--color-primary-dim)]"
+                    className="w-full bg-input-bg text-text-main border border-border rounded-xl pl-9 pr-3 py-2 outline-none focus:border-primary transition-all text-sm font-bold placeholder:text-text-muted focus:shadow-[0_0_15px_var(--color-primary-dim)]"
                     placeholder={t('common.searchPlaceholder')}
                     value={search}
                     onChange={e => onSearchChange(e.target.value)}
@@ -55,7 +55,7 @@ export const ProductFilters = memo(({
                 <button
                     onClick={onScanClick}
                     title={t('common.scanBarcode')}
-                    className="p-2.5 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 text-purple-500 dark:text-purple-300 rounded-xl font-bold flex items-center gap-2 hover:from-purple-500/20 hover:to-blue-500/20 transition-all shadow-sm active:scale-95 shrink-0"
+                    className="p-2.5 bg-primary/10 border border-primary/20 text-primary dark:text-primary rounded-xl font-bold flex items-center gap-2 hover:from-primary/20 hover:to-primary/20 transition-all shadow-sm active:scale-95 shrink-0"
                 >
                     <ScanLine size={18} />
                     <span className="hidden sm:inline text-xs">{t('common.scanBarcode')}</span>
@@ -65,7 +65,7 @@ export const ProductFilters = memo(({
 
                 <select
                     aria-label="فلترة حسب الفئة"
-                    className="bg-input-bg border border-border text-text-main text-xs font-bold rounded-xl px-3 py-2.5 outline-none cursor-pointer focus:border-primary transition-all appearance-none min-w-[100px]"
+                    className="bg-input-bg border border-border text-text-main text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer focus:border-primary transition-all appearance-none min-w-[100px]"
                     value={selectedCategory}
                     onChange={e => onCategoryChange(e.target.value)}
                 >
@@ -74,7 +74,7 @@ export const ProductFilters = memo(({
                 </select>
                 <select
                     aria-label="فلترة حسب المورد"
-                    className="bg-input-bg border border-border text-text-main text-xs font-bold rounded-xl px-3 py-2.5 outline-none cursor-pointer focus:border-primary transition-all appearance-none min-w-[100px]"
+                    className="bg-input-bg border border-border text-text-main text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer focus:border-primary transition-all appearance-none min-w-[100px]"
                     value={selectedSupplier}
                     onChange={e => onSupplierChange(e.target.value)}
                 >
@@ -83,7 +83,7 @@ export const ProductFilters = memo(({
                 </select>
                 <select
                     aria-label="فلترة حسب الحالة"
-                    className="bg-input-bg border border-border text-text-main text-xs font-bold rounded-xl px-3 py-2.5 outline-none cursor-pointer focus:border-primary transition-all appearance-none min-w-[100px]"
+                    className="bg-input-bg border border-border text-text-main text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer focus:border-primary transition-all appearance-none min-w-[100px]"
                     value={statusFilter}
                     onChange={e => onStatusChange(e.target.value as 'all' | 'low' | 'out')}
                 >

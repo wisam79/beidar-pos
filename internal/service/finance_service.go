@@ -5,6 +5,7 @@ import (
 	pkgerrors "beidar-desktop/pkg/errors"
 	"beidar-desktop/pkg/i18n"
 	"beidar-desktop/pkg/logger"
+	"beidar-desktop/pkg/auth"
 	"fmt"
 	"time"
 
@@ -237,6 +238,10 @@ func (s *financeService) CloseShift(shiftID string, closingBalance domain.Amount
 		shift = *sPointer
 		if shift.Status != "open" {
 			return fmt.Errorf("الشفت مغلق بالفعل")
+		}
+
+		if auth.IsActive() && shift.StaffID != auth.CurrentStaffID() && domain.Role(auth.CurrentRole()) != domain.RoleAdmin {
+			return fmt.Errorf("لا تملك صلاحية لإغلاق شفت موظف آخر")
 		}
 
 		cashIn, cashOut, err := txShiftRepo.GetCashInAndOut(shiftID)

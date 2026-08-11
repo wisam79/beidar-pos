@@ -1,7 +1,6 @@
-
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Save, Store, Database, CreditCard, ShieldCheck, Palette, Monitor, Wifi, Terminal, Sparkles, Cloud } from 'lucide-react';
+import { Save, Store, CreditCard, ShieldCheck, Palette, Monitor, Wifi, Sparkles, Cloud, Settings, Package, Smartphone, RefreshCw } from 'lucide-react';
 import { PinModal } from '../../components/PinModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { useConfirmModal } from '../../hooks';
@@ -28,7 +27,6 @@ import {
     AboutSettings,
     MobileScannerSettings
 } from './components';
-import { Smartphone } from 'lucide-react';
 import { CloudBackupSettings } from './components/CloudBackupSettings';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -43,6 +41,14 @@ export const SettingsPage: React.FC = () => {
     const [showPinModal, setShowPinModal] = useState(false);
     const [pinAction, setPinAction] = useState<'reset_db' | null>(null);
     const [activeTab, setActiveTab] = useState('store');
+    
+    // Sub-tab navigation states for clean focused views
+    const [storeSubTab, setStoreSubTab] = useState<'info' | 'sales' | 'inventory'>('info');
+    const [systemSubTab, setSystemSubTab] = useState<'appearance' | 'security'>('appearance');
+    const [networkSubTab, setNetworkSubTab] = useState<'lan' | 'scanner'>('lan');
+    const [cloudSubTab, setCloudSubTab] = useState<'backup' | 'ai'>('backup');
+    const [aboutSubTab, setAboutSubTab] = useState<'updates' | 'info'>('updates');
+
     const [showDiscountManager, setShowDiscountManager] = useState(false);
     const [showStaffManager, setShowStaffManager] = useState(false);
     const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
@@ -60,7 +66,7 @@ export const SettingsPage: React.FC = () => {
                     const base64Raw = ev.target?.result as string;
                     const base64 = await compressImage(base64Raw, 400, 0.8);
                     handleChange('storeLogo', base64);
-                    notify('تم رفع الشعار بنجاح ✨', 'success');
+                    notify('تم رفع الشعار بنجاح', 'success');
                 } catch (err: unknown) {
                     const msg = err instanceof Error ? err.message : 'خطأ غير معروف';
                     notify(`فشل معالجة الصورة: ${msg}`, 'error');
@@ -87,7 +93,6 @@ export const SettingsPage: React.FC = () => {
         if (!validation.success) {
             setErrors(validation.errors || {});
             const firstError = Object.values(validation.errors || {})[0];
-            // Show specific validation error
             notify(firstError ? `تنبيه: ${firstError}` : 'يرجى التأكد من صحة الحقول المدخلة', 'error');
             return;
         }
@@ -99,77 +104,67 @@ export const SettingsPage: React.FC = () => {
             setPrefs(localPrefs);
             setHasChanges(false);
             setErrors({});
-            notify('تم حفظ الإعدادات بنجاح ✨', 'success');
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : 'حدث خطأ غير متوقع';
-            notify(`فشل الحفظ: ${msg}`, 'error');
+            notify('تم حفظ جميع الإعدادات بنجاح', 'success');
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'خطأ غير معروف';
+            notify(`فشل حفظ الإعدادات: ${msg}`, 'error');
         }
     };
 
     const handleExport = async () => {
         try {
-            const success = await window.go.handlers.BackupHandler.ExportDatabaseBackupNative();
+            notify('جاري تصدير نسخة احتياطية...', 'info');
+            const success = await api.ExportDatabaseBackupNative();
             if (success) {
-                // Update last backup date
-                const now = new Date().toISOString();
-                handleChange('lastBackupDate', now);
-                // Verify immediate storage update for the alert to clear
-                const updatedPrefs = { ...localPrefs, lastBackupDate: now };
-                localStorage.setItem('beidar_preferences', JSON.stringify(sanitizePrefsForStorage(updatedPrefs as unknown as Record<string, unknown>)));
-                api.prefs.set(updatedPrefs);
-
-                notify('تم تصدير نسخة احتياطية 📦', 'success');
-            } else {
-                notify('تم إلغاء التصدير', 'info');
+                notify('تم تصدير النسخة الاحتياطية بنجاح', 'success');
             }
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : 'خطأ في قاعدة البيانات';
-            if (msg === 'cancelled') {
-                notify('تم إلغاء التصدير', 'info');
-            } else {
-                notify(`تعذر التصدير: ${msg}`, 'error');
-            }
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'خطأ في النظام';
+            notify(`فشل تصدير النسخة الاحتياطية: ${msg}`, 'error');
         }
     };
 
     const handleRestoreTrigger = async () => {
         openConfirm({
-            title: 'استعادة النسخة الاحتياطية',
-            message: 'سيتم استبدال جميع البيانات الحالية. هل أنت متأكد؟',
-            type: 'warning',
+            title: 'تأكيد استعادة النسخة الاحتياطية',
+            message: 'سيتم استبدال قاعدة البيانات الحالية بالكامل وإعادة تشغيل التطبيق. هل أنت متأكد من الاستمرار؟',
+            type: 'error',
             onConfirm: async () => {
                 closeConfirm();
                 try {
-                    const success = await window.go.handlers.BackupHandler.ImportDatabaseBackupNative();
+                    const success = await api.ImportDatabaseBackupNative();
                     if (success) {
-                        notify('تم استعادة البيانات بنجاح! 🎉', 'success');
-                        setTimeout(() => window.location.reload(), 1500);
-                    } else {
-                        notify('تم إلغاء الاستعادة', 'info');
+                        notify('تمت الاستعادة بنجاح! جاري إعادة تشغيل التطبيق...', 'success');
                     }
                 } catch (err: unknown) {
-                    const msg = err instanceof Error ? err.message : 'ملف غير صالح';
-                    if (msg === 'cancelled') {
-                        notify('تم إلغاء الاستعادة', 'info');
-                    } else {
-                        notify(`فشل الاستعادة: ${msg}`, 'error');
-                    }
+                    const msg = err instanceof Error ? err.message : 'خطأ في النقل';
+                    notify(`فشل استعادة النسخة الاحتياطية: ${msg}`, 'error');
                 }
             }
         });
     };
 
-    const handlePinSuccess = async () => {
+    const handlePinSuccess = () => {
         setShowPinModal(false);
         if (pinAction === 'reset_db') {
-            try {
-                await api.db.reset();
-                window.location.reload();
-            } catch (err: unknown) {
-                const msg = err instanceof Error ? err.message : 'خطأ في النظام';
-                notify(`فشل إعادة الضبط: ${msg}`, 'error');
-            }
+            openConfirm({
+                title: 'تحذير نهائي وحرج جداً',
+                message: 'هذا الإجراء سيقوم بحذف كافة الفواتير، المبيعات، المنتجات والعملاء بشكل دائم ولا يمكن التراجع عنه مطلقاً! هل ترغب بالاستمرار؟',
+                type: 'error',
+                onConfirm: async () => {
+                    closeConfirm();
+                    try {
+                        notify('جاري تصفير وإعادة تعيين قاعدة البيانات...', 'info');
+                        await api.db.reset();
+                        notify('تم تصفير النظام وإعادة تعيينه بنجاح! أعد تشغيل التطبيق.', 'success');
+                    } catch (err: unknown) {
+                        const msg = err instanceof Error ? err.message : 'خطأ غير معروف';
+                        notify(`فشل تصفير قاعدة البيانات: ${msg}`, 'error');
+                    }
+                }
+            });
         }
+        setPinAction(null);
     };
 
     // Helper to safely reset database by prompting PIN
@@ -180,29 +175,23 @@ export const SettingsPage: React.FC = () => {
 
     const menuGroups = [
         {
-            title: 'إدارة المتجر',
+            title: 'التشغيل والعمليات',
             items: [
-                { id: 'store', label: t('settings.storeInfo'), icon: Store },
-                { id: 'sales', label: t('nav.sales'), icon: CreditCard },
-                { id: 'inventory', label: t('nav.inventory'), icon: Database },
+                { id: 'store', label: 'المتجر', icon: Store },
             ]
         },
         {
-            title: 'النظام والخدمات',
+            title: 'التخصيص والأمان',
             items: [
-                { id: 'appearance', label: t('settings.appearance'), icon: Palette },
-                { id: 'security', label: t('settings.security'), icon: ShieldCheck },
-                { id: 'desktop', label: 'التحديثات', icon: Monitor },
-                { id: 'lan', label: t('settings.lan'), icon: Wifi },
-                { id: 'mobile-scanner', label: 'الماسح الضوئي', icon: Smartphone },
+                { id: 'system', label: 'النظام', icon: ShieldCheck },
+                { id: 'network', label: 'الشبكة', icon: Wifi },
             ]
         },
         {
-            title: 'الذكاء والحساب',
+            title: 'الخدمات والمعلومات',
             items: [
-                { id: 'cloud', label: 'الحساب', icon: Cloud },
-                { id: 'ai', label: t('settings.ai'), icon: Sparkles },
-                { id: 'about', label: t('settings.about'), icon: Terminal },
+                { id: 'cloud', label: 'السحابة', icon: Cloud },
+                { id: 'about', label: 'حول', icon: Monitor },
             ]
         }
     ];
@@ -216,13 +205,13 @@ export const SettingsPage: React.FC = () => {
             <StaffManager isOpen={showStaffManager} onClose={() => setShowStaffManager(false)} notify={notify} />
 
             <div className="flex gap-4 flex-1 min-h-0 select-none">
-                {/* Sidebar - Redesigned & Organized */}
-                <div className="w-56 xl:w-64 shrink-0 flex flex-col h-full bg-surface border border-border/80 rounded-2xl p-3.5">
+                {/* Sidebar - Concise Short Names */}
+                <div className="w-56 shrink-0 flex flex-col h-full bg-surface border border-border/80 rounded-2xl p-3 shadow-2xs">
 
                     {/* Sidebar Header */}
                     <div className="mb-3 pb-3 border-b border-border/60">
-                        <h1 className="text-lg font-black text-text-main flex items-center gap-2">
-                            <span className="text-emerald-400">⚙️</span> الإعدادات
+                        <h1 className="text-base font-black text-text-main flex items-center gap-2">
+                            <Settings size={18} className="text-primary shrink-0" /> الإعدادات
                         </h1>
                         <p className="text-[10px] text-text-muted mt-0.5 font-bold">تخصيص الخيارات والنظام</p>
                     </div>
@@ -231,21 +220,21 @@ export const SettingsPage: React.FC = () => {
                     <button
                         onClick={handleSave}
                         disabled={!hasChanges}
-                        className={`w-full mb-3.5 min-h-[48px] px-4 py-3 rounded-xl font-black flex items-center justify-center gap-2 transition-all duration-150 text-xs cursor-pointer active:scale-[0.98] ${hasChanges
-                            ? 'bg-emerald-500 text-black border border-emerald-400 hover:bg-emerald-400'
-                            : 'bg-surface-hover text-text-muted border border-border/60 cursor-not-allowed opacity-60'
+                        className={`w-full mb-3.5 min-h-[46px] px-4 py-2.5 rounded-xl font-black flex items-center justify-center gap-2 transition-all duration-150 text-xs cursor-pointer active:scale-[0.98] ${hasChanges
+                            ? 'bg-success text-white border border-success hover:brightness-110 shadow-md shadow-success/20'
+                            : 'bg-surface-hover/70 text-text-muted border border-border/60 cursor-not-allowed opacity-70'
                             }`}
                     >
-                        <Save size={18} className={hasChanges ? 'animate-pulse' : ''} />
+                        <Save size={16} className={hasChanges ? 'animate-pulse' : ''} />
                         {hasChanges ? 'حفظ التغييرات' : 'محفوظ ✓'}
                     </button>
 
                     {/* Navigation Items Grouped */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-3.5">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-3">
                         {menuGroups.map((group, idx) => (
                             <div key={idx} className="space-y-1">
-                                <h3 className="text-[10px] font-black text-text-muted uppercase tracking-widest px-2 mb-1 flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                <h3 className="text-[10px] font-black text-text-muted uppercase tracking-widest px-2 mb-1.5 flex items-center gap-1.5 opacity-80">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
                                     {group.title}
                                 </h3>
                                 <div className="space-y-1">
@@ -264,93 +253,243 @@ export const SettingsPage: React.FC = () => {
 
                     {/* Pro Badge - Bottom Footer */}
                     <div className="pt-3 mt-auto border-t border-border/60">
-                        <div className="bg-surface-hover/70 border border-amber-500/30 rounded-xl p-3 flex items-center gap-2.5">
-                            <div className="w-8 h-8 bg-amber-500/15 border border-amber-500/30 text-amber-400 rounded-lg flex items-center justify-center font-black">
-                                <Sparkles size={16} />
+                        <div className="bg-surface-hover/70 border border-warning/30 rounded-xl p-2.5 flex items-center gap-2.5">
+                            <div className="w-7 h-7 bg-warning/15 border border-warning/30 text-warning rounded-lg flex items-center justify-center font-black shrink-0">
+                                <Sparkles size={15} />
                             </div>
-                            <div>
-                                <h5 className="font-black text-amber-400 text-xs">النسخة الاحترافية</h5>
-                                <p className="text-[9px] text-text-muted font-bold">Pro Edition</p>
+                            <div className="min-w-0 flex-1">
+                                <h5 className="font-black text-warning text-xs truncate">النسخة الاحترافية</h5>
+                                <p className="text-[9px] text-text-muted font-mono font-bold">Pro Edition 2.0.8</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Content Pane */}
-                <div className="flex-1 bg-surface border border-border/80 rounded-2xl overflow-hidden relative">
-                    <div className="absolute inset-0 overflow-y-auto custom-scrollbar p-5">
+                {/* Content Pane - Focused Segmented Views */}
+                <div className="flex-1 bg-surface border border-border/80 rounded-2xl overflow-hidden relative shadow-2xs flex flex-col">
+                    <div className="absolute inset-0 overflow-y-auto custom-scrollbar p-5 space-y-5">
 
+                        {/* TAB 1: STORE */}
                         {activeTab === 'store' && (
-                            <StoreSettings
-                                prefs={localPrefs}
-                                handleChange={handleChange}
-                                errors={errors}
-                                logoInputRef={logoInputRef}
-                                handleLogoUpload={handleLogoUpload}
-                            />
+                            <div className="space-y-5">
+                                {/* Segmented Sub-Tab Switcher */}
+                                <div className="flex items-center gap-1.5 p-1.5 bg-bg/80 dark:bg-black/30 border border-border/70 rounded-2xl w-fit shadow-3xs">
+                                    <button
+                                        onClick={() => setStoreSubTab('info')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            storeSubTab === 'info'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        <Store size={14} className="shrink-0" />
+                                        <span>بيانات المتجر</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setStoreSubTab('sales')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            storeSubTab === 'sales'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        <CreditCard size={14} className="shrink-0" />
+                                        <span>المبيعات والطباعة</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setStoreSubTab('inventory')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            storeSubTab === 'inventory'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        <Package size={14} className="shrink-0" />
+                                        <span>سياسات المخزون</span>
+                                    </button>
+                                </div>
+
+                                {/* Focused Panel View */}
+                                {storeSubTab === 'info' && (
+                                    <StoreSettings
+                                        prefs={localPrefs}
+                                        handleChange={handleChange}
+                                        errors={errors}
+                                        logoInputRef={logoInputRef}
+                                        handleLogoUpload={handleLogoUpload}
+                                    />
+                                )}
+                                {storeSubTab === 'sales' && (
+                                    <SalesSettings
+                                        prefs={localPrefs}
+                                        handleChange={handleChange}
+                                        errors={errors}
+                                        setShowDiscountManager={setShowDiscountManager}
+                                    />
+                                )}
+                                {storeSubTab === 'inventory' && (
+                                    <InventorySettings
+                                        prefs={localPrefs}
+                                        handleChange={handleChange}
+                                        errors={errors}
+                                    />
+                                )}
+                            </div>
                         )}
 
-                        {activeTab === 'sales' && (
-                            <SalesSettings
-                                prefs={localPrefs}
-                                handleChange={handleChange}
-                                errors={errors}
-                                setShowDiscountManager={setShowDiscountManager}
-                            />
+                        {/* TAB 2: SYSTEM */}
+                        {activeTab === 'system' && (
+                            <div className="space-y-5">
+                                {/* Segmented Sub-Tab Switcher */}
+                                <div className="flex items-center gap-1.5 p-1.5 bg-bg/80 dark:bg-black/30 border border-border/70 rounded-2xl w-fit shadow-3xs">
+                                    <button
+                                        onClick={() => setSystemSubTab('appearance')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            systemSubTab === 'appearance'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        <Palette size={14} className="shrink-0" />
+                                        <span>المظهر والخطوط</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setSystemSubTab('security')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            systemSubTab === 'security'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        <ShieldCheck size={14} className="shrink-0" />
+                                        <span>الأمان والموظفين</span>
+                                    </button>
+                                </div>
+
+                                {systemSubTab === 'appearance' && (
+                                    <AppearanceSettings
+                                        prefs={localPrefs}
+                                        handleChange={handleChange}
+                                    />
+                                )}
+                                {systemSubTab === 'security' && (
+                                    <SecuritySettings
+                                        prefs={localPrefs}
+                                        handleChange={handleChange}
+                                        errors={errors}
+                                        openStaffManager={() => setShowStaffManager(true)}
+                                        onExportBackup={handleExport}
+                                        onRestoreBackup={handleRestoreTrigger}
+                                        onResetDatabase={onResetDatabase}
+                                    />
+                                )}
+                            </div>
                         )}
 
-                        {activeTab === 'inventory' && (
-                            <InventorySettings
-                                prefs={localPrefs}
-                                handleChange={handleChange}
-                                errors={errors}
-                            />
+                        {/* TAB 3: NETWORK */}
+                        {activeTab === 'network' && (
+                            <div className="space-y-5">
+                                {/* Segmented Sub-Tab Switcher */}
+                                <div className="flex items-center gap-1.5 p-1.5 bg-bg/80 dark:bg-black/30 border border-border/70 rounded-2xl w-fit shadow-3xs">
+                                    <button
+                                        onClick={() => setNetworkSubTab('lan')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            networkSubTab === 'lan'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        <Wifi size={14} className="shrink-0" />
+                                        <span>مزامنة LAN</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setNetworkSubTab('scanner')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            networkSubTab === 'scanner'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        <Smartphone size={14} className="shrink-0" />
+                                        <span>الماسح الضوئي (QR)</span>
+                                    </button>
+                                </div>
+
+                                {networkSubTab === 'lan' && <LanSyncPanel notify={notify} />}
+                                {networkSubTab === 'scanner' && <MobileScannerSettings notify={notify} />}
+                            </div>
                         )}
 
-                        {activeTab === 'appearance' && (
-                            <AppearanceSettings
-                                prefs={localPrefs}
-                                handleChange={handleChange}
-                            />
-                        )}
-
-                        {activeTab === 'ai' && (
-                            <AISettings
-                                prefs={localPrefs}
-                                handleChange={handleChange}
-                            />
-                        )}
-
-                        {activeTab === 'lan' && (
-                            <LanSyncPanel notify={notify} />
-                        )}
-
-                        {activeTab === 'mobile-scanner' && (
-                            <MobileScannerSettings notify={notify} />
-                        )}
-
+                        {/* TAB 4: CLOUD */}
                         {activeTab === 'cloud' && (
-                            <CloudBackupSettings />
+                            <div className="space-y-5">
+                                {/* Segmented Sub-Tab Switcher */}
+                                <div className="flex items-center gap-1.5 p-1.5 bg-bg/80 dark:bg-black/30 border border-border/70 rounded-2xl w-fit shadow-3xs">
+                                    <button
+                                        onClick={() => setCloudSubTab('backup')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            cloudSubTab === 'backup'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        <Cloud size={14} className="shrink-0" />
+                                        <span>النسخ السحابي والحساب</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setCloudSubTab('ai')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            cloudSubTab === 'ai'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        <Sparkles size={14} className="shrink-0" />
+                                        <span>الذكاء الاصطناعي (AI)</span>
+                                    </button>
+                                </div>
+
+                                {cloudSubTab === 'backup' && <CloudBackupSettings />}
+                                {cloudSubTab === 'ai' && (
+                                    <AISettings
+                                        prefs={localPrefs}
+                                        handleChange={handleChange}
+                                    />
+                                )}
+                            </div>
                         )}
 
-                        {activeTab === 'desktop' && (
-                            <DesktopSettingsPanel notify={notify} />
-                        )}
-
-                        {activeTab === 'security' && (
-                            <SecuritySettings
-                                prefs={localPrefs}
-                                handleChange={handleChange}
-                                errors={errors}
-                                openStaffManager={() => setShowStaffManager(true)}
-                                onExportBackup={handleExport}
-                                onRestoreBackup={handleRestoreTrigger}
-                                onResetDatabase={onResetDatabase}
-                            />
-                        )}
-
+                        {/* TAB 5: ABOUT */}
                         {activeTab === 'about' && (
-                            <AboutSettings />
+                            <div className="space-y-5">
+                                {/* Segmented Sub-Tab Switcher */}
+                                <div className="flex items-center gap-1.5 p-1.5 bg-bg/80 dark:bg-black/30 border border-border/70 rounded-2xl w-fit shadow-3xs">
+                                    <button
+                                        onClick={() => setAboutSubTab('updates')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            aboutSubTab === 'updates'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        <RefreshCw size={14} className="shrink-0" />
+                                        <span>تحديثات النظام</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setAboutSubTab('info')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                            aboutSubTab === 'info'
+                                                ? 'bg-surface text-primary border border-border/80 shadow-2xs'
+                                                : 'text-text-muted hover:text-text-main'
+                                        }`}
+                                    >
+                                        ℹ️ عن المنظومة والترخيص
+                                    </button>
+                                </div>
+
+                                {aboutSubTab === 'updates' && <DesktopSettingsPanel notify={notify} />}
+                                {aboutSubTab === 'info' && <AboutSettings />}
+                            </div>
                         )}
                     </div>
                 </div>

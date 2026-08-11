@@ -110,6 +110,19 @@ func (h *StaffHandler) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 	return result, nil
 }
 
+func (h *StaffHandler) RestoreSession(staffID string) (*domain.AuthResult, error) {
+	result, err := h.staffService.RestoreSession(staffID)
+	if err != nil {
+		return nil, err
+	}
+	if result.Success && result.Staff.ID != "" {
+		staff := result.Staff
+		auth.Set(&staff, result.Permissions)
+		h.cloudService.KeepAliveSupabase()
+	}
+	return result, nil
+}
+
 // Logout clears the backend session. Open: must be callable even if the session
 // already expired (idempotent).
 func (h *StaffHandler) Logout() {

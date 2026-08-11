@@ -144,10 +144,10 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                     </div>
                 </div>
                 {activeShift && (
-                    <span className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-black rounded-xl flex items-center gap-2 shadow-sm">
+                    <span className="px-3 py-1.5 bg-success/10 border border-success/20 text-success dark:text-success text-xs font-black rounded-xl flex items-center gap-2 shadow-sm">
                         <span className="relative flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success"></span>
                         </span>
                         شفت مفتوح
                     </span>
@@ -168,27 +168,27 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                         </div>
 
                         {/* Expected Balance */}
-                        <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-3 flex flex-col gap-1 hover:border-blue-500/30 transition-colors">
-                            <span className="text-[10px] uppercase font-bold text-blue-600/70 dark:text-blue-400/70 tracking-wider">المتوقع حالياً</span>
-                            <span className="text-lg font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">
+                        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-3 flex flex-col gap-1 hover:border-primary/30 transition-colors">
+                            <span className="text-[10px] uppercase font-bold text-primary/70 dark:text-primary/70 tracking-wider">المتوقع حالياً</span>
+                            <span className="text-lg font-black text-primary dark:text-primary font-mono tracking-tight">
                                 {formatCurrency(activeShift.expectedBalance, currency).replace(currency, '')}
-                                <span className="text-[10px] text-blue-600/70 mr-1">{currency}</span>
+                                <span className="text-[10px] text-primary/70 mr-1">{currency}</span>
                             </span>
                         </div>
 
                         {/* Cash Sales */}
-                        <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-3 flex flex-col gap-1 hover:border-emerald-500/30 transition-colors">
-                            <span className="text-[10px] uppercase font-bold text-emerald-600/70 dark:text-emerald-400/70 tracking-wider">مبيعات نقدية</span>
-                            <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">
+                        <div className="bg-success/5 border border-success/10 rounded-2xl p-3 flex flex-col gap-1 hover:border-success/30 transition-colors">
+                            <span className="text-[10px] uppercase font-bold text-success/70 dark:text-success/70 tracking-wider">مبيعات نقدية</span>
+                            <span className="text-lg font-black text-success dark:text-success font-mono tracking-tight">
                                 {formatCurrency(activeShift.cashSales, currency).replace(currency, '')}
-                                <span className="text-[10px] text-emerald-600/70 mr-1">{currency}</span>
+                                <span className="text-[10px] text-success/70 mr-1">{currency}</span>
                             </span>
                         </div>
 
                         {/* Sales Count */}
-                        <div className="bg-purple-500/5 border border-purple-500/10 rounded-2xl p-3 flex flex-col gap-1 hover:border-purple-500/30 transition-colors">
-                            <span className="text-[10px] uppercase font-bold text-purple-600/70 dark:text-purple-400/70 tracking-wider">عدد الفواتير</span>
-                            <span className="text-lg font-black text-purple-600 dark:text-purple-400 font-mono tracking-tight">
+                        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-3 flex flex-col gap-1 hover:border-primary/30 transition-colors">
+                            <span className="text-[10px] uppercase font-bold text-primary/70 dark:text-primary/70 tracking-wider">عدد الفواتير</span>
+                            <span className="text-lg font-black text-primary dark:text-primary font-mono tracking-tight">
                                 {activeShift.salesCount}
                             </span>
                         </div>
@@ -198,14 +198,14 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                         <div className="flex gap-3">
                             <button
                                 onClick={() => { setMovementType('cash_in'); setShowMovementModal(true); }}
-                                className="flex-1 py-3 px-4 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-sm border border-emerald-500/20 hover:bg-emerald-500 hover:text-white hover:shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 group/btn"
+                                className="flex-1 py-3 px-4 rounded-xl bg-success/10 text-success dark:text-success font-bold text-sm border border-success/20 hover:bg-success hover:text-white hover:shadow-lg hover:shadow-success/20 transition-all flex items-center justify-center gap-2 group/btn"
                             >
                                 <Plus size={18} className="group-hover/btn:rotate-90 transition-transform" />
                                 إيداع
                             </button>
                             <button
                                 onClick={() => { setMovementType('cash_out'); setShowMovementModal(true); }}
-                                className="flex-1 py-3 px-4 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 font-bold text-sm border border-orange-500/20 hover:bg-orange-500 hover:text-white hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center justify-center gap-2 group/btn"
+                                className="flex-1 py-3 px-4 rounded-xl bg-warning/10 text-warning dark:text-warning font-bold text-sm border border-warning/20 hover:bg-warning hover:text-white hover:shadow-lg hover:shadow-warning/20 transition-all flex items-center justify-center gap-2 group/btn"
                             >
                                 <Minus size={18} />
                                 سحب
@@ -214,7 +214,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
 
                         <button
                             onClick={() => { setClosingBalance(activeShift.expectedBalance); setShowCloseModal(true); }}
-                            className="w-full py-3.5 px-4 rounded-xl bg-red-500 text-white font-black text-sm shadow-lg shadow-red-500/20 hover:bg-red-600 hover:shadow-red-500/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                            className="w-full py-3.5 px-4 rounded-xl bg-danger text-white font-black text-sm shadow-lg shadow-danger/20 hover:bg-danger hover:shadow-danger/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
                         >
                             <LogOut size={18} />
                             إغلاق الشفت الحالي
@@ -224,12 +224,12 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 p-6 rounded-2xl border border-dashed border-border/80 bg-surface  group-hover:border-primary/25 transition-all">
                     {/* Glowing active indicator dot */}
-                    <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-[10px] font-black px-2 py-0.5 rounded-lg">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-danger/10 border border-danger/20 text-danger dark:text-danger text-[10px] font-black px-2 py-0.5 rounded-lg">
+                        <span className="w-1.5 h-1.5 rounded-full bg-danger" />
                         مغلق
                     </div>
 
-                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center mb-5 group-hover:scale-110 group-hover:border-primary/30 transition-all duration-500 shadow-inner">
+                    <div className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5 group-hover:scale-110 group-hover:border-primary/30 transition-all duration-500 shadow-inner">
                         <LogIn size={36} className="text-primary opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
                     
@@ -240,7 +240,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
 
                     <button
                         onClick={() => setShowOpenModal(true)}
-                        className="px-8 py-3.5 bg-gradient-to-r from-primary to-emerald-500 text-white rounded-xl font-black shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all flex items-center gap-2.5 group/btn"
+                        className="px-8 py-3.5 bg-primary text-white rounded-xl font-black shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all flex items-center gap-2.5 group/btn"
                     >
                         <Plus size={20} className="group-hover/btn:scale-110 transition-transform" />
                         فتح شفت جديد
@@ -262,7 +262,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                     <div className="bg-white dark:bg-surface border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-5 duration-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-black text-xl text-text-main">فتح شفت جديد</h3>
-                            <button onClick={() => setShowOpenModal(false)} className="w-8 h-8 rounded-full bg-surface hover:bg-red-500/10 hover:text-red-500 flex items-center justify-center transition-colors">
+                            <button onClick={() => setShowOpenModal(false)} className="w-8 h-8 rounded-full bg-surface hover:bg-danger/10 hover:text-danger flex items-center justify-center transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
@@ -299,14 +299,14 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                     <div className="bg-white dark:bg-surface border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-5 duration-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-black text-xl text-text-main">إغلاق الشفت</h3>
-                            <button onClick={() => setShowCloseModal(false)} className="w-8 h-8 rounded-full bg-surface hover:bg-red-500/10 hover:text-red-500 flex items-center justify-center transition-colors">
+                            <button onClick={() => setShowCloseModal(false)} className="w-8 h-8 rounded-full bg-surface hover:bg-danger/10 hover:text-danger flex items-center justify-center transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-4 mb-6 text-center">
+                        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 mb-6 text-center">
                             <span className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">الرصيد المتوقع في الصندوق</span>
-                            <span className="text-2xl font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">{formatCurrency(activeShift.expectedBalance, currency)}</span>
+                            <span className="text-2xl font-black text-primary dark:text-primary font-mono tracking-tight">{formatCurrency(activeShift.expectedBalance, currency)}</span>
                         </div>
 
                         <div className="mb-4">
@@ -322,7 +322,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                         </div>
 
                         {closingBalance !== activeShift.expectedBalance && closingBalance > 0 && (
-                            <div className={`flex items-center gap-3 p-3 rounded-xl mb-4 text-sm font-bold ${closingBalance > activeShift.expectedBalance ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-500'}`}>
+                            <div className={`flex items-center gap-3 p-3 rounded-xl mb-4 text-sm font-bold ${closingBalance > activeShift.expectedBalance ? 'bg-success/10 text-success dark:text-success' : 'bg-danger/10 text-danger'}`}>
                                 <AlertTriangle size={18} />
                                 <span>
                                     {closingBalance > activeShift.expectedBalance ? 'يوجد فائض: ' : 'يوجد عجز: '}
@@ -343,7 +343,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
 
                         <button
                             onClick={handleCloseShift}
-                            className="w-full py-4 bg-red-500 text-white rounded-xl font-black shadow-lg shadow-red-500/20 hover:shadow-red-500/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-danger text-white rounded-xl font-black shadow-lg shadow-danger/20 hover:shadow-danger/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
                         >
                             <LogOut size={20} />
                             تأكيد الإغلاق النهائي
@@ -358,10 +358,10 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                     <div className="bg-white dark:bg-surface border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-5 duration-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-black text-xl text-text-main flex items-center gap-2">
-                                {movementType === 'cash_in' ? <Plus className="text-emerald-500" /> : <Minus className="text-orange-500" />}
+                                {movementType === 'cash_in' ? <Plus className="text-success" /> : <Minus className="text-warning" />}
                                 {movementType === 'cash_in' ? 'إيداع نقد' : 'سحب نقد'}
                             </h3>
-                            <button onClick={() => setShowMovementModal(false)} className="w-8 h-8 rounded-full bg-surface hover:bg-red-500/10 hover:text-red-500 flex items-center justify-center transition-colors">
+                            <button onClick={() => setShowMovementModal(false)} className="w-8 h-8 rounded-full bg-surface hover:bg-danger/10 hover:text-danger flex items-center justify-center transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
@@ -398,8 +398,8 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                             onClick={handleAddMovement}
                             disabled={movementAmount <= 0}
                             className={`w-full py-4 text-white rounded-xl font-black shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:translate-y-0 ${movementType === 'cash_in'
-                                ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20 hover:shadow-emerald-500/40'
-                                : 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20 hover:shadow-orange-500/40'
+                                ? 'bg-success hover:bg-success shadow-success/20 hover:shadow-success/40'
+                                : 'bg-warning hover:bg-warning shadow-warning/20 hover:shadow-warning/40'
                                 }`}
                         >
                             {movementType === 'cash_in' ? <Plus size={20} /> : <Minus size={20} />}

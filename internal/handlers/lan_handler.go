@@ -43,10 +43,11 @@ func (h *LanHandler) GetLanServerStatus() domain.LanServerStatus {
 	return h.lanService.GetServerStatus()
 }
 
+// ConnectToLanServer is intentionally open: a fresh client device has no local
+// staff data, so the user cannot log in before establishing the LAN link.
+// The connection only registers the device; all sensitive operations remain
+// protected by their own auth checks.
 func (h *LanHandler) ConnectToLanServer(serverIP string, port int, secret string) error {
-	if err := auth.RequirePermission(auth.PermSettings); err != nil {
-		return err
-	}
 	return h.lanService.ConnectToServer(serverIP, port, secret)
 }
 
@@ -62,10 +63,9 @@ func (h *LanHandler) GetLocalIP() (string, error) {
 	return network.GetLocalIP()
 }
 
+// DiscoverServers is intentionally open: it is called from the connection
+// screen before any session exists, to list available servers on the LAN.
 func (h *LanHandler) DiscoverServers() ([]domain.DiscoveredServer, error) {
-	if err := auth.Require(); err != nil {
-		return nil, err
-	}
 	return h.lanService.DiscoverServers()
 }
 

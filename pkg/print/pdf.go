@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/johnfercher/maroto/pkg/consts"
 	"github.com/johnfercher/maroto/pkg/pdf"
@@ -25,30 +24,6 @@ type PrintSettings struct {
 	PaperWidth  float64
 	PaperHeight float64
 	Copies      int
-}
-
-// GenerateInvoicePDF creates a PDF for the given sale and returns the file path (temp)
-func GenerateInvoicePDF(sale domain.Sale, prefs domain.AppPreferences, format string) (string, error) {
-	// Create temp directory if not exists
-	tempDir := filepath.Join(os.TempDir(), "beidar-invoices")
-	if err := os.MkdirAll(tempDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create temp dir: %w", err)
-	}
-
-	// Clean up invoices older than a week to avoid unbounded temp-dir growth.
-	cutoff := time.Now().AddDate(0, 0, -7)
-	if entries, err := os.ReadDir(tempDir); err == nil {
-		for _, entry := range entries {
-			if info, err := entry.Info(); err == nil && info.ModTime().Before(cutoff) {
-				_ = os.Remove(filepath.Join(tempDir, entry.Name()))
-			}
-		}
-	}
-
-	filename := fmt.Sprintf("invoice_%s_%d.pdf", sale.ID, time.Now().Unix())
-	filePath := filepath.Join(tempDir, filename)
-
-	return generatePDF(sale, prefs, format, filePath)
 }
 
 // GenerateInvoicePDFToPath creates a PDF at the specified path

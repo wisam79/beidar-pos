@@ -18,21 +18,21 @@ export const SplitPaymentModal = ({ total, onClose, onConfirm, currency = 'IQD' 
 
                 <div>
                     <label className="flex justify-between text-xs font-bold text-text-muted mb-2"><span>نقدي (Cash)</span><span className="text-text-main font-mono">{formatCurrency(cash, currency)}</span></label>
-                    <input type="range" min="0" max={total} step="250" value={cash} onChange={e => setCash(Number(e.target.value))} className="w-full h-2 bg-input-bg rounded-lg appearance-none cursor-pointer accent-green-500" />
+                    <input type="range" min="0" max={total} step="250" value={cash} onChange={e => setCash(Number(e.target.value))} className="w-full h-2 bg-input-bg rounded-lg appearance-none cursor-pointer accent-success" />
                 </div>
 
                 <div>
                     <label className="flex justify-between text-xs font-bold text-text-muted mb-2"><span>بطاقة (Card)</span><span className="text-text-main font-mono">{formatCurrency(card, currency)}</span></label>
-                    <input type="range" min="0" max={total} step="250" value={card} onChange={e => setCash(total - Number(e.target.value))} className="w-full h-2 bg-input-bg rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                    <input type="range" min="0" max={total} step="250" value={card} onChange={e => setCash(total - Number(e.target.value))} className="w-full h-2 bg-input-bg rounded-lg appearance-none cursor-pointer accent-primary" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-xl text-center">
-                        <Banknote className="mx-auto mb-1 text-green-500" size={20} />
+                    <div className="bg-success/10 border border-success/20 p-3 rounded-xl text-center">
+                        <Banknote className="mx-auto mb-1 text-success" size={20} />
                         <p className="font-bold text-text-main text-lg">{formatCurrency(cash, currency).replace(currency, '')}</p>
                     </div>
-                    <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl text-center">
-                        <CreditCard className="mx-auto mb-1 text-blue-500" size={20} />
+                    <div className="bg-primary/10 border border-primary/20 p-3 rounded-xl text-center">
+                        <CreditCard className="mx-auto mb-1 text-primary" size={20} />
                         <p className="font-bold text-text-main text-lg">{formatCurrency(card, currency).replace(currency, '')}</p>
                     </div>
                 </div>

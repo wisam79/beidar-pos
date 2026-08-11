@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { api } from '../core/api';
 import { StockMovement } from '../core/types';
 
@@ -32,7 +32,7 @@ export const useInventoryProducts = (
                 stats: response?.stats || { totalStock: 0, totalValue: 0, totalCost: 0, profit: 0 }
             };
         },
-        placeholderData: (previousData) => previousData
+        placeholderData: keepPreviousData
     });
 };
 

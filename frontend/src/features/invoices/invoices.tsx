@@ -10,16 +10,15 @@ import { PinModal } from '../../components/PinModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { BarcodeScannerOverlay, ScanResult } from '../../components/BarcodeScannerOverlay';
 import { api } from '../../core/api';
+import { invalidateAllData } from '../../core/queryClient';
 import { useInvalidateSales, useInvalidateProducts, useInvalidateCustomers, useInvoices } from '../../hooks';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
 
 export const InvoicesPage: React.FC = () => {
     const { notify, prefs } = usePreferences();
-    // i18n
     const { t } = useTranslation();
 
-    // React Query cache invalidation for cross-page sync
     const invalidateSales = useInvalidateSales();
     const invalidateProducts = useInvalidateProducts();
     const invalidateCustomers = useInvalidateCustomers();
@@ -41,14 +40,12 @@ export const InvoicesPage: React.FC = () => {
     const [page, setPage] = useState(0);
     const pageSize = 50;
 
-    // --- Server Data State ---
+    // Server Data State
     const { data, isLoading: loading, refetch: loadData } = useInvoices(page, pageSize, search, statusFilter, dateFilter);
     const salesData = data?.data || [];
     const totalRecords = data?.total || 0;
     const stats = data?.stats || { count: 0, total: 0, pending: 0, returns: 0 };
 
-
-    // --- Actions ---
     const handleInitDelete = (sale: Sale) => {
         if (prefs.adminPin) {
             setDeleteConfirmation(sale);
@@ -66,7 +63,8 @@ export const InvoicesPage: React.FC = () => {
             setDeleteConfirmation(null);
             setSelectedInvoice(null);
             setShowPinModal(false);
-            invalidateSales(); // Sync cache
+            invalidateSales();
+            invalidateAllData();
             loadData();
         } catch (_e) {
             notify('خطأ في الحذف', 'error');
@@ -85,9 +83,10 @@ export const InvoicesPage: React.FC = () => {
             setSelectedInvoice(null);
             setIsPrinting(false);
             setReturnConfirmation(null);
-            invalidateSales(); // Sync sales cache
-            invalidateProducts(); // Sync products (stock restored)
-            invalidateCustomers(); // Sync customer debt
+            invalidateSales();
+            invalidateProducts();
+            invalidateCustomers();
+            invalidateAllData();
             loadData();
         } catch (_e) {
             notify('خطأ في عملية الإرجاع', 'error');
@@ -95,9 +94,7 @@ export const InvoicesPage: React.FC = () => {
         }
     };
 
-    // QR Code Scanner Handler
     const handleScan = async (code: string): Promise<ScanResult> => {
-        // Check if this is an invoice QR code (format: INV:XXXXXX|T:XXXXX|D:XXXX)
         if (code.startsWith('INV:')) {
             const invoiceId = code.split('|')[0].replace('INV:', '');
             try {
@@ -118,15 +115,13 @@ export const InvoicesPage: React.FC = () => {
                 return { success: false, message: 'خطأ في التحميل' };
             }
         }
-        // Not an invoice QR
         playBeep('error');
         return { success: false, message: 'هذا ليس QR فاتورة' };
     };
 
-    // Listen for keyboard barcode scans
     useScanDetection({ onScan: handleScan });
 
-    if (loading) return <LoadingState icon={FileText} title="جاري تحميل الفواتير..." subtitle="معالجة السجلات" />;
+    if (loading && !data) return <LoadingState icon={FileText} title="جاري تحميل الفواتير..." subtitle="معالجة السجلات" />;
 
     return (
         <PageShell className="relative">
@@ -146,7 +141,7 @@ export const InvoicesPage: React.FC = () => {
                         onClick={() => setShowStats(!showStats)}
                         className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
                             ? 'bg-surface border border-border text-text-muted hover:text-text-main'
-                            : 'bg-gradient-to-br from-primary to-emerald-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
+                            : 'bg-primary text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
                             }`}
                         title={showStats ? 'إخفاء الإحصائيات' : 'عرض التحليل'}
                     >
@@ -154,7 +149,7 @@ export const InvoicesPage: React.FC = () => {
                     </button>
                 }
             >
-                <div className="flex flex-col md:flex-row gap-3 items-center w-full">
+                <div className="flex flex-col md:flex-row gap-2 items-center w-full">
                     <SearchInput
                         value={search}
                         onChange={v => { setSearch(v); setPage(0); }}
@@ -202,7 +197,7 @@ export const InvoicesPage: React.FC = () => {
                 <StatCard icon={CheckCircle2} label="صافي العمليات" value={stats.count - stats.returns} color="emerald" subtitle="• مكتملة" />
             </StatsGrid>
 
-            {/* Invoices Table - Standard Unified Style */}
+            {/* Invoices Table */}
             <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden flex-1 flex flex-col min-h-0">
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {salesData.length === 0 ? (
@@ -217,10 +212,10 @@ export const InvoicesPage: React.FC = () => {
                                 <tr>
                                     <th className="px-4 py-3 text-right">رقم الفاتورة</th>
                                     <th className="px-4 py-3 text-right">العميل</th>
-                                    <th className="px-4 py-3 text-center w-[150px]">التاريخ</th>
-                                    <th className="px-4 py-3 text-right w-[150px]">الإجمالي</th>
-                                    <th className="px-4 py-3 text-center w-[120px]">الحالة</th>
-                                    <th className="px-4 py-3 text-center w-[120px]">إجراءات</th>
+                                    <th className="px-4 py-3 text-center min-w-[130px]">التاريخ</th>
+                                    <th className="px-4 py-3 text-right min-w-[130px]">الإجمالي</th>
+                                    <th className="px-4 py-3 text-center min-w-[110px]">الحالة</th>
+                                    <th className="px-4 py-3 text-center min-w-[110px]">إجراءات</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -228,7 +223,7 @@ export const InvoicesPage: React.FC = () => {
                                     const isReturned = s.status === 'returned';
                                     const isPending = s.status === 'pending';
                                     const isCompleted = s.status === 'completed';
-                                    const healthColor = isCompleted ? 'bg-emerald-500' : isReturned ? 'bg-red-500' : 'bg-orange-500';
+                                    const healthColor = isCompleted ? 'bg-success' : isReturned ? 'bg-danger' : 'bg-warning';
 
                                     return (
                                         <tr
@@ -238,8 +233,7 @@ export const InvoicesPage: React.FC = () => {
                                                 isReturned ? 'opacity-60 grayscale-[0.5]' : ''
                                             }`}
                                         >
-                                            <td className="px-4 py-3 relative">
-                                                {/* Status indicator bar on the right in RTL */}
+                                            <td className="px-4 py-2.5 relative">
                                                 <div className={`absolute right-0 top-2 bottom-2 w-1 rounded-l-full ${healthColor} shadow-[0_0_8px_currentColor] text-${isCompleted ? 'emerald' : isReturned ? 'red' : 'orange'}-500`} />
                                                 
                                                 <div className="flex items-center gap-3 pr-2">
@@ -252,26 +246,26 @@ export const InvoicesPage: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="px-4 py-2.5">
                                                 <p className="font-bold text-text-main text-sm truncate">{s.customer}</p>
                                                 <p className="text-[10px] text-text-muted flex items-center gap-1 mt-0.5">
                                                     {s.paymentMethod === 'cash' ? <DollarSign size={10} className="inline mr-1" /> : <CreditCard size={10} className="inline mr-1" />}
                                                     {t(`sales.${s.paymentMethod}`)}
                                                 </p>
                                             </td>
-                                            <td className="px-4 py-3 text-center">
+                                            <td className="px-4 py-2.5 text-center">
                                                 <div className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-text-muted bg-bg px-2 py-1 rounded-lg border border-border">
                                                     <Calendar size={10} className="inline mr-1" />
                                                     <span>{new Date(s.date).toLocaleDateString('en-GB')}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-right font-mono font-bold text-text-main text-base">
+                                            <td className="px-4 py-2.5 text-right font-mono font-bold text-text-main text-base">
                                                 {formatCurrency(s.total, prefs.currency).replace(prefs.currency, '')}
                                             </td>
-                                            <td className="px-4 py-3 text-center">
+                                            <td className="px-4 py-2.5 text-center">
                                                 <Badge type={isCompleted ? 'success' : isReturned ? 'error' : 'warning'} text={isCompleted ? 'مكتمل' : isReturned ? 'مرتجع' : 'معلق'} />
                                             </td>
-                                            <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                            <td className="px-4 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex justify-center gap-1.5">
                                                     <button onClick={() => { setSelectedInvoice(s); setIsPrinting(false); setPrintMode('a4'); }} className="p-1.5 hover:bg-primary/10 text-text-muted hover:text-primary rounded-xl border border-border/40 transition-colors" title="طباعة الفاتورة"><Printer size={13} /></button>
                                                     <button onClick={() => { setSelectedInvoice(s); setIsPrinting(false); setPrintMode('a4'); }} className="p-1.5 hover:bg-surface-hover text-text-muted hover:text-text-main rounded-xl border border-border/40 transition-colors" title="عرض التفاصيل"><ArrowUpRight size={13} /></button>
@@ -294,11 +288,10 @@ export const InvoicesPage: React.FC = () => {
                 onPageChange={setPage}
             />
 
-            {/* Print Preview Modal - Only for preview, PrintPortal is triggered separately */}
+            {/* Print Preview Modal */}
             {selectedInvoice && (
                 <Modal title="معاينة الطباعة" onClose={() => setSelectedInvoice(null)} size="lg">
                     <div className="flex flex-col h-[75vh]">
-                        {/* Print Mode Selection - Compact */}
                         <div className="flex flex-col sm:flex-row justify-center gap-3 mb-2 pb-2 border-b border-border">
                             <button
                                 onClick={() => setPrintMode('thermal')}
@@ -327,24 +320,20 @@ export const InvoicesPage: React.FC = () => {
                             </button>
                         </div>
 
-                        {/* Preview Area */}
                         <div className="flex-1 bg-gray-200 rounded-3xl overflow-hidden relative shadow-inner flex flex-col">
-                            {/* Scrollable Receipt Container */}
                             <div className="flex-1 overflow-auto custom-scrollbar p-2 flex justify-center items-start">
                                 <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top center', transition: 'transform 0.2s' } as React.CSSProperties}>
                                     <ReceiptTemplate sale={selectedInvoice} prefs={prefs} mode={printMode} />
                                 </div>
                             </div>
 
-                            {/* Floating Zoom Controls */}
-                            <div className="absolute bottom-4 right-4 flex gap-2 bg-surface  rounded-xl p-2 border border-border shadow-lg z-10">
+                            <div className="absolute bottom-4 right-4 flex gap-2 bg-surface rounded-xl p-2 border border-border shadow-lg z-10">
                                 <button onClick={() => setPreviewScale(s => Math.min(1.5, s + 0.1))} className="p-2 hover:bg-surface-hover text-text-main rounded-lg transition-colors" title="تكبير"><ZoomIn size={20} /></button>
                                 <div className="w-px bg-border"></div>
                                 <button onClick={() => setPreviewScale(s => Math.max(0.3, s - 0.1))} className="p-2 hover:bg-surface-hover text-text-main rounded-lg transition-colors" title="تصغير"><ZoomOut size={20} /></button>
                             </div>
                         </div>
 
-                        {/* Sticky Action Footer */}
                         <div className="shrink-0 mt-6 pt-4 border-t border-border flex gap-3 bg-surface z-20">
                             <button
                                 onClick={() => setIsPrinting(true)}
@@ -355,11 +344,11 @@ export const InvoicesPage: React.FC = () => {
                             </button>
 
                             {selectedInvoice.status !== 'returned' && (
-                                <button onClick={() => handleReturnInit(selectedInvoice)} className="px-6 bg-orange-500/10 text-orange-500 border-2 border-orange-500/20 rounded-xl font-bold hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all flex items-center gap-2" title="استرجاع الفاتورة">
+                                <button onClick={() => handleReturnInit(selectedInvoice)} className="px-6 bg-warning/10 text-warning border-2 border-warning/20 rounded-xl font-bold hover:bg-warning hover:text-white hover:border-warning transition-all flex items-center gap-2" title="استرجاع الفاتورة">
                                     <RefreshCcw size={20} />
                                 </button>
                             )}
-                            <button onClick={() => handleInitDelete(selectedInvoice)} className="px-6 bg-red-500/10 text-red-500 border-2 border-red-500/20 rounded-xl font-bold hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center gap-2" title="حذف الفاتورة">
+                            <button onClick={() => handleInitDelete(selectedInvoice)} className="px-6 bg-danger/10 text-danger border-2 border-danger/20 rounded-xl font-bold hover:bg-danger hover:text-white hover:border-danger transition-all flex items-center gap-2" title="حذف الفاتورة">
                                 <Trash2 size={20} />
                             </button>
                         </div>
@@ -367,14 +356,12 @@ export const InvoicesPage: React.FC = () => {
                 </Modal>
             )}
 
-            {/* PRINT PORTAL - Opens popup window when isPrinting is true */}
             {isPrinting && selectedInvoice && (
                 <PrintPortal onAfterPrint={() => setIsPrinting(false)}>
                     <ReceiptTemplate sale={selectedInvoice} prefs={prefs} mode={printMode} />
                 </PrintPortal>
             )}
 
-            {/* Return Confirmation Modal */}
             <ConfirmModal
                 isOpen={!!returnConfirmation}
                 title="تأكيد الإرجاع"
@@ -386,7 +373,6 @@ export const InvoicesPage: React.FC = () => {
                 onCancel={() => setReturnConfirmation(null)}
             />
 
-            {/* QR Scanner Overlay */}
             {isScannerOpen && (
                 <BarcodeScannerOverlay
                     onClose={() => setIsScannerOpen(false)}
@@ -397,4 +383,3 @@ export const InvoicesPage: React.FC = () => {
         </PageShell>
     );
 };
-

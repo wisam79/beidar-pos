@@ -195,9 +195,9 @@ export const ReceiptTemplate: React.FC<ReceiptTemplateProps> = ({ sale, prefs, m
                                                         <td className="py-1.5 px-2 text-center font-mono">{formatCurrency(inst.amount, prefs.currency)}</td>
                                                         <td className="py-1.5 px-2 text-center">
                                                             {inst.status === 'paid' ? (
-                                                                <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-bold">✓ مسدد</span>
+                                                                <span className="bg-success text-success px-2 py-0.5 rounded-full text-[10px] font-bold">✓ مسدد</span>
                                                             ) : (
-                                                                <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-[10px] font-bold">مستحق</span>
+                                                                <span className="bg-warning text-warning px-2 py-0.5 rounded-full text-[10px] font-bold">مستحق</span>
                                                             )}
                                                         </td>
                                                     </tr>
@@ -219,7 +219,7 @@ export const ReceiptTemplate: React.FC<ReceiptTemplateProps> = ({ sale, prefs, m
                                             <span className="font-mono font-bold">{formatCurrency(sale.subtotal, prefs.currency).replace(prefs.currency, '')}</span>
                                         </div>
                                         {sale.discount > 0 && (
-                                            <div className="flex justify-between text-sm text-red-500 py-2 border-b border-gray-200">
+                                            <div className="flex justify-between text-sm text-danger py-2 border-b border-gray-200">
                                                 <span className="font-bold">الخصم</span>
                                                 <span className="font-mono">- {formatCurrency(sale.discount, prefs.currency).replace(prefs.currency, '')}</span>
                                             </div>
@@ -370,7 +370,7 @@ export const ReceiptTemplate: React.FC<ReceiptTemplateProps> = ({ sale, prefs, m
                     </div>
                     <div className="space-y-1">
                         {sale.installmentPlan.schedule.map((inst, i) => (
-                            <div key={i} className={`flex justify-between text-[9px] font-mono px-2 py-1 rounded ${inst.status === 'paid' ? 'bg-green-100' : 'bg-white'}`}>
+                            <div key={i} className={`flex justify-between text-[9px] font-mono px-2 py-1 rounded ${inst.status === 'paid' ? 'bg-success' : 'bg-white'}`}>
                                 <span>القسط {inst.number} ({inst.dueDate}) {inst.status === 'paid' && '✓'}</span>
                                 <span className="font-bold">
                                     {formatCurrency(inst.amount, prefs.currency)}

@@ -51,3 +51,7 @@ supabase/.temp/
 .env.local
 .kilo/
 
+# Ad-hoc tool output
+frontend/lint_out.txt
+full_user_input.txt
+

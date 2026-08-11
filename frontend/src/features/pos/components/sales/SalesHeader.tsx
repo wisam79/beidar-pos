@@ -99,9 +99,9 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
                         </Button>
                     )}
                     <Button variant="soft" onClick={openParkedModal} className="relative text-xs">
-                        <History size={16} /> تعليق
+                        <History size={16} /> المعلقة
                         {parkedCount > 0 && (
-                            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-warning px-1 text-[10px] font-black text-white">
+                            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-black text-primary-fg">
                                 {parkedCount > 9 ? '9+' : parkedCount}
                             </span>
                         )}
@@ -123,7 +123,7 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
                 <button
                     type="button"
                     onClick={() => setSelectedCategory(t('common.all'))}
-                    className={`h-10 whitespace-nowrap rounded-xl px-5 text-xs font-black transition active:scale-[0.98] border ${selectedCategory === t('common.all') ? 'bg-emerald-500 text-black border-emerald-400' : 'bg-surface text-text-muted border-border/80 hover:bg-surface-hover hover:text-text-main'}`}
+                    className={`h-9 whitespace-nowrap rounded-lg px-4 text-xs font-bold transition border ${selectedCategory === t('common.all') ? 'bg-primary text-primary-fg border-primary' : 'bg-surface text-text-muted border-border/80 hover:bg-surface-hover hover:text-text-main'}`}
                 >
                     {t('common.all')}
                 </button>
@@ -132,7 +132,7 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
                         key={category.id || category.name}
                         type="button"
                         onClick={() => setSelectedCategory(category.name)}
-                        className={`h-10 whitespace-nowrap rounded-xl px-5 text-xs font-black transition active:scale-[0.98] border ${selectedCategory === category.name ? 'bg-emerald-500 text-black border-emerald-400' : 'bg-surface text-text-muted border-border/80 hover:bg-surface-hover hover:text-text-main'}`}
+                        className={`h-9 whitespace-nowrap rounded-lg px-4 text-xs font-bold transition active:scale-[0.98] border ${selectedCategory === category.name ? 'bg-primary text-primary-fg border-primary' : 'bg-surface text-text-muted border-border/80 hover:bg-surface-hover hover:text-text-main'}`}
                     >
                         {category.name}
                     </button>

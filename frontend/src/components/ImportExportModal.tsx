@@ -213,7 +213,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                         <div className="space-y-4">
                             <div className="bg-bg rounded-xl p-4 border border-border">
                                 <div className="flex items-center gap-3 mb-3">
-                                    <Info size={18} className="text-blue-500" />
+                                    <Info size={18} className="text-primary" />
                                     <p className="text-sm text-text-main font-medium">معلومات التصدير</p>
                                 </div>
                                 <ul className="text-xs text-text-muted space-y-1 mr-7">
@@ -226,7 +226,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                             <button
                                 onClick={handleExport}
                                 disabled={exporting}
-                                className="w-full py-4 bg-gradient-to-r from-primary to-emerald-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+                                className="w-full py-4 bg-primary text-primary-fg font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
                             >
                                 {exporting ? (
                                     <>
@@ -246,16 +246,16 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                             {/* Import Result */}
                             {importResult && (
                                 <div className={`rounded-xl p-4 border ${importResult.success && importResult.errors.length === 0
-                                    ? 'bg-emerald-500/10 border-emerald-500/20'
+                                    ? 'bg-success/10 border-success/20'
                                     : importResult.errors.length > 0
-                                        ? 'bg-amber-500/10 border-amber-500/20'
-                                        : 'bg-red-500/10 border-red-500/20'
+                                        ? 'bg-warning/10 border-warning/20'
+                                        : 'bg-danger/10 border-danger/20'
                                     }`}>
                                     <div className="flex items-center gap-2 mb-3">
                                         {importResult.success && importResult.errors.length === 0 ? (
-                                            <CheckCircle size={18} className="text-emerald-500" />
+                                            <CheckCircle size={18} className="text-success" />
                                         ) : (
-                                            <AlertCircle size={18} className="text-amber-500" />
+                                            <AlertCircle size={18} className="text-warning" />
                                         )}
                                         <span className="font-bold text-text-main">نتيجة الاستيراد</span>
                                     </div>
@@ -265,20 +265,20 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                                             <p className="text-[10px] text-text-muted">الإجمالي</p>
                                         </div>
                                         <div className="bg-bg/50 rounded-lg p-2">
-                                            <p className="text-lg font-bold text-emerald-500">{importResult.imported}</p>
+                                            <p className="text-lg font-bold text-success">{importResult.imported}</p>
                                             <p className="text-[10px] text-text-muted">جديد</p>
                                         </div>
                                         <div className="bg-bg/50 rounded-lg p-2">
-                                            <p className="text-lg font-bold text-blue-500">{importResult.updated}</p>
+                                            <p className="text-lg font-bold text-primary">{importResult.updated}</p>
                                             <p className="text-[10px] text-text-muted">محدث</p>
                                         </div>
                                         <div className="bg-bg/50 rounded-lg p-2">
-                                            <p className="text-lg font-bold text-red-500">{importResult.skipped}</p>
+                                            <p className="text-lg font-bold text-danger">{importResult.skipped}</p>
                                             <p className="text-[10px] text-text-muted">مرفوض</p>
                                         </div>
                                     </div>
                                     {importResult.errors.length > 0 && (
-                                        <div className="mt-3 max-h-24 overflow-y-auto text-xs text-red-400 bg-bg/50 rounded-lg p-2">
+                                        <div className="mt-3 max-h-24 overflow-y-auto text-xs text-danger bg-bg/50 rounded-lg p-2">
                                             {importResult.errors.slice(0, 5).map((err, i) => (
                                                 <p key={i}>• {err}</p>
                                             ))}

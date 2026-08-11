@@ -74,8 +74,8 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
         return (
             <div className="bg-bg border border-border rounded-2xl p-4">
                 <div className="flex items-start gap-3">
-                    <div className="p-2.5 bg-gradient-to-br from-purple-500/20 to-primary/20 rounded-xl border border-purple-500/30 shrink-0">
-                        <Brain size={20} className="text-purple-400" />
+                    <div className="p-2.5 bg-primary/20 rounded-xl border border-primary/30 shrink-0">
+                        <Brain size={20} className="text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-2">
@@ -91,7 +91,7 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
                         </div>
                         {loading ? (
                             <div className="flex items-center gap-2 text-text-muted text-sm">
-                                <Loader2 size={14} className="animate-spin text-purple-400" />
+                                <Loader2 size={14} className="animate-spin text-primary" />
                                 جاري التحليل...
                             </div>
                         ) : (
@@ -120,7 +120,7 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
                     <div>
                         <h3 className="font-bold text-text-main flex items-center gap-2">
                             رؤى ذكية
-                            <Sparkles size={14} className="text-amber-400" />
+                            <Sparkles size={14} className="text-warning" />
                         </h3>
                         <p className="text-[10px] text-text-muted">
                             {lastUpdate ? `آخر تحديث: ${lastUpdate.toLocaleTimeString('ar-IQ')}` : 'لم يتم التحديث بعد'}
@@ -152,7 +152,7 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
                             </div>
                         ) : (
                             <div className="flex items-start gap-3">
-                                <Lightbulb size={20} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                                <Lightbulb size={20} className="text-warning mt-0.5 flex-shrink-0" />
                                 <p className="text-sm text-text-main leading-relaxed whitespace-pre-wrap">{insight || 'اضغط لتحديث للحصول على رؤية ذكية'}</p>
                             </div>
                         )}
@@ -160,23 +160,23 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
 
                     {/* Quick Stats */}
                     <div className="grid grid-cols-3 gap-2">
-                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-center">
-                            <TrendingUp size={18} className="text-emerald-400 mx-auto mb-1" />
-                            <p className="text-xl font-black text-emerald-400">{ordersCount}</p>
+                        <div className="bg-success/10 border border-success/20 rounded-xl p-4 text-center">
+                            <TrendingUp size={18} className="text-success mx-auto mb-1" />
+                            <p className="text-xl font-black text-success">{ordersCount}</p>
                             <p className="text-[10px] text-text-muted font-medium">طلب اليوم</p>
                         </div>
-                        <div className={`${lowStockCount > 5 ? 'bg-red-500/10 border-red-500/20' : 'bg-amber-500/10 border-amber-500/20'} border rounded-xl p-4 text-center`}>
+                        <div className={`${lowStockCount > 5 ? 'bg-danger/10 border-danger/20' : 'bg-warning/10 border-warning/20'} border rounded-xl p-4 text-center`}>
                             {lowStockCount > 5 ? (
-                                <AlertTriangle size={18} className="text-red-400 mx-auto mb-1" />
+                                <AlertTriangle size={18} className="text-danger mx-auto mb-1" />
                             ) : (
-                                <Package size={18} className="text-amber-400 mx-auto mb-1" />
+                                <Package size={18} className="text-warning mx-auto mb-1" />
                             )}
-                            <p className={`text-xl font-black ${lowStockCount > 5 ? 'text-red-400' : 'text-amber-400'}`}>{lowStockCount}</p>
+                            <p className={`text-xl font-black ${lowStockCount > 5 ? 'text-danger' : 'text-warning'}`}>{lowStockCount}</p>
                             <p className="text-[10px] text-text-muted font-medium">مخزون منخفض</p>
                         </div>
-                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center">
-                            <TrendingUp size={18} className="text-blue-400 mx-auto mb-1" />
-                            <p className="text-xl font-black text-blue-400">{products.length}</p>
+                        <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 text-center">
+                            <TrendingUp size={18} className="text-primary mx-auto mb-1" />
+                            <p className="text-xl font-black text-primary">{products.length}</p>
                             <p className="text-[10px] text-text-muted font-medium">عميل</p>
                         </div>
                     </div>

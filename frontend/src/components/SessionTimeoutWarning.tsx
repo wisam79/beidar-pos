@@ -16,8 +16,8 @@ export const SessionTimeoutWarning = () => {
             <div className="bg-surface rounded-2xl border border-border shadow-2xl p-6 max-w-sm mx-4 animate-in zoom-in-95 duration-300">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                        <Clock className="w-6 h-6 text-amber-500" />
+                    <div className="w-12 h-12 rounded-xl bg-warning/20 flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-warning" />
                     </div>
                     <div>
                         <h3 className="font-bold text-text-main">انتهاء الجلسة قريباً</h3>

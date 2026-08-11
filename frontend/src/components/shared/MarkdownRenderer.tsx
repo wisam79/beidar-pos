@@ -24,7 +24,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
         if (inCodeBlock) {
             elements.push(
-                <div key={`code-${index}`} className="bg-black/30 p-2 rounded text-xs font-mono my-1 text-emerald-300">
+                <div key={`code-${index}`} className="bg-black/30 p-2 rounded text-xs font-mono my-1 text-success">
                     {line}
                 </div>
             );
@@ -33,7 +33,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
         // Handle Headers
         if (line.startsWith('### ')) {
-            elements.push(<h3 key={index} className="text-sm font-bold mt-3 mb-1 text-purple-300">{line.replace('### ', '')}</h3>);
+            elements.push(<h3 key={index} className="text-sm font-bold mt-3 mb-1 text-primary">{line.replace('### ', '')}</h3>);
             return;
         }
         if (line.startsWith('## ')) {

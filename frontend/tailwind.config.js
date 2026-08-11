@@ -51,6 +51,12 @@ export default {
         success: 'var(--color-success)',
         warning: 'var(--color-warning)',
         info: 'var(--color-info)',
+        'primary-dim': 'var(--color-primary-dim)',
+        'danger-dim': 'var(--color-danger-dim)',
+        'success-dim': 'var(--color-success-dim)',
+        'warning-dim': 'var(--color-warning-dim)',
+        'info-dim': 'var(--color-info-dim)',
+        'primary-rgb': 'rgba(var(--color-primary-rgb), <alpha-value>)',
         emerald: {
           50: '#f0fdf4',
           100: '#dcfce7',

@@ -135,8 +135,8 @@ export const Numpad: React.FC<NumpadProps> = ({
                             onClick={() => (mode === 'payment' ? handleQuickAmount(amount) : handleIncrement(amount - currentValue))}
                             className={`rounded-2xl px-2 py-3 min-h-[44px] text-xs font-black transition-colors active:scale-[0.98] touch-target outline-none cursor-pointer border ${
                                 selected
-                                    ? 'bg-emerald-500 text-black border-emerald-400 font-black'
-                                    : 'bg-surface hover:bg-surface-hover text-emerald-400 border-border/80'
+                                    ? 'bg-success text-primary-fg border-success font-black'
+                                    : 'bg-surface hover:bg-surface-hover text-success border-border/80'
                             }`}
                         >
                             {mode === 'payment' ? `${amount / 1000}K` : amount}
@@ -160,7 +160,7 @@ export const Numpad: React.FC<NumpadProps> = ({
                     type="button"
                     onClick={handleBackspace}
                     title="مسح"
-                    className="h-14 min-h-[56px] rounded-2xl bg-surface hover:bg-surface-hover text-amber-400 border border-border/80 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
+                    className="h-14 min-h-[56px] rounded-2xl bg-surface hover:bg-surface-hover text-warning border border-border/80 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
                 >
                     <Delete size={24} />
                 </button>
@@ -168,7 +168,7 @@ export const Numpad: React.FC<NumpadProps> = ({
                     type="button"
                     onClick={handleClear}
                     title="تفريغ"
-                    className="h-14 min-h-[56px] rounded-2xl bg-surface hover:bg-surface-hover text-red-400 border border-border/80 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
+                    className="h-14 min-h-[56px] rounded-2xl bg-surface hover:bg-surface-hover text-danger border border-border/80 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
                 >
                     <X size={24} />
                 </button>
@@ -176,7 +176,7 @@ export const Numpad: React.FC<NumpadProps> = ({
                     type="button"
                     onClick={handleExact}
                     title="المبلغ المضبوط"
-                    className="h-14 min-h-[56px] rounded-2xl bg-surface hover:bg-surface-hover text-blue-400 border border-border/80 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
+                    className="h-14 min-h-[56px] rounded-2xl bg-surface hover:bg-surface-hover text-primary border border-border/80 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
                 >
                     <CornerDownLeft size={24} />
                 </button>
@@ -184,7 +184,7 @@ export const Numpad: React.FC<NumpadProps> = ({
                     type="button"
                     onClick={onConfirm}
                     title="تأكيد"
-                    className="h-14 min-h-[56px] rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-black border border-emerald-400 active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
+                    className="h-14 min-h-[56px] rounded-2xl bg-success hover:bg-success text-primary-fg font-black border border-success active:scale-[0.98] flex items-center justify-center transition-colors touch-target outline-none cursor-pointer"
                 >
                     <Check size={26} strokeWidth={3} />
                 </button>

@@ -17,22 +17,22 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
     const getIcon = () => {
         switch (type) {
             case 'error':
-                return <AlertCircle size={16} className="text-red-400" />;
+                return <AlertCircle size={16} className="text-danger" />;
             case 'warning':
-                return <AlertTriangle size={16} className="text-amber-400" />;
+                return <AlertTriangle size={16} className="text-warning" />;
             case 'info':
-                return <Info size={16} className="text-blue-400" />;
+                return <Info size={16} className="text-primary" />;
         }
     };
 
     const getColors = () => {
         switch (type) {
             case 'error':
-                return 'bg-red-500/10 border-red-500/30 text-red-400';
+                return 'bg-danger/10 border-danger/30 text-danger';
             case 'warning':
-                return 'bg-amber-500/10 border-amber-500/30 text-amber-400';
+                return 'bg-warning/10 border-warning/30 text-warning';
             case 'info':
-                return 'bg-blue-500/10 border-blue-500/30 text-blue-400';
+                return 'bg-primary/10 border-primary/30 text-primary';
         }
     };
 
@@ -64,7 +64,7 @@ export const FieldError: React.FC<FieldErrorProps> = ({ error, hint }) => {
 
     return (
         <div className="mt-1">
-            <p className="text-red-400 text-xs font-bold flex items-center gap-1">
+            <p className="text-danger text-xs font-bold flex items-center gap-1">
                 <AlertCircle size={12} />
                 {error}
             </p>

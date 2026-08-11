@@ -91,7 +91,7 @@ func (r *statsRepository) GetProfitAndExpenses() (totalCOGS domain.Amount, total
 	err = r.db.Table("sale_items").
 		Joins("JOIN sales ON sales.id = sale_items.sale_id").
 		Where("sales.status IN ?", revenueStatuses).
-		Select("CAST(COALESCE(SUM(sale_items.cost * sale_items.quantity), 0) AS INTEGER)").
+		Select("CAST(COALESCE(SUM(sale_items.cost * (sale_items.quantity - sale_items.returned_qty)), 0) AS INTEGER)").
 		Scan(&totalCOGS).Error
 	if err != nil {
 		return

@@ -1,12 +1,4 @@
-/**
- * Dashboard.tsx - Beidar POS Tactile 3D Launcher (لوحة تحكم الأزرار اللمسية المجسمة)
- * 
- * - Compact, centered 3x2 tactile push-button control grid
- * - Realistic 3D hardware button depth (bevel top, shadow bottom, active press)
- * - Prominent glowing 3D icon pods
- * - Pure Beidar Emerald identity
- */
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { PageShell } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
 import {
@@ -18,107 +10,115 @@ import {
     Reports3DIcon,
 } from '../../components/icons3d';
 import { cn } from '../../theme/cn';
+import { Command } from 'lucide-react';
 
 interface TactileButtonProps {
     title: string;
+    sublabel: string;
+    shortcut: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
     onClick: () => void;
-    hero?: boolean;
 }
 
 const TactileButton = memo(({
     title,
+    sublabel,
+    shortcut,
     icon: Icon3D,
     onClick,
-    hero = false,
-}: TactileButtonProps) => {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={cn(
-                // 3D Push Button Tactile Feel
-                'group relative flex flex-col justify-center items-center text-center select-none outline-none cursor-pointer',
-                'rounded-3xl p-6 lg:p-8 transition-all duration-150 ease-out',
-                'bg-surface hover:bg-surface-hover',
-                'border-t-[1.5px] border-t-white/60 dark:border-t-white/10 border-x border-x-border/60 border-b-[4px] border-b-border dark:border-b-black/80',
-                'shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-1',
-                'active:translate-y-1.5 active:border-b-[2px] active:shadow-inner',
-                hero && 'border-t-emerald-500/40 shadow-emerald-500/10'
-            )}
-        >
-            {/* Center: Large Floating 3D Icon */}
-            <div className="relative z-10 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1.5">
-                <Icon3D size={220} />
-            </div>
+}: TactileButtonProps) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+            'group relative flex flex-col justify-between items-center text-center select-none outline-none cursor-pointer',
+            'rounded-2xl p-6 sm:p-7 transition-all duration-300 ease-out min-h-[220px] lg:min-h-[240px]',
+            'bg-surface hover:bg-surface-hover/90 border border-border/80 hover:border-primary/50',
+            'shadow-2xs hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1.5',
+            'active:scale-[0.98] active:translate-y-0 overflow-hidden'
+        )}
+    >
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-primary/15 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-            {/* Directly Below Icon: Main Card Title */}
-            <div className="relative z-10 w-full mt-2">
-                <h3 className="text-2xl lg:text-3xl font-extrabold text-text-main group-hover:text-emerald-400 transition-colors">
-                    {title}
-                </h3>
-            </div>
-        </button>
-    );
-});
+        <div className="w-full flex items-center justify-between relative z-10">
+            <span className="px-2.5 py-1 rounded-lg bg-bg/80 dark:bg-black/40 border border-border/80 text-[10px] font-mono font-bold text-text-muted group-hover:text-primary group-hover:border-primary/40 transition-colors shadow-3xs">
+                {shortcut}
+            </span>
+            <span className="text-[10px] font-bold text-text-muted/70 group-hover:text-text-muted transition-colors">
+                {sublabel}
+            </span>
+        </div>
+
+        <div className="relative z-10 flex items-center justify-center my-auto transition-transform duration-300 group-hover:scale-110 group-hover:drop-shadow-lg">
+            <Icon3D size={190} />
+        </div>
+
+        <div className="relative z-10 w-full mt-2">
+            <h3 className="text-xl lg:text-2xl font-black text-text-main group-hover:text-primary transition-colors">
+                {title}
+            </h3>
+        </div>
+    </button>
+));
 
 TactileButton.displayName = 'TactileButton';
+
+const SECTIONS = [
+    { key: 'sales', title: 'المبيعات', sublabel: 'نقطة البيع', shortcut: 'F1', icon: Pos3DIcon },
+    { key: 'products', title: 'المخزون', sublabel: 'الأصناف', shortcut: 'F2', icon: Products3DIcon },
+    { key: 'invoices', title: 'الفواتير', sublabel: 'سجل الطلبات', shortcut: 'F3', icon: Invoices3DIcon },
+    { key: 'shifts', title: 'الخزينة', sublabel: 'الورديات', shortcut: 'F4', icon: Vault3DIcon },
+    { key: 'customers', title: 'العملاء', sublabel: 'الديون والنقاط', shortcut: 'F5', icon: Customers3DIcon },
+    { key: 'reports', title: 'التقارير', sublabel: 'التحليلات', shortcut: 'F6', icon: Reports3DIcon },
+] as const;
 
 export const Dashboard: React.FC = () => {
     const { setView } = usePreferences();
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            const section = SECTIONS.find((s) => e.key === s.shortcut);
+            if (section) {
+                e.preventDefault();
+                setView(section.key);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [setView]);
+
     return (
-        <PageShell className="p-0 h-full flex flex-col justify-center overflow-hidden">
-            {/* ═══════════════════════════════════════════════════════════════
-                CENTERED 3D TACTILE BUTTONS GRID
-            ═══════════════════════════════════════════════════════════════ */}
+        <PageShell className="p-0 h-full flex flex-col justify-between overflow-hidden select-none">
             <div className="flex-1 flex flex-col justify-center py-6 min-h-0">
-                <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto w-full px-6">
-
-                    {/* ─── BUTTON 1: Quick POS Sales ─── */}
-                    <TactileButton
-                        title="المبيعات"
-                        icon={Pos3DIcon}
-                        onClick={() => setView('sales')}
-                        hero={true}
-                    />
-
-                    {/* ─── BUTTON 2: Products & Inventory ─── */}
-                    <TactileButton
-                        title="المخزون"
-                        icon={Products3DIcon}
-                        onClick={() => setView('products')}
-                    />
-
-                    {/* ─── BUTTON 3: Invoices & Orders ─── */}
-                    <TactileButton
-                        title="الفواتير"
-                        icon={Invoices3DIcon}
-                        onClick={() => setView('invoices')}
-                    />
-
-                    {/* ─── BUTTON 4: Shift & Cash Vault ─── */}
-                    <TactileButton
-                        title="الخزينة"
-                        icon={Vault3DIcon}
-                        onClick={() => setView('shifts')}
-                    />
-
-                    {/* ─── BUTTON 5: Customers & Debts ─── */}
-                    <TactileButton
-                        title="العملاء"
-                        icon={Customers3DIcon}
-                        onClick={() => setView('customers')}
-                    />
-
-                    {/* ─── BUTTON 6: Financial Reports & Analytics ─── */}
-                    <TactileButton
-                        title="التقارير"
-                        icon={Reports3DIcon}
-                        onClick={() => setView('reports')}
-                    />
-
+                <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7 max-w-5xl mx-auto w-full px-6">
+                    {SECTIONS.map((section) => (
+                        <TactileButton
+                            key={section.key}
+                            title={section.title}
+                            sublabel={section.sublabel}
+                            shortcut={section.shortcut}
+                            icon={section.icon}
+                            onClick={() => setView(section.key)}
+                        />
+                    ))}
                 </main>
+            </div>
+
+            <div className="py-2.5 px-6 border-t border-border/60 bg-surface/60 backdrop-blur-md flex items-center justify-between text-xs text-text-muted font-bold shrink-0">
+                <div className="flex items-center gap-2">
+                    <Command size={14} className="text-primary" />
+                    <span>التنقل السريع عبر اختصارات لوحة المفاتيح</span>
+                </div>
+                <div className="flex items-center gap-3 font-mono text-[11px]">
+                    {SECTIONS.map((s, i) => (
+                        <React.Fragment key={s.key}>
+                            {i > 0 && <span>•</span>}
+                            <span>[{s.shortcut}] {s.title}</span>
+                        </React.Fragment>
+                    ))}
+                </div>
             </div>
         </PageShell>
     );

@@ -103,7 +103,7 @@ export const ZohoSettings: React.FC<{ notify: (msg: string, type: 'success' | 'e
                     </div>
                     <button
                         onClick={handleDisconnect}
-                        className="w-full mt-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-lg text-sm font-bold hover:bg-red-500/20 transition"
+                        className="w-full mt-2 px-4 py-2 bg-danger/10 text-danger rounded-lg text-sm font-bold hover:bg-danger/20 transition"
                     >
                         إلغاء الربط
                     </button>
@@ -114,7 +114,7 @@ export const ZohoSettings: React.FC<{ notify: (msg: string, type: 'success' | 'e
             {!status?.enabled && !showSetup && (
                 <button
                     onClick={() => setShowSetup(true)}
-                    className="w-full px-4 py-3 bg-primary text-black rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition"
+                    className="w-full px-4 py-3 bg-primary text-primary-fg rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition"
                 >
                     <Link2 size={18} /> ربط مع Zoho Books
                 </button>
@@ -177,7 +177,7 @@ export const ZohoSettings: React.FC<{ notify: (msg: string, type: 'success' | 'e
                         <button
                             onClick={handleConnect}
                             disabled={connecting}
-                            className="flex-1 px-4 py-2 bg-primary text-black rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:opacity-90"
+                            className="flex-1 px-4 py-2 bg-primary text-primary-fg rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:opacity-90"
                         >
                             {connecting ? <RefreshCw className="animate-spin" size={16} /> : <Check size={16} />}
                             ربط

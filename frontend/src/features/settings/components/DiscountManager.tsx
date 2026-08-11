@@ -155,9 +155,9 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
                                         value={form.name}
                                         onChange={e => { setForm({ ...form, name: e.target.value }); if (errors.name) setErrors({ ...errors, name: '' }); }}
                                         placeholder="عرض نهاية الأسبوع"
-                                        className={`w-full bg-bg border ${errors.name ? 'border-red-500' : 'border-border'} rounded-xl p-3 text-text-main outline-none focus:border-primary`}
+                                        className={`w-full bg-bg border ${errors.name ? 'border-danger' : 'border-border'} rounded-xl p-3 text-text-main outline-none focus:border-primary`}
                                     />
-                                    {errors.name && <p className="text-red-500 text-[10px] mt-1 font-bold">{errors.name}</p>}
+                                    {errors.name && <p className="text-danger text-[10px] mt-1 font-bold">{errors.name}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-muted mb-1">كود الكوبون</label>
@@ -183,9 +183,9 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
                                         onChange={e => { setForm({ ...form, value: Number(e.target.value) }); if (errors.value) setErrors({ ...errors, value: '' }); }}
                                         placeholder="10"
                                         aria-label="قيمة الخصم"
-                                        className={`w-full bg-bg border ${errors.value ? 'border-red-500' : 'border-border'} rounded-xl p-3 text-text-main text-center font-bold outline-none focus:border-primary`}
+                                        className={`w-full bg-bg border ${errors.value ? 'border-danger' : 'border-border'} rounded-xl p-3 text-text-main text-center font-bold outline-none focus:border-primary`}
                                     />
-                                    {errors.value && <p className="text-red-500 text-[10px] mt-1 font-bold">{errors.value}</p>}
+                                    {errors.value && <p className="text-danger text-[10px] mt-1 font-bold">{errors.value}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-muted mb-1">الحد الأدنى للشراء</label>
@@ -299,7 +299,7 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
                                             <div className="flex items-start justify-between">
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <span className={`w-2 h-2 rounded-full ${d.active ? 'bg-emerald-500' : 'bg-gray-500'}`} />
+                                                        <span className={`w-2 h-2 rounded-full ${d.active ? 'bg-success' : 'bg-gray-500'}`} />
                                                         <h4 className="font-bold text-text-main">{d.name}</h4>
                                                         {d.code && (
                                                             <span className="px-2 py-0.5 bg-primary/20 text-primary text-xs font-mono rounded">
@@ -325,7 +325,7 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
                                                         onClick={() => handleToggle(d.id)}
                                                         title={d.active ? 'إيقاف' : 'تفعيل'}
                                                         className={`p-2 rounded-lg transition-colors ${d.active
-                                                            ? 'text-emerald-500 hover:bg-emerald-500/10'
+                                                            ? 'text-success hover:bg-success/10'
                                                             : 'text-text-muted hover:bg-surface'
                                                             }`}
                                                     >
@@ -340,7 +340,7 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(d.id)}
-                                                        className="p-2 rounded-lg text-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                                                        className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
                                                         aria-label="حذف الخصم"
                                                     >
                                                         <Trash2 size={16} />
@@ -368,13 +368,13 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
                         </div>
                         <div className="bg-bg rounded-xl p-3 border border-border">
                             <p className="text-[10px] text-text-muted font-bold">الخصومات النشطة</p>
-                            <p className="text-2xl font-black text-emerald-500">
+                            <p className="text-2xl font-black text-success">
                                 {discounts.filter(d => d.active).length}
                             </p>
                         </div>
                         <div className="bg-bg rounded-xl p-3 border border-border">
                             <p className="text-[10px] text-text-muted font-bold">الكوبونات</p>
-                            <p className="text-2xl font-black text-amber-500">
+                            <p className="text-2xl font-black text-warning">
                                 {discounts.filter(d => d.code).length}
                             </p>
                         </div>

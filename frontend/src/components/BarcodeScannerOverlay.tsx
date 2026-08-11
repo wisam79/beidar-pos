@@ -205,10 +205,10 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
         <div className="fixed inset-0 z-[9999] bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-300">
 
             {/* Top Bar */}
-            <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
+            <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-50 bg-black/80">
                 <div className="flex gap-4">
                     {hasTorch && (
-                        <button onClick={toggleTorch} className={`p-3 rounded-full transition-all  border ${torchOn ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' : 'bg-white/10 text-white border-white/10'}`}>
+                        <button onClick={toggleTorch} className={`p-3 rounded-full transition-all  border ${torchOn ? 'bg-warning/20 text-warning border-warning/50' : 'bg-white/10 text-white border-white/10'}`}>
                             {torchOn ? <Zap size={20} fill="currentColor" /> : <ZapOff size={20} />}
                         </button>
                     )}
@@ -230,7 +230,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                         </div>
                     )}
                 </div>
-                <button onClick={onClose} className="text-white p-3 bg-white/10 border border-white/10 rounded-full hover:bg-red-500/20 hover:text-red-500 transition-all " aria-label="إغلاق الماسح">
+                <button onClick={onClose} className="text-white p-3 bg-white/10 border border-white/10 rounded-full hover:bg-danger/20 hover:text-danger transition-all " aria-label="إغلاق الماسح">
                     <X size={20} />
                 </button>
             </div>
@@ -238,9 +238,9 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
             {/* Main Area */}
             <div className="relative w-full max-w-lg aspect-[3/4] flex flex-col items-center justify-center p-4">
                 {error ? (
-                    <div className="text-center p-8 bg-surface rounded-3xl border border-red-500/20 shadow-2xl">
-                        <AlertTriangle className="mx-auto mb-4 text-red-500" size={48} />
-                        <p className="text-red-400 font-bold mb-6 text-lg">{error}</p>
+                    <div className="text-center p-8 bg-surface rounded-3xl border border-danger/20 shadow-2xl">
+                        <AlertTriangle className="mx-auto mb-4 text-danger" size={48} />
+                        <p className="text-danger font-bold mb-6 text-lg">{error}</p>
                         <button onClick={onClose} className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-xl font-bold">إغلاق</button>
                     </div>
                 ) : (
@@ -251,15 +251,15 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                             {/* Visual Feedback Overlay */}
                             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                                 {/* Success Flash */}
-                                <div className={`absolute inset-0 bg-green-500/40 transition-opacity duration-200 ${scanStatus === 'success' ? 'opacity-100' : 'opacity-0'}`}></div>
+                                <div className={`absolute inset-0 bg-success/40 transition-opacity duration-200 ${scanStatus === 'success' ? 'opacity-100' : 'opacity-0'}`}></div>
                                 {/* Error Flash */}
-                                <div className={`absolute inset-0 bg-red-500/40 transition-opacity duration-200 ${scanStatus === 'error' ? 'opacity-100' : 'opacity-0'}`}></div>
+                                <div className={`absolute inset-0 bg-danger/40 transition-opacity duration-200 ${scanStatus === 'error' ? 'opacity-100' : 'opacity-0'}`}></div>
 
                                 {/* Frame */}
                                 <div className={`
                                     w-[260px] h-[260px] rounded-3xl relative transition-all duration-300
-                                    ${scanStatus === 'success' ? 'border-4 border-green-500 scale-105 shadow-[0_0_50px_rgba(34,197,94,0.6)]' :
-                                        scanStatus === 'error' ? 'border-4 border-red-500 scale-105 shadow-[0_0_50px_rgba(239,68,68,0.6)]' :
+                                    ${scanStatus === 'success' ? 'border-4 border-success scale-105 shadow-[0_0_50px_rgba(34,197,94,0.6)]' :
+                                        scanStatus === 'error' ? 'border-4 border-danger scale-105 shadow-[0_0_50px_rgba(239,68,68,0.6)]' :
                                             'border-2 border-white/30 shadow-[0_0_100px_rgba(0,200,150,0.1)]'}
                                 `}>
                                     {scanStatus === 'idle' && (
@@ -268,14 +268,14 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                                             <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-xl translate-x-1 -translate-y-1"></div>
                                             <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-xl -translate-x-1 translate-y-1"></div>
                                             <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl translate-x-1 translate-y-1"></div>
-                                            <div className="absolute inset-x-0 h-0.5 bg-red-500 shadow-[0_0_15px_red] top-1/2 -translate-y-1/2 animate-scan-line opacity-80"></div>
+                                            <div className="absolute inset-x-0 h-0.5 bg-danger shadow-[0_0_15px_red] top-1/2 -translate-y-1/2 animate-scan-line opacity-80"></div>
                                         </>
                                     )}
 
                                     {/* Success Icon */}
                                     {scanStatus === 'success' && (
                                         <div className="absolute inset-0 flex items-center justify-center animate-in zoom-in duration-300">
-                                            <div className="bg-green-500 text-black rounded-full p-5 shadow-xl">
+                                            <div className="bg-success text-primary-fg rounded-full p-5 shadow-xl">
                                                 <CheckCircle2 size={64} strokeWidth={3} />
                                             </div>
                                         </div>
@@ -284,7 +284,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                                     {/* Error Icon */}
                                     {scanStatus === 'error' && (
                                         <div className="absolute inset-0 flex items-center justify-center animate-in zoom-in duration-300">
-                                            <div className="bg-red-500 text-white rounded-full p-5 shadow-xl">
+                                            <div className="bg-danger text-white rounded-full p-5 shadow-xl">
                                                 <Ban size={64} strokeWidth={3} />
                                             </div>
                                         </div>
@@ -303,12 +303,12 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                                     </p>
                                 </div>
                             ) : scanStatus === 'success' ? (
-                                <div className="bg-green-500 text-black px-6 py-4 rounded-2xl font-black text-lg shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-4 w-full justify-center">
+                                <div className="bg-success text-primary-fg px-6 py-4 rounded-2xl font-black text-lg shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-4 w-full justify-center">
                                     <Box size={24} strokeWidth={2.5} />
                                     <span className="truncate">{feedbackMessage}</span>
                                 </div>
                             ) : (
-                                <div className="bg-red-500 text-white px-6 py-4 rounded-2xl font-black text-lg shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-4 w-full justify-center">
+                                <div className="bg-danger text-white px-6 py-4 rounded-2xl font-black text-lg shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-4 w-full justify-center">
                                     <AlertTriangle size={24} strokeWidth={2.5} />
                                     <span>{feedbackMessage}</span>
                                 </div>

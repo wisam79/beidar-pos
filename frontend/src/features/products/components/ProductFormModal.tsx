@@ -47,7 +47,7 @@ export const ProductFormModal = ({
                         onClick={() => setActiveTab('details')}
                         className={`flex-1 py-2 px-4 rounded-lg text-xs font-black transition-all duration-200 flex items-center justify-center gap-2 ${
                             activeTab === 'details'
-                                ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20 shadow-sm shadow-primary/5'
+                                ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/5'
                                 : 'text-text-muted hover:text-text-main'
                         }`}
                     >
@@ -58,7 +58,7 @@ export const ProductFormModal = ({
                             onClick={() => setActiveTab('history')}
                             className={`flex-1 py-2 px-4 rounded-lg text-xs font-black transition-all duration-200 flex items-center justify-center gap-2 ${
                                 activeTab === 'history'
-                                    ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20 shadow-sm shadow-primary/5'
+                                    ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/5'
                                     : 'text-text-muted hover:text-text-main'
                             }`}
                         >
@@ -105,7 +105,7 @@ export const ProductFormModal = ({
                                                 {form.image && (
                                                     <button 
                                                         onClick={() => setForm({ ...form, image: '' })} 
-                                                        className="bg-red-500/80 hover:bg-red-500 border border-red-500/20 text-white p-1.5 rounded-lg transition-all transform hover:scale-110" 
+                                                        className="bg-danger/80 hover:bg-danger border border-danger/20 text-white p-1.5 rounded-lg transition-all transform hover:scale-110" 
                                                         aria-label="Remove Image"
                                                     >
                                                         <Trash2 size={14} />
@@ -120,11 +120,11 @@ export const ProductFormModal = ({
                                 {/* Name Input with AI integrated inside */}
                                 <div className="relative group">
                                     <label className="text-[10px] text-text-muted font-black mb-1.5 block">
-                                        اسم المنتج <span className="text-red-500">*</span>
+                                        اسم المنتج <span className="text-danger">*</span>
                                     </label>
                                     <div className="relative">
                                         <input
-                                            className={`w-full h-10 bg-input-bg border ${errors.name ? 'border-red-500' : 'border-border/80 focus:border-primary/80'} text-text-main rounded-xl pl-10 pr-4 outline-none font-bold text-sm transition-all duration-200`}
+                                            className={`w-full h-10 bg-input-bg border ${errors.name ? 'border-danger' : 'border-border/80 focus:border-primary/80'} text-text-main rounded-xl pl-10 pr-4 outline-none font-bold text-sm transition-all duration-200`}
                                             placeholder="عصير برتقال طبيعي..."
                                             value={form.name || ''}
                                             onChange={e => { setForm({ ...form, name: e.target.value }); if (errors.name) delete errors.name; }}
@@ -132,7 +132,7 @@ export const ProductFormModal = ({
                                         <button 
                                             onClick={() => onImproveText('name')} 
                                             disabled={isGenerating || !form.name} 
-                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400 hover:text-purple-300 disabled:opacity-30 transition-colors"
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary disabled:opacity-30 transition-colors"
                                             title="تحسين الاسم بالذكاء الاصطناعي"
                                         >
                                             <Sparkles size={14} />
@@ -146,7 +146,7 @@ export const ProductFormModal = ({
                                     <label className="text-[10px] text-text-muted font-black mb-1.5 block">الباركود (رمز المنتج)</label>
                                     <div className="relative">
                                         <input
-                                            className={`w-full h-10 bg-input-bg border ${errors.barcode ? 'border-red-500' : 'border-border/80 focus:border-primary/80'} text-text-main rounded-xl pl-10 pr-4 outline-none font-mono font-bold text-sm transition-all duration-200`}
+                                            className={`w-full h-10 bg-input-bg border ${errors.barcode ? 'border-danger' : 'border-border/80 focus:border-primary/80'} text-text-main rounded-xl pl-10 pr-4 outline-none font-mono font-bold text-sm transition-all duration-200`}
                                             placeholder="Scan or type..."
                                             value={form.barcode || ''}
                                             onChange={e => setForm({ ...form, barcode: e.target.value })}
@@ -210,7 +210,7 @@ export const ProductFormModal = ({
                                     <button
                                         onClick={onAiGenerateDescription}
                                         disabled={isGenerating}
-                                        className="absolute bottom-3 left-3 bg-gradient-to-r from-purple-500/15 to-blue-500/15 hover:from-purple-500/30 hover:to-blue-500/30 border border-purple-500/30 text-purple-400 hover:text-white px-3 py-1.5 rounded-lg text-[9px] font-black flex items-center gap-1.5 transition-all shadow-sm  active:scale-95 duration-100 hover:shadow-[0_0_15px_rgba(147,51,234,0.15)]"
+                                        className="absolute bottom-3 left-3 bg-primary/15 hover:from-primary/30 hover:to-primary/30 border border-primary/30 text-primary hover:text-white px-3 py-1.5 rounded-lg text-[9px] font-black flex items-center gap-1.5 transition-all shadow-sm  active:scale-95 duration-100 hover:shadow-[0_0_15px_rgba(147,51,234,0.15)]"
                                     >
                                         {isGenerating ? <RefreshCw size={10} className="animate-spin" /> : <Sparkles size={10} />} توليد وصف ذكي
                                     </button>
@@ -227,12 +227,12 @@ export const ProductFormModal = ({
                                     {/* Selling Price with Sparkles inside */}
                                     <div>
                                         <label className="block text-[10px] text-text-muted font-black mb-1.5">
-                                            سعر البيع <span className="text-red-500">*</span>
+                                            سعر البيع <span className="text-danger">*</span>
                                         </label>
                                         <div className="relative">
                                             <input
                                                 type="number"
-                                                className={`w-full h-10 bg-input-bg border ${errors.price ? 'border-red-500' : 'border-border/80 focus:border-primary/80'} text-text-main rounded-xl pl-16 pr-10 outline-none font-mono font-bold text-sm transition-all duration-200`}
+                                                className={`w-full h-10 bg-input-bg border ${errors.price ? 'border-danger' : 'border-border/80 focus:border-primary/80'} text-text-main rounded-xl pl-16 pr-10 outline-none font-mono font-bold text-sm transition-all duration-200`}
                                                 value={form.price || ''}
                                                 onChange={e => setForm({ ...form, price: Number(e.target.value) })}
                                                 placeholder="0"
@@ -241,7 +241,7 @@ export const ProductFormModal = ({
                                             <button 
                                                 onClick={onAiSuggestPrice} 
                                                 disabled={isGenerating} 
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-400 hover:text-purple-300 disabled:opacity-30 transition-colors"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary disabled:opacity-30 transition-colors"
                                                 title="اقتراح السعر بالذكاء الاصطناعي"
                                             >
                                                 {isGenerating ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
@@ -295,7 +295,7 @@ export const ProductFormModal = ({
 
                                 {/* Profit Margin Widget Card */}
                                 {((form.price ?? 0) > 0 || (form.cost ?? 0) > 0) && (
-                                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 p-4 transition-all duration-300">
+                                    <div className="relative overflow-hidden rounded-2xl bg-primary/10 border border-primary/20 p-4 transition-all duration-300">
                                         <div className="absolute -left-12 -bottom-12 w-28 h-28 bg-primary/15 rounded-full blur-xl pointer-events-none" />
                                         
                                         <div className="flex items-center justify-between relative z-10">
@@ -312,10 +312,10 @@ export const ProductFormModal = ({
                                                 {form.cost && form.cost > 0 ? (
                                                     <span className={`px-2.5 py-1 rounded-lg text-xs font-extrabold font-mono inline-block ${
                                                         (((form.price ?? 0) - (form.cost ?? 0)) / form.cost * 100) >= 20 
-                                                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-[0_2px_10px_rgba(16,185,129,0.06)]' 
+                                                            ? 'bg-success/10 text-success border border-success/20 shadow-[0_2px_10px_rgba(16,185,129,0.06)]' 
                                                             : (((form.price ?? 0) - (form.cost ?? 0)) / form.cost * 100) > 0 
-                                                                ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_2px_10px_rgba(245,158,11,0.06)]' 
-                                                                : 'bg-red-500/10 text-red-500 border border-red-500/20 shadow-[0_2px_10px_rgba(239,68,68,0.06)]'
+                                                                ? 'bg-warning/10 text-warning border border-warning/20 shadow-[0_2px_10px_rgba(245,158,11,0.06)]' 
+                                                                : 'bg-danger/10 text-danger border border-danger/20 shadow-[0_2px_10px_rgba(239,68,68,0.06)]'
                                                     }`}>
                                                         {(((form.price ?? 0) - (form.cost ?? 0)) / form.cost * 100).toFixed(1)}%
                                                     </span>
@@ -387,7 +387,7 @@ export const ProductFormModal = ({
                                                 </div>
                                                 {m.reason && <p className="text-[10px] text-text-muted/80 mt-2 font-semibold">{m.reason}</p>}
                                             </div>
-                                            <span className={`font-mono font-black text-xl ${m.qty > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                            <span className={`font-mono font-black text-xl ${m.qty > 0 ? 'text-success' : 'text-danger'}`}>
                                                 {m.qty > 0 ? '+' : ''}{m.qty}
                                             </span>
                                         </div>
@@ -403,7 +403,7 @@ export const ProductFormModal = ({
                     {editingProduct && (
                         <button 
                             onClick={() => editingProduct?.id && onDelete(editingProduct.id)} 
-                            className="w-11 h-11 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shrink-0 active:scale-95 duration-100 hover:shadow-[0_0_15px_rgba(239,68,68,0.25)]" 
+                            className="w-11 h-11 bg-danger/10 text-danger border border-danger/20 rounded-xl hover:bg-danger hover:text-white transition-all flex items-center justify-center shrink-0 active:scale-95 duration-100 hover:shadow-[0_0_15px_rgba(239,68,68,0.25)]" 
                             aria-label="حذف المنتج" 
                             title="حذف المنتج"
                         >

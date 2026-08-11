@@ -78,7 +78,7 @@ export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess, 
                         <div
                             key={i}
                             className={`w-4 h-4 rounded-full transition-all duration-200 border-2 ${i < pin.length
-                                ? (error ? 'bg-red-500 border-red-500 scale-110' : 'bg-primary border-primary scale-110')
+                                ? (error ? 'bg-danger border-danger scale-110' : 'bg-primary border-primary scale-110')
                                 : 'bg-transparent border-border'
                                 }`}
                         />
@@ -122,7 +122,7 @@ export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess, 
                     <button
                         onClick={() => setPin('')}
                         disabled={loading}
-                        className="h-14 rounded-2xl bg-red-500/10 hover:bg-red-500/20 text-red-500 flex items-center justify-center transition-all active:scale-95 border border-red-500/20"
+                        className="h-14 rounded-2xl bg-danger/10 hover:bg-danger/20 text-danger flex items-center justify-center transition-all active:scale-95 border border-danger/20"
                         title="مسح الكل"
                     >
                         <X size={22} />
@@ -141,7 +141,7 @@ export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess, 
                     <button
                         onClick={handleSubmit}
                         disabled={pin.length === 0 || loading}
-                        className="flex-1 h-12 rounded-xl bg-primary hover:brightness-110 text-black font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="flex-1 h-12 rounded-xl bg-primary hover:brightness-110 text-primary-fg font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {loading ? <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <><Check size={18} /> تأكيد</>}
                     </button>
@@ -164,7 +164,7 @@ export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess, 
                     autoFocus
                 />
 
-                {error && <p className="text-red-500 text-sm font-bold mt-4 animate-pulse">❌ الرمز غير صحيح</p>}
+                {error && <p className="text-danger text-sm font-bold mt-4 animate-pulse">❌ الرمز غير صحيح</p>}
             </div>
         </div>
     );

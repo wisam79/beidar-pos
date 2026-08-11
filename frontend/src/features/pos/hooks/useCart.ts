@@ -11,7 +11,6 @@ const CART_STORAGE_KEY = 'beidar_pos_cart';
 const CUSTOMER_STORAGE_KEY = 'beidar_pos_customer';
 const DISCOUNT_STORAGE_KEY = 'beidar_pos_discount';
 const PAYMENT_METHOD_STORAGE_KEY = 'beidar_pos_payment_method';
-const ZEN_MODE_STORAGE_KEY = 'beidar_pos_zen_mode';
 
 interface UseCartOptions {
     taxRate?: number;
@@ -99,8 +98,6 @@ export function useCart(options: UseCartOptions = {}): UseCartReturn {
             const savedDiscount = localStorage.getItem(DISCOUNT_STORAGE_KEY);
             const savedCustomer = localStorage.getItem(CUSTOMER_STORAGE_KEY);
             const savedPaymentMethod = localStorage.getItem(PAYMENT_METHOD_STORAGE_KEY);
-            const savedZenMode = localStorage.getItem(ZEN_MODE_STORAGE_KEY);
-
 
             let restored = false;
 
@@ -154,10 +151,12 @@ export function useCart(options: UseCartOptions = {}): UseCartReturn {
         }
     }, [cart, discount, selectedCustomer, paymentMethod]); // Removed isZenMode form dependency
 
-    // Reset received amount when total changes
+    // Reset received amount when cart is empty
     useEffect(() => {
-        setReceivedAmount(0);
-    }, [total]);
+        if (cart.length === 0) {
+            setReceivedAmount(0);
+        }
+    }, [cart.length]);
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // Cart Actions

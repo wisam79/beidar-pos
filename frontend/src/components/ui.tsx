@@ -93,14 +93,14 @@ export const SpotlightCard = memo(({ children, className = "", spotlightColor, o
 SpotlightCard.displayName = 'SpotlightCard';
 
 const badgeStyles: Record<BadgeType, string> = {
-    success: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_2px_8px_rgba(16,185,129,0.08)]',
-    error: 'bg-red-500/10 text-red-500 border-red-500/20 shadow-[0_2px_8px_rgba(239,68,68,0.08)]',
-    warning: 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_2px_8px_rgba(245,158,11,0.08)]',
-    info: 'bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_2px_8px_rgba(59,130,246,0.08)]',
+    success: 'bg-success/10 text-success border-success/20 shadow-[0_2px_8px_rgba(16,185,129,0.08)]',
+    error: 'bg-danger/10 text-danger border-danger/20 shadow-[0_2px_8px_rgba(239,68,68,0.08)]',
+    warning: 'bg-warning/10 text-warning border-warning/20 shadow-[0_2px_8px_rgba(245,158,11,0.08)]',
+    info: 'bg-primary/10 text-primary border-primary/20 shadow-[0_2px_8px_rgba(59,130,246,0.08)]',
     default: 'bg-surface text-text-muted border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]',
-    completed: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_2px_8px_rgba(16,185,129,0.08)]',
-    returned: 'bg-red-500/10 text-red-500 border-red-500/20 shadow-[0_2px_8px_rgba(239,68,68,0.08)]',
-    pending: 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_2px_8px_rgba(245,158,11,0.08)]'
+    completed: 'bg-success/10 text-success border-success/20 shadow-[0_2px_8px_rgba(16,185,129,0.08)]',
+    returned: 'bg-danger/10 text-danger border-danger/20 shadow-[0_2px_8px_rgba(239,68,68,0.08)]',
+    pending: 'bg-warning/10 text-warning border-warning/20 shadow-[0_2px_8px_rgba(245,158,11,0.08)]'
 };
 
 export const Badge = memo(({ type, text }: { type: BadgeType | string, text: string }) => {
@@ -115,11 +115,11 @@ export const Badge = memo(({ type, text }: { type: BadgeType | string, text: str
 Badge.displayName = 'Badge';
 
 export const PageHeader = memo(({ title, icon: Icon, description, actions, children }: PageHeaderProps) => (
-    <header className="shrink-0 flex flex-col gap-2.5 bg-surface  border border-border rounded-2xl py-2.5 px-4 lg:py-3 lg:px-5 shadow-card mb-3 w-full text-right">
+    <header className="shrink-0 flex flex-col gap-2 bg-surface  border border-border rounded-2xl py-2.5 px-4 lg:py-2.5 lg:px-4 shadow-card w-full text-right">
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 w-full">
             {/* Right-to-Left (Arabic friendly) layout: Icon & Title */}
             <div className="flex items-center gap-3 w-full md:w-auto">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary border border-primary/10 shadow-sm shrink-0">
+                <div className="p-2.5 rounded-xl bg-primary/15 text-primary border border-primary/10 shadow-sm shrink-0">
                     <Icon size={20} />
                 </div>
                 <div>
@@ -190,7 +190,7 @@ export const Modal = memo(({ title, description, onClose, children, footer, open
                         </div>
                         <div className="flex items-center gap-3">
                             <Kbd>ESC</Kbd>
-                            <button onClick={onClose} title="إغلاق" aria-label="إغلاق" className="w-10 h-10 flex items-center justify-center bg-surface border border-border/60 hover:bg-surface-hover rounded-2xl text-text-muted hover:text-emerald-400 transition-colors touch-target cursor-pointer"><X size={22} /></button>
+                            <button onClick={onClose} title="إغلاق" aria-label="إغلاق" className="w-10 h-10 flex items-center justify-center bg-surface border border-border/60 hover:bg-surface-hover rounded-2xl text-text-muted hover:text-success transition-colors touch-target cursor-pointer"><X size={22} /></button>
                         </div>
                     </div>
                 )}
@@ -369,10 +369,10 @@ export const PulseIndicator = memo(({
     label?: string;
 }) => {
     const colors = {
-        emerald: 'bg-emerald-500',
-        blue: 'bg-blue-500',
-        amber: 'bg-amber-500',
-        red: 'bg-red-500'
+        emerald: 'bg-success',
+        blue: 'bg-primary',
+        amber: 'bg-warning',
+        red: 'bg-danger'
     };
 
     const sizes = {

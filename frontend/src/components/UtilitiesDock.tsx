@@ -74,8 +74,8 @@ export const UtilitiesDock = ({ onLock }: UtilitiesDockProps) => {
 
     const tools = [
         { id: 'calculator' as Tool, icon: CalcIcon, label: 'الآلة الحاسبة', color: 'text-primary', bg: 'bg-primary/10 border-primary/30' },
-        { id: 'profit' as Tool, icon: TrendingUp, label: 'حاسبة الأرباح', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30' },
-        { id: 'notes' as Tool, icon: FileText, label: 'الملاحظات', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30' },
+        { id: 'profit' as Tool, icon: TrendingUp, label: 'حاسبة الأرباح', color: 'text-success', bg: 'bg-success/10 border-success/30' },
+        { id: 'notes' as Tool, icon: FileText, label: 'الملاحظات', color: 'text-warning', bg: 'bg-warning/10 border-warning/30' },
     ];
 
     return (
@@ -151,14 +151,14 @@ export const UtilitiesDock = ({ onLock }: UtilitiesDockProps) => {
                     {/* Lock Screen */}
                     <button
                         onClick={onLock}
-                        className="w-12 h-12 rounded-xl flex items-center justify-center transition-all group relative hover:bg-red-500/10 text-text-muted hover:text-red-500 border border-transparent hover:border-red-500/30"
+                        className="w-12 h-12 rounded-xl flex items-center justify-center transition-all group relative hover:bg-danger/10 text-text-muted hover:text-danger border border-transparent hover:border-danger/30"
                         title="قفل الشاشة"
                     >
                         <Lock size={20} />
                         <span className="
                             absolute left-1/2 -translate-x-1/2 -bottom-7
-                            bg-surface border border-red-500/30 px-2 py-0.5 rounded text-[9px] whitespace-nowrap 
-                            opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[110] shadow-lg text-red-400 font-bold
+                            bg-surface border border-danger/30 px-2 py-0.5 rounded text-[9px] whitespace-nowrap 
+                            opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[110] shadow-lg text-danger font-bold
                         ">
                             قفل
                         </span>

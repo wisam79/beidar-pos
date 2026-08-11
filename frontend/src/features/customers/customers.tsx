@@ -9,9 +9,10 @@ import { Modal, Badge, PageHeader, EmptyState } from '../../components/ui';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput } from '../../components/blocks';
 import { analyzeCustomerProfile } from '../../core/ai';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCustomers, useInvalidateCustomers, useConfirmModal } from '../../hooks';
 import { api } from '../../core/api';
+import { invalidateAllData, queryKeys } from '../../core/queryClient';
 import { ReceiptTemplate } from '../../components/ReceiptTemplate';
 import { Printer, Eye } from 'lucide-react';
 import { DataTable } from '../../components/shared/DataTable';
@@ -23,12 +24,12 @@ export const CustomersPage: React.FC = () => {
     const { t } = useTranslation();
 
     // React Query cache invalidation for cross-page sync
-    const invalidateCustomers = useInvalidateCustomers();
+    const queryClient = useQueryClient();
 
     // React Query Hooks
     const { customers, isLoading: customersLoading, refetch: refetchCustomers } = useCustomers();
     const { data: sales = [], isLoading: salesLoading } = useQuery({
-        queryKey: ['sales', 0, 5000, '', '', ''],
+        queryKey: queryKeys.sales.list(0, 5000, '', '', ''),
         queryFn: async () => {
             const res = await api.sales.list(0, 5000, '', '', '');
             return res?.data || [];
@@ -36,9 +37,6 @@ export const CustomersPage: React.FC = () => {
     });
 
     const loading = customersLoading || salesLoading;
-    const loadData = () => {
-        refetchCustomers();
-    };
 
     const [search, setSearch] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
@@ -52,6 +50,13 @@ export const CustomersPage: React.FC = () => {
     const [showOnlyDebt, setShowOnlyDebt] = useState(false);
     const [showStats, setShowStats] = useState(false); // Collapsible stats state
     const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
+
+    // Installment sales for the selected customer (dedicated query, no full-sales scan)
+    const { data: customerInstallments = [] } = useQuery({
+        queryKey: queryKeys.sales.installments(installmentModal ?? ''),
+        queryFn: () => api.payments.getCustomerInstallments(installmentModal ?? ''),
+        enabled: !!installmentModal,
+    });
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // 🔗 Pending Action Handler (from QuickActionsBar)
@@ -71,8 +76,8 @@ export const CustomersPage: React.FC = () => {
 
     const stats = useMemo(() => {
         const totalCustomers = customers.length;
-        const totalDebt = customers.reduce((sum, c) => sum + (c.debt || 0), 0);
-        const totalInstallmentDebt = customers.reduce((sum, c) => sum + (c.installmentDebt || 0), 0);
+        const totalDebt = Math.round(customers.reduce((sum, c) => sum + (c.debt || 0), 0));
+        const totalInstallmentDebt = Math.round(customers.reduce((sum, c) => sum + (c.installmentDebt || 0), 0));
         const totalAllDebt = totalDebt + totalInstallmentDebt;
         const vipCustomers = customers.filter(c => (c.totalPurchases || 0) > 1000000).length;
         return { totalCustomers, totalDebt, totalInstallmentDebt, totalAllDebt, vipCustomers };
@@ -104,8 +109,7 @@ export const CustomersPage: React.FC = () => {
             await api.customers.save(customerToSave);
             notify(form.id ? 'تم تحديث البيانات' : 'تم إضافة العميل', 'success');
             setModalOpen(false);
-            invalidateCustomers(); // Sync cache with Sales page
-            loadData();
+            invalidateAllData();
         } catch (e: unknown) {
             const errorMsg = e instanceof Error ? e.message : 'خطأ في الحفظ';
             notify(errorMsg, 'error');
@@ -117,8 +121,7 @@ export const CustomersPage: React.FC = () => {
             try {
                 await api.customers.delete(id, force);
                 notify('تم الحذف', 'success');
-                invalidateCustomers();
-                loadData();
+                invalidateAllData();
                 closeConfirm();
             } catch (err: unknown) {
                 // Try to parse the error as JSON (AppError)
@@ -172,8 +175,7 @@ export const CustomersPage: React.FC = () => {
             });
             notify(`تم التسديد ${formatCurrency(amount, prefs?.currency)}`, 'success');
             setPayDebtModal(null);
-            invalidateCustomers(); // Sync cache with Sales page
-            loadData();
+            invalidateAllData(); // Sync cache with Sales page and everywhere
         } catch (e: unknown) {
             // Show error message from backend if available
             const errorMsg = e instanceof Error ? e.message : 'فشل العملية';
@@ -188,12 +190,14 @@ export const CustomersPage: React.FC = () => {
         try {
             // استدعاء API تسديد القسط
             await api.payments.payInstallment(saleId, index, amount, 'cash');
-            notify('تم تسديد القسط بنجاح ✓', 'success');
-            // إعادة تحميل البيانات لتحديث الديون والأقساط
-            loadData();
-        } catch (e) {
+            notify('تم تسديد القسط بنجاح', 'success');
+            // إبطال صريح لكل كاش المبيعات (المودال، الفواتير، التقارير) + تجديد شامل
+            queryClient.invalidateQueries({ queryKey: queryKeys.sales.all });
+            invalidateAllData();
+        } catch (e: unknown) {
             console.error('Error paying installment:', e);
-            notify('حدث خطأ أثناء تسديد القسط', 'error');
+            const errMsg = (e as { message?: string })?.message || (typeof e === 'string' ? e : 'حدث خطأ أثناء تسديد القسط');
+            notify(errMsg, 'error');
         }
     };
 
@@ -211,7 +215,6 @@ export const CustomersPage: React.FC = () => {
         estimateSize: () => 68,
         overscan: 8,
     });
-    const virtualRows = rowVirtualizer.getVirtualItems();
 
     const selectedCustomerHistory = historyModal
         ? sales.filter(s => {
@@ -221,18 +224,9 @@ export const CustomersPage: React.FC = () => {
         })
         : [];
 
-    // Installment logic
-    const selectedCustomerInstallments = useMemo(() => {
-        if (!installmentModal) return [];
-        const target = customers.find(c => c.id === installmentModal);
-        if (!target) return [];
-        return sales.filter(s =>
-            s.paymentMethod === 'installment' && s.installmentPlan &&
-            (s.customerId === installmentModal || (!s.customerId && s.customer === target.name))
-        );
-    }, [installmentModal, sales, customers]);
+    // Installment logic (data comes from the dedicated getCustomerInstallments query)
 
-    if (loading) return <LoadingState icon={Users} title="جاري تحميل بيانات العملاء..." subtitle="تحليل السجلات" />;
+    if (loading && customers.length === 0) return <LoadingState icon={Users} title="جاري تحميل بيانات العملاء..." subtitle="تحليل السجلات" />;
 
     return (
         <PageShell>
@@ -241,21 +235,21 @@ export const CustomersPage: React.FC = () => {
                     <SearchInput value={search} onChange={setSearch} placeholder="ابحث باسم العميل أو رقم الهاتف..." />
                     <button
                         onClick={() => setShowOnlyDebt(!showOnlyDebt)}
-                        className={`h-10 px-4 rounded-xl font-bold text-xs flex items-center gap-2 transition-all border touch-target ${showOnlyDebt ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-surface text-text-muted border-border hover:text-text-main hover:border-text-muted'}`}
+                        className={`h-10 px-4 rounded-xl font-bold text-xs flex items-center gap-2 transition-all border touch-target ${showOnlyDebt ? 'bg-danger/10 text-danger border-danger/30' : 'bg-surface text-text-muted border-border hover:text-text-main hover:border-text-muted'}`}
                     >
                         <Filter size={14} /> {showOnlyDebt ? 'المديونين فقط' : 'الكل'}
                     </button>
                     <button
                         onClick={() => setShowStats(!showStats)}
                         className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer border ${showStats
-                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                            ? 'bg-success/10 border-success/30 text-success'
                             : 'bg-surface border-border/80 text-text-muted hover:text-text-main'
                             }`}
                         title={showStats ? 'إخفاء الإحصائيات' : 'عرض تحليل العملاء'}
                     >
                         <Users size={18} />
                     </button>
-                    <button onClick={handleInitAdd} className="bg-emerald-500 text-black font-black hover:bg-emerald-400 h-10 px-4 rounded-xl flex items-center gap-2 transition-transform active:scale-[0.98] text-xs border border-emerald-400 touch-target cursor-pointer"><Plus size={16} /> إضافة عميل جديد</button>
+                    <button onClick={handleInitAdd} className="bg-success text-primary-fg font-black hover:bg-success h-10 px-4 rounded-xl flex items-center gap-2 transition-transform active:scale-[0.98] text-xs border border-success touch-target cursor-pointer"><Plus size={16} /> إضافة عميل جديد</button>
                 </div>
             }>
             </PageHeader>
@@ -265,20 +259,20 @@ export const CustomersPage: React.FC = () => {
                 <StatCard icon={Users} label="إجمالي العملاء" value={stats.totalCustomers} color="blue" subtitle="نشط" />
                 <StatCard icon={CreditCard} label="إجمالي الديون" value={formatCurrency(stats.totalAllDebt, prefs?.currency).replace(prefs?.currency || 'IQD', '')} color="red">
                     <div className="flex gap-3 text-[9px] font-bold mt-1">
-                        <span className="text-orange-400">آجل: {formatCurrency(stats.totalDebt, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</span>
-                        <span className="text-pink-400">أقساط: {formatCurrency(stats.totalInstallmentDebt, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</span>
+                        <span className="text-warning">آجل: {formatCurrency(stats.totalDebt, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</span>
+                        <span className="text-danger">أقساط: {formatCurrency(stats.totalInstallmentDebt, prefs?.currency).replace(prefs?.currency || 'IQD', '')}</span>
                     </div>
                 </StatCard>
                 <StatCard icon={Sparkles} label="عملاء VIP" value={stats.vipCustomers} color="amber" subtitle="مشتريات عالية" />
             </StatsGrid>
 
-            <div className="flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar pb-10">
+            <div className="flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar pb-4">
                 {filtered.length === 0 ? (
                     <EmptyState
                         icon={User}
                         title="لا يوجد عملاء"
                         description={search ? "لا توجد نتائج مطابقة لبحثك." : "ابدأ بإضافة عملائك لتتبع مشترياتهم وديونهم."}
-                        action={!search && <button onClick={handleInitAdd} className="bg-primary text-black px-5 py-2.5 rounded-xl font-bold hover:brightness-110 shadow-sm transition-all">إضافة عميل جديد</button>}
+                        action={!search && <button onClick={handleInitAdd} className="bg-primary text-primary-fg px-5 py-2.5 rounded-xl font-bold hover:brightness-110 shadow-sm transition-all">إضافة عميل جديد</button>}
                     />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4.5 p-1">
@@ -292,12 +286,12 @@ export const CustomersPage: React.FC = () => {
                             return (
                                 <div
                                     key={c.id}
-                                    className="group relative flex flex-col justify-between bg-surface hover:bg-surface-hover border border-border/80 hover:border-emerald-500/40 rounded-3xl p-5 shadow-sm hover:shadow-emerald-950/20 transition-all duration-200 overflow-hidden"
+                                    className="group relative flex flex-col justify-between bg-surface hover:bg-surface-hover border border-border/80 hover:border-success/40 rounded-3xl p-5 shadow-sm hover:shadow-success/20 transition-all duration-200 overflow-hidden"
                                 >
                                     {/* Top Health Accent Bar */}
                                     <div
                                         className={`absolute top-0 right-0 left-0 h-1 ${
-                                            isVip ? 'bg-emerald-400' : hasAnyDebt ? 'bg-rose-500' : 'bg-emerald-500/40'
+                                            isVip ? 'bg-success' : hasAnyDebt ? 'bg-danger' : 'bg-success/40'
                                         }`}
                                     />
 
@@ -308,10 +302,10 @@ export const CustomersPage: React.FC = () => {
                                                 <div
                                                     className={`w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-extrabold shadow-inner transition-transform group-hover:scale-105 ${
                                                         isVip
-                                                            ? 'bg-primary text-black ring-2 ring-primary/30'
+                                                            ? 'bg-primary text-primary-fg ring-2 ring-primary/30'
                                                             : hasAnyDebt
-                                                                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                                                                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                                ? 'bg-danger/10 text-danger border border-danger/20'
+                                                                : 'bg-success/10 text-success border border-success/20'
                                                     }`}
                                                 >
                                                     {c.name.charAt(0)}
@@ -329,7 +323,7 @@ export const CustomersPage: React.FC = () => {
                                                     </div>
                                                     <a
                                                         href={`tel:${c.phone}`}
-                                                        className="text-xs text-text-muted hover:text-emerald-400 font-mono mt-0.5 inline-block transition-colors"
+                                                        className="text-xs text-text-muted hover:text-success font-mono mt-0.5 inline-block transition-colors"
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         {c.phone || 'بدون هاتف'}
@@ -341,8 +335,8 @@ export const CustomersPage: React.FC = () => {
                                             <span
                                                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-2xs ${
                                                     hasAnyDebt
-                                                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                                                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                                        ? 'bg-danger/10 text-danger border-danger/30'
+                                                        : 'bg-success/10 text-success border-success/30'
                                                 }`}
                                             >
                                                 {hasAnyDebt ? 'مطلوب ديون' : 'حساب مصفّى'}
@@ -364,7 +358,7 @@ export const CustomersPage: React.FC = () => {
                                                 <span className="text-text-muted font-bold">الديون المستحقة:</span>
                                                 <span
                                                     className={`font-mono font-black text-sm ${
-                                                        hasAnyDebt ? 'text-rose-400' : 'text-emerald-400'
+                                                        hasAnyDebt ? 'text-danger' : 'text-success'
                                                     }`}
                                                 >
                                                     {hasAnyDebt
@@ -427,7 +421,7 @@ export const CustomersPage: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => handleDelete(c.id)}
-                                                className="p-2 rounded-xl bg-surface hover:bg-rose-500/15 text-text-muted hover:text-rose-400 border border-border/50 transition-all active:scale-95"
+                                                className="p-2 rounded-xl bg-surface hover:bg-danger/15 text-text-muted hover:text-danger border border-border/50 transition-all active:scale-95"
                                                 title="حذف العميل"
                                             >
                                                 <Trash2 size={14} />
@@ -442,7 +436,7 @@ export const CustomersPage: React.FC = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => setInstallmentModal(c.id)}
-                                                            className="p-2 rounded-xl bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 transition-all active:scale-95"
+                                                            className="p-2 rounded-xl bg-warning/10 text-warning hover:bg-warning/20 border border-warning/30 transition-all active:scale-95"
                                                             title="جدول الأقساط"
                                                         >
                                                             <Calculator size={14} />
@@ -462,7 +456,7 @@ export const CustomersPage: React.FC = () => {
                                                             window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
                                                             notify('تم فتح WhatsApp', 'success');
                                                         }}
-                                                        className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all active:scale-95"
+                                                        className="p-2 rounded-xl bg-success/10 text-success hover:bg-success/20 border border-success/30 transition-all active:scale-95"
                                                         title="إرسال تذكير عبر واتساب"
                                                     >
                                                         <MessageSquare size={14} />
@@ -471,7 +465,7 @@ export const CustomersPage: React.FC = () => {
                                                     <button
                                                         type="button"
                                                         onClick={() => setPayDebtModal(c)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs shadow-sm active:scale-95 transition-all"
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-success hover:bg-success text-primary-fg font-extrabold text-xs shadow-sm active:scale-95 transition-all"
                                                         title="تسديد دفعة من الدين"
                                                     >
                                                         <Wallet size={13} />
@@ -512,21 +506,21 @@ export const CustomersPage: React.FC = () => {
             {payDebtModal && <Modal title="تسديد دفعة" onClose={() => setPayDebtModal(null)} size="sm">
                 <div className="space-y-6 text-center pt-2">
                     <div className="bg-bg p-6 rounded-3xl border border-border relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/10 blur-xl rounded-full pointer-events-none"></div>
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-danger/10 blur-xl rounded-full pointer-events-none"></div>
                         <p className="text-xs text-text-muted font-bold uppercase tracking-wider mb-2">إجمالي الدين المستحق</p>
-                        <p className="text-4xl font-black text-text-main tracking-tight font-mono">{formatCurrency(payDebtModal.debt || 0, prefs?.currency).replace(prefs?.currency || 'IQD', '')}<span className="text-sm text-red-500 ml-1">{prefs?.currency || 'IQD'}</span></p>
+                        <p className="text-4xl font-black text-text-main tracking-tight font-mono">{formatCurrency(payDebtModal.debt || 0, prefs?.currency).replace(prefs?.currency || 'IQD', '')}<span className="text-sm text-danger ml-1">{prefs?.currency || 'IQD'}</span></p>
                     </div>
                     <div className="relative">
                         <input type="number" id="payAmount" className="w-full bg-input-bg border border-border text-primary rounded-2xl p-4 outline-none focus:border-primary font-black text-center text-3xl placeholder:text-text-muted" placeholder="0" autoFocus />
                         <p className="text-[10px] text-text-muted mt-2 font-bold">أدخل المبلغ المراد تسديده</p>
                     </div>
-                    <button onClick={() => handlePayDebt(Number((document.getElementById('payAmount') as HTMLInputElement).value))} className="w-full bg-green-500 text-white font-black py-4 rounded-2xl hover:bg-green-600 shadow-lg shadow-green-500/20 active:scale-95 transition-all text-sm">تأكيد الدفع</button>
+                    <button onClick={() => handlePayDebt(Number((document.getElementById('payAmount') as HTMLInputElement).value))} className="w-full bg-success text-white font-black py-4 rounded-2xl hover:bg-success shadow-lg shadow-success/20 active:scale-95 transition-all text-sm">تأكيد الدفع</button>
                 </div>
             </Modal>}
 
             {installmentModal && <Modal title="الأقساط المستحقة" onClose={() => setInstallmentModal(null)} size="lg">
                 <div className="space-y-4">
-                    {selectedCustomerInstallments.length === 0 ? <p className="text-center text-text-muted py-6 text-xs font-bold">لا توجد أقساط نشطة.</p> : selectedCustomerInstallments.map(s => (
+                    {customerInstallments.length === 0 ? <p className="text-center text-text-muted py-6 text-xs font-bold">لا توجد أقساط نشطة.</p> : customerInstallments.map(s => (
                         <div key={s.id} className="bg-bg border border-border rounded-2xl p-4">
                             <div className="flex justify-between items-center mb-4 border-b border-border pb-2">
                                 <div>
@@ -536,7 +530,7 @@ export const CustomersPage: React.FC = () => {
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => { setPreviewSale(s); setPreviewMode('a4'); }}
-                                        className="px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg text-xs font-bold hover:bg-blue-500/20 transition-all flex items-center gap-1"
+                                        className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-1"
                                         title="معاينة الفاتورة"
                                     >
                                         <Eye size={14} /> معاينة
@@ -544,24 +538,24 @@ export const CustomersPage: React.FC = () => {
                                 </div>
                                 <div>
                                     <p className="text-xs text-text-muted">المتبقي</p>
-                                    <p className="text-pink-400 font-bold font-mono">
+                                    <p className="text-danger font-bold font-mono">
                                         {formatCurrency(s.installmentPlan?.schedule.filter(i => i.status !== 'paid').reduce((acc, i) => acc + i.amount, 0) || 0, prefs?.currency)}
                                     </p>
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 {s.installmentPlan?.schedule.map((inst, idx) => (
-                                    <div key={idx} className={`flex justify-between items-center p-3 rounded-xl border ${inst.status === 'paid' ? 'bg-green-500/5 border-green-500/20' : new Date(inst.dueDate) < new Date() ? 'bg-red-500/5 border-red-500/20' : 'bg-surface border-border'}`}>
+                                    <div key={idx} className={`flex justify-between items-center p-3 rounded-xl border ${inst.status === 'paid' ? 'bg-success/5 border-success/20' : new Date(inst.dueDate) < new Date() ? 'bg-danger/5 border-danger/20' : 'bg-surface border-border'}`}>
                                         <div>
-                                            <p className={`text-xs font-bold font-mono ${inst.status === 'paid' ? 'text-green-500' : 'text-text-main'}`}>قسط #{inst.number} - {formatCurrency(inst.amount)}</p>
+                                            <p className={`text-xs font-bold font-mono ${inst.status === 'paid' ? 'text-success' : 'text-text-main'}`}>قسط #{inst.number} - {formatCurrency(inst.amount)}</p>
                                             <p className="text-[10px] text-text-muted">مستحق: {inst.dueDate}</p>
                                         </div>
                                         {inst.status === 'paid' ? (
-                                            <span className="text-xs text-green-500 font-bold flex items-center gap-1"><Check size={14} /> تم الدفع</span>
+                                            <span className="text-xs text-success font-bold flex items-center gap-1"><Check size={14} /> تم الدفع</span>
                                         ) : (
                                             <button
                                                 onClick={() => handlePayInstallment(s.id, idx, inst.amount)}
-                                                className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-bold hover:bg-primary hover:text-black transition-all"
+                                                className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-bold hover:bg-primary hover:text-primary-fg transition-all"
                                             >
                                                 تسديد الآن
                                             </button>
@@ -583,13 +577,13 @@ export const CustomersPage: React.FC = () => {
                             <div className="flex justify-center gap-2 mb-4">
                                 <button
                                     onClick={() => setPreviewMode('a4')}
-                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${previewMode === 'a4' ? 'bg-primary text-black' : 'bg-surface border border-border text-text-muted hover:text-text-main'}`}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${previewMode === 'a4' ? 'bg-primary text-primary-fg' : 'bg-surface border border-border text-text-muted hover:text-text-main'}`}
                                 >
                                     <FileText size={16} /> فاتورة رسمية A4
                                 </button>
                                 <button
                                     onClick={() => setPreviewMode('thermal')}
-                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${previewMode === 'thermal' ? 'bg-primary text-black' : 'bg-surface border border-border text-text-muted hover:text-text-main'}`}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${previewMode === 'thermal' ? 'bg-primary text-primary-fg' : 'bg-surface border border-border text-text-muted hover:text-text-main'}`}
                                 >
                                     <Printer size={16} /> إيصال حراري 80mm
                                 </button>
@@ -610,7 +604,7 @@ export const CustomersPage: React.FC = () => {
                                         notify('فشل في إنشاء ملف PDF', 'error');
                                     }
                                 }}
-                                className="w-full bg-primary text-black font-black py-4 rounded-xl hover:brightness-110 shadow-lg shadow-primary/20 active:scale-95 transition-all text-sm flex items-center justify-center gap-2"
+                                className="w-full bg-primary text-primary-fg font-black py-4 rounded-xl hover:brightness-110 shadow-lg shadow-primary/20 active:scale-95 transition-all text-sm flex items-center justify-center gap-2"
                             >
                                 <Printer size={18} /> طباعة الفاتورة
                             </button>

@@ -56,7 +56,7 @@ export const CategoryModal = ({
                                         </button>
                                         <button
                                             onClick={() => onDeleteCategory(cat)}
-                                            className="p-2 hover:bg-red-500/10 rounded-lg text-text-muted hover:text-red-500 transition-all"
+                                            className="p-2 hover:bg-danger/10 rounded-lg text-text-muted hover:text-danger transition-all"
                                             title="حذف"
                                         >
                                             <Trash2 size={14} />
@@ -125,7 +125,7 @@ export const CategoryModal = ({
                                 {catForm.fields.map((f, i) => (
                                     <div key={i} className="flex justify-between items-center bg-surface p-2.5 rounded-lg border border-border">
                                         <span className="text-xs font-bold text-text-main">{f.name} <span className="text-[9px] text-text-muted bg-bg px-1.5 py-0.5 rounded ml-1 border border-border">{f.type === 'text' ? 'نص' : f.type === 'number' ? 'رقم' : 'قائمة'}</span></span>
-                                        <button onClick={() => setCatForm(prev => ({ ...prev, fields: prev.fields?.filter((_, idx) => idx !== i) }))} className="text-red-500 hover:bg-red-500/10 p-1 rounded transition-all" aria-label="Delete Field"><Trash2 size={12} /></button>
+                                        <button onClick={() => setCatForm(prev => ({ ...prev, fields: prev.fields?.filter((_, idx) => idx !== i) }))} className="text-danger hover:bg-danger/10 p-1 rounded transition-all" aria-label="Delete Field"><Trash2 size={12} /></button>
                                     </div>
                                 ))}
                             </div>

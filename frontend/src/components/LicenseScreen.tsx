@@ -127,9 +127,9 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
 
         {/* Trial Expired Banner */}
         {mode === 'license' && (
-          <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl p-5 mb-6 text-center">
+          <div className="bg-warning/10 border border-warning/30 rounded-2xl p-5 mb-6 text-center">
             <div className="text-4xl mb-3">⏰</div>
-            <h2 className="text-lg font-black text-amber-400 mb-2">انتهت الفترة التجريبية المجانية</h2>
+            <h2 className="text-lg font-black text-warning mb-2">انتهت الفترة التجريبية المجانية</h2>
             <p className="text-sm text-text-muted mb-4">
               للاستمرار في استخدام التطبيق، يرجى التواصل مع مطور التطبيق لشراء ترخيص
             </p>
@@ -148,7 +148,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
         )}
 
         <div className="bg-surface  border border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
-          <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${mode === 'license' ? 'from-primary to-blue-600' : 'from-blue-500 to-cyan-500'}`}></div>
+          <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${mode === 'license' ? 'from-primary to-primary' : 'from-primary to-primary'}`}></div>
 
           {mode === 'license' ? (
             <form onSubmit={handleActivate} className="space-y-6">
@@ -168,7 +168,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
               </div>
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center gap-3 text-red-400 text-xs font-bold animate-in slide-in-from-top-2">
+                <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 flex items-center gap-3 text-danger text-xs font-bold animate-in slide-in-from-top-2">
                   <AlertTriangle size={16} className="shrink-0" />
                   {error}
                 </div>
@@ -177,7 +177,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
               <button
                 type="submit"
                 disabled={isLoading || !keyInput}
-                className="w-full bg-gradient-to-r from-primary to-teal-600 text-black font-black py-4 rounded-xl hover:brightness-110 transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-primary text-primary-fg font-black py-4 rounded-xl hover:brightness-110 transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -202,7 +202,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
                     type="button"
                     onClick={handleScanServers}
                     disabled={isScanning}
-                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                    className="text-xs text-primary hover:text-primary flex items-center gap-1 transition-colors"
                   >
                     {isScanning ? (
                       <><Loader2 size={12} className="animate-spin" /> جاري البحث...</>
@@ -213,8 +213,8 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
                 </div>
 
                 {isScanning ? (
-                  <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-xl text-center">
-                    <Loader2 size={24} className="animate-spin mx-auto text-blue-400 mb-2" />
+                  <div className="p-6 bg-primary/5 border border-primary/20 rounded-xl text-center">
+                    <Loader2 size={24} className="animate-spin mx-auto text-primary mb-2" />
                     <p className="text-sm text-text-muted">جاري البحث عن سيرفرات بيدار...</p>
                     <p className="text-xs text-text-muted/50 mt-1">يستغرق حوالي 5 ثوان</p>
                   </div>
@@ -226,14 +226,14 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
                         type="button"
                         onClick={() => handleSelectServer(server)}
                         className={`w-full p-4 rounded-xl border text-right transition-all ${serverIp === server.serverIP
-                          ? 'bg-blue-500/10 border-blue-500 text-blue-400'
-                          : 'bg-bg border-border hover:border-blue-500/50 text-text-main'
+                          ? 'bg-primary/10 border-primary text-primary'
+                          : 'bg-bg border-border hover:border-primary/50 text-text-main'
                           }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${serverIp === server.serverIP ? 'bg-blue-400' : 'bg-emerald-400'} animate-pulse`} />
-                            <Server size={18} className={serverIp === server.serverIP ? 'text-blue-400' : 'text-emerald-400'} />
+                            <div className={`w-3 h-3 rounded-full ${serverIp === server.serverIP ? 'bg-primary' : 'bg-success'} animate-pulse`} />
+                            <Server size={18} className={serverIp === server.serverIP ? 'text-primary' : 'text-success'} />
                             <span className="font-bold">{server.serverName}</span>
                           </div>
                           <code className="text-sm font-mono bg-surface px-2 py-1 rounded">{server.serverIP}</code>
@@ -258,7 +258,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
                 </summary>
                 <div className="mt-3">
                   <div className="relative group/input">
-                    <Server className="absolute right-4 top-3.5 text-text-muted group-focus-within/input:text-blue-400 transition-colors" size={20} />
+                    <Server className="absolute right-4 top-3.5 text-text-muted group-focus-within/input:text-primary transition-colors" size={20} />
                     <input
                       type="text"
                       className="w-full bg-bg border border-border text-text-main rounded-xl py-3 pr-12 ltr text-lg placeholder:text-text-muted/50 font-bold"
@@ -275,7 +275,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
               <div className="mt-3">
                 <input
                   type="password"
-                  className="w-full bg-bg border border-border text-text-main rounded-xl py-3 px-4 outline-none focus:border-blue-500 focus:bg-surface transition-all font-mono text-center text-sm placeholder:text-text-muted/50"
+                  className="w-full bg-bg border border-border text-text-main rounded-xl py-3 px-4 outline-none focus:border-primary focus:bg-surface transition-all font-mono text-center text-sm placeholder:text-text-muted/50"
                   placeholder="رمز سر الخادم (اختياري)"
                   value={serverSecret}
                   onChange={(e) => setServerSecret(e.target.value)}
@@ -284,7 +284,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
               </div>
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center gap-3 text-red-400 text-xs font-bold animate-in slide-in-from-top-2">
+                <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 flex items-center gap-3 text-danger text-xs font-bold animate-in slide-in-from-top-2">
                   <AlertTriangle size={16} className="shrink-0" />
                   {error}
                 </div>
@@ -293,7 +293,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
               <button
                 type="submit"
                 disabled={isLoading || !serverIp}
-                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black py-4 rounded-xl hover:brightness-110 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-primary text-white font-black py-4 rounded-xl hover:brightness-110 transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -335,7 +335,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({ onSuccess }) => {
               await api.cloud.logout();
               onSuccess(); // Trigger re-check which will redirect to login
             }}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/40 text-red-400 font-bold text-sm transition-all"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-danger/20 bg-danger/5 hover:bg-danger/10 hover:border-danger/40 text-danger font-bold text-sm transition-all"
           >
             <LogOut size={16} />
             تسجيل الخروج من الحساب

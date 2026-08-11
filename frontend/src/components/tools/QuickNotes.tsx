@@ -13,11 +13,11 @@ interface Note {
 
 const COLORS = [
     { id: 'default', bg: 'bg-bg', border: 'border-border' },
-    { id: 'yellow', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
-    { id: 'green', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
-    { id: 'blue', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
-    { id: 'pink', bg: 'bg-pink-500/10', border: 'border-pink-500/30' },
-    { id: 'purple', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
+    { id: 'yellow', bg: 'bg-warning/10', border: 'border-warning/30' },
+    { id: 'green', bg: 'bg-success/10', border: 'border-success/30' },
+    { id: 'blue', bg: 'bg-primary/10', border: 'border-primary/30' },
+    { id: 'pink', bg: 'bg-danger/10', border: 'border-danger/30' },
+    { id: 'purple', bg: 'bg-primary/10', border: 'border-primary/30' },
 ];
 
 export const QuickNotes = () => {
@@ -127,7 +127,7 @@ export const QuickNotes = () => {
                                 className="p-1.5 rounded-lg hover:bg-white/10 text-text-muted hover:text-text-main transition-colors"
                                 title="نسخ النص"
                             >
-                                {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+                                {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
                             </button>
                             <div className="relative">
                                 <button
@@ -151,13 +151,13 @@ export const QuickNotes = () => {
                             </div>
                             <button
                                 onClick={() => updateNote(currentNote.id, { pinned: !currentNote.pinned })}
-                                className={`p-1.5 rounded-lg transition-colors ${currentNote.pinned ? 'text-amber-400' : 'text-text-muted hover:text-text-main'}`}
+                                className={`p-1.5 rounded-lg transition-colors ${currentNote.pinned ? 'text-warning' : 'text-text-muted hover:text-text-main'}`}
                             >
                                 {currentNote.pinned ? <PinOff size={16} /> : <Pin size={16} />}
                             </button>
                             <button
                                 onClick={() => deleteNote(currentNote.id)}
-                                className="p-1.5 rounded-lg hover:bg-red-500/10 text-text-muted hover:text-red-400"
+                                className="p-1.5 rounded-lg hover:bg-danger/10 text-text-muted hover:text-danger"
                             >
                                 <Trash2 size={16} />
                             </button>
@@ -198,7 +198,7 @@ export const QuickNotes = () => {
                                                     lines.splice(idx, 1);
                                                     updateNote(currentNote.id, { content: lines.join('\n') });
                                                 }}
-                                                className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-red-400 transition-opacity"
+                                                className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-danger transition-opacity"
                                             >
                                                 <XIcon size={12} />
                                             </button>
@@ -250,7 +250,7 @@ export const QuickNotes = () => {
                                             <p className={`text-sm line-clamp-2 ${!note.content && 'italic opacity-50'}`}>
                                                 {note.content || 'ملاحظة فارغة'}
                                             </p>
-                                            {note.pinned && <Pin size={12} className="text-amber-400 flex-shrink-0" />}
+                                            {note.pinned && <Pin size={12} className="text-warning flex-shrink-0" />}
                                         </div>
                                         <div className="text-[10px] text-text-muted mt-2 flex items-center justify-between">
                                             <span className="flex items-center gap-1"><Clock size={10} /> {formatDate(note.updatedAt)}</span>

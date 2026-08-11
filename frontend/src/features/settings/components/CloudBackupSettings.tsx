@@ -313,7 +313,7 @@ export function CloudBackupSettings() {
             {/* Header Banner */}
             <div className="bg-surface border border-border/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <div className="p-2.5 rounded-xl bg-success/10 text-success border border-success/20">
                         <Cloud size={22} />
                     </div>
                     <div>
@@ -326,8 +326,8 @@ export function CloudBackupSettings() {
             {/* Status Message */}
             {message && (
                 <div className={`p-3.5 rounded-xl flex items-center gap-2.5 ${message.type === 'success'
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-red-500/10 text-red-400 border border-red-500/30'
+                    ? 'bg-success/10 text-success border border-success/30'
+                    : 'bg-danger/10 text-danger border border-danger/30'
                     }`}>
                     {message.type === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
                     <span className="text-xs font-black">{message.text}</span>
@@ -336,19 +336,15 @@ export function CloudBackupSettings() {
 
             {/* Not Logged In State */}
             {!isLoggedIn && (
-                <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                            <AlertCircle size={20} className="text-amber-400" />
+                <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden p-5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-warning/10 border border-warning/20 rounded-xl text-warning">
+                            <AlertCircle size={20} />
                         </div>
                         <div>
-                            <h3 className="font-black text-text-main text-base">تسجيل الدخول غير متاح حالياً</h3>
-                            <p className="text-xs text-text-muted font-medium mt-0.5">يلزم تسجيل الدخول بنفس الحساب المعتمد لترخيص النسخة السحابية.</p>
+                            <h3 className="font-black text-text-main text-sm">تسجيل الدخول غير متاح</h3>
+                            <p className="text-xs text-text-muted font-medium mt-0.5">يلزم توفر ترخيص فعال لتنشيط هذه اللوحة</p>
                         </div>
-                    </div>
-                    <div className="p-3 bg-surface-hover/60 border border-border/60 rounded-xl text-xs text-text-muted font-bold flex items-center gap-2">
-                        <Info size={16} className="shrink-0 text-emerald-400" />
-                        <span>إذا قمت بتفعيل الترخيص من الشاشة الرئيسية، ستنشط هذه اللوحة تلقائياً.</span>
                     </div>
                 </div>
             )}
@@ -360,21 +356,21 @@ export function CloudBackupSettings() {
                     <div className="bg-surface border border-border/80 rounded-2xl p-5">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3.5">
-                                <div className="w-11 h-11 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
+                                <div className="w-11 h-11 bg-success/10 border border-success/20 rounded-xl flex items-center justify-center text-success">
                                     <User size={22} />
                                 </div>
                                 <div>
                                     <p className="font-black text-text-main text-sm">{currentUser.store_name || 'متجري'}</p>
                                     <p className="text-xs font-mono font-semibold text-text-muted">{currentUser.email}</p>
                                     <div className="flex items-center gap-1.5 mt-1">
-                                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                                        <span className="text-[10px] text-emerald-400 font-bold">الحساب نشط (Licensed)</span>
+                                        <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
+                                        <span className="text-[10px] text-success font-bold">الحساب نشط (Licensed)</span>
                                     </div>
                                 </div>
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="px-3.5 py-2 text-xs text-red-400 hover:text-red-300 bg-red-500/10 border border-red-500/20 rounded-xl transition-colors flex items-center gap-1.5 font-black cursor-pointer"
+                                className="px-3.5 py-2 text-xs text-danger hover:text-danger bg-danger/10 border border-danger/20 rounded-xl transition-colors flex items-center gap-1.5 font-black cursor-pointer"
                             >
                                 <LogOut size={14} />
                                 تسجيل الخروج
@@ -386,16 +382,16 @@ export function CloudBackupSettings() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {/* Auto Sync Toggle */}
                         <div className={`p-4 rounded-2xl border transition-colors cursor-pointer ${autoSync
-                            ? 'bg-emerald-500/10 border-emerald-500/30'
-                            : 'bg-surface border-border/80 hover:border-emerald-500/30'
+                            ? 'bg-success/10 border-success/30'
+                            : 'bg-surface border-border/80 hover:border-success/30'
                             }`}
                             onClick={handleAutoSyncToggle}
                         >
                             <div className="flex items-center justify-between mb-2">
-                                <div className={`p-2 rounded-xl border ${autoSync ? 'bg-emerald-500 text-black border-emerald-400' : 'bg-surface-hover text-text-muted border-border/60'}`}>
+                                <div className={`p-2 rounded-xl border ${autoSync ? 'bg-success text-primary-fg border-success' : 'bg-surface-hover text-text-muted border-border/60'}`}>
                                     <RefreshCw size={18} className={autoSync ? 'animate-spin' : ''} />
                                 </div>
-                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${autoSync ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-hover text-text-muted border-border/60'}`}>
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${autoSync ? 'bg-success/20 text-success border-success/30' : 'bg-surface-hover text-text-muted border-border/60'}`}>
                                     {autoSync ? 'مفعل' : 'معطل'}
                                 </span>
                             </div>
@@ -407,7 +403,7 @@ export function CloudBackupSettings() {
                         <button
                             onClick={handleBackup}
                             disabled={backupLoading}
-                            className="p-4 rounded-2xl bg-emerald-500 text-black border border-emerald-400 hover:bg-emerald-400 transition-transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed text-right font-black cursor-pointer min-h-[80px]"
+                            className="p-4 rounded-2xl bg-success text-primary-fg border border-success hover:bg-success transition-transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed text-right font-black cursor-pointer min-h-[80px]"
                         >
                             <div className="flex items-center justify-between mb-2">
                                 <div className="p-2 bg-black/10 rounded-xl">
@@ -427,9 +423,9 @@ export function CloudBackupSettings() {
                     <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden">
                         <div className="p-3.5 border-b border-border/60 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <Database size={16} className="text-emerald-400" />
+                                <Database size={16} className="text-success" />
                                 <span className="font-black text-xs text-text-main">سجل النسخ المحفوظة بالسحابة</span>
-                                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-lg font-bold">
+                                <span className="text-[10px] bg-success/10 text-success border border-success/20 px-2 py-0.5 rounded-lg font-bold">
                                     {backups.length} نسخة
                                 </span>
                             </div>
@@ -456,7 +452,7 @@ export function CloudBackupSettings() {
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
+                                            <div className="w-9 h-9 bg-success/10 border border-success/20 rounded-xl flex items-center justify-center text-success">
                                                 <Database size={16} />
                                             </div>
                                             <div>
@@ -471,7 +467,7 @@ export function CloudBackupSettings() {
                                             <button
                                                 onClick={() => confirmRestore(backup.id)}
                                                 disabled={restoreLoading === backup.id}
-                                                className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-colors disabled:opacity-50 cursor-pointer"
+                                                className="p-2 bg-success/10 text-success border border-success/20 rounded-xl hover:bg-success/20 transition-colors disabled:opacity-50 cursor-pointer"
                                                 title="استعادة"
                                             >
                                                 {restoreLoading === backup.id ? (
@@ -482,7 +478,7 @@ export function CloudBackupSettings() {
                                             </button>
                                             <button
                                                 onClick={() => confirmDelete(backup.id)}
-                                                className="p-2 text-red-400 hover:bg-red-500/10 border border-red-500/20 rounded-xl transition-colors cursor-pointer"
+                                                className="p-2 text-danger hover:bg-danger/10 border border-danger/20 rounded-xl transition-colors cursor-pointer"
                                                 title="حذف"
                                             >
                                                 <Trash2 size={14} />
@@ -498,7 +494,7 @@ export function CloudBackupSettings() {
 
             <div className="bg-surface border border-border/80 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-3">
-                    <Info size={16} className="text-emerald-400" />
+                    <Info size={16} className="text-success" />
                     <span className="font-black text-xs text-text-main">مواصفات التخزين السحابي</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

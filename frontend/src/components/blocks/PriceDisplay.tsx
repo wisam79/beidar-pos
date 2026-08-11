@@ -20,9 +20,9 @@ interface PriceDisplayProps {
 const variantColors: Record<PriceVariant, string> = {
     default: 'text-text-main',
     primary: 'text-primary',
-    success: 'text-emerald-500 dark:text-emerald-400',
-    danger: 'text-rose-500 dark:text-rose-400',
-    warning: 'text-amber-500 dark:text-amber-400',
+    success: 'text-success dark:text-success',
+    danger: 'text-danger dark:text-danger',
+    warning: 'text-warning dark:text-warning',
     muted: 'text-text-muted',
 };
 

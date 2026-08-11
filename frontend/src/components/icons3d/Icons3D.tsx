@@ -12,95 +12,30 @@ export interface Icon3DProps {
     alt?: string;
 }
 
-export const Pos3DIcon: React.FC<Icon3DProps> = ({ size = 220, className = '', alt = 'نقطة البيع' }) => (
-    <div className="relative w-full flex items-center justify-center">
-        <img
-            src={posSalesImg}
-            alt={alt}
-            width={size}
-            height={size}
-            style={{ width: size, height: size }}
-            className={`relative z-10 object-contain select-none pointer-events-none drop-shadow-md transition-transform duration-300 ${className}`}
-            loading="eager"
-            draggable={false}
-        />
-    </div>
-);
+const makeIcon = (src: string, defaultAlt: string) => {
+    const Icon3D: React.FC<Icon3DProps> = ({ size = 220, className = '', alt = defaultAlt }) => (
+        <div className="relative w-full flex items-center justify-center">
+            <img
+                src={src}
+                alt={alt}
+                width={size}
+                height={size}
+                style={{ width: size, height: size }}
+                className={`relative z-10 object-contain select-none pointer-events-none drop-shadow-md transition-transform duration-300 ${className}`}
+                loading="eager"
+                draggable={false}
+            />
+        </div>
+    );
+    return Icon3D;
+};
 
-export const Products3DIcon: React.FC<Icon3DProps> = ({ size = 220, className = '', alt = 'المخزون' }) => (
-    <div className="relative w-full flex items-center justify-center">
-        <img
-            src={productsImg}
-            alt={alt}
-            width={size}
-            height={size}
-            style={{ width: size, height: size }}
-            className={`relative z-10 object-contain select-none pointer-events-none drop-shadow-md transition-transform duration-300 ${className}`}
-            loading="eager"
-            draggable={false}
-        />
-    </div>
-);
-
-export const Invoices3DIcon: React.FC<Icon3DProps> = ({ size = 220, className = '', alt = 'الفواتير' }) => (
-    <div className="relative w-full flex items-center justify-center">
-        <img
-            src={invoicesImg}
-            alt={alt}
-            width={size}
-            height={size}
-            style={{ width: size, height: size }}
-            className={`relative z-10 object-contain select-none pointer-events-none drop-shadow-md transition-transform duration-300 ${className}`}
-            loading="eager"
-            draggable={false}
-        />
-    </div>
-);
-
-export const Vault3DIcon: React.FC<Icon3DProps> = ({ size = 220, className = '', alt = 'الخزينة' }) => (
-    <div className="relative w-full flex items-center justify-center">
-        <img
-            src={vaultImg}
-            alt={alt}
-            width={size}
-            height={size}
-            style={{ width: size, height: size }}
-            className={`relative z-10 object-contain select-none pointer-events-none drop-shadow-md transition-transform duration-300 ${className}`}
-            loading="eager"
-            draggable={false}
-        />
-    </div>
-);
-
-export const Customers3DIcon: React.FC<Icon3DProps> = ({ size = 220, className = '', alt = 'العملاء' }) => (
-    <div className="relative w-full flex items-center justify-center">
-        <img
-            src={customersImg}
-            alt={alt}
-            width={size}
-            height={size}
-            style={{ width: size, height: size }}
-            className={`relative z-10 object-contain select-none pointer-events-none drop-shadow-md transition-transform duration-300 ${className}`}
-            loading="eager"
-            draggable={false}
-        />
-    </div>
-);
-
-export const Reports3DIcon: React.FC<Icon3DProps> = ({ size = 220, className = '', alt = 'التقارير' }) => (
-    <div className="relative w-full flex items-center justify-center">
-        <img
-            src={reportsImg}
-            alt={alt}
-            width={size}
-            height={size}
-            style={{ width: size, height: size }}
-            className={`relative z-10 object-contain select-none pointer-events-none drop-shadow-md transition-transform duration-300 ${className}`}
-            loading="eager"
-            draggable={false}
-        />
-    </div>
-);
+export const Pos3DIcon = makeIcon(posSalesImg, 'نقطة البيع');
+export const Products3DIcon = makeIcon(productsImg, 'المخزون');
+export const Invoices3DIcon = makeIcon(invoicesImg, 'الفواتير');
+export const Vault3DIcon = makeIcon(vaultImg, 'الخزينة');
+export const Customers3DIcon = makeIcon(customersImg, 'العملاء');
+export const Reports3DIcon = makeIcon(reportsImg, 'التقارير');
 
 export const AI3DIcon = Pos3DIcon;
 export const Settings3DIcon = Pos3DIcon;

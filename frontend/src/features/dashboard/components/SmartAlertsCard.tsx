@@ -30,8 +30,8 @@ export const SmartAlertsCard = memo(({
     if (!hasAlerts) {
         return (
             <div className="flex flex-col items-center justify-center py-6 text-center">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3">
-                    <CheckCircle2 size={24} className="text-emerald-500" />
+                <div className="w-12 h-12 rounded-full bg-success/10 border border-success/20 flex items-center justify-center mb-3">
+                    <CheckCircle2 size={24} className="text-success" />
                 </div>
                 <p className="text-sm font-bold text-text-main">كل شيء على ما يرام</p>
                 <p className="text-[10px] text-text-muted">لا توجد تنبيهات حالياً</p>
@@ -43,10 +43,10 @@ export const SmartAlertsCard = memo(({
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
-                    <AlertCircle size={16} className="text-amber-500" />
+                    <AlertCircle size={16} className="text-warning" />
                     التنبيهات
                 </h3>
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/10 text-amber-500 text-[10px] font-bold">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-warning/10 text-warning text-[10px] font-bold">
                     {alerts.length}
                 </span>
             </div>
@@ -57,14 +57,14 @@ export const SmartAlertsCard = memo(({
                         key={alert.type}
                         onClick={() => setView(alert.view as View)}
                         className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-right group ${alert.priority === 'critical'
-                                ? 'bg-red-500/5 border-red-500/20 hover:border-red-500/40'
+                                ? 'bg-danger/5 border-danger/20 hover:border-danger/40'
                                 : 'bg-surface border-border hover:border-primary/50'
                             }`}
                     >
                         <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${alert.type === 'stock' ? 'bg-orange-500/10 text-orange-500' :
-                                    alert.type === 'debt' ? 'bg-red-500/10 text-red-500' :
-                                        'bg-blue-500/10 text-blue-500'
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${alert.type === 'stock' ? 'bg-warning/10 text-warning' :
+                                    alert.type === 'debt' ? 'bg-danger/10 text-danger' :
+                                        'bg-primary/10 text-primary'
                                 }`}>
                                 {alert.type === 'stock' && <Package size={16} />}
                                 {alert.type === 'debt' && <CalendarClock size={16} />}

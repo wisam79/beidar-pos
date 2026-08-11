@@ -121,15 +121,17 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
     return (
         <header
             dir="rtl"
-            className="title-bar-draggable h-18 bg-surface/95 backdrop-blur-md border-b border-border/80 flex items-center justify-between select-none z-[50] shrink-0 w-full relative text-sm pr-4 pl-0 transition-colors shadow-2xs"
+            className={cn(
+                "title-bar-draggable bg-surface/95 backdrop-blur-md border-b border-border/70 flex items-center justify-between select-none z-[50] shrink-0 w-full relative text-sm pr-4 pl-0 transition-all duration-200 shadow-2xs",
+                onNavigate ? "h-14" : "h-10"
+            )}
             onDoubleClick={handleMaximize}
         >
-            {/* 1. Main Navigation Segment (RTL Right) */}
-            <div className="flex items-center gap-2.5 h-full min-w-0 flex-1 overflow-x-auto no-scrollbar py-2 title-bar-controls">
-                
-                {/* Segmented Navigation Tab Control - Large Spacious Pills */}
-                {onNavigate && (
-                    <nav className="flex items-center gap-2">
+            {/* 1. App Navigation / Brand Content (RTL Right Side) */}
+            <div className="flex items-center gap-3 h-full min-w-0 flex-1 overflow-hidden">
+                {onNavigate ? (
+                    /* Segmented Navigation Tab Control */
+                    <nav className="flex items-center gap-1.5 h-full title-bar-controls overflow-x-auto no-scrollbar py-1">
                         {NAV_ITEMS.filter((item) => isAllowed(item.permission)).map((item) => {
                             const isActive = activeView === item.id;
                             const label = t(item.labelKey);
@@ -144,9 +146,9 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
                                         onNavigate(item.id);
                                     }}
                                     className={cn(
-                                        'relative flex items-center justify-center h-12 px-5 rounded-2xl font-bold text-sm transition-all shrink-0 active:scale-95 touch-target outline-none shadow-3xs',
+                                        'relative flex items-center justify-center h-10 px-4 rounded-xl font-bold text-xs transition-all shrink-0 active:scale-95 touch-target outline-none shadow-3xs',
                                         isActive
-                                            ? 'bg-primary text-black font-black text-base shadow-md shadow-emerald-500/20 ring-1 ring-white/20'
+                                            ? 'bg-primary text-primary-fg font-black text-sm shadow-sm shadow-primary/20 ring-1 ring-white/20'
                                             : 'text-text-muted hover:text-text-main hover:bg-surface-hover/90'
                                     )}
                                     title={label}
@@ -155,7 +157,7 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
 
                                     {/* Low Stock Badge */}
                                     {badge !== undefined && badge > 0 && (
-                                        <span className="absolute -top-1.5 -left-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[10px] font-black text-white shadow-sm animate-pulse">
+                                        <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[9px] font-black text-white shadow-sm animate-pulse">
                                             {badge > 9 ? '9+' : badge}
                                         </span>
                                     )}
@@ -163,108 +165,118 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
                             );
                         })}
                     </nav>
+                ) : (
+                    /* Brand Identity Header when no navigation tabs exist (Login/License/CloudAuth) */
+                    <div className="flex items-center gap-2.5 px-1 title-bar-draggable">
+                        <div className="w-6 h-6 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-xs shadow-3xs">
+                            B
+                        </div>
+                        <span className="font-bold text-xs text-text-main tracking-tight">Beidar POS</span>
+                        <span className="text-[10px] font-mono text-text-muted bg-surface-active/80 px-2 py-0.5 rounded-full border border-border/50">
+                            {appVersion || 'v2.0.8'}
+                        </span>
+                    </div>
                 )}
             </div>
 
-            {/* 2. Action Indicators & Full-Height Caption Controls (RTL Left) */}
-            <div className="flex items-center gap-3 shrink-0 h-full title-bar-controls">
+            {/* 2. Action Buttons & Windows 11 Caption Controls (RTL Left Side) */}
+            <div className="flex items-center h-full shrink-0 title-bar-controls">
                 
-                {/* AI Assistant Quick Button - Large Icon */}
-                {onToggleAI && (
-                    <Tooltip side="bottom" content="المستشار الذكي (AI)">
+                {/* Action Icons (Theme, AI, Logout) */}
+                <div className="flex items-center gap-1.5 px-2">
+                    {onToggleAI && (
+                        <Tooltip side="bottom" content="المستشار الذكي (AI)">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleAI();
+                                }}
+                                className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface border border-border/80 text-text-muted hover:bg-surface-hover hover:text-success transition-all shadow-3xs outline-none active:scale-95 touch-target"
+                                aria-label="المستشار الذكي"
+                            >
+                                <Sparkles size={16} className="text-success" />
+                            </button>
+                        </Tooltip>
+                    )}
+
+                    {onToggleTheme && (
                         <button
-                            type="button"
+                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface border border-border/80 text-text-muted hover:bg-surface-hover hover:text-text-main transition-all shadow-3xs outline-none active:scale-95"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onToggleAI();
+                                onToggleTheme();
                             }}
-                            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-surface border border-border/80 text-text-muted hover:bg-surface-hover hover:text-emerald-400 transition-all shadow-3xs outline-none active:scale-95 touch-target"
-                            aria-label="المستشار الذكي"
+                            title={theme === 'dark' ? "الوضع الفاتح" : "الوضع الداكن"}
+                            aria-label="تبديل المظهر"
                         >
-                            <Sparkles size={20} className="text-emerald-400" />
+                            {theme === 'dark' ? (
+                                <Sun size={16} className="text-warning" />
+                            ) : (
+                                <Moon size={16} className="text-primary" />
+                            )}
                         </button>
-                    </Tooltip>
-                )}
+                    )}
 
-                {/* Theme Toggle Button - Large */}
-                {onToggleTheme && (
+                    {onLogout && (
+                        <Tooltip side="bottom" content="تسجيل الخروج">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onLogout();
+                                }}
+                                className="flex items-center justify-center w-9 h-9 rounded-xl bg-surface/80 hover:bg-danger/15 hover:text-danger hover:border-danger/30 border border-border/60 text-text-muted transition-all active:scale-95 touch-target"
+                                aria-label="تسجيل الخروج"
+                            >
+                                <LogOut size={16} />
+                            </button>
+                        </Tooltip>
+                    )}
+                </div>
+
+                {/* Windows 11 Native Height Caption Controls (Close X at Outer Corner Edge) */}
+                <div dir="ltr" className="title-bar-controls flex items-center h-full border-r border-border/40 select-none">
+                    {/* Close Button (X - Far Corner Edge) */}
                     <button
-                        className="w-12 h-12 flex items-center justify-center rounded-2xl bg-surface border border-border/80 text-text-muted hover:bg-surface-hover hover:text-text-main transition-all shadow-3xs outline-none active:scale-95"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleTheme();
-                        }}
-                        title={theme === 'dark' ? "الوضع الفاتح" : "الوضع الداكن"}
-                        aria-label="تبديل المظهر"
+                        className="w-[46px] h-full flex items-center justify-center text-text-muted hover:text-white hover:bg-[#c42b1c] active:bg-[#982318] transition-colors duration-150 outline-none"
+                        onClick={handleClose}
+                        title="إغلاق"
+                        aria-label="إغلاق"
                     >
-                        {theme === 'dark' ? (
-                            <Sun size={20} className="text-amber-400" />
-                        ) : (
-                            <Moon size={20} className="text-primary" />
-                        )}
-                    </button>
-                )}
-
-                {/* Logout Button - Large */}
-                {onLogout && (
-                    <Tooltip side="bottom" content="تسجيل الخروج">
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onLogout();
-                            }}
-                            className="flex items-center justify-center w-12 h-12 rounded-2xl bg-surface/80 hover:bg-danger/15 hover:text-danger hover:border-danger/30 border border-border/60 text-text-muted transition-all active:scale-95 touch-target mr-1"
-                            aria-label="تسجيل الخروج"
-                        >
-                            <LogOut size={20} />
-                        </button>
-                    </Tooltip>
-                )}
-
-                {/* Windows 11 Native Height Caption Controls */}
-                <div className="title-bar-controls flex items-center h-full border-r border-border/80 ml-0 pl-0">
-                    {/* Minimize */}
-                    <button
-                        className="w-14 h-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-text-main transition-colors duration-100 outline-none"
-                        onClick={handleMinimize}
-                        title="تصغير"
-                        aria-label="تصغير"
-                    >
-                        <svg width="14" height="2" viewBox="0 0 14 2" fill="currentColor">
-                            <rect width="14" height="2" rx="1" />
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                            <path d="M1 1L10 10M10 1L1 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                         </svg>
                     </button>
 
-                    {/* Maximize / Restore */}
+                    {/* Maximize / Restore Button */}
                     <button
-                        className="w-14 h-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-text-main transition-colors duration-100 outline-none"
+                        className="w-[46px] h-full flex items-center justify-center text-text-muted hover:text-text-main hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/15 transition-colors duration-150 outline-none"
                         onClick={handleMaximize}
                         title={isMaximized ? "استعادة للأسفل" : "تكبير"}
                         aria-label={isMaximized ? "استعادة للأسفل" : "تكبير"}
                     >
                         {isMaximized ? (
-                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4">
-                                <rect x="3.5" y="1.5" width="8" height="8" rx="1" />
-                                <polyline points="1.5,4.5 1.5,11.5 8.5,11.5" />
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                                <path d="M2.5 2.5V0.5H10.5V8.5H8.5" stroke="currentColor" strokeWidth="1" strokeLinecap="square" />
+                                <rect x="0.5" y="2.5" width="8" height="8" stroke="currentColor" strokeWidth="1" />
                             </svg>
                         ) : (
-                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4">
-                                <rect x="1.5" y="1.5" width="10" height="10" rx="1.5" />
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                                <rect x="0.5" y="0.5" width="10" height="10" stroke="currentColor" strokeWidth="1" />
                             </svg>
                         )}
                     </button>
 
-                    {/* Close */}
+                    {/* Minimize Button */}
                     <button
-                        className="w-14 h-full flex items-center justify-center text-text-muted hover:bg-danger hover:text-white transition-colors duration-100 outline-none"
-                        onClick={handleClose}
-                        title="إغلاق"
-                        aria-label="إغلاق"
+                        className="w-[46px] h-full flex items-center justify-center text-text-muted hover:text-text-main hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/15 transition-colors duration-150 outline-none"
+                        onClick={handleMinimize}
+                        title="تصغير"
+                        aria-label="تصغير"
                     >
-                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                            <line x1="1.5" y1="1.5" x2="11.5" y2="11.5" />
-                            <line x1="11.5" y1="1.5" x2="1.5" y2="11.5" />
+                        <svg width="11" height="1" viewBox="0 0 11 1" fill="currentColor">
+                            <rect width="11" height="1" rx="0.5" />
                         </svg>
                     </button>
                 </div>

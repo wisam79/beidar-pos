@@ -146,7 +146,11 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 	// Never trust client-supplied timestamps, dates, or status.
 	sale.Date = time.Now().Format("2006-01-02")
 	sale.Timestamp = time.Now().UnixMilli()
-	sale.Status = "completed"
+	if sale.PaymentMethod == "credit" || sale.PaymentMethod == "installment" {
+		sale.Status = "pending"
+	} else {
+		sale.Status = "completed"
+	}
 
 	// Check permissions for discounts in the service layer
 	anyItemHasDiscount := false
@@ -332,6 +336,25 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 					"يجب أن تكون الدفعة الأولى أقل من أو تساوي إجمالي الفاتورة",
 					"installment",
 				)
+			}
+			if sale.InstallmentPlan != nil && sale.InstallmentPlan.Schedule != nil {
+				var scheduleSum domain.Amount
+				for _, inst := range sale.InstallmentPlan.Schedule {
+					if inst.Amount.IsNegative() {
+						return pkgerrors.NewAppError(pkgerrors.ModuleSales, "INVALID_PAYMENT", "قيمة القسط لا يمكن أن تكون سالبة", "يرجى التحقق من مبالغ الأقساط", "installment")
+					}
+					scheduleSum = scheduleSum.Add(inst.Amount)
+				}
+				expectedSum := sale.Total.Sub(sale.InstallmentPlan.DownPayment)
+				if scheduleSum != expectedSum {
+					return pkgerrors.NewAppError(
+						pkgerrors.ModuleSales,
+						"INVALID_PAYMENT",
+						fmt.Sprintf("مجموع الأقساط المجدولة (%s) لا يساوي المبلغ المتبقي (%s)", scheduleSum.String(), expectedSum.String()),
+						"يرجى إعادة جدولة الأقساط لتتطابق مع الإجمالي المتبقي",
+						"installment",
+					)
+				}
 			}
 		}
 

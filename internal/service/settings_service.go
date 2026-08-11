@@ -262,18 +262,21 @@ func getSupabaseKey() string {
 	return ""
 }
 
-func (s *settingsService) FetchGlobalAIKeys() ([]string, error) {
+// fetchGlobalAIConfig performs the Supabase GET for the ai_keys row.
+// It returns config when the value is an object, plainKeys when the value is a
+// plain JSON array (legacy format), and an error otherwise.
+func fetchGlobalAIConfig() (config *aiKeysConfig, plainKeys []string, err error) {
 	sbURL := getSupabaseURL()
 	sbKey := getSupabaseKey()
 
 	if sbURL == "" || sbKey == "" {
-		return nil, fmt.Errorf("supabase not configured")
+		return nil, nil, fmt.Errorf("supabase not configured")
 	}
 
 	url := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys&select=value", sbURL)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	req.Header.Set("apikey", sbKey)
@@ -282,78 +285,53 @@ func (s *settingsService) FetchGlobalAIKeys() ([]string, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch settings: %d", resp.StatusCode)
+		return nil, nil, fmt.Errorf("failed to fetch settings: %d", resp.StatusCode)
 	}
 
 	var results []globalSettings
 	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(results) == 0 {
-		return []string{}, nil
+		return &aiKeysConfig{GeminiKeys: []string{}, GroqKeys: []string{}}, nil, nil
 	}
 
-	var config aiKeysConfig
-	if err := json.Unmarshal(results[0].Value, &config); err != nil {
-		// Fallback: Try parsing as a plain JSON array of strings
-		var plainKeys []string
-		if errArray := json.Unmarshal(results[0].Value, &plainKeys); errArray == nil {
-			return plainKeys, nil
+	var cfg aiKeysConfig
+	if err := json.Unmarshal(results[0].Value, &cfg); err != nil {
+		var keys []string
+		if errArray := json.Unmarshal(results[0].Value, &keys); errArray == nil {
+			return nil, keys, nil
 		}
+		return nil, nil, err
+	}
+	return &cfg, nil, nil
+}
+
+func (s *settingsService) FetchGlobalAIKeys() ([]string, error) {
+	config, plainKeys, err := fetchGlobalAIConfig()
+	if err != nil {
 		return nil, err
 	}
-
+	if config == nil {
+		return plainKeys, nil
+	}
 	return config.GeminiKeys, nil
 }
 
 func (s *settingsService) FetchGlobalGroqKeys() ([]string, error) {
-	sbURL := getSupabaseURL()
-	sbKey := getSupabaseKey()
-
-	if sbURL == "" || sbKey == "" {
-		return nil, fmt.Errorf("supabase not configured")
-	}
-
-	url := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys&select=value", sbURL)
-	req, err := http.NewRequest("GET", url, nil)
+	config, _, err := fetchGlobalAIConfig()
 	if err != nil {
 		return nil, err
 	}
-
-	req.Header.Set("apikey", sbKey)
-	req.Header.Set("Authorization", "Bearer "+sbKey)
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
+	if config == nil {
+		return nil, nil
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch settings: %d", resp.StatusCode)
-	}
-
-	var results []globalSettings
-	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-		return nil, err
-	}
-
-	if len(results) == 0 {
-		return []string{}, nil
-	}
-
-	var config aiKeysConfig
-	if err := json.Unmarshal(results[0].Value, &config); err != nil {
-		return nil, err
-	}
-
 	return config.GroqKeys, nil
 }
 
@@ -373,16 +351,31 @@ func (s *settingsService) SaveGlobalAIKeys(keys []string, userToken string) erro
 	var currentConfig aiKeysConfig
 	urlGet := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys&select=value", sbURL)
 	reqGet, err := http.NewRequest("GET", urlGet, nil)
-	if err == nil {
-		reqGet.Header.Set("apikey", sbKey)
-		reqGet.Header.Set("Authorization", "Bearer "+sbKey)
-		client := &http.Client{Timeout: 10 * time.Second}
-		if respGet, errGet := client.Do(reqGet); errGet == nil && respGet.StatusCode == http.StatusOK {
-			var results []globalSettings
-			if errDec := json.NewDecoder(respGet.Body).Decode(&results); errDec == nil && len(results) > 0 {
-				_ = json.Unmarshal(results[0].Value, &currentConfig)
-			}
-			respGet.Body.Close()
+	if err != nil {
+		return fmt.Errorf("failed to create request for current config: %w", err)
+	}
+
+	reqGet.Header.Set("apikey", sbKey)
+	reqGet.Header.Set("Authorization", "Bearer "+sbKey)
+	client := &http.Client{Timeout: 10 * time.Second}
+	
+	respGet, errGet := client.Do(reqGet)
+	if errGet != nil {
+		return fmt.Errorf("failed to fetch current config: %w", errGet)
+	}
+	defer respGet.Body.Close()
+
+	if respGet.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to fetch current config: status %d", respGet.StatusCode)
+	}
+
+	var results []globalSettings
+	if errDec := json.NewDecoder(respGet.Body).Decode(&results); errDec != nil {
+		return fmt.Errorf("failed to decode current config: %w", errDec)
+	}
+	if len(results) > 0 {
+		if errUnm := json.Unmarshal(results[0].Value, &currentConfig); errUnm != nil {
+			return fmt.Errorf("failed to unmarshal current config: %w", errUnm)
 		}
 	}
 
@@ -413,7 +406,7 @@ func (s *settingsService) SaveGlobalAIKeys(keys []string, userToken string) erro
 	req.Header.Set("apikey", sbKey)
 	req.Header.Set("Authorization", "Bearer "+userToken)
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client = &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err

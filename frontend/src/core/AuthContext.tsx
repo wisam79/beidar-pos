@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [idleMinutesRemaining, setIdleMinutesRemaining] = useState(DEFAULT_IDLE_TIMEOUT);
     const [idleTimeout, setIdleTimeoutState] = useState(DEFAULT_IDLE_TIMEOUT);
 
-    // Load session from localStorage on mount
+    // Load session from localStorage on mount and sync to Go backend
     useEffect(() => {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -51,6 +51,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 if (session.user && session.permissions) {
                     setCurrentUser(session.user);
                     setPermissions(session.permissions);
+                    // 🔐 CRITICAL: Restore session on Go Backend so permissions pass
+                    api.staff.restoreSession(session.user.id).catch(() => {
+                        // Backend binding may be absent in tests
+                    });
                 }
             } catch {
                 localStorage.removeItem(STORAGE_KEY);

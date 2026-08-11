@@ -75,7 +75,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
             {/* Header Banner */}
             <div className="bg-surface border border-border/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <div className="p-2.5 rounded-xl bg-success/10 text-success border border-success/20">
                         <Smartphone size={22} />
                     </div>
                     <div>
@@ -88,7 +88,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
                     disabled={isLoading}
                     title="تحديث الحالة"
                     aria-label="تحديث الحالة"
-                    className="p-2.5 text-text-muted hover:text-emerald-400 hover:bg-surface-hover border border-border/60 rounded-xl transition-colors cursor-pointer"
+                    className="p-2.5 text-text-muted hover:text-success hover:bg-surface-hover border border-border/60 rounded-xl transition-colors cursor-pointer"
                 >
                     <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
                 </button>
@@ -100,11 +100,11 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
                 {/* Instructions & Status */}
                 <div className="space-y-5">
                     <div className={`p-5 rounded-2xl border ${serverStatus.running
-                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                        ? 'bg-success/10 border-success/30'
                         : 'bg-surface border-border/80'
                         }`}>
                         <div className="flex items-start gap-3.5">
-                            <div className={`p-2.5 rounded-xl border ${serverStatus.running ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' : 'bg-surface-hover border-border/60 text-text-muted'}`}>
+                            <div className={`p-2.5 rounded-xl border ${serverStatus.running ? 'bg-success/20 border-success/30 text-success' : 'bg-surface-hover border-border/60 text-text-muted'}`}>
                                 <Wifi size={22} />
                             </div>
                             <div className="flex-1">
@@ -121,7 +121,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
                                     <button
                                         onClick={startServer}
                                         disabled={isLoading}
-                                        className="bg-emerald-500 text-black px-5 py-2.5 min-h-[44px] rounded-xl font-black text-xs hover:bg-emerald-400 active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2 border border-emerald-400"
+                                        className="bg-success text-primary-fg px-5 py-2.5 min-h-[44px] rounded-xl font-black text-xs hover:bg-success active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2 border border-success"
                                     >
                                         تشغيل الخدمة الآن
                                         {isLoading && <Loader2 size={16} className="animate-spin" />}
@@ -133,20 +133,20 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
 
                     <div className="bg-surface rounded-2xl p-5 sm:p-6 border border-border/80">
                         <h4 className="font-black text-sm text-text-main flex items-center gap-2 mb-4">
-                            <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-mono font-black">1</span>
+                            <span className="w-6 h-6 rounded-lg bg-success/10 border border-success/20 text-success flex items-center justify-center text-xs font-mono font-black">1</span>
                             خطوات ربط القارئ بالجوال
                         </h4>
                         <ul className="space-y-3.5 text-xs font-semibold text-text-muted">
                             <li className="flex gap-3 items-center">
-                                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                                <CheckCircle2 size={18} className="text-success shrink-0" />
                                 <span>تأكد من فتح تطبيق <b>Beidar Scanner</b> على الهاتف المحمول.</span>
                             </li>
                             <li className="flex gap-3 items-center">
-                                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                                <CheckCircle2 size={18} className="text-success shrink-0" />
                                 <span>تأكد من اتصال الكمبيوتر والهاتف بنفس شبكة الواي فاي المحلية.</span>
                             </li>
                             <li className="flex gap-3 items-center">
-                                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                                <CheckCircle2 size={18} className="text-success shrink-0" />
                                 <span>امسح كود QR الظاهر في اللوحة المقابلة بواسطة كاميرا التطبيق.</span>
                             </li>
                         </ul>
@@ -160,7 +160,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
                             <div className="bg-white p-4 rounded-xl border border-gray-200">
                                 <img src={qrData} alt="Pairing QR" className="w-56 h-56 object-contain" />
                             </div>
-                            <p className="mt-4 text-emerald-400 font-mono text-xs font-black bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-xl dir-ltr">
+                            <p className="mt-4 text-success font-mono text-xs font-black bg-success/10 border border-success/20 px-3.5 py-1.5 rounded-xl dir-ltr">
                                 {serverStatus.ip}:{serverStatus.port}
                             </p>
                         </>

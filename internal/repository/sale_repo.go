@@ -76,7 +76,7 @@ func (r *saleRepository) GetSales(page int, pageSize int, search string, statusF
 	var dbStats DBStats
 
 	statsQuery := query.Session(&gorm.Session{})
-	statsQuery.Select("COUNT(*) as count, IFNULL(SUM(total),0) as total, IFNULL(SUM(CASE WHEN status = 'returned' THEN 1 ELSE 0 END),0) as returns, IFNULL(SUM(CASE WHEN status = 'pending' THEN total ELSE 0 END),0) as pending").Scan(&dbStats)
+	statsQuery.Select("COUNT(*) as count, IFNULL(SUM(CASE WHEN status != 'returned' THEN total ELSE 0 END),0) as total, IFNULL(SUM(CASE WHEN status = 'returned' THEN 1 ELSE 0 END),0) as returns, IFNULL(SUM(CASE WHEN status = 'pending' THEN total ELSE 0 END),0) as pending").Scan(&dbStats)
 
 	stats.Count = dbStats.Count
 	stats.Total = domain.Amount(dbStats.Total)

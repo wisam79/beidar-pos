@@ -16,9 +16,9 @@ export const TrendBadge = memo(({ value, suffix = '%', showIcon = true, classNam
     const isNegative = value < 0;
 
     const colorClass = isPositive
-        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+        ? 'bg-success/10 text-success dark:text-success border-success/20'
         : isNegative
-        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+        ? 'bg-danger/10 text-danger dark:text-danger border-danger/20'
         : 'bg-surface-hover text-text-muted border-border';
 
     const Icon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus;

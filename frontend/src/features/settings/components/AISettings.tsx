@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Type, Target, DollarSign, Brain, Lightbulb, MessageCircle, Star } from 'lucide-react';
+import { Sparkles, Type, Target, DollarSign, Brain, Lightbulb, MessageCircle } from 'lucide-react';
 import { AppPreferences } from '../../../core/types';
 
 interface AISettingsProps {
@@ -7,93 +7,48 @@ interface AISettingsProps {
     handleChange: <K extends keyof AppPreferences>(key: K, value: AppPreferences[K]) => void;
 }
 
-// Feature card component
-const AIFeatureCard = ({ icon: Icon, title, description }: {
-    icon: React.ElementType, title: string, description: string
+const AIFeatureCard = ({ icon: Icon, title }: {
+    icon: React.ElementType, title: string
 }) => (
-    <div className="bg-surface border border-border/80 p-4 sm:p-5 rounded-2xl cursor-default transition-colors hover:border-emerald-500/40">
-        <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center mb-3">
-            <Icon size={20} />
+    <div className="bg-surface border border-border/80 p-3.5 sm:p-4 rounded-xl cursor-default transition-colors hover:border-success/40 flex items-center gap-3">
+        <div className="w-9 h-9 bg-success/10 border border-success/20 text-success rounded-xl flex items-center justify-center shrink-0">
+            <Icon size={18} />
         </div>
-        <h6 className="font-black text-text-main text-sm mb-1">{title}</h6>
-        <p className="text-xs text-text-muted leading-relaxed font-semibold">{description}</p>
+        <h6 className="font-black text-text-main text-xs">{title}</h6>
     </div>
 );
 
 export const AISettings = ({ prefs, handleChange }: AISettingsProps) => {
     return (
-        <div className="space-y-5 animate-in fade-in duration-300 pb-8 select-none">
-            {/* Header Banner */}
-            <div className="bg-surface border border-border/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+        <div className="space-y-4 animate-in fade-in duration-200 select-none">
+            {/* Status */}
+            <div className="bg-surface border border-border/80 rounded-xl p-4 flex items-center justify-between shadow-3xs">
                 <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        <Sparkles size={22} />
-                    </div>
+                    <Brain size={18} className="text-primary" />
                     <div>
-                        <h2 className="text-base font-black text-text-main">مساعد الذكاء الاصطناعي (AI Core)</h2>
-                        <p className="text-text-muted text-xs font-semibold">ميزات ذكية مدمجة لتحليل المبيعات والتسعير وإنشاء الأوصاف</p>
+                        <h3 className="text-xs font-black text-text-main">محرك التحليل الذكي</h3>
+                        <p className="text-[11px] text-text-muted font-bold">معالجة الاستعلامات وتوقعات المبيعات</p>
                     </div>
+                </div>
+                <div className="px-2.5 py-1 bg-success/10 text-success rounded-lg font-bold text-xs border border-success/20 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                    <span>جاهز</span>
                 </div>
             </div>
 
-            {/* AI Status Banner */}
-            <div className="bg-surface border border-border/80 rounded-2xl p-5 sm:p-6 flex items-center justify-between">
-                <div className="flex items-center gap-3.5">
-                    <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                        <Brain size={22} />
-                    </div>
-                    <div>
-                        <h3 className="text-base font-black text-text-main flex items-center gap-2">
-                            محرك التنبؤات والتحليل الذكي
-                        </h3>
-                        <p className="text-xs text-text-muted font-semibold mt-0.5">
-                            المحرك يعمل محلياً ومستعد لمعالجة استعلاماتك وتوقعات المبيعات
-                        </p>
-                    </div>
-                </div>
-                <div className="px-3.5 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-xl font-black text-xs border border-emerald-500/20 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    جاهز (Ready)
-                </div>
-            </div>
-
-            {/* AI Features Grid */}
-            <div>
-                <h4 className="text-xs font-black text-text-muted mb-3 flex items-center gap-1.5 px-1">
-                    <Star size={14} className="text-amber-400" />
-                    الميزات المتاحة بالنظام
+            {/* Features */}
+            <div className="bg-surface border border-border/80 rounded-xl p-4 space-y-3 shadow-3xs">
+                <h4 className="text-xs font-black text-text-main flex items-center gap-2 pb-2 border-b border-border/60">
+                    <Sparkles size={16} className="text-primary" />
+                    ميزات الذكاء الاصطناعي
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <AIFeatureCard
-                        icon={Type}
-                        title="توليد أوصاف المنتجات"
-                        description="إنشاء أوصاف تسويقية دقيقة للمنتجات تلقائياً بنقرة واحدة"
-                    />
-                    <AIFeatureCard
-                        icon={Target}
-                        title="تحسين أسماء الأصناف"
-                        description="اقتراح أسماء جذابة ومناسبة للمنتجات لزيادة المبيعات"
-                    />
-                    <AIFeatureCard
-                        icon={DollarSign}
-                        title="توصيات التسعير"
-                        description="اقتراح أسعار بيع تنافسية بناءً على التكلفة وهامش الربح"
-                    />
-                    <AIFeatureCard
-                        icon={MessageCircle}
-                        title="المساعد الذكي (AI Chat)"
-                        description="شات بوت تفاعلي للإجابة عن التساؤلات وإصدار التقارير"
-                    />
-                    <AIFeatureCard
-                        icon={Lightbulb}
-                        title="تحليل الأداء اليومي"
-                        description="رؤى وتوصيات ذكية لتحسين مبيعات المحل وتجنب النواقص"
-                    />
-                    <AIFeatureCard
-                        icon={Brain}
-                        title="التصنيف التلقائي للمصاريف"
-                        description="تصنيف مصروفات النظام تلقائياً (إيجار، رواتب، تجهيزات...)"
-                    />
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                    <AIFeatureCard icon={Type} title="توليد الأوصاف" />
+                    <AIFeatureCard icon={Target} title="تحسين الأسماء" />
+                    <AIFeatureCard icon={DollarSign} title="توصيات التسعير" />
+                    <AIFeatureCard icon={MessageCircle} title="المساعد الذكي" />
+                    <AIFeatureCard icon={Lightbulb} title="تحليل المبيعات" />
+                    <AIFeatureCard icon={Brain} title="تصنيف المصاريف" />
                 </div>
             </div>
         </div>

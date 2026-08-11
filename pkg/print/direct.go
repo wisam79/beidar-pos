@@ -27,6 +27,7 @@ var (
 	procStartPagePrinter  = winspool.NewProc("StartPagePrinter")
 	procEndPagePrinter    = winspool.NewProc("EndPagePrinter")
 	procWritePrinter      = winspool.NewProc("WritePrinter")
+	procAbortPrinter      = winspool.NewProc("AbortPrinter")
 	procEnumPrintersW     = winspool.NewProc("EnumPrintersW")
 	procGetDefaultPrinter = winspool.NewProc("GetDefaultPrinterW")
 )
@@ -262,6 +263,7 @@ func printRawSpooler(printerName string, data []byte) error {
 		uintptr(unsafe.Pointer(&written)),
 	)
 	if ret == 0 {
+		_, _, _ = procAbortPrinter.Call(hPrinter)
 		return fmt.Errorf("failed to write to printer: %v", err)
 	}
 

@@ -26,6 +26,7 @@ export const staff = {
     loginPIN: (pin: string) => StaffHandler.AuthenticateByPIN(pin),
     authenticate: (username: string, password: string) => StaffHandler.AuthenticateByUsername(username, password),
     authenticateByPIN: (pin: string) => StaffHandler.AuthenticateByPIN(pin),
+    restoreSession: (staffId: string) => StaffHandler.RestoreSession(staffId),
     hasPermission: (staffId: string, permission: string) => StaffHandler.HasPermission(staffId, permission),
     count: () => StaffHandler.GetStaffCount(),
     isUsingDefaultPassword: (staffId: string) => StaffHandler.IsUsingDefaultPassword(staffId),

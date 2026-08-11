@@ -37,9 +37,9 @@ export const ShiftsPage: React.FC = () => {
     };
 
     const getVarianceClass = (variance: number) => {
-        if (variance === 0) return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
-        if (variance > 0) return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
-        return 'text-red-500 bg-red-500/10 border-red-500/20';
+        if (variance === 0) return 'text-success bg-success/10 border-success/20';
+        if (variance > 0) return 'text-primary bg-primary/10 border-primary/20';
+        return 'text-danger bg-danger/10 border-danger/20';
     };
 
     // Calculate totals
@@ -58,7 +58,7 @@ export const ShiftsPage: React.FC = () => {
                     <button
                         onClick={() => setShowStats(!showStats)}
                         className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer border ${showStats
-                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                            ? 'bg-success/10 border-success/30 text-success'
                             : 'bg-surface border-border/80 text-text-muted hover:text-text-main'
                             }`}
                         title={showStats ? 'إخفاء الإحصائيات' : 'عرض التحليل'}
@@ -100,7 +100,7 @@ export const ShiftsPage: React.FC = () => {
                 />
             </StatsGrid>
 
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
                 {/* Active Shift / Open New */}
                 <div className="lg:col-span-1 h-full overflow-y-auto custom-scrollbar">
                     <ShiftManager
@@ -130,54 +130,50 @@ export const ShiftsPage: React.FC = () => {
                                 <p className="text-text-muted font-bold text-sm">جاري تحديث السجل...</p>
                             </div>
                         ) : shifts.length === 0 ? (
-                            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-mesh relative overflow-hidden min-h-[400px]">
-                                {/* Floating decorative background elements */}
-                                <div className="absolute top-10 left-10 w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-                                <div className="absolute bottom-10 right-10 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-
+                            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center min-h-[300px]">
                                 {/* Interactive Floating Icons Illustration */}
-                                <div className="relative w-24 h-24 mb-6 flex items-center justify-center">
+                                <div className="relative w-24 h-24 mb-5 flex items-center justify-center">
                                     <div className="absolute inset-0 bg-primary/5 rounded-3xl animate-pulse" />
-                                    <div className="absolute -top-2 -right-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-500 shadow-md transform rotate-12 hover:rotate-0 transition-transform">
+                                    <div className="absolute -top-2 -right-2 p-2 bg-success/10 border border-success/20 rounded-xl text-success shadow-md transform rotate-12 hover:rotate-0 transition-transform">
                                         <DollarSign size={20} />
                                     </div>
-                                    <div className="absolute -bottom-2 -left-2 p-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-500 shadow-md transform -rotate-12 hover:rotate-0 transition-transform">
+                                    <div className="absolute -bottom-2 -left-2 p-2 bg-primary/10 border border-primary/20 rounded-xl text-primary shadow-md transform -rotate-12 hover:rotate-0 transition-transform">
                                         <Wallet size={20} />
                                     </div>
                                     <Clock size={44} className="text-primary opacity-80" />
                                 </div>
 
                                 <h4 className="text-lg font-black text-text-main mb-2">سجل الشفتات فارغ</h4>
-                                <p className="text-sm text-text-muted mb-8 max-w-md leading-relaxed">
+                                <p className="text-sm text-text-muted mb-5 max-w-md leading-relaxed">
                                     هنا سيظهر تاريخ الورديات وجرد الصناديق التي يقوم الموظفون بفتحها وإغلاقها.
                                 </p>
 
                                 {/* Interactive Steps Grid */}
-                                <div className="w-full max-w-xl grid grid-cols-1 md:grid-cols-3 gap-4 text-right">
-                                    <div className="bg-surface border border-border/80  p-4 rounded-2xl relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center font-black text-xs mb-3">
+                                <div className="w-full max-w-xl grid grid-cols-1 md:grid-cols-3 gap-3 text-right">
+                                    <div className="bg-surface border border-border/80 p-3.5 rounded-2xl relative overflow-hidden group hover:border-success/30 transition-all">
+                                        <div className="w-8 h-8 rounded-lg bg-success/10 border border-success/20 text-success flex items-center justify-center font-black text-xs mb-2.5">
                                             ١
                                         </div>
                                         <h5 className="font-bold text-sm text-text-main mb-1 flex items-center gap-1.5">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-success" />
                                             فتح الوردية
                                         </h5>
                                         <p className="text-xs text-text-muted leading-relaxed">ابدأ بفتح شفت جديد وحدد الرصيد الافتتاحي للنقد في درج الصندوق.</p>
                                     </div>
 
-                                    <div className="bg-surface border border-border/80  p-4 rounded-2xl relative overflow-hidden group hover:border-blue-500/30 transition-all">
-                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-500 flex items-center justify-center font-black text-xs mb-3">
+                                    <div className="bg-surface border border-border/80 p-3.5 rounded-2xl relative overflow-hidden group hover:border-primary/30 transition-all">
+                                        <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-black text-xs mb-2.5">
                                             ٢
                                         </div>
                                         <h5 className="font-bold text-sm text-text-main mb-1 flex items-center gap-1.5">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                                             تسجيل المبيعات
                                         </h5>
                                         <p className="text-xs text-text-muted leading-relaxed">تُحسب جميع الفواتير والمقبوضات تلقائياً تحت مظلة هذا الشفت.</p>
                                     </div>
 
-                                    <div className="bg-surface border border-border/80  p-4 rounded-2xl relative overflow-hidden group hover:border-primary/30 transition-all">
-                                        <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-black text-xs mb-3">
+                                    <div className="bg-surface border border-border/80 p-3.5 rounded-2xl relative overflow-hidden group hover:border-primary/30 transition-all">
+                                        <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-black text-xs mb-2.5">
                                             ٣
                                         </div>
                                         <h5 className="font-bold text-sm text-text-main mb-1 flex items-center gap-1.5">
@@ -189,23 +185,23 @@ export const ShiftsPage: React.FC = () => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+                            <div className="flex-1 flex flex-col min-h-0">
                                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                                     <table className="w-full text-right text-sm border-collapse">
                                         <thead className="sticky top-0 z-10 bg-surface-hover border-b border-border text-text-muted text-xs">
                                             <tr>
-                                                <th className="px-4 py-3 text-right">الموظف</th>
-                                                <th className="px-4 py-3 text-right">تاريخ البدء</th>
-                                                <th className="px-4 py-3 text-left w-[140px]">إجمالي المبيعات</th>
-                                                <th className="px-4 py-3 text-center w-[140px]">الفروقات</th>
-                                                <th className="px-4 py-3 text-center w-[80px]">الحالة</th>
+                                                <th className="px-4 py-2.5 text-right">الموظف</th>
+                                                <th className="px-4 py-2.5 text-right">تاريخ البدء</th>
+                                                <th className="px-4 py-2.5 text-left w-[140px]">إجمالي المبيعات</th>
+                                                <th className="px-4 py-2.5 text-center w-[140px]">الفروقات</th>
+                                                <th className="px-4 py-2.5 text-center w-[80px]">الحالة</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {shifts.map((shift) => {
                                                 const hasVariance = shift.variance !== 0;
                                                 const isDeficit = shift.variance < 0;
-                                                const healthColor = !hasVariance ? 'bg-emerald-500' : isDeficit ? 'bg-red-500' : 'bg-blue-500';
+                                                const healthColor = !hasVariance ? 'bg-success' : isDeficit ? 'bg-danger' : 'bg-primary';
 
                                                 return (
                                                     <tr
@@ -213,7 +209,7 @@ export const ShiftsPage: React.FC = () => {
                                                         onClick={() => handleViewDetails(shift)}
                                                         className={`border-b border-border/30 hover:bg-surface-hover transition-colors cursor-pointer group`}
                                                     >
-                                                        <td className="px-4 py-3 relative">
+                                                        <td className="px-4 py-2.5 relative">
                                                             {/* Health indicator bar on the right in RTL */}
                                                             <div className={`absolute right-0 top-2 bottom-2 w-1 rounded-l-full ${healthColor} shadow-[0_0_8px_currentColor] text-${!hasVariance ? 'emerald' : isDeficit ? 'red' : 'blue'}-500`} />
                                                             
@@ -227,27 +223,27 @@ export const ShiftsPage: React.FC = () => {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-3">
+                                                        <td className="px-4 py-2.5">
                                                             <span className="text-xs font-mono font-medium text-text-muted flex items-center gap-1.5">
                                                                 <Calendar size={12} className="opacity-70 inline mr-1" />
                                                                 {formatDate(shift.openTime)}
                                                             </span>
                                                         </td>
-                                                        <td className="px-4 py-3 text-left font-mono font-bold text-text-main text-base">
+                                                        <td className="px-4 py-2.5 text-left font-mono font-bold text-text-main text-base">
                                                             {formatCurrency(shift.totalSales, prefs.currency).replace(prefs.currency || 'IQD', '')}
                                                         </td>
-                                                        <td className="px-4 py-3 text-center">
+                                                        <td className="px-4 py-2.5 text-center">
                                                             {shift.variance !== 0 ? (
-                                                                <span className={`text-xs font-bold px-2.5 py-1 rounded-lg font-mono inline-block ${shift.variance > 0 ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
+                                                                <span className={`text-xs font-bold px-2.5 py-1 rounded-lg font-mono inline-block ${shift.variance > 0 ? 'bg-primary/10 text-primary dark:text-primary' : 'bg-danger/10 text-danger dark:text-danger'}`}>
                                                                     {shift.variance > 0 ? '+' : ''}{formatCurrency(shift.variance, prefs.currency).replace(prefs.currency || 'IQD', '')}
                                                                 </span>
                                                             ) : (
-                                                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg font-mono inline-block">
+                                                                <span className="text-xs font-bold text-success dark:text-success bg-success/10 px-2.5 py-1 rounded-lg font-mono inline-block">
                                                                     0.00
                                                                 </span>
                                                             )}
                                                         </td>
-                                                        <td className="px-4 py-3 text-center">
+                                                        <td className="px-4 py-2.5 text-center">
                                                             {shift.closeTime ? (
                                                                 <Badge type="default" text="مغلق" />
                                                             ) : (
@@ -277,7 +273,7 @@ export const ShiftsPage: React.FC = () => {
                 {selectedShift && (
                     <>
                                 {/* Summary Card */}
-                                <div className="bg-gradient-to-br from-primary/5 to-purple-500/5 border border-primary/10 rounded-2xl p-5 mb-6 relative overflow-hidden group">
+                                <div className="bg-primary/5 border border-primary/10 rounded-2xl p-5 mb-6 relative overflow-hidden group">
                                     <div className="absolute top-0 left-0 w-24 h-24 bg-primary/5 rounded-full -translate-x-12 -translate-y-12 blur-2xl" />
 
                                     <div className="flex justify-between items-center mb-5 relative z-10">
@@ -292,8 +288,8 @@ export const ShiftsPage: React.FC = () => {
                                         </div>
                                         <div className="text-left bg-white dark:bg-surface border border-border/50 rounded-xl px-3 py-1.5 ">
                                             <p className="font-bold text-text-main text-sm text-center">{formatDate(selectedShift.openTime).split(' ')[0]}</p>
-                                            <div className={`text-[10px] font-black uppercase text-center mt-0.5 px-1.5 py-0.5 rounded flex items-center justify-center gap-1 ${selectedShift.closeTime ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'}`}>
-                                                <div className={`w-1.5 h-1.5 rounded-full ${selectedShift.closeTime ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`} />
+                                            <div className={`text-[10px] font-black uppercase text-center mt-0.5 px-1.5 py-0.5 rounded flex items-center justify-center gap-1 ${selectedShift.closeTime ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${selectedShift.closeTime ? 'bg-danger' : 'bg-success animate-pulse'}`} />
                                                 {selectedShift.closeTime ? 'مغلق' : 'مفتوح'}
                                             </div>
                                         </div>
@@ -318,18 +314,18 @@ export const ShiftsPage: React.FC = () => {
                                         <span className="font-mono font-black text-text-main text-lg">{formatCurrency(selectedShift.openingBalance, prefs.currency)}</span>
                                     </div>
 
-                                    <div className="flex justify-between items-center p-3.5 bg-emerald-500/5 rounded-2xl border border-emerald-500/10">
-                                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">المبيعات النقدية ({selectedShift.salesCount})</span>
-                                        <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-lg">{formatCurrency(selectedShift.cashSales, prefs.currency)}</span>
+                                    <div className="flex justify-between items-center p-3.5 bg-success/5 rounded-2xl border border-success/10">
+                                        <span className="text-sm font-bold text-success dark:text-success">المبيعات النقدية ({selectedShift.salesCount})</span>
+                                        <span className="font-mono font-black text-success dark:text-success text-lg">{formatCurrency(selectedShift.cashSales, prefs.currency)}</span>
                                     </div>
 
                                     <div className="relative py-2">
                                         <div className="absolute inset-x-0 top-1/2 border-t-2 border-dashed border-border/50"></div>
                                     </div>
 
-                                    <div className="flex justify-between items-center p-3.5 bg-blue-500/5 rounded-2xl border border-blue-500/10">
-                                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">المتوقع في الصندوق</span>
-                                        <span className="font-mono font-black text-blue-600 dark:text-blue-400 text-lg">{formatCurrency(selectedShift.expectedBalance, prefs.currency)}</span>
+                                    <div className="flex justify-between items-center p-3.5 bg-primary/5 rounded-2xl border border-primary/10">
+                                        <span className="text-sm font-bold text-primary dark:text-primary">المتوقع في الصندوق</span>
+                                        <span className="font-mono font-black text-primary dark:text-primary text-lg">{formatCurrency(selectedShift.expectedBalance, prefs.currency)}</span>
                                     </div>
 
                                     <div className="flex justify-between items-center p-3.5 bg-white dark:bg-surface rounded-2xl border border-border shadow-sm">
@@ -337,9 +333,9 @@ export const ShiftsPage: React.FC = () => {
                                         <span className="font-mono font-black text-text-main text-xl">{formatCurrency(selectedShift.closingBalance, prefs.currency)}</span>
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-4 rounded-2xl border shadow-sm mt-2 ${selectedShift.variance === 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400' : selectedShift.variance > 0 ? 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400' : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'}`}>
+                                    <div className={`flex justify-between items-center p-4 rounded-2xl border shadow-sm mt-2 ${selectedShift.variance === 0 ? 'bg-success/10 border-success/20 text-success dark:text-success' : selectedShift.variance > 0 ? 'bg-primary/10 border-primary/20 text-primary dark:text-primary' : 'bg-danger/10 border-danger/20 text-danger dark:text-danger'}`}>
                                         <div className="flex items-center gap-2">
-                                            <div className={`p-1.5 rounded-full ${selectedShift.variance === 0 ? 'bg-emerald-500/20' : selectedShift.variance > 0 ? 'bg-blue-500/20' : 'bg-red-500/20'}`}>
+                                            <div className={`p-1.5 rounded-full ${selectedShift.variance === 0 ? 'bg-success/20' : selectedShift.variance > 0 ? 'bg-primary/20' : 'bg-danger/20'}`}>
                                                 {selectedShift.variance === 0 ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
                                             </div>
                                             <span className="font-black text-sm">فرق الصندوق</span>
@@ -348,9 +344,9 @@ export const ShiftsPage: React.FC = () => {
                                     </div>
 
                                     {selectedShift.note && (
-                                        <div className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-2xl mt-4">
-                                            <span className="text-[10px] font-black text-amber-500 uppercase block mb-1.5 flex items-center gap-1.5">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                        <div className="bg-warning/5 border border-warning/10 p-4 rounded-2xl mt-4">
+                                            <span className="text-[10px] font-black text-warning uppercase block mb-1.5 flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-warning" />
                                                 ملاحظات الإغلاق
                                             </span>
                                             <p className="text-sm font-medium text-text-main leading-relaxed">{selectedShift.note}</p>
@@ -374,7 +370,7 @@ export const ShiftsPage: React.FC = () => {
                                             {movements.map((mov) => (
                                                 <div key={mov.id} className="flex justify-between items-center bg-surface-active/30 p-3 rounded-2xl border border-border/50 hover:border-border transition-colors">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${mov.type === 'cash_in' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-orange-500/10 border-orange-500/20 text-orange-500'}`}>
+                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${mov.type === 'cash_in' ? 'bg-success/10 border-success/20 text-success' : 'bg-warning/10 border-warning/20 text-warning'}`}>
                                                             {mov.type === 'cash_in' ? <ArrowDownRight size={18} /> : <ArrowUpRight size={18} />}
                                                         </div>
                                                         <div>
@@ -382,7 +378,7 @@ export const ShiftsPage: React.FC = () => {
                                                             <p className="text-[10px] font-medium text-text-muted font-mono mt-0.5">{new Date(mov.timestamp).toLocaleTimeString('ar-IQ')}</p>
                                                         </div>
                                                     </div>
-                                                    <span className={`font-mono font-black text-sm ${mov.type === 'cash_in' ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                                                    <span className={`font-mono font-black text-sm ${mov.type === 'cash_in' ? 'text-success dark:text-success' : 'text-warning dark:text-warning'}`}>
                                                         {mov.type === 'cash_in' ? '+' : '-'}{formatCurrency(mov.amount, prefs.currency)}
                                                     </span>
                                                 </div>

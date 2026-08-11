@@ -13,9 +13,9 @@ interface StaffManagerProps {
 }
 
 const ROLES: { value: StaffRole; label: string; color: string }[] = [
-    { value: 'admin', label: 'مدير', color: 'text-red-400 bg-red-500/10' },
-    { value: 'manager', label: 'مشرف', color: 'text-amber-400 bg-amber-500/10' },
-    { value: 'cashier', label: 'كاشير', color: 'text-blue-400 bg-blue-500/10' },
+    { value: 'admin', label: 'مدير', color: 'text-danger bg-danger/10' },
+    { value: 'manager', label: 'مشرف', color: 'text-warning bg-warning/10' },
+    { value: 'cashier', label: 'كاشير', color: 'text-primary bg-primary/10' },
     { value: 'viewer', label: 'مشاهد', color: 'text-gray-400 bg-gray-500/10' },
 ];
 
@@ -250,10 +250,10 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
         <div className="fixed inset-0 bg-black/70  z-50 flex items-center justify-center p-4">
             <div className="bg-surface border border-border rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
                 {/* Header */}
-                <div className="p-6 border-b border-border flex items-center justify-between bg-gradient-to-l from-purple-500/5 to-transparent">
+                <div className="p-6 border-b border-border flex items-center justify-between bg-primary/5">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-purple-500/20 rounded-xl">
-                            <Users size={24} className="text-purple-400" />
+                        <div className="p-3 bg-primary/20 rounded-xl">
+                            <Users size={24} className="text-primary" />
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-text-main">إدارة الموظفين</h2>
@@ -303,7 +303,7 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
                                         onChange={e => setFormData({ ...formData, name: e.target.value })}
                                         placeholder="أدخل الاسم"
                                         title="الاسم الكامل"
-                                        className={`w-full bg-bg border ${errors.name ? 'border-red-500' : 'border-border'} rounded-xl px-4 py-3 text-text-main outline-none focus:border-primary`}
+                                        className={`w-full bg-bg border ${errors.name ? 'border-danger' : 'border-border'} rounded-xl px-4 py-3 text-text-main outline-none focus:border-primary`}
                                     />
                                     <FieldError error={errors.name} hint={errorHints.name} />
                                 </div>
@@ -339,7 +339,7 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
                                         placeholder="••••"
                                         title="رمز PIN"
                                         maxLength={4}
-                                        className={`w-full max-w-[200px] bg-bg border ${errors.pin ? 'border-red-500' : 'border-border'} rounded-xl px-4 py-3 text-text-main outline-none focus:border-primary text-center tracking-[0.5em] font-mono text-xl`}
+                                        className={`w-full max-w-[200px] bg-bg border ${errors.pin ? 'border-danger' : 'border-border'} rounded-xl px-4 py-3 text-text-main outline-none focus:border-primary text-center tracking-[0.5em] font-mono text-xl`}
                                         dir="ltr"
                                     />
                                     <FieldError error={errors.pin} hint={errorHints.pin} />
@@ -375,7 +375,7 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
                                         onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                         placeholder="07xxxxxxxxx"
                                         title="رقم الهاتف"
-                                        className={`w-full bg-bg border ${errors.phone ? 'border-red-500' : 'border-border'} rounded-xl px-4 py-3 text-text-main outline-none focus:border-primary`}
+                                        className={`w-full bg-bg border ${errors.phone ? 'border-danger' : 'border-border'} rounded-xl px-4 py-3 text-text-main outline-none focus:border-primary`}
                                         dir="ltr"
                                     />
                                     <FieldError error={errors.phone} hint={errorHints.phone || 'يجب أن يبدأ بـ 07 ويتكون من 11 رقماً'} />
@@ -391,7 +391,7 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                                         placeholder="email@example.com"
                                         title="البريد الإلكتروني"
-                                        className={`w-full bg-bg border ${errors.email ? 'border-red-500' : 'border-border'} rounded-xl px-4 py-3 text-text-main outline-none focus:border-primary`}
+                                        className={`w-full bg-bg border ${errors.email ? 'border-danger' : 'border-border'} rounded-xl px-4 py-3 text-text-main outline-none focus:border-primary`}
                                         dir="ltr"
                                     />
                                     <FieldError error={errors.email} hint={errorHints.email || 'مثال: user@example.com'} />
@@ -441,9 +441,9 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
                                                     <div className="flex items-center gap-2">
                                                         <h4 className="font-bold text-text-main">{s.name}</h4>
                                                         {s.active ? (
-                                                            <BadgeCheck size={14} className="text-emerald-400" />
+                                                            <BadgeCheck size={14} className="text-success" />
                                                         ) : (
-                                                            <UserX size={14} className="text-red-400" />
+                                                            <UserX size={14} className="text-danger" />
                                                         )}
                                                     </div>
                                                     <p className="text-xs text-text-muted">@{s.username}</p>
@@ -457,21 +457,21 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
 
                                                 <button
                                                     onClick={() => handleToggleStatus(s.id)}
-                                                    className={`p-2 rounded-lg transition-colors ${s.active ? 'hover:bg-red-500/10 text-red-400' : 'hover:bg-emerald-500/10 text-emerald-400'}`}
+                                                    className={`p-2 rounded-lg transition-colors ${s.active ? 'hover:bg-danger/10 text-danger' : 'hover:bg-success/10 text-success'}`}
                                                     title={s.active ? 'تعطيل' : 'تفعيل'}
                                                 >
                                                     {s.active ? <UserX size={18} /> : <UserCheck size={18} />}
                                                 </button>
                                                 <button
                                                     onClick={() => startEdit(s)}
-                                                    className="p-2 hover:bg-blue-500/10 text-blue-400 rounded-lg transition-colors"
+                                                    className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
                                                     title="تعديل"
                                                 >
                                                     <Edit2 size={18} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(s.id)}
-                                                    className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
+                                                    className="p-2 hover:bg-danger/10 text-danger rounded-lg transition-colors"
                                                     title="حذف"
                                                 >
                                                     <Trash2 size={18} />

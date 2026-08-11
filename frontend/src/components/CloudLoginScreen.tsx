@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Key, User, ArrowRight, Loader2, Store, AlertTriangle, Server, Cloud, Sparkles, Shield, Zap } from 'lucide-react';
+import { Lock, Mail, Key, User, ArrowRight, Loader2, Store, AlertTriangle, Server, Cloud, Shield, Zap } from 'lucide-react';
 import { api, desktopApi } from '../core/api';
 
 interface CloudLoginScreenProps {
@@ -171,29 +171,19 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
 
     return (
         <div className="fixed inset-0 bg-bg flex items-center justify-center overflow-hidden" dir="rtl">
-            {/* Background - Static gradient orbs (no animation for performance) */}
-            <div className="absolute inset-0">
-                {/* Primary gradient orbs */}
-                <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-br from-primary/20 via-emerald-500/10 to-transparent rounded-full blur-[150px]" />
-                <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-tl from-cyan-500/15 via-blue-500/10 to-transparent rounded-full blur-[130px]" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 rounded-full blur-[100px]" />
-            </div>
-
             {/* Main Content */}
             <div className="relative z-10 w-full max-w-md mx-4">
                 {/* Hero Section - Compact */}
                 <div className="text-center mb-4">
-                    {/* Animated Logo - Smaller */}
+                    {/* Logo */}
                     <div className="relative inline-block mb-3">
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary via-emerald-400 to-cyan-400 rounded-2xl blur-lg opacity-50" />
-                        <div className="relative w-14 h-14 bg-gradient-to-br from-primary via-emerald-400 to-cyan-400 rounded-2xl flex items-center justify-center shadow-xl shadow-primary/30">
-                            <Icon className="text-black" size={28} strokeWidth={2.5} />
+                        <div className="relative w-14 h-14 bg-primary rounded-2xl flex items-center justify-center">
+                            <Icon className="text-primary-fg" size={28} strokeWidth={2.5} />
                         </div>
-                        <Sparkles className="absolute -top-1 -right-1 text-primary" size={14} />
                     </div>
 
                     <h1 className="text-2xl font-black mb-1">
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-emerald-400 to-cyan-400">
+                        <span className="text-primary">
                             {mode === 'login' ? 'سحابة بيدر' : mode === 'register' ? 'انضم إلينا' : mode === 'lan' ? 'الشبكة المحلية' : 'استعادة الحساب'}
                         </span>
                     </h1>
@@ -215,7 +205,7 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
                                 className={`
                                     relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2
                                     ${mode === id
-                                        ? 'bg-gradient-to-r from-primary to-emerald-400 text-primary-fg shadow-lg shadow-primary/25'
+                                        ? 'bg-primary text-primary-fg shadow-lg shadow-primary/25'
                                         : 'text-text-muted hover:text-text hover:bg-surface-hover'
                                     }
                                 `}
@@ -229,19 +219,16 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
 
                 {/* Card */}
                 <div className="relative">
-                    {/* Card glow */}
-                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-emerald-400/20 to-cyan-400/20 rounded-[2rem] blur-xl opacity-50" />
-
-                    <div className="relative bg-surface  rounded-3xl border border-border shadow-card overflow-hidden">
+                    <div className="relative bg-surface  rounded-3xl border border-border overflow-hidden">
                         {/* Top accent line */}
-                        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+                        <div className="absolute top-0 left-0 right-0 h-px bg-transparent" />
 
                         <div className="p-5">
                             {/* Error Message */}
                             {error && (
-                                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 animate-shake">
-                                    <AlertTriangle className="text-red-400 flex-shrink-0" size={16} />
-                                    <span className="text-red-400 text-xs">{error}</span>
+                                <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl flex items-center gap-2 animate-shake">
+                                    <AlertTriangle className="text-danger flex-shrink-0" size={16} />
+                                    <span className="text-danger text-xs">{error}</span>
                                 </div>
                             )}
 
@@ -372,29 +359,18 @@ export const CloudLoginScreen: React.FC<CloudLoginScreenProps> = ({ onSuccess })
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="relative w-full h-11 mt-4 group overflow-hidden rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="relative w-full h-11 mt-4 rounded-xl bg-primary text-primary-fg font-bold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                                 >
-                                    {/* Button gradient background */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-primary via-emerald-400 to-cyan-400 transition-transform duration-300 group-hover:scale-105" />
-
-                                    {/* Shine effect */}
-                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                                    </div>
-
-                                    {/* Button content */}
-                                    <div className="relative flex items-center justify-center gap-2 text-black font-bold">
-                                        {loading ? (
-                                            <Loader2 className="animate-spin" size={20} />
-                                        ) : (
-                                            <>
-                                                <span>
-                                                    {mode === 'login' ? 'تسجيل الدخول' : mode === 'register' ? 'إنشاء الحساب' : mode === 'lan' ? 'اتصال' : 'إرسال رابط الاستعادة'}
-                                                </span>
-                                                <ArrowRight size={18} className="group-hover:-translate-x-1 transition-transform" />
-                                            </>
-                                        )}
-                                    </div>
+                                    {loading ? (
+                                        <Loader2 className="animate-spin" size={20} />
+                                    ) : (
+                                        <>
+                                            <span>
+                                                {mode === 'login' ? 'تسجيل الدخول' : mode === 'register' ? 'إنشاء الحساب' : mode === 'lan' ? 'اتصال' : 'إرسال رابط الاستعادة'}
+                                            </span>
+                                            <ArrowRight size={18} />
+                                        </>
+                                    )}
                                 </button>
                             </form>
 

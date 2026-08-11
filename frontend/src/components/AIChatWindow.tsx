@@ -176,17 +176,17 @@ export const AIChatWindow = ({ isOpen, onClose, contextData }: AIChatWindowProps
                     {/* Header with gradient */}
                     <div className="relative p-5 border-b border-white/10">
                         {/* Gradient accent line */}
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-primary to-blue-500" />
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
 
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-purple-500 to-primary flex items-center justify-center shadow-lg shadow-purple-500/30">
+                                <div className="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
                                     <Bot size={22} className="text-white" />
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-text-main text-base">المساعد الذكي</h3>
                                     <p className="text-xs text-text-muted flex items-center gap-1">
-                                        <span className={`w-2 h-2 rounded-full ${loading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
+                                        <span className={`w-2 h-2 rounded-full ${loading ? 'bg-warning animate-pulse' : 'bg-success'}`} />
                                         {loading ? 'يكتب...' : 'متصل ومستعد للمساعدة'}
                                     </p>
                                 </div>
@@ -194,7 +194,7 @@ export const AIChatWindow = ({ isOpen, onClose, contextData }: AIChatWindowProps
                             <div className="flex items-center gap-1.5">
                                 <button
                                     onClick={() => { setMessages([]); setStreamingText(''); }}
-                                    className="p-2.5 hover:bg-white/10 rounded-xl text-text-muted hover:text-red-400 transition-all touch-target active:scale-95"
+                                    className="p-2.5 hover:bg-white/10 rounded-xl text-text-muted hover:text-danger transition-all touch-target active:scale-95"
                                     title="مسح المحادثة"
                                 >
                                     <Trash2 size={18} />
@@ -215,7 +215,7 @@ export const AIChatWindow = ({ isOpen, onClose, contextData }: AIChatWindowProps
                         {/* Welcome State */}
                         {messages.length === 0 && (
                             <div className="flex flex-col items-center justify-center h-full text-center py-10">
-                                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-500/20 to-primary/20 flex items-center justify-center mb-4 border border-white/10">
+                                <div className="w-20 h-20 rounded-3xl bg-primary/20 flex items-center justify-center mb-4 border border-white/10">
                                     <Sparkles size={36} className="text-primary" />
                                 </div>
                                 <h4 className="text-text-main font-bold text-lg mb-2">مرحباً! 👋</h4>
@@ -248,7 +248,7 @@ export const AIChatWindow = ({ isOpen, onClose, contextData }: AIChatWindowProps
                                 {/* Avatar */}
                                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${m.role === 'user'
                                     ? 'bg-primary text-primary-fg'
-                                    : 'bg-gradient-to-br from-purple-500 to-primary text-white'
+                                    : 'bg-primary text-white'
                                     }`}>
                                     {m.role === 'user' ? <User size={16} /> : <Bot size={16} />}
                                 </div>
@@ -302,7 +302,7 @@ export const AIChatWindow = ({ isOpen, onClose, contextData }: AIChatWindowProps
                                 <button
                                     onClick={handleStop}
                                     title="إيقاف"
-                                    className="w-14 h-14 bg-red-500/10 border border-red-500/50 rounded-2xl text-red-500 flex items-center justify-center hover:bg-red-500/20 transition-all touch-target active:scale-95"
+                                    className="w-14 h-14 bg-danger/10 border border-danger/50 rounded-2xl text-danger flex items-center justify-center hover:bg-danger/20 transition-all touch-target active:scale-95"
                                 >
                                     <StopCircle size={20} />
                                 </button>
@@ -312,7 +312,7 @@ export const AIChatWindow = ({ isOpen, onClose, contextData }: AIChatWindowProps
                                     disabled={!input.trim()}
                                     title="إرسال"
                                     aria-label="إرسال"
-                                    className="w-14 h-14 bg-gradient-to-br from-primary to-emerald-400 rounded-2xl text-black flex items-center justify-center hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all touch-target active:scale-95 shadow-lg shadow-primary/30"
+                                    className="w-14 h-14 bg-primary rounded-2xl text-primary-fg flex items-center justify-center hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all touch-target active:scale-95 shadow-lg shadow-primary/30"
                                 >
                                     <Send size={20} />
                                 </button>

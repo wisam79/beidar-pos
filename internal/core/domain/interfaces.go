@@ -322,9 +322,9 @@ type StaffService interface {
 	GetAllStaff() ([]Staff, error)
 	GetActiveStaff() ([]Staff, error)
 	ToggleStaffStatus(id string) error
-
 	AuthenticateByUsername(username, password string) (*AuthResult, error)
 	AuthenticateByPIN(pin string) (*AuthResult, error)
+	RestoreSession(staffID string) (*AuthResult, error)
 	HasPermission(staffID, permission string) (bool, error)
 	SeedDefaultAdmin() error
 	GetStaffCount() (int64, error)

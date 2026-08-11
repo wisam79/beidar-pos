@@ -225,23 +225,20 @@ const useDesktopSettings = (notify: (msg: string, type: 'success' | 'error' | 'i
 const AutoStartCard = React.memo(({ enabled, loading, onToggle }: { enabled: boolean, loading: boolean, onToggle: () => void }) => (
     <div className="bg-surface border border-border/80 rounded-2xl p-5 sm:p-6 select-none">
         <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-success/10 border border-success/20 text-success rounded-xl flex items-center justify-center">
                 <Power size={20} />
             </div>
             <div className="flex items-center gap-2 px-3 py-1 bg-surface-hover rounded-xl border border-border/60">
-                <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-emerald-400 animate-pulse' : 'bg-text-muted'}`} />
+                <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-success animate-pulse' : 'bg-text-muted'}`} />
                 <span className="text-xs font-black text-text-muted">{enabled ? 'مفعل' : 'معطل'}</span>
             </div>
         </div>
-        <h3 className="text-base font-black text-text-main mb-1">التشغيل الآلي عند الإقلاع</h3>
-        <p className="text-xs text-text-muted mb-4 font-semibold leading-relaxed">
-            تفعيل فتح برنامج بيدر تلقائياً فور بدء تشغيل نظام الويندوز.
-        </p>
+        <h3 className="text-sm font-black text-text-main mb-3">التشغيل الآلي عند الإقلاع</h3>
         <button
             onClick={onToggle}
             disabled={loading}
-            className={`w-full py-3 min-h-[48px] rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-transform cursor-pointer active:scale-[0.98] border ${enabled
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+            className={`w-full py-3 min-h-[44px] rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-transform cursor-pointer active:scale-[0.98] border ${enabled
+                ? 'bg-success/10 text-success border-success/30 hover:bg-success/20'
                 : 'bg-surface-hover text-text-muted border-border/60 hover:text-text-main'
                 }`}
         >
@@ -252,24 +249,21 @@ const AutoStartCard = React.memo(({ enabled, loading, onToggle }: { enabled: boo
 ));
 
 const SimulatePrintCard = React.memo(({ enabled, onToggle }: { enabled: boolean, onToggle: () => void }) => (
-    <div className="bg-surface border border-border/80 rounded-2xl p-5 sm:p-6 select-none">
+    <div className="bg-surface border border-border/80 rounded-2xl p-5 select-none">
         <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary/10 border border-primary/20 text-primary rounded-xl flex items-center justify-center">
                 <FileText size={20} />
             </div>
             <div className="flex items-center gap-2 px-3 py-1 bg-surface-hover rounded-xl border border-border/60">
-                <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-blue-400 animate-pulse' : 'bg-text-muted'}`} />
+                <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-primary animate-pulse' : 'bg-text-muted'}`} />
                 <span className="text-xs font-black text-text-muted">{enabled ? 'مفعل' : 'معطل'}</span>
             </div>
         </div>
-        <h3 className="text-base font-black text-text-main mb-1">وضع محاكاة الطباعة المعاينة</h3>
-        <p className="text-xs text-text-muted mb-4 font-semibold leading-relaxed">
-            عرض صورة الفاتورة فورياً على الشاشة بدلاً من إرسالها للطابعة الحرارية.
-        </p>
+        <h3 className="text-sm font-black text-text-main mb-3">وضع محاكاة الطباعة</h3>
         <button
             onClick={onToggle}
-            className={`w-full py-3 min-h-[48px] rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-transform cursor-pointer active:scale-[0.98] border ${enabled
-                ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20'
+            className={`w-full py-3 min-h-[44px] rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-transform cursor-pointer active:scale-[0.98] border ${enabled
+                ? 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20'
                 : 'bg-surface-hover text-text-muted border-border/60 hover:text-text-main'
                 }`}
         >
@@ -287,14 +281,14 @@ const PrinterCard = React.memo(({
     <button
         onClick={() => onSelect(printer.name)}
         className={`p-4 rounded-xl border text-right transition-colors cursor-pointer ${isSelected
-            ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
-            : 'border-border/80 bg-surface hover:border-emerald-500/30'
+            ? 'border-success/50 bg-success/10 text-success'
+            : 'border-border/80 bg-surface hover:border-success/30'
             }`}
     >
         <div className="flex items-start justify-between mb-2">
-            <Printer size={22} className={isSelected ? 'text-emerald-400' : 'text-text-muted'} />
+            <Printer size={22} className={isSelected ? 'text-success' : 'text-text-muted'} />
             {isSelected && (
-                <div className="w-5 h-5 bg-emerald-500 text-black rounded-full flex items-center justify-center">
+                <div className="w-5 h-5 bg-success text-primary-fg rounded-full flex items-center justify-center">
                     <Check size={12} className="stroke-[3]" />
                 </div>
             )}
@@ -303,12 +297,12 @@ const PrinterCard = React.memo(({
             {printer.name}
         </h4>
         <div className="flex items-center gap-2 mt-2">
-            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-bold border ${printer.status === 'Ready' || !printer.status ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-bold border ${printer.status === 'Ready' || !printer.status ? 'bg-success/10 text-success border-success/20' : 'bg-danger/10 text-danger border-danger/20'
                 }`}>
                 {printer.status || 'جاهز'}
             </span>
             {isDefault && (
-                <span className="text-[10px] px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg font-bold">الافتراضية</span>
+                <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-lg font-bold">الافتراضية</span>
             )}
         </div>
     </button>
@@ -337,7 +331,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
             {/* Header Banner */}
             <div className="bg-surface border border-border/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <div className="p-2.5 rounded-xl bg-success/10 text-success border border-success/20">
                         <RefreshCw size={22} />
                     </div>
                     <div>
@@ -357,15 +351,15 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                 {/* Updates Section */}
                 <div className="bg-surface border border-border/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                        <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-success/10 border border-success/20 text-success rounded-xl flex items-center justify-center">
                             <RefreshCw size={20} className={update.checking ? 'animate-spin' : ''} />
                         </div>
                         <div className="text-right">
                             <div className="text-xs font-black text-text-muted mb-1">إصدار النظام الحاضر</div>
                             <div className="flex items-center gap-2">
-                                <code className="font-mono bg-surface-hover border border-border/60 px-2.5 py-1 rounded-lg text-xs font-black text-emerald-400">{update.currentVersion}</code>
+                                <code className="font-mono bg-surface-hover border border-border/60 px-2.5 py-1 rounded-lg text-xs font-black text-success">{update.currentVersion}</code>
                                 {(update.currentVersion === 'dev' || update.currentVersion === '0.0.0') && (
-                                    <span className="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-lg font-bold border border-amber-500/20">
+                                    <span className="text-[10px] bg-warning/10 text-warning px-2 py-0.5 rounded-lg font-bold border border-warning/20">
                                         تطوير محلي
                                     </span>
                                 )}
@@ -379,7 +373,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                                 <button
                                     onClick={downloadUpdate}
                                     disabled={update.downloading}
-                                    className="w-full py-3 min-h-[48px] bg-emerald-500 text-black font-black rounded-xl border border-emerald-400 hover:bg-emerald-400 transition-transform active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                                    className="w-full py-3 min-h-[48px] bg-success text-primary-fg font-black rounded-xl border border-success hover:bg-success transition-transform active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     {update.downloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                                     {update.downloading
@@ -393,7 +387,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                                 {update.downloading && (
                                     <div className="relative h-2.5 bg-surface-hover rounded-full overflow-hidden border border-border/60">
                                         <div
-                                            className="absolute inset-y-0 left-0 bg-emerald-500 transition-all duration-300"
+                                            className="absolute inset-y-0 left-0 bg-success transition-all duration-300"
                                             style={{ width: `${update.progress}%` }}
                                         />
                                     </div>
@@ -403,7 +397,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                             <button
                                 onClick={checkForUpdates}
                                 disabled={update.checking}
-                                className="w-full py-3 min-h-[48px] bg-surface-hover hover:bg-emerald-500/10 text-text-main hover:text-emerald-400 font-black text-xs rounded-xl border border-border/80 hover:border-emerald-500/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                className="w-full py-3 min-h-[48px] bg-surface-hover hover:bg-success/10 text-text-main hover:text-success font-black text-xs rounded-xl border border-border/80 hover:border-success/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                             >
                                 {update.checking ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
                                 {update.checking ? 'جاري التحقق...' : 'التحقق من وجود تحديثات جديدة'}
@@ -417,7 +411,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
             <div className="bg-surface border border-border/80 rounded-2xl p-5 sm:p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
                             <Printer size={20} />
                         </div>
                         <div>
@@ -427,7 +421,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                     </div>
                     <button
                         onClick={refreshPrinters}
-                        className="p-2.5 bg-surface-hover text-text-muted hover:text-emerald-400 rounded-xl border border-border/60 transition-colors cursor-pointer"
+                        className="p-2.5 bg-surface-hover text-text-muted hover:text-success rounded-xl border border-border/60 transition-colors cursor-pointer"
                         title="تحديث القائمة"
                     >
                         <RefreshCw size={18} className={printers.loading ? 'animate-spin' : ''} />
@@ -436,7 +430,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
 
                 {printers.loading ? (
                     <div className="flex flex-col items-center justify-center py-10 text-text-muted">
-                        <Loader2 size={32} className="animate-spin mb-3 text-emerald-400" />
+                        <Loader2 size={32} className="animate-spin mb-3 text-success" />
                         <p className="text-xs font-bold">جاري الفحص واستكشاف الطابعات...</p>
                     </div>
                 ) : printers.list.length > 0 ? (
@@ -463,7 +457,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                     <button
                         onClick={testPrinter}
                         disabled={testingPrinter || !printers.selected}
-                        className="px-6 py-2.5 min-h-[44px] bg-emerald-500 text-black font-black text-xs rounded-xl border border-emerald-400 hover:bg-emerald-400 transition-transform active:scale-[0.98] flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2.5 min-h-[44px] bg-success text-primary-fg font-black text-xs rounded-xl border border-success hover:bg-success transition-transform active:scale-[0.98] flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {testingPrinter ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
                         طباعة إيصال تجريبي
@@ -474,7 +468,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
             {/* Diagnostics Section */}
             <div className="bg-surface border border-border/80 rounded-2xl p-5 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <div className="p-2.5 rounded-xl bg-warning/10 text-warning border border-warning/20">
                         <AlertTriangle size={20} />
                     </div>
                     <div>
@@ -491,13 +485,13 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                     ) : crashReports.list.length > 0 ? (
                         <ul className="space-y-1">
                             {crashReports.list.map((report, idx) => (
-                                <li key={idx} className="flex items-center gap-2 text-red-400 font-bold">
+                                <li key={idx} className="flex items-center gap-2 text-danger font-bold">
                                     <FileText size={12} /> {report}
                                 </li>
                             ))}
                         </ul>
                     ) : (
-                        <div className="flex items-center justify-center h-full text-emerald-400 gap-2 font-bold">
+                        <div className="flex items-center justify-center h-full text-success gap-2 font-bold">
                             <Check size={14} /> النظام يعمل باستقرار تام دون تسجيل أي أخطاء.
                         </div>
                     )}
@@ -507,7 +501,7 @@ export const DesktopSettingsPanel: React.FC<DesktopSettingsPanelProps> = ({ noti
                     <button
                         onClick={clearCrashReports}
                         disabled={crashReports.list.length === 0}
-                        className="text-red-400 hover:text-red-300 text-xs font-black flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="text-danger hover:text-danger text-xs font-black flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
                         <Trash2 size={14} /> تنظيف وسحق السجلات القديمة
                     </button>

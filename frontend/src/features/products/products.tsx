@@ -505,7 +505,7 @@ export const ProductsPage: React.FC = () => {
     const [showStats, setShowStats] = useState(false);
 
     // --- Loading State ---
-    if (loading) return <LoadingState icon={Package} title={t('common.loading')} subtitle={t('common.loading')} />;
+    if (loading && allProducts.length === 0) return <LoadingState icon={Package} title={t('common.loading')} subtitle={t('common.loading')} />;
 
     return (
         <PageShell>
@@ -515,7 +515,7 @@ export const ProductsPage: React.FC = () => {
                         onClick={() => setShowStats(!showStats)}
                         className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
                             ? 'bg-surface border border-border text-text-muted hover:text-text-main'
-                            : 'bg-gradient-to-br from-primary to-emerald-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
+                            : 'bg-primary text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
                             }`}
                         title={showStats ? 'إخفاء الإحصائيات' : 'عرض التحليل'}
                     >
@@ -542,7 +542,7 @@ export const ProductsPage: React.FC = () => {
 
             <BulkActions selectedCount={selectedIds.length} onPrintSelected={() => { selectedIds.forEach(id => { const p = allProducts.find(prod => prod.id === id); if (p) addToPrintQueue(p, 1); }); setSelectedIds([]); }} onDeleteSelected={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
 
-            <div ref={parentRef} className="flex-1 overflow-y-auto min-h-0 pr-1 pb-10 custom-scrollbar">
+            <div ref={parentRef} className="flex-1 overflow-y-auto min-h-0 pr-1 pb-4 custom-scrollbar">
                 {filteredProducts.length === 0 ? <EmptyState icon={Package} title={t('products.noProducts')} description={search ? t('common.noData') : t('products.addProduct')} action={!search && <button onClick={handleInitAdd} className="bg-surface hover:bg-surface-hover text-text-main px-5 py-2 rounded-xl border border-border text-sm font-bold">{t('products.addProduct')}</button>} /> : (
                     isGrid ? (
                         <ProductGridView

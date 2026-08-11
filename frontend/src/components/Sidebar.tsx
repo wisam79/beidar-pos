@@ -67,7 +67,7 @@ const NavButton = React.memo(({ icon: Icon, label, isActive, onClick, variant = 
         default: isActive
             ? 'border-primary/15 bg-primary-dim text-primary shadow-xs'
             : 'border-transparent bg-transparent text-text-muted hover:border-border/80 hover:bg-surface-hover hover:text-text-main',
-        ai: 'border-indigo-500/20 bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 hover:border-indigo-500/35 hover:bg-indigo-500/20',
+        ai: 'border-primary/20 bg-primary/10 text-primary dark:text-primary hover:border-primary/35 hover:bg-primary/20',
         danger: 'border-transparent bg-transparent text-text-muted hover:border-danger/20 hover:bg-danger-dim hover:text-danger',
     };
 

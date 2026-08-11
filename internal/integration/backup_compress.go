@@ -33,7 +33,7 @@ func compressDatabaseForBackup() ([]byte, error) {
 	db := repository.GetDB()
 	if db != nil {
 		tempFile := filepath.Join(os.TempDir(), fmt.Sprintf("beidar_backup_%d.db", time.Now().UnixNano()))
-		if err := db.Exec("VACUUM INTO ?", tempFile).Error; err == nil {
+		if err := db.Exec(fmt.Sprintf("VACUUM INTO '%s'", tempFile)).Error; err == nil {
 			srcPath = tempFile
 			useTemp = true
 		}

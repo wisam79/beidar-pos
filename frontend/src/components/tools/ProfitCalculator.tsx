@@ -46,13 +46,13 @@ export const ProfitCalculator = () => {
                 <div className="flex bg-bg/50 p-1 rounded-2xl mb-2">
                     <button
                         onClick={() => setMode('calculate')}
-                        className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all ${mode === 'calculate' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25' : 'text-text-muted hover:text-text-main'}`}
+                        className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all ${mode === 'calculate' ? 'bg-success text-white shadow-lg shadow-success/25' : 'text-text-muted hover:text-text-main'}`}
                     >
                         حساب الربح
                     </button>
                     <button
                         onClick={() => setMode('findPrice')}
-                        className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all ${mode === 'findPrice' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' : 'text-text-muted hover:text-text-main'}`}
+                        className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all ${mode === 'findPrice' ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'text-text-muted hover:text-text-main'}`}
                     >
                         تحديد السعر
                     </button>
@@ -86,9 +86,9 @@ export const ProfitCalculator = () => {
                                         value={sellPrice}
                                         onChange={(e) => setSellPrice(e.target.value)}
                                         placeholder="0"
-                                        className="w-full h-12 bg-bg/50 rounded-2xl border border-transparent focus:border-emerald-500/30 focus:bg-bg px-4 pr-10 text-lg font-mono font-bold focus:outline-none transition-all placeholder:text-text-muted/30"
+                                        className="w-full h-12 bg-bg/50 rounded-2xl border border-transparent focus:border-success/30 focus:bg-bg px-4 pr-10 text-lg font-mono font-bold focus:outline-none transition-all placeholder:text-text-muted/30"
                                     />
-                                    <TrendingUp size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500/50" />
+                                    <TrendingUp size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-success/50" />
                                 </div>
                             </div>
                             <div className="relative w-24">
@@ -117,7 +117,7 @@ export const ProfitCalculator = () => {
                                         style={{ width: `${Math.min((costNum / sellNum) * 100, 100)}%` }}
                                     />
                                     <div
-                                        className={`h-full transition-all duration-500 ${unitProfit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
+                                        className={`h-full transition-all duration-500 ${unitProfit >= 0 ? 'bg-success' : 'bg-danger'}`}
                                         style={{ width: `${Math.min(Math.abs((unitProfit / sellNum) * 100), 100)}%` }}
                                     />
                                 </div>
@@ -125,23 +125,23 @@ export const ProfitCalculator = () => {
                         )}
 
                         {/* Results Card */}
-                        <div className="bg-gradient-to-br from-emerald-500/5 to-blue-500/5 border border-emerald-500/10 rounded-3xl p-5 space-y-3 mt-1">
+                        <div className="bg-success/5 border border-success/10 rounded-3xl p-5 space-y-3 mt-1">
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold text-text-muted">صافي الربح</span>
-                                <span className={`font-mono font-black text-3xl tracking-tight ${totalProfit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                <span className={`font-mono font-black text-3xl tracking-tight ${totalProfit >= 0 ? 'text-success' : 'text-danger'}`}>
                                     {formatNum(totalProfit)}
                                 </span>
                             </div>
-                            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-dashed border-emerald-500/10">
+                            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-dashed border-success/10">
                                 <div className="bg-surface rounded-2xl p-2.5 text-center">
                                     <div className="text-[10px] font-bold text-text-muted mb-1">هامش الربح</div>
-                                    <div className={`font-mono font-bold text-lg ${profitMargin >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                                    <div className={`font-mono font-bold text-lg ${profitMargin >= 0 ? 'text-primary' : 'text-danger'}`}>
                                         {profitMargin.toFixed(1)}%
                                     </div>
                                 </div>
                                 <div className="bg-surface rounded-2xl p-2.5 text-center">
                                     <div className="text-[10px] font-bold text-text-muted mb-1">Markup</div>
-                                    <div className="font-mono font-bold text-lg text-purple-500">
+                                    <div className="font-mono font-bold text-lg text-primary">
                                         {markup.toFixed(1)}%
                                     </div>
                                 </div>
@@ -158,7 +158,7 @@ export const ProfitCalculator = () => {
                                     <button
                                         key={m}
                                         onClick={() => setTargetMargin(String(m))}
-                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${targetMargin === String(m) ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-bg border border-border text-text-muted hover:text-text-main hover:border-blue-500/50'}`}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${targetMargin === String(m) ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-bg border border-border text-text-muted hover:text-text-main hover:border-primary/50'}`}
                                     >
                                         {m}%
                                     </button>
@@ -170,21 +170,21 @@ export const ProfitCalculator = () => {
                                     value={targetMargin}
                                     onChange={(e) => setTargetMargin(e.target.value)}
                                     placeholder="20"
-                                    className="w-full h-12 bg-bg/50 rounded-2xl border border-transparent focus:border-blue-500/30 focus:bg-bg px-4 pr-10 text-lg font-mono font-bold focus:outline-none transition-all"
+                                    className="w-full h-12 bg-bg/50 rounded-2xl border border-transparent focus:border-primary/30 focus:bg-bg px-4 pr-10 text-lg font-mono font-bold focus:outline-none transition-all"
                                 />
-                                <Percent size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500/50" />
+                                <Percent size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/50" />
                             </div>
                         </div>
 
                         {/* Suggested Price Result */}
-                        <div className="bg-gradient-to-br from-blue-500/5 to-purple-500/5 border border-blue-500/10 rounded-3xl p-6 text-center mt-2">
-                            <div className="text-xs font-bold text-blue-500/70 mb-2">سعر البيع المقترح</div>
-                            <div className="text-4xl font-black text-blue-500 font-mono tracking-tighter">
+                        <div className="bg-primary/5 border border-primary/10 rounded-3xl p-6 text-center mt-2">
+                            <div className="text-xs font-bold text-primary/70 mb-2">سعر البيع المقترح</div>
+                            <div className="text-4xl font-black text-primary font-mono tracking-tighter">
                                 {suggestedPrice > 0 ? formatNum(suggestedPrice) : '--'}
                             </div>
                             {suggestedPrice > 0 && (
-                                <div className="text-[10px] font-bold text-text-muted mt-3 bg-blue-500/10 rounded-xl py-1.5 px-3 inline-block">
-                                    الربح: <span className="text-emerald-500">{formatNum(suggestedPrice - costNum)}</span>
+                                <div className="text-[10px] font-bold text-text-muted mt-3 bg-primary/10 rounded-xl py-1.5 px-3 inline-block">
+                                    الربح: <span className="text-success">{formatNum(suggestedPrice - costNum)}</span>
                                 </div>
                             )}
                         </div>
@@ -195,7 +195,7 @@ export const ProfitCalculator = () => {
             {/* Reset */}
             <button
                 onClick={reset}
-                className="w-full py-3 bg-bg/50 hover:bg-red-500/5 rounded-2xl text-xs font-bold text-text-muted hover:text-red-500 transition-all flex items-center justify-center gap-2 mt-auto"
+                className="w-full py-3 bg-bg/50 hover:bg-danger/5 rounded-2xl text-xs font-bold text-text-muted hover:text-danger transition-all flex items-center justify-center gap-2 mt-auto"
             >
                 <RotateCcw size={14} />
                 تصفير الحاسبة

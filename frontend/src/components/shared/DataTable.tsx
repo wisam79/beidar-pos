@@ -16,9 +16,9 @@ import { EmptyState } from '../ui';
 export { type ColumnDef };
 
 const rowColorMap: Record<string, string> = {
-  emerald: 'hover:bg-emerald-500/5',
-  orange: 'hover:bg-amber-500/5',
-  red: 'hover:bg-red-500/5',
+  emerald: 'hover:bg-success/5',
+  orange: 'hover:bg-warning/5',
+  red: 'hover:bg-danger/5',
   default: 'hover:bg-surface-hover/60',
 };
 
@@ -99,14 +99,14 @@ export function DataTable<TData, TValue>({
                       <th
                         key={header.id}
                         style={{ width: size !== 150 ? size : undefined }}
-                        className="px-5 py-3.5 font-extrabold cursor-pointer hover:text-emerald-400 transition-colors select-none"
+                        className="px-5 py-3.5 font-extrabold cursor-pointer hover:text-success transition-colors select-none"
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         <div className="flex items-center gap-1.5">
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {{
-                            asc: <ArrowUp size={14} className="text-emerald-400" />,
-                            desc: <ArrowDown size={14} className="text-emerald-400" />,
+                            asc: <ArrowUp size={14} className="text-success" />,
+                            desc: <ArrowDown size={14} className="text-success" />,
                           }[header.column.getIsSorted() as string] ?? null}
                         </div>
                       </th>
@@ -154,7 +154,7 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <button
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-emerald-500 hover:text-black border border-border/60 text-text-muted transition-all disabled:opacity-40 disabled:hover:bg-surface-hover disabled:hover:text-text-muted active:scale-95 touch-target cursor-pointer"
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-success hover:text-primary-fg border border-border/60 text-text-muted transition-all disabled:opacity-40 disabled:hover:bg-surface-hover disabled:hover:text-text-muted active:scale-95 touch-target cursor-pointer"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               title="الصفحة السابقة"
@@ -162,7 +162,7 @@ export function DataTable<TData, TValue>({
               <ChevronRight size={20} />
             </button>
             <button
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-emerald-500 hover:text-black border border-border/60 text-text-muted transition-all disabled:opacity-40 disabled:hover:bg-surface-hover disabled:hover:text-text-muted active:scale-95 touch-target cursor-pointer"
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-success hover:text-primary-fg border border-border/60 text-text-muted transition-all disabled:opacity-40 disabled:hover:bg-surface-hover disabled:hover:text-text-muted active:scale-95 touch-target cursor-pointer"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               title="الصفحة التالية"
@@ -171,7 +171,7 @@ export function DataTable<TData, TValue>({
             </button>
           </div>
           <span className="text-xs md:text-sm text-text-muted font-extrabold tracking-wide">
-            صفحة <span className="text-emerald-400 font-mono font-black">{table.getState().pagination.pageIndex + 1}</span> من{' '}
+            صفحة <span className="text-success font-mono font-black">{table.getState().pagination.pageIndex + 1}</span> من{' '}
             <span className="text-text-main font-mono font-black">{table.getPageCount() || 1}</span>
           </span>
         </div>
@@ -181,7 +181,7 @@ export function DataTable<TData, TValue>({
           onChange={e => {
             table.setPageSize(Number(e.target.value))
           }}
-          className="bg-bg border border-border/80 text-xs rounded-xl px-4 py-2.5 outline-none font-extrabold text-text-main hover:border-emerald-500/50 transition-colors touch-target cursor-pointer"
+          className="bg-bg border border-border/80 text-xs rounded-xl px-4 py-2.5 outline-none font-extrabold text-text-main hover:border-success/50 transition-colors touch-target cursor-pointer"
         >
           {[10, 20, 30, 40, 50].map(pageSize => (
             <option key={pageSize} value={pageSize}>

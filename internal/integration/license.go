@@ -317,9 +317,15 @@ func (s *cloudService) VerifyLicense(licenseKey string) (*domain.LicenseResult, 
 	}
 
 	result, err := s.verifyOnline(user.UserID)
-	if err == nil && result.Licensed {
-		_ = s.cacheResult(licenseKey, user.UserID, result)
-		s.saveSessionToCache()
+	if err == nil {
+		if result.Licensed {
+			_ = s.cacheResult(licenseKey, user.UserID, result)
+			s.saveSessionToCache()
+		} else {
+			// License revoked! Clear it from cache by caching the denial
+			_ = s.cacheResult(licenseKey, user.UserID, result)
+			s.saveSessionToCache()
+		}
 		return result, nil
 	}
 

@@ -38,31 +38,35 @@ var (
 	pinnedHTTPClient   *http.Client
 )
 
+var certPinningOnce sync.Once
+
 func initCertPinning() {
-	supabaseCertPool, _ = x509.SystemCertPool()
-	if supabaseCertPool == nil {
-		supabaseCertPool = x509.NewCertPool()
-	}
+	certPinningOnce.Do(func() {
+		supabaseCertPool, _ = x509.SystemCertPool()
+		if supabaseCertPool == nil {
+			supabaseCertPool = x509.NewCertPool()
+		}
 
-	host := ""
-	if strings.HasPrefix(supabaseURL, "https://") {
-		host = strings.TrimPrefix(supabaseURL, "https://")
-	}
+		host := ""
+		if strings.HasPrefix(supabaseURL, "https://") {
+			host = strings.TrimPrefix(supabaseURL, "https://")
+		}
 
-	tlsConfig := &tls.Config{
-		RootCAs:    supabaseCertPool,
-		MinVersion: tls.VersionTLS12,
-		ServerName: host,
-	}
+		tlsConfig := &tls.Config{
+			RootCAs:    supabaseCertPool,
+			MinVersion: tls.VersionTLS12,
+			ServerName: host,
+		}
 
-	transport := &http.Transport{
-		TLSClientConfig: tlsConfig,
-	}
+		transport := &http.Transport{
+			TLSClientConfig: tlsConfig,
+		}
 
-	pinnedHTTPClient = &http.Client{
-		Transport: transport,
-		Timeout:   30 * time.Second,
-	}
+		pinnedHTTPClient = &http.Client{
+			Transport: transport,
+			Timeout:   30 * time.Second,
+		}
+	})
 }
 
 func getPinnedClient() *http.Client {

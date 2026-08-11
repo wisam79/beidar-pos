@@ -6,6 +6,7 @@ import (
 	"beidar-desktop/pkg/auth"
 	"context"
 	"net/url"
+	"strconv"
 )
 
 type SaleHandler struct {
@@ -31,7 +32,19 @@ func (h *SaleHandler) GetSales(page int, pageSize int, search string, statusFilt
 	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		var result domain.PaginatedSales
-		err := h.lanService.RemoteGet("/api/sales", &result)
+		query := url.Values{}
+		query.Add("page", strconv.Itoa(page))
+		query.Add("pageSize", strconv.Itoa(pageSize))
+		if search != "" {
+			query.Add("search", search)
+		}
+		if statusFilter != "" {
+			query.Add("status", statusFilter)
+		}
+		if dateFilter != "" {
+			query.Add("date", dateFilter)
+		}
+		err := h.lanService.RemoteGet("/api/sales?"+query.Encode(), &result)
 		return &result, err
 	}
 	return h.saleService.GetSales(page, pageSize, search, statusFilter, dateFilter)

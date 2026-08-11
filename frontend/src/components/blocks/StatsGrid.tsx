@@ -4,7 +4,6 @@
  */
 import React, { memo } from 'react';
 import { LucideIcon } from 'lucide-react';
-import { Card } from '../ds';
 
 // ═══════════════════════════════════════════════════════
 //  StatCard Colors
@@ -12,70 +11,54 @@ import { Card } from '../ds';
 
 export type StatColor = 'emerald' | 'blue' | 'red' | 'orange' | 'purple' | 'amber' | 'primary';
 
-const colorMap: Record<StatColor, {
+type StatColorStyle = {
     iconBg: string;
     iconBorder: string;
     iconText: string;
-    valueText: string;
     hoverBorder: string;
     hoverShadow: string;
-}> = {
-    emerald: {
-        iconBg: 'bg-emerald-500/10',
-        iconBorder: 'border-emerald-500/20',
-        iconText: 'text-emerald-500',
-        valueText: 'text-text-main',
-        hoverBorder: 'hover:border-emerald-500/30',
-        hoverShadow: 'hover:shadow-emerald-500/5',
-    },
-    blue: {
-        iconBg: 'bg-blue-500/10',
-        iconBorder: 'border-blue-500/20',
-        iconText: 'text-blue-500',
-        valueText: 'text-text-main',
-        hoverBorder: 'hover:border-blue-500/30',
-        hoverShadow: 'hover:shadow-blue-500/5',
-    },
-    red: {
-        iconBg: 'bg-red-500/10',
-        iconBorder: 'border-red-500/20',
-        iconText: 'text-red-500',
-        valueText: 'text-text-main',
-        hoverBorder: 'hover:border-red-500/30',
-        hoverShadow: 'hover:shadow-red-500/5',
-    },
-    orange: {
-        iconBg: 'bg-orange-500/10',
-        iconBorder: 'border-orange-500/20',
-        iconText: 'text-orange-500',
-        valueText: 'text-text-main',
-        hoverBorder: 'hover:border-orange-500/30',
-        hoverShadow: 'hover:shadow-orange-500/5',
-    },
-    purple: {
-        iconBg: 'bg-purple-500/10',
-        iconBorder: 'border-purple-500/20',
-        iconText: 'text-purple-500',
-        valueText: 'text-text-main',
-        hoverBorder: 'hover:border-purple-500/30',
-        hoverShadow: 'hover:shadow-purple-500/5',
-    },
-    amber: {
-        iconBg: 'bg-amber-500/10',
-        iconBorder: 'border-amber-500/20',
-        iconText: 'text-amber-500',
-        valueText: 'text-text-main',
-        hoverBorder: 'hover:border-amber-500/30',
-        hoverShadow: 'hover:shadow-amber-500/5',
-    },
-    primary: {
-        iconBg: 'bg-primary/10',
-        iconBorder: 'border-primary/20',
-        iconText: 'text-primary',
-        valueText: 'text-text-main',
-        hoverBorder: 'hover:border-primary/30',
-        hoverShadow: 'hover:shadow-primary/5',
-    },
+};
+
+const success: StatColorStyle = {
+    iconBg: 'bg-success/10',
+    iconBorder: 'border-success/20',
+    iconText: 'text-success',
+    hoverBorder: 'hover:border-success/30',
+    hoverShadow: 'hover:shadow-success/5',
+};
+
+const primary: StatColorStyle = {
+    iconBg: 'bg-primary/10',
+    iconBorder: 'border-primary/20',
+    iconText: 'text-primary',
+    hoverBorder: 'hover:border-primary/30',
+    hoverShadow: 'hover:shadow-primary/5',
+};
+
+const danger: StatColorStyle = {
+    iconBg: 'bg-danger/10',
+    iconBorder: 'border-danger/20',
+    iconText: 'text-danger',
+    hoverBorder: 'hover:border-danger/30',
+    hoverShadow: 'hover:shadow-danger/5',
+};
+
+const warning: StatColorStyle = {
+    iconBg: 'bg-warning/10',
+    iconBorder: 'border-warning/20',
+    iconText: 'text-warning',
+    hoverBorder: 'hover:border-warning/30',
+    hoverShadow: 'hover:shadow-warning/5',
+};
+
+const colorMap: Record<StatColor, StatColorStyle> = {
+    emerald: success,
+    blue: primary,
+    red: danger,
+    orange: warning,
+    purple: primary,
+    amber: warning,
+    primary,
 };
 
 // ═══════════════════════════════════════════════════════
@@ -113,21 +96,21 @@ export const StatCard = memo(({
         <div
             onClick={onClick}
             className={`
-                bg-surface rounded-2xl p-4 sm:p-5 flex items-center gap-4 group transition-colors duration-150 select-none
+                bg-surface rounded-2xl p-3.5 flex items-center gap-3 group transition-colors duration-150 select-none
                 border border-border/80 hover:border-border
                 ${onClick ? 'cursor-pointer active:scale-[0.98] touch-target' : ''}
             `}
         >
             {/* Icon Pod */}
-            <div className={`w-12 h-12 rounded-xl ${c.iconBg} border ${c.iconBorder} flex items-center justify-center shrink-0`}>
-                <Icon size={22} className={c.iconText} />
+            <div className={`w-10 h-10 rounded-xl ${c.iconBg} border ${c.iconBorder} flex items-center justify-center shrink-0`}>
+                <Icon size={20} className={c.iconText} />
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0 text-start">
                 <span className="text-xs font-extrabold text-text-muted block leading-tight tracking-tight">{label}</span>
                 <div className="flex items-center justify-start gap-2.5 mt-1">
-                    <span className={`font-mono font-black text-2xl ${c.valueText} leading-none tracking-tight`}>{value}</span>
+                    <span className="font-mono font-black text-xl text-text-main leading-none tracking-tight">{value}</span>
                     {trend}
                 </div>
                 {subtitle && <span className="text-[11px] text-text-muted font-semibold block mt-1">{subtitle}</span>}
@@ -204,7 +187,7 @@ export const MiniCard = memo(({
                 bg-surface border rounded-2xl p-3.5 flex items-center justify-between gap-3 
                 select-none transition-colors duration-150 relative overflow-hidden
                 ${active
-                    ? 'border-emerald-500/50 bg-emerald-500/5'
+                    ? 'border-success/50 bg-success/5'
                     : 'border-border/80 hover:border-border hover:bg-surface-hover/60'
                 }
                 ${onClick ? 'cursor-pointer active:scale-[0.98] min-h-[48px]' : ''}

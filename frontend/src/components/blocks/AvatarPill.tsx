@@ -24,9 +24,9 @@ export const AvatarPill = memo(({
     const initials = name ? name.substring(0, 2).toUpperCase() : 'US';
 
     const statusColors = {
-        online: 'bg-emerald-500',
+        online: 'bg-success',
         offline: 'bg-text-muted',
-        warning: 'bg-amber-500',
+        warning: 'bg-warning',
     };
 
     return (

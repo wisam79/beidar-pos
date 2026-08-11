@@ -5,7 +5,6 @@ import (
 	pkgerrors "beidar-desktop/pkg/errors"
 	"beidar-desktop/pkg/i18n"
 	"beidar-desktop/pkg/logger"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"regexp"
@@ -628,6 +627,24 @@ func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 	return &domain.AuthResult{Success: false, Message: i18n.GetMessage("INVALID_PIN")}, nil
 }
 
+func (s *staffService) RestoreSession(staffID string) (*domain.AuthResult, error) {
+	st, err := s.staffRepo.GetByID(staffID)
+	if err != nil || !st.Active {
+		return &domain.AuthResult{Success: false, Message: i18n.GetMessage("STAFF_NOT_FOUND")}, nil
+	}
+
+	perms := st.Permissions
+	if len(perms) == 0 {
+		perms = RolePermissions[st.Role]
+	}
+
+	return &domain.AuthResult{
+		Success:     true,
+		Staff:       *st,
+		Permissions: perms,
+	}, nil
+}
+
 func (s *staffService) HasPermission(staffID, permission string) (bool, error) {
 	st, err := s.staffRepo.GetByID(staffID)
 	if err != nil {
@@ -726,22 +743,7 @@ func (s *staffService) pinAlreadyUsed(pin, excludeID string) (*domain.Staff, err
 	return nil, nil
 }
 
-// generateRandomPIN returns a numeric PIN of the given length generated from a
-// cryptographically secure PRNG.
-func generateRandomPIN(length int) (string, error) {
-	if length <= 0 {
-		return "", errors.New("pin length must be positive")
-	}
-	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("failed to generate random PIN: %w", err)
-	}
-	var sb strings.Builder
-	for _, b := range bytes {
-		sb.WriteByte('0' + b%10)
-	}
-	return sb.String(), nil
-}
+
 
 func (s *staffService) CheckUsingDefaultPassword(password string) bool {
 	return password == "0000" || password == "admin123" || password == "password" || password == "123456" || password == "1234"

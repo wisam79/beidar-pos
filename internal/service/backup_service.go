@@ -418,10 +418,10 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 				continue
 			}
 
-			costVal, _ := parseFloat(costStr)
-			stockVal, _ := parseFloat(stockStr)
-			minStockVal, _ := parseFloat(minStockStr)
-			wholesalePriceVal, _ := parseFloat(wholesalePriceStr)
+			costVal, costErr := parseFloat(costStr)
+			stockVal, stockErr := parseFloat(stockStr)
+			minStockVal, minStockErr := parseFloat(minStockStr)
+			wholesalePriceVal, wholesaleErr := parseFloat(wholesalePriceStr)
 
 			price := domain.NewAmount(priceVal)
 			cost := domain.NewAmount(costVal)
@@ -438,6 +438,26 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 			}
 
 			if found && updateExisting {
+				// Re-fetch existing product to ensure Image isn't wiped by GetAll's truncation
+				fullProduct, fetchErr := txRepo.GetByID(existingProduct.ID)
+				if fetchErr == nil {
+					existingProduct = fullProduct
+				}
+
+				// Prevent wiping numerics with 0 if parsing failed (e.g. empty column)
+				if costErr != nil {
+					cost = existingProduct.Cost
+				}
+				if stockErr != nil {
+					stockVal = existingProduct.Stock
+				}
+				if minStockErr != nil {
+					minStockVal = existingProduct.MinStock
+				}
+				if wholesaleErr != nil {
+					wholesalePrice = existingProduct.WholesalePrice
+				}
+
 				diff := stockVal - existingProduct.Stock
 				existingProduct.Name = name
 				existingProduct.Description = description

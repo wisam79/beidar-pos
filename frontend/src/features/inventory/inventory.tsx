@@ -7,7 +7,7 @@ import { PageHeader, EmptyState } from '../../components/ui';
 import { analyzeInventoryRisk } from '../../core/ai';
 import { api } from '../../core/api';
 import { useInvalidateProducts, useDashboardStats, useInventoryProducts, useInventoryMetadata, useInventoryMovements } from '../../hooks';
-import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
+import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination, TabNav } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
 
 // Internal debounce hook since lodash might not be available
@@ -171,33 +171,33 @@ export const InventoryPage: React.FC = () => {
                 description="تحليل المخزون، تتبع الحركات، وتقييم الأصول."
                 actions={
                     <div className="flex gap-2 items-center">
-                        <SegmentedControl
-                            options={[
+                        <TabNav
+                            tabs={[
                                 { id: 'products', label: 'المنتجات' },
                                 { id: 'movements', label: 'سجل الحركات' },
                             ]}
-                            value={activeTab}
+                            active={activeTab}
                             onChange={(v) => setActiveTab(v as 'products' | 'movements')}
                         />
                         <button
                             onClick={() => setShowStats(!showStats)}
                             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${showStats
                                 ? 'bg-surface border border-border text-text-muted hover:text-text-main'
-                                : 'bg-gradient-to-br from-primary to-emerald-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
+                                : 'bg-primary text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105'
                                 }`}
                             title={showStats ? 'إخفاء الإحصائيات' : 'عرض التحليل'}
                         >
                             <BarChart2 size={showStats ? 18 : 20} strokeWidth={showStats ? 1.5 : 2.5} />
                         </button>
                         <button onClick={handlePrint} className="h-10 px-4 bg-surface hover:bg-surface-hover text-text-main border border-border rounded-xl text-xs font-bold flex items-center gap-2 transition-colors touch-target active:scale-95"><Printer size={16} /> طباعة</button>
-                        <button onClick={handleRunAnalysis} disabled={isAnalyzing} className={`h-10 px-4 rounded-xl border flex items-center gap-2 transition-all text-xs font-bold shadow-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-500 dark:text-purple-400 border-purple-500/30 hover:border-purple-500/50 hover:shadow-purple-500/20 touch-target active:scale-95`}>
+                        <button onClick={handleRunAnalysis} disabled={isAnalyzing} className={`h-10 px-4 rounded-xl border flex items-center gap-2 transition-all text-xs font-bold shadow-lg bg-primary/20 text-primary dark:text-primary border-primary/30 hover:border-primary/50 hover:shadow-primary/20 touch-target active:scale-95`}>
                             {isAnalyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />} تحليل AI
                         </button>
                     </div>
                 }
             >
                 {activeTab === 'products' && (
-                    <div className="flex flex-col md:flex-row gap-3 items-center w-full">
+                    <div className="flex flex-col md:flex-row gap-2 items-center w-full">
                         {/* Status Segmented Control */}
                         <SegmentedControl
                             options={[
@@ -298,13 +298,13 @@ export const InventoryPage: React.FC = () => {
             </StatsGrid>
 
             {aiReport && (
-                <div className="bg-surface border border-purple-500/30 rounded-2xl p-6 relative overflow-hidden animate-in slide-in-from-top-2">
+                <div className="bg-surface border border-primary/30 rounded-2xl p-6 relative overflow-hidden animate-in slide-in-from-top-2">
                     <p className="text-sm text-text-main/90 leading-relaxed whitespace-pre-wrap font-medium relative z-10">{aiReport}</p>
                 </div>
             )}
 
             {/* Main Content */}
-            <div className="flex-1 min-h-0 border border-border rounded-2xl flex flex-col overflow-hidden relative">
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
                 {activeTab === 'products' ? (
                     <>
 
@@ -331,7 +331,7 @@ export const InventoryPage: React.FC = () => {
                                                 const isOut = p.stock === 0;
                                                 const productVal = p.stock * p.price;
                                                 const abcClass = getABCClass(productVal);
-                                                const healthColor = isOut ? 'bg-red-500' : isLow ? 'bg-orange-500' : 'bg-emerald-500';
+                                                const healthColor = isOut ? 'bg-danger' : isLow ? 'bg-warning' : 'bg-success';
 
                                                 return (
                                                     <tr
@@ -367,7 +367,7 @@ export const InventoryPage: React.FC = () => {
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
                                                             <div className="flex items-center justify-center gap-1.5 text-xs bg-bg px-2.5 py-1 rounded-lg border border-border w-fit mx-auto">
-                                                                <span className={`font-bold ${isOut ? 'text-red-500' : isLow ? 'text-orange-500' : 'text-text-main'}`}>{p.stock}</span>
+                                                                <span className={`font-bold ${isOut ? 'text-danger' : isLow ? 'text-warning' : 'text-text-main'}`}>{p.stock}</span>
                                                                 <span className="text-text-muted/70 font-bold">قطعة</span>
                                                             </div>
                                                         </td>
@@ -378,9 +378,9 @@ export const InventoryPage: React.FC = () => {
                                                             <div className="flex justify-center">
                                                                 <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-lg text-xs font-black font-mono border select-none ${
                                                                     abcClass === 'A' 
-                                                                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_2px_8px_rgba(16,185,129,0.06)]' 
+                                                                        ? 'bg-success/10 text-success border-success/20 shadow-[0_2px_8px_rgba(16,185,129,0.06)]' 
                                                                         : abcClass === 'B' 
-                                                                        ? 'bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_2px_8px_rgba(59,130,246,0.06)]' 
+                                                                        ? 'bg-primary/10 text-primary border-primary/20 shadow-[0_2px_8px_rgba(59,130,246,0.06)]' 
                                                                         : 'bg-text-muted/10 text-text-muted border-border/40'
                                                                 }`}>
                                                                     {abcClass}
@@ -389,8 +389,8 @@ export const InventoryPage: React.FC = () => {
                                                         </td>
                                                         <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                                                             <div className="flex justify-center gap-1.5">
-                                                                <button onClick={() => updateStock(p, -1)} className="p-1.5 hover:bg-red-500/10 hover:text-red-500 text-text-muted rounded-xl border border-border/40 transition-colors" title="إنقاص المخزون"><Minus size={13} /></button>
-                                                                <button onClick={() => updateStock(p, 1)} className="p-1.5 hover:bg-emerald-500/10 hover:text-emerald-500 text-text-muted rounded-xl border border-border/40 transition-colors" title="زيادة المخزون"><Plus size={13} /></button>
+                                                                <button onClick={() => updateStock(p, -1)} className="p-1.5 hover:bg-danger/10 hover:text-danger text-text-muted rounded-xl border border-border/40 transition-colors" title="إنقاص المخزون"><Minus size={13} /></button>
+                                                                <button onClick={() => updateStock(p, 1)} className="p-1.5 hover:bg-success/10 hover:text-success text-text-muted rounded-xl border border-border/40 transition-colors" title="زيادة المخزون"><Plus size={13} /></button>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -420,7 +420,7 @@ export const InventoryPage: React.FC = () => {
                                     return (
                                         <div key={m.id || i} className="flex items-center justify-between p-3 bg-surface border border-border rounded-xl hover:bg-surface-hover transition-colors">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIncoming ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIncoming ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
                                                     {isIncoming ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
                                                 </div>
                                                 <div>
@@ -429,7 +429,7 @@ export const InventoryPage: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="text-left">
-                                                <span className={`font-black text-lg font-mono ${isIncoming ? 'text-emerald-500' : 'text-red-500'}`}>
+                                                <span className={`font-black text-lg font-mono ${isIncoming ? 'text-success' : 'text-danger'}`}>
                                                     {isIncoming ? '+' : '-'}{m.qty}
                                                 </span>
                                                 <p className="text-text-muted text-[10px]">{m.timestamp ? new Date(m.timestamp).toLocaleDateString('ar-IQ') : ''}</p>
