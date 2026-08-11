@@ -8,6 +8,15 @@ import { Page } from '@playwright/test';
  */
 export async function mockWails(page: Page) {
     await page.addInitScript(() => {
+        try {
+            window.localStorage.setItem('beidar_auth_session', JSON.stringify({
+                user: { id: 'admin-id', name: 'Admin', role: 'admin', active: true },
+                permissions: ['sales', 'products', 'inventory', 'customers', 'invoices', 'reports', 'finance', 'settings']
+            }));
+            window.localStorage.setItem('beidar_last_staff_id', 'admin-id');
+            window.localStorage.setItem('beidar_last_activity', Date.now().toString());
+        } catch { /* ignore */ }
+
         // Create a deep recursive proxy that intercepts any function calls on window.go
         // and returns a resolved promise (or customized dummy mock data for startup)
         
