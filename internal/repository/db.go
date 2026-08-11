@@ -51,7 +51,7 @@ func BackupPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	dbPath := filepath.Join(configDir, "BeidarPOS", "beidar.db")
+	dbPath := filepath.Join(configDir, "BeidarPOS_V3", "beidar_v3.db")
 	backupPath := dbPath + ".backup"
 	_ = os.Rename(dbPath, backupPath)
 	return backupPath, nil
@@ -63,7 +63,7 @@ func RestoreBackup(backupPath string) error {
 	if err != nil {
 		return err
 	}
-	dbPath := filepath.Join(configDir, "BeidarPOS", "beidar.db")
+	dbPath := filepath.Join(configDir, "BeidarPOS_V3", "beidar_v3.db")
 	_ = os.Rename(backupPath, dbPath)
 	_, err = InitDB()
 	return err
@@ -87,12 +87,22 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	appDir := filepath.Join(configDir, "BeidarPOS")
+	appDir := filepath.Join(configDir, "BeidarPOS_V3")
 	if err := os.MkdirAll(appDir, 0755); err != nil {
 		return nil, err
 	}
 
-	dbPath := filepath.Join(appDir, "beidar.db")
+	dbPath := filepath.Join(appDir, "beidar_v3.db")
+
+	// Migration check: If legacy database exists at BeidarPOS/beidar.db and new DB does not exist, copy legacy DB over.
+	legacyDbPath := filepath.Join(configDir, "BeidarPOS", "beidar.db")
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		if _, err := os.Stat(legacyDbPath); err == nil {
+			if data, err := os.ReadFile(legacyDbPath); err == nil {
+				_ = os.WriteFile(dbPath, data, 0644)
+			}
+		}
+	}
 
 	// Config for glebarez (pure go)
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{

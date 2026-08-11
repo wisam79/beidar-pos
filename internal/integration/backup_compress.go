@@ -101,7 +101,7 @@ func restoreFromCompressed(data []byte) error {
 			defer rc.Close()
 
 			configDir, _ := os.UserConfigDir()
-dbPath := filepath.Join(configDir, "BeidarPOS", "beidar.db")
+			dbPath := filepath.Join(configDir, "BeidarPOS_V3", "beidar_v3.db")
 			outFile, err := os.Create(dbPath)
 			if err != nil {
 				_ = repository.RestoreBackup(backupPath)

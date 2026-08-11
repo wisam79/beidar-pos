@@ -35,7 +35,7 @@ func GetBackupDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	backupDir := filepath.Join(configDir, "BeidarPOS", "backups")
+	backupDir := filepath.Join(configDir, "BeidarPOS_V3", "backups")
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
 		return "", err
 	}
