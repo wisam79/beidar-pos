@@ -61,7 +61,11 @@ func (s *lanService) ValidateSessionToken(token string, requestIP string) (*doma
 	for _, client := range s.connectedClients {
 		if subtle.ConstantTimeCompare([]byte(client.SessionToken), []byte(token)) == 1 {
 			if requestIP != "" && client.IPAddress != requestIP {
-				return nil, fmt.Errorf("جلسة غير صالحة: تم رفض الوصول من عنوان IP مختلف")
+				isClientLoopback := client.IPAddress == "127.0.0.1" || client.IPAddress == "::1" || client.IPAddress == "localhost"
+				isReqLoopback := requestIP == "127.0.0.1" || requestIP == "::1" || requestIP == "localhost"
+				if !(isClientLoopback && isReqLoopback) {
+					return nil, fmt.Errorf("جلسة غير صالحة: تم رفض الوصول من عنوان IP مختلف")
+				}
 			}
 			if client.Status == "suspended" {
 				return nil, fmt.Errorf("جلستك معلّقة من قبل المدير")

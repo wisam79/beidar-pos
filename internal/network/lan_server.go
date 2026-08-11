@@ -178,6 +178,9 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 		return corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
 			if token == "" {
+				token = r.Header.Get("X-Session-Token")
+			}
+			if token == "" {
 				http.Error(w, `{"error":"يجب تسجيل الدخول أولاً"}`, http.StatusUnauthorized)
 				return
 			}
