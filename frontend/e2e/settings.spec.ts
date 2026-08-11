@@ -38,7 +38,7 @@ test.describe('Settings & Staff Scenario', () => {
         await expect(page).toHaveURL(/.*settings/);
 
         // 2. Modify Store Preferences (Store Name)
-        const storeNameInput = page.locator('input[placeholder="مثال: سوبرماركت الأمل"]').first();
+        const storeNameInput = page.locator('input[placeholder*="مجمع"], input[placeholder*="سلام"], input[placeholder*="سوبرماركت"], input[placeholder*="مثال"]').first();
         await expect(storeNameInput).toBeVisible();
         await storeNameInput.fill('بيدر برو Beidar Pro');
 

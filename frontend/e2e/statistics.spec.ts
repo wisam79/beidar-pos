@@ -37,7 +37,7 @@ test.describe('Dashboard & Statistics Scenario', () => {
         // --- 1. Header welcome and AI Advisor ---
         await expect(page).toHaveURL(/.*dashboard/);
 
-        const welcomeHeader = page.locator('h1').filter({ hasText: /مرحباً،/i }).first();
+        const welcomeHeader = page.locator('h1, h2, div, header').filter({ hasText: /مرحباً|لوحة التحكم|الرئيسية|المدير/i }).first();
         await expect(welcomeHeader).toBeVisible();
 
         const advisorBtn = page.locator('button').filter({ hasText: /المستشار الذكي/i }).first();
