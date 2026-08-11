@@ -164,6 +164,14 @@ export async function mockWails(page: Page) {
                                 }
                                 return Promise.resolve({ success: false, message: 'Invalid PIN' });
                             },
+                            RestoreSession: (staffID: string) => {
+                                const found = (window as any).__mockStaffList.find((s: any) => s.id === staffID) || { id: 'admin-id', name: 'Admin', role: 'admin', active: true };
+                                return Promise.resolve({
+                                    success: true,
+                                    staff: found,
+                                    permissions: ['sales', 'products', 'inventory', 'customers', 'invoices', 'reports', 'finance', 'settings']
+                                });
+                            },
                             GetStaffCount: () => Promise.resolve(1),
                         }),
                         ProductHandler: makeMockHandler({
