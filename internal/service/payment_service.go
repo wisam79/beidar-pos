@@ -268,8 +268,19 @@ func (s *paymentService) PayInstallment(saleID string, installmentIndex int, amo
 			)
 		}
 
-		// Set amount to exact required installment amount unconditionally to prevent Cents vs IQD mismatch
-		amount = sale.InstallmentPlan.Schedule[installmentIndex].Amount
+		requiredAmount := sale.InstallmentPlan.Schedule[installmentIndex].Amount
+		if amount <= 0 {
+			amount = requiredAmount
+		} else if amount != requiredAmount && amount*100 != requiredAmount && amount != requiredAmount*100 {
+			return pkgerrors.NewAppError(
+				pkgerrors.ModulePayment,
+				"EXACT_AMOUNT_REQUIRED",
+				i18n.GetMessage("EXACT_AMOUNT_REQUIRED", requiredAmount.Float()),
+				i18n.GetHint("EXACT_AMOUNT_REQUIRED"),
+				"amount",
+			)
+		}
+		amount = requiredAmount
 
 		sale.InstallmentPlan.Schedule[installmentIndex].Status = "paid"
 		sale.InstallmentPlan.Schedule[installmentIndex].PaidAt = time.Now().Unix()
