@@ -13,12 +13,6 @@ interface UserSession {
     expires_at: number;
 }
 
-interface SupabaseAuthResult {
-    success: boolean;
-    message: string;
-    user?: UserSession;
-}
-
 interface CloudBackup {
     id: string;
     user_id: string;
@@ -34,21 +28,9 @@ export function CloudBackupSettings() {
     const [backups, setBackups] = useState<CloudBackup[]>([]);
     const [autoSync, setAutoSync] = useState(false);
 
-    // Form states
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [storeName, setStoreName] = useState('');
-    const [isRegisterMode, setIsRegisterMode] = useState(false);
-
     // Loading states
-    const [authLoading, setAuthLoading] = useState(false);
     const [backupLoading, setBackupLoading] = useState(false);
     const [restoreLoading, setRestoreLoading] = useState<string | null>(null);
-    const [googleConnected, setGoogleConnected] = useState(false);
-    const [googleLoading, setGoogleLoading] = useState(false);
-    const [showGoogleConfig, setShowGoogleConfig] = useState(false);
-    const [googleClientId, setGoogleClientId] = useState('');
-    const [googleClientSecret, setGoogleClientSecret] = useState('');
 
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -89,9 +71,6 @@ export function CloudBackupSettings() {
                 setCurrentUser(user as UserSession);
                 loadBackups();
             }
-            
-            const gConnected = await CloudHandler.IsGoogleConnected();
-            setGoogleConnected(gConnected);
         } catch (error) {
             console.error('Check login failed:', error);
         }
@@ -123,39 +102,6 @@ export function CloudBackupSettings() {
         }
     };
 
-    const handleAuth = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setAuthLoading(true);
-        setMessage(null);
-
-        try {
-            let result: SupabaseAuthResult;
-            if (isRegisterMode) {
-                result = await CloudHandler.Register(email, password, storeName) as SupabaseAuthResult;
-            } else {
-                result = await CloudHandler.Login(email, password) as SupabaseAuthResult;
-            }
-
-            if (result.success) {
-                setMessage({ type: 'success', text: result.message });
-                setIsLoggedIn(true);
-                setCurrentUser(result.user as UserSession);
-                loadBackups();
-                // Clear form
-                setEmail('');
-                setPassword('');
-                setStoreName('');
-            } else {
-                setMessage({ type: 'error', text: result.message });
-            }
-        } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : 'حدث خطأ';
-            setMessage({ type: 'error', text: msg });
-        } finally {
-            setAuthLoading(false);
-        }
-    };
-
     const handleLogout = async () => {
         try {
             await CloudHandler.Logout();
@@ -182,61 +128,6 @@ export function CloudBackupSettings() {
             setMessage({ type: 'error', text: 'فشل النسخ: ' + msg });
         } finally {
             setBackupLoading(false);
-        }
-    };
-
-    const handleGoogleBackup = async () => {
-        setGoogleLoading(true);
-        setMessage(null);
-        try {
-            await CloudHandler.GoogleDriveBackupNow();
-            setMessage({ type: 'success', text: 'تم النسخ الاحتياطي إلى Google Drive بنجاح! ✅' });
-        } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : String(error);
-            setMessage({ type: 'error', text: 'فشل النسخ إلى Google Drive: ' + msg });
-        } finally {
-            setGoogleLoading(false);
-        }
-    };
-
-    const handleConnectGoogle = async () => {
-        try {
-            const url = await CloudHandler.InitGoogleAuth();
-            if (url) {
-                window.open(url, '_blank');
-                setMessage({ type: 'success', text: 'تم فتح نافذة تسجيل الدخول. يرجى الانتظار...' });
-                
-                await CloudHandler.CompleteGoogleAuth();
-                setGoogleConnected(true);
-                setMessage({ type: 'success', text: 'تم ربط Google Drive بنجاح! ✅' });
-            }
-        } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : String(error);
-            setMessage({ type: 'error', text: 'فشل ربط Google Drive: ' + msg });
-        }
-    };
-
-    const handleDisconnectGoogle = async () => {
-        try {
-            await CloudHandler.DisconnectGoogle();
-            setGoogleConnected(false);
-            setMessage({ type: 'success', text: 'تم فك ربط Google Drive بنجاح' });
-        } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : String(error);
-            setMessage({ type: 'error', text: 'فشل فك الربط: ' + msg });
-        }
-    };
-
-    const handleSaveGoogleSecrets = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (CloudHandler as any).SaveGoogleOAuthSecrets(googleClientId, googleClientSecret);
-            setMessage({ type: 'success', text: 'تم حفظ مفاتيح Google API بنجاح! ✅ يمكنك الآن الربط' });
-            setShowGoogleConfig(false);
-        } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : String(error);
-            setMessage({ type: 'error', text: 'فشل حفظ المفاتيح: ' + msg });
         }
     };
 

@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { LucideIcon } from 'lucide-react';
 
-export interface TabItem<T extends string = string> {
+interface TabItem<T extends string = string> {
     id: T;
     label: string;
     icon?: LucideIcon;

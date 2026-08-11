@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useExpenses, usePurchaseOrders, useFinanceData } from '../hooks/useFinance';
+import { usePurchaseOrders, useFinanceData } from '../hooks/useFinance';
 import { api } from '../core/api';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -39,15 +39,6 @@ const createWrapper = () => {
 describe('useFinance Hooks', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-    });
-
-    it('useExpenses fetches expenses', async () => {
-        vi.mocked(api.expenses.list).mockResolvedValue([{ id: 'e1', title: 'Rent', amount: 500 }] as any);
-
-        const { result } = renderHook(() => useExpenses(), { wrapper: createWrapper() });
-
-        await waitFor(() => expect(result.current.isLoading).toBe(false));
-        expect(result.current.data).toEqual([{ id: 'e1', title: 'Rent', amount: 500 }]);
     });
 
     it('usePurchaseOrders fetches orders', async () => {

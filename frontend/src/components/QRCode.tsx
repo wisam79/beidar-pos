@@ -14,13 +14,11 @@ interface QRCodeProps {
 export const QRCode: React.FC<QRCodeProps> = ({ data, size = 120, className = '' }) => {
     const [src, setSrc] = useState<string>('');
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
 
     useEffect(() => {
         const generateQR = async () => {
             try {
                 setLoading(true);
-                setError(false);
 
                 // Try backend QR generation first
                 const base64 = await api.print.generateQR(data, size);
@@ -29,7 +27,6 @@ export const QRCode: React.FC<QRCodeProps> = ({ data, size = 120, className = ''
                 console.warn('Backend QR failed, using fallback:', e);
                 // Fallback to external API
                 setSrc(`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(data)}`);
-                setError(true);
             } finally {
                 setLoading(false);
             }

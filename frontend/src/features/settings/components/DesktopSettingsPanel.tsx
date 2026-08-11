@@ -71,7 +71,7 @@ const useDesktopSettings = (notify: (msg: string, type: 'success' | 'error' | 'i
 
             setAutoStart(prev => ({ ...prev, enabled: newState }));
             notify(newState ? 'تم تفعيل التشغيل التلقائي ✅' : 'تم إلغاء التشغيل التلقائي', 'success');
-        } catch (e) {
+        } catch {
             notify('فشل تغيير إعداد التشغيل التلقائي', 'error');
         } finally {
             setAutoStart(prev => ({ ...prev, loading: false }));
@@ -110,7 +110,7 @@ const useDesktopSettings = (notify: (msg: string, type: 'success' | 'error' | 'i
         try {
             await desktopApi.printing.test(printers.selected);
             notify('تم إرسال صفحة الاختبار ✅', 'success');
-        } catch (e) {
+        } catch {
             notify('فشل اختبار الطابعة', 'error');
         } finally {
             setTestingPrinter(false);
@@ -186,7 +186,7 @@ const useDesktopSettings = (notify: (msg: string, type: 'success' | 'error' | 'i
             await desktopApi.crashReports.clear();
             setCrashReports({ list: [], loading: false });
             notify('تم حذف التقارير', 'success');
-        } catch (e) {
+        } catch {
             notify('فشل حذف التقارير', 'error');
         }
     };

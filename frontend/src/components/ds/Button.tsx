@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../../theme/cn';
-import { Loader2 } from '../../lib/icons';
+import { Loader2 } from 'lucide-react';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'soft' | 'icon';
 export type ButtonSize = 'sm' | 'md' | 'lg';

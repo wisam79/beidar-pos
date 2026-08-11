@@ -250,38 +250,6 @@ export async function exportSalesReport(
     else await exportToPDF(formattedData, columns, options);
 }
 
-export async function exportProductsReport(
-    products: { id: string; name: string; sku?: string; price: number; stock: number; category?: string }[],
-    format: 'excel' | 'pdf',
-    currency: string = 'IQD',
-    storeName?: string
-): Promise<void> {
-    const columns: ExportColumn[] = [
-        { key: 'sku', header: 'الكود', width: 15 },
-        { key: 'name', header: 'اسم المنتج', width: 30 },
-        { key: 'category', header: 'الفئة', width: 15 },
-        { key: 'price', header: `السعر (${currency})`, width: 15 },
-        { key: 'stock', header: 'المخزون', width: 10 },
-    ];
-
-    const formattedData = products.map(p => ({
-        ...p,
-        category: p.category || 'بدون فئة',
-        sku: p.sku || '-',
-    }));
-
-    const options: ExportOptions = {
-        filename: 'تقرير_المنتجات',
-        sheetName: 'المنتجات',
-        title: 'تقرير المنتجات',
-        subtitle: `عدد المنتجات: ${products.length}`,
-        storeName
-    };
-
-    if (format === 'excel') await exportToExcel(formattedData, columns, options);
-    else await exportToPDF(formattedData, columns, options);
-}
-
 export async function exportInventoryReport(
     products: { id: string; name: string; stock: number; minStock?: number; cost?: number; price: number }[],
     format: 'excel' | 'pdf',

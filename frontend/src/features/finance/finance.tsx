@@ -170,7 +170,7 @@ export const FinancePage: React.FC = () => {
             notify(expenseForm.id ? 'تم تحديث المصروف' : 'تم إضافة المصروف', 'success');
             setExpenseModal(false);
             loadData();
-        } catch (_e) { notify('خطأ في الحفظ', 'error'); }
+        } catch { notify('خطأ في الحفظ', 'error'); }
     };
 
     const handleAutoCategorize = async () => {
@@ -198,7 +198,7 @@ export const FinancePage: React.FC = () => {
                     notify('تم الحذف', 'success');
                     invalidateAllData();
                     loadData();
-                } catch (_e) { notify('خطأ في الحذف', 'error'); }
+                } catch { notify('خطأ في الحذف', 'error'); }
                 setConfirmModal(prev => ({ ...prev, open: false }));
             }
         });
@@ -219,7 +219,7 @@ export const FinancePage: React.FC = () => {
                 try {
                     const jsonPart = errStr.includes('{') ? errStr.substring(errStr.indexOf('{')) : errStr;
                     appError = JSON.parse(jsonPart);
-                } catch (e) { /* Not JSON */ }
+                } catch { /* Not JSON */ }
 
                 // Check for allowForce option
                 const appErr = appError as AppError | null;
@@ -268,7 +268,7 @@ export const FinancePage: React.FC = () => {
             setSupplierModal(false);
             invalidateAllData();
             loadData();
-        } catch (_e) { notify('خطأ في الحفظ', 'error'); }
+        } catch { notify('خطأ في الحفظ', 'error'); }
     };
 
     const handleGenerateEmail = async (supplier: Supplier) => {

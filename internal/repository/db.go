@@ -51,7 +51,7 @@ func BackupPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	dbPath := filepath.Join(configDir, "BeidarPOS_V3", "beidar_v3.db")
+	dbPath := filepath.Join(configDir, "BeidarPOS", "beidar.db")
 	backupPath := dbPath + ".backup"
 	_ = os.Rename(dbPath, backupPath)
 	return backupPath, nil
@@ -63,7 +63,7 @@ func RestoreBackup(backupPath string) error {
 	if err != nil {
 		return err
 	}
-	dbPath := filepath.Join(configDir, "BeidarPOS_V3", "beidar_v3.db")
+	dbPath := filepath.Join(configDir, "BeidarPOS", "beidar.db")
 	_ = os.Rename(backupPath, dbPath)
 	_, err = InitDB()
 	return err
@@ -87,12 +87,12 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	appDir := filepath.Join(configDir, "BeidarPOS_V3")
+	appDir := filepath.Join(configDir, "BeidarPOS")
 	if err := os.MkdirAll(appDir, 0755); err != nil {
 		return nil, err
 	}
 
-	dbPath := filepath.Join(appDir, "beidar_v3.db")
+	dbPath := filepath.Join(appDir, "beidar.db")
 
 	// Config for glebarez (pure go)
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{

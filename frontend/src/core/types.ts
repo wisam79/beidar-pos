@@ -17,15 +17,6 @@ export interface Product {
   customDetails?: Record<string, unknown>;
 }
 
-export interface Task {
-  id: number;
-  title: string;
-  time: string;
-  customer: string;
-  type: 'call' | 'payment' | 'meeting';
-  completed: boolean;
-}
-
 export interface Customer {
   id: string;
   name: string;
@@ -115,20 +106,6 @@ export interface Sale {
   pointsEarned?: number;
   pointsAwarded?: number; // Added to match backend
   convertValues?: unknown; // Wails helper
-}
-
-export interface ParkedSale {
-  id?: number;
-  customerName: string;
-  items: CartItem[];
-  timestamp: number;
-  note?: string;
-}
-
-export interface Notification {
-  id: number;
-  message: string;
-  type: 'success' | 'error' | 'info';
 }
 
 export interface StockMovement {

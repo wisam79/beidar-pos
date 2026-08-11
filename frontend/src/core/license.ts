@@ -7,10 +7,7 @@
  * SECURITY: Supabase credentials are no longer exposed in frontend code.
  */
 
-import { api, LicenseResult } from './api';
-
-// Re-export LicenseResult for convenience
-export type { LicenseResult };
+import { api } from './api';
 
 /**
  * Gets the Device ID from the backend
@@ -22,19 +19,6 @@ export const getDeviceId = async (): Promise<string> => {
   } catch (e) {
     console.error("Failed to get device ID:", e);
     return "";
-  }
-};
-
-/**
- * Gets the stored license key from backend
- */
-export const getStoredLicenseKey = async (): Promise<string | null> => {
-  try {
-    const key = await api.license.getStoredKey();
-    return key || null;
-  } catch (e) {
-    console.error("Failed to get stored license key:", e);
-    return null;
   }
 };
 
@@ -57,61 +41,3 @@ export const activateLicense = async (licenseKey: string): Promise<{ success: bo
     };
   }
 };
-
-/**
- * Verifies license via backend
- * The backend handles:
- * - Server verification with Supabase
- * - Device ID matching
- * - Encrypted cache for offline use
- * - Tamper detection
- */
-export const verifyLicense = async (licenseKey: string): Promise<LicenseResult> => {
-  try {
-    const result = await api.license.verify(licenseKey);
-    return result;
-  } catch (error) {
-    console.error("Verification Error:", error);
-
-    // Try cached license
-    try {
-      const cached = await api.license.getCached();
-      if (cached && cached.licensed) {
-        return cached;
-      }
-    } catch (cacheError) {
-      // Ignore cache errors
-    }
-
-    return {
-      success: false,
-      licensed: false,
-      message: "خطأ في التحقق من الترخيص. يرجى الاتصال بالإنترنت.",
-      features: {}
-    };
-  }
-};
-
-/**
- * Gets cached license from backend
- * Returns null if no valid cache exists
- */
-export const getCachedLicense = async (): Promise<LicenseResult | null> => {
-  try {
-    const result = await api.license.getCached();
-    return result.licensed ? result : null;
-  } catch (e) {
-    return null;
-  }
-};
-
-// Legacy exports for compatibility (deprecated - use async versions)
-// These are kept for backward compatibility but should be migrated
-export const setStoredLicenseKey = (_key: string) => {
-  console.warn('setStoredLicenseKey is deprecated. License key is now stored by backend.');
-};
-
-// These are no longer exposed for security
-export const SUPABASE_URL = '[SECURED_IN_BACKEND]';
-export const SUPABASE_ANON_KEY = '[SECURED_IN_BACKEND]';
-export const FUNCTIONS_URL = '[SECURED_IN_BACKEND]';

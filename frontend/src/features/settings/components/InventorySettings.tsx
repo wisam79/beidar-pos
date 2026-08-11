@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { AlertTriangle, Bell } from 'lucide-react';
 
 import { AppPreferences } from '../../../core/types';
@@ -10,17 +9,6 @@ interface InventorySettingsProps {
     handleChange: <K extends keyof AppPreferences>(key: K, value: AppPreferences[K]) => void;
     errors: Record<string, string>;
 }
-
-// Stats card component
-const InventoryStatCard = ({ icon: Icon, title, value, color }: {
-    icon: React.ElementType, title: string, value: string | number, color: string
-}) => (
-    <div className={`bg-${color}-500/10 border border-${color}-500/20 rounded-2xl p-4 text-center`}>
-        <Icon size={24} className={`text-${color}-400 mx-auto mb-2`} />
-        <p className={`text-xl font-black text-${color}-400`}>{value}</p>
-        <p className="text-[10px] text-text-muted font-medium">{title}</p>
-    </div>
-);
 
 export const InventorySettings = ({ prefs, handleChange, errors }: InventorySettingsProps) => {
     return (

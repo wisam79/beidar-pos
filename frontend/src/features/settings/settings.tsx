@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Save, Store, CreditCard, ShieldCheck, Palette, Monitor, Wifi, Sparkles, Cloud, Settings, Package, Smartphone, RefreshCw } from 'lucide-react';
 import { PinModal } from '../../components/PinModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
@@ -53,9 +52,7 @@ export const SettingsPage: React.FC = () => {
     const [showStaffManager, setShowStaffManager] = useState(false);
     const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const logoInputRef = useRef<HTMLInputElement>(null);
-    const { t } = useTranslation();
 
     const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -450,12 +447,7 @@ export const SettingsPage: React.FC = () => {
                                 </div>
 
                                 {cloudSubTab === 'backup' && <CloudBackupSettings />}
-                                {cloudSubTab === 'ai' && (
-                                    <AISettings
-                                        prefs={localPrefs}
-                                        handleChange={handleChange}
-                                    />
-                                )}
+                                {cloudSubTab === 'ai' && <AISettings />}
                             </div>
                         )}
 

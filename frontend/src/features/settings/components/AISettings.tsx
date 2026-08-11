@@ -1,11 +1,5 @@
 import React from 'react';
 import { Sparkles, Type, Target, DollarSign, Brain, Lightbulb, MessageCircle } from 'lucide-react';
-import { AppPreferences } from '../../../core/types';
-
-interface AISettingsProps {
-    prefs: AppPreferences;
-    handleChange: <K extends keyof AppPreferences>(key: K, value: AppPreferences[K]) => void;
-}
 
 const AIFeatureCard = ({ icon: Icon, title }: {
     icon: React.ElementType, title: string
@@ -18,7 +12,7 @@ const AIFeatureCard = ({ icon: Icon, title }: {
     </div>
 );
 
-export const AISettings = ({ prefs, handleChange }: AISettingsProps) => {
+export const AISettings = () => {
     return (
         <div className="space-y-4 animate-in fade-in duration-200 select-none">
             {/* Status */}

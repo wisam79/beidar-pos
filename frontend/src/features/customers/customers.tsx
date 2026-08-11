@@ -1,7 +1,6 @@
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { User, Phone, Plus, Edit, Trash2, FileText, CreditCard, Sparkles, BrainCircuit, History, Wallet, MessageSquare, Users, Calculator, Check, Filter } from 'lucide-react';
 import { Customer, Sale } from '../../core/types';
 import { formatCurrency } from '../../core/utils';
@@ -10,7 +9,7 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput } from '../../components/blocks';
 import { analyzeCustomerProfile } from '../../core/ai';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCustomers, useInvalidateCustomers, useConfirmModal } from '../../hooks';
+import { useCustomers, useConfirmModal } from '../../hooks';
 import { api } from '../../core/api';
 import { invalidateAllData, queryKeys } from '../../core/queryClient';
 import { ReceiptTemplate } from '../../components/ReceiptTemplate';
@@ -27,7 +26,7 @@ export const CustomersPage: React.FC = () => {
     const queryClient = useQueryClient();
 
     // React Query Hooks
-    const { customers, isLoading: customersLoading, refetch: refetchCustomers } = useCustomers();
+    const { customers, isLoading: customersLoading } = useCustomers();
     const { data: sales = [], isLoading: salesLoading } = useQuery({
         queryKey: queryKeys.sales.list(0, 5000, '', '', ''),
         queryFn: async () => {
@@ -46,7 +45,6 @@ export const CustomersPage: React.FC = () => {
     const [previewSale, setPreviewSale] = useState<Sale | null>(null); // Invoice preview state
     const [previewMode, setPreviewMode] = useState<'thermal' | 'a4'>('a4');
     const [form, setForm] = useState<Partial<Customer>>({});
-    const [analysisResult, setAnalysisResult] = useState<{ id: string, text: string } | null>(null);
     const [showOnlyDebt, setShowOnlyDebt] = useState(false);
     const [showStats, setShowStats] = useState(false); // Collapsible stats state
     const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
@@ -87,10 +85,7 @@ export const CustomersPage: React.FC = () => {
     const handleInitEdit = (c: Customer) => { setForm(c); setModalOpen(true); };
 
     const handleAnalyze = async (c: Customer) => {
-        // AI Analysis assumes frontend logic or separate service
-        setAnalysisResult({ id: c.id, text: 'جاري التحليل...' });
-        const res = await analyzeCustomerProfile(c.name, c.totalPurchases, c.debt);
-        setAnalysisResult({ id: c.id, text: res });
+        await analyzeCustomerProfile(c.name, c.totalPurchases, c.debt);
     };
 
     const handleSave = async () => {
@@ -130,7 +125,7 @@ export const CustomersPage: React.FC = () => {
                 try {
                     const jsonPart = errStr.includes('{') ? errStr.substring(errStr.indexOf('{')) : errStr;
                     appError = JSON.parse(jsonPart);
-                } catch (e) { /* Not JSON */ }
+                } catch { /* Not JSON */ }
 
                 // Check for allowForce option
                 const appErr = appError as AppError | null;
@@ -206,14 +201,6 @@ export const CustomersPage: React.FC = () => {
         const totalDebt = (c.debt || 0) + (c.installmentDebt || 0);
         const matchesDebt = showOnlyDebt ? totalDebt > 0 : true;
         return matchesSearch && matchesDebt;
-    });
-
-    const tableScrollRef = useRef<HTMLDivElement>(null);
-    const rowVirtualizer = useVirtualizer({
-        count: filtered.length,
-        getScrollElement: () => tableScrollRef.current,
-        estimateSize: () => 68,
-        overscan: 8,
     });
 
     const selectedCustomerHistory = historyModal
@@ -600,7 +587,7 @@ export const CustomersPage: React.FC = () => {
                                     try {
                                         await api.print.generatePDF(previewSale.id, previewMode);
                                         notify('تم إنشاء ملف PDF بنجاح', 'success');
-                                    } catch (err) {
+                                    } catch {
                                         notify('فشل في إنشاء ملف PDF', 'error');
                                     }
                                 }}

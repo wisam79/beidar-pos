@@ -229,7 +229,7 @@ export const ProductsPage: React.FC = () => {
     }, []);
 
     // USB Scanner Detection
-    const { isUsbDetected, scanCount } = useUsbScannerDetection({
+    useUsbScannerDetection({
         onScan: (code) => handleScan(code),
         onUsbDetected: () => notify('تم اكتشاف قارئ USB ✅', 'success')
     });
@@ -311,9 +311,9 @@ export const ProductsPage: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        const performDelete = async (force: boolean) => {
+        const performDelete = async () => {
             try {
-                await api.products.delete(id, force);
+                await api.products.delete(id);
                     notify(t('products.productDeleted'), 'success');
                     invalidateProducts();
                     refetchProducts();
@@ -327,7 +327,7 @@ export const ProductsPage: React.FC = () => {
                     // Sometimes it's wrapped in "Error: " prefix
                     const jsonPart = errStr.includes('{') ? errStr.substring(errStr.indexOf('{')) : errStr;
                     appError = JSON.parse(jsonPart);
-                } catch (e) { /* Not JSON */ }
+                } catch { /* Not JSON */ }
 
                 // Check if it's an AppError with allowForce
                 const appErr = appError as AppError | null;
@@ -338,7 +338,7 @@ export const ProductsPage: React.FC = () => {
                         message: `${appErr.message}\n\n${appErr.hint || ''}`,
                         type: 'warning',
                         confirmText: 'حذف قسري (Force Delete)',
-                        onConfirm: () => performDelete(true)
+                        onConfirm: () => performDelete()
                     });
                     return;
                 }
@@ -352,7 +352,7 @@ export const ProductsPage: React.FC = () => {
             title: t('confirm.deleteTitle'),
             message: t('confirm.deleteMessage'),
             type: 'error',
-            onConfirm: () => performDelete(false)
+            onConfirm: () => performDelete()
         });
     };
 
@@ -368,7 +368,7 @@ export const ProductsPage: React.FC = () => {
                     notify('تم الحذف بنجاح', 'success');
                     invalidateProducts();
                     refetchProducts();
-                } catch (_e) { notify('خطأ', 'error'); }
+                } catch { notify('خطأ', 'error'); }
                 closeConfirm();
             }
         });
@@ -383,7 +383,7 @@ export const ProductsPage: React.FC = () => {
                     const base64Raw = ev.target?.result as string;
                     const base64 = await compressImage(base64Raw);
                     setForm({ ...form, image: base64 });
-                } catch (_err) { notify('فشل ضغط الصورة', 'error'); }
+                } catch { notify('فشل ضغط الصورة', 'error'); }
             };
             reader.readAsDataURL(file);
         }
@@ -396,7 +396,7 @@ export const ProductsPage: React.FC = () => {
             await api.products.save({ ...p, stock: newStock });
             await api.stock.log(p.id, p.name, change > 0 ? 'in' : 'out', Math.abs(change), 'تعديل سريع للمخزون');
             refetchProducts();
-        } catch (_e) {
+        } catch {
             refetchProducts();
         }
     };
@@ -437,7 +437,7 @@ export const ProductsPage: React.FC = () => {
             await api.categories.save(categoryToSave);
             notify(editingCategory ? 'تم تحديث الفئة بنجاح' : 'تم إضافة الفئة بنجاح', 'success');
             refetchCategories(); refetchProducts(); setCategoryModalOpen(false); setEditingCategory(null); setCatForm({ name: '', fields: [] });
-        } catch (_e) { notify('خطأ في حفظ الفئة', 'error'); }
+        } catch { notify('خطأ في حفظ الفئة', 'error'); }
     };
 
     const handleEditCategory = (cat: CategoryDef) => { setEditingCategory(cat); setCatForm({ name: cat.name, fields: cat.fields || [] }); };
@@ -456,7 +456,7 @@ export const ProductsPage: React.FC = () => {
                 try {
                     const jsonPart = errStr.includes('{') ? errStr.substring(errStr.indexOf('{')) : errStr;
                     appError = JSON.parse(jsonPart);
-                } catch (e) { /* Not JSON */ }
+                } catch { /* Not JSON */ }
 
                 // Check for allowForce option
                 const appErr = appError as AppError | null;

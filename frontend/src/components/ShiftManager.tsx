@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Clock, LogIn, LogOut, Plus, Minus, DollarSign, X, CheckCircle, AlertTriangle } from 'lucide-react';
 import { api } from '../core/api';
-import { Shift, CashMovement } from '../core/types';
+import { Shift } from '../core/types';
 import { formatCurrency } from '../core/utils';
 
 interface ShiftManagerProps {
@@ -13,9 +12,7 @@ interface ShiftManagerProps {
 }
 
 export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, notify, onShiftChange }) => {
-    const { t } = useTranslation();
     const [activeShift, setActiveShift] = useState<Shift | null>(null);
-    const [movements, setMovements] = useState<CashMovement[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Modal states
@@ -42,10 +39,6 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
             const shift = await api.shift.getActive();
             setActiveShift(shift || null);
             onShiftChange?.(shift || null);
-            if (shift) {
-                const movs = await api.shift.getMovements(shift.id);
-                setMovements(movs || []);
-            }
         } catch (e) {
             console.error('Failed to fetch shift:', e);
         } finally {

@@ -6,7 +6,6 @@ export const ProfitCalculator = () => {
     const [sellPrice, setSellPrice] = useState('');
     const [quantity, setQuantity] = useState('1');
     const [targetMargin, setTargetMargin] = useState('');
-    const [vatRate, setVatRate] = useState('0'); // New: VAT support
     const [mode, setMode] = useState<'calculate' | 'findPrice'>('calculate');
 
     // Calculate profit and margin
@@ -14,7 +13,6 @@ export const ProfitCalculator = () => {
     const sellNum = parseFloat(sellPrice) || 0;
     const qtyNum = parseFloat(quantity) || 1;
     const marginNum = parseFloat(targetMargin) || 0;
-    const vatNum = parseFloat(vatRate) || 0;
 
     // Calculations
     const unitProfit = sellNum - costNum;
@@ -34,7 +32,6 @@ export const ProfitCalculator = () => {
         setSellPrice('');
         setQuantity('1');
         setTargetMargin('');
-        setVatRate('0');
     };
 
     const quickMargins = [10, 15, 20, 25, 30];

@@ -52,7 +52,7 @@ export const products = {
             return ProductHandler.CreateProduct(p);
         }
     },
-    delete: (id: string, force?: boolean) => ProductHandler.DeleteProduct(id),
+    delete: (id: string) => ProductHandler.DeleteProduct(id),
     search: (q: string) => ProductHandler.SearchProducts(q),
 };
 

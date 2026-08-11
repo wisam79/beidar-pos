@@ -64,14 +64,3 @@ export const system = {
     getDeviceId: () => SettingsHandler.GetDeviceID(),
     showMessage: (title: string, message: string) => SettingsHandler.ShowNativeNotification(title, message, "info"),
 };
-
-export const ai = {
-    setKey: (key: string) => SettingsHandler.SaveGlobalAIKeys([key], ""),
-    generateBasic: (prompt: string) => Promise.resolve(''),
-    generateComplex: (prompt: string) => Promise.resolve(''),
-    fetchGlobalKeys: () => SettingsHandler.FetchGlobalAIKeys(),
-    saveGlobalKeys: (keys: string[]) => SettingsHandler.SaveGlobalAIKeys(keys, ""),
-    listModels: () => Promise.resolve([]),
-    fetchUsageStats: () => Promise.resolve([]),
-    generateStream: (prompt: string) => Promise.resolve(),
-};

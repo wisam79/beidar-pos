@@ -68,7 +68,7 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
             setForm(emptyDiscount);
             setErrors({});
             loadDiscounts();
-        } catch (e) {
+        } catch {
             notify('فشل في حفظ الخصم', 'error');
         }
     };
@@ -78,7 +78,7 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
             await api.discounts.delete(id);
             notify('تم حذف الخصم', 'success');
             loadDiscounts();
-        } catch (e) {
+        } catch {
             notify('فشل في الحذف', 'error');
         }
     };
@@ -87,7 +87,7 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
         try {
             await api.discounts.toggle(id);
             loadDiscounts();
-        } catch (e) {
+        } catch {
             notify('فشل في تغيير الحالة', 'error');
         }
     };

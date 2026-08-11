@@ -23,7 +23,6 @@ const ChangePasswordModalWrapper = () => {
     <ChangePasswordModal
       isOpen
       staffId={currentUser.id}
-      staffName={currentUser.username}
       isForced
       onSuccess={() => setRequirePinChange(false)}
     />

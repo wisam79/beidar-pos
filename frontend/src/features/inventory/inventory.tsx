@@ -65,9 +65,8 @@ export const InventoryPage: React.FC = () => {
     const products = productsData?.products || [];
     const stats = productsData?.stats || { totalStock: 0, totalValue: 0, totalCost: 0, profit: 0 };
     const totalItems = productsData?.totalItems || 0;
-    const totalPages = productsData?.totalPages || 0;
 
-    const { data: movements = [], refetch: loadMovements } = useInventoryMovements(activeTab === 'movements');
+    const { data: movements = [] } = useInventoryMovements(activeTab === 'movements');
 
     // Reset page when filters change
     useEffect(() => { setPage(0); }, [debouncedSearch, categoryFilter, supplierFilter, filterType]);
@@ -89,7 +88,7 @@ export const InventoryPage: React.FC = () => {
                 const { timestamp, data } = JSON.parse(cached);
                 setAiReport(data);
                 setLastUpdated(timestamp);
-            } catch (_e) { /* ignore */ }
+            } catch { /* ignore */ }
         }
     }, []);
 
@@ -121,7 +120,7 @@ export const InventoryPage: React.FC = () => {
             setAiReport(report);
             setLastUpdated(now);
             localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data: report }));
-        } catch (e) {
+        } catch {
             notify("فشل التحليل الذكي", "error");
         } finally {
             setIsAnalyzing(false);

@@ -10,25 +10,6 @@ export interface StaffError {
     field?: string;
 }
 
-// Error codes from backend (staff.go)
-export const StaffErrorCodes = {
-    DUPLICATE_USERNAME: 'DUPLICATE_USERNAME',
-    WEAK_PASSWORD: 'WEAK_PASSWORD',
-    INVALID_EMAIL: 'INVALID_EMAIL',
-    STAFF_INVALID_PHONE: 'STAFF_INVALID_PHONE',
-    STAFF_NOT_FOUND: 'STAFF_NOT_FOUND',
-    LAST_ADMIN: 'LAST_ADMIN',
-    STAFF_HAS_SALES: 'STAFF_HAS_SALES',
-    WEAK_PIN: 'WEAK_PIN',
-    PIN_TOO_SHORT: 'PIN_TOO_SHORT',
-    PIN_NOT_NUMERIC: 'PIN_NOT_NUMERIC',
-    STAFF_INVALID_NAME: 'STAFF_INVALID_NAME',
-    INVALID_USERNAME: 'INVALID_USERNAME',
-    PASSWORD_REQUIRED: 'PASSWORD_REQUIRED',
-    MISSING_STAFF_ID: 'MISSING_STAFF_ID',
-    DATABASE_ERROR: 'DATABASE_ERROR',
-} as const;
-
 /**
  * Parse error from backend into structured StaffError
  * Handles various error formats from Wails/Go

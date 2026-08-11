@@ -5,7 +5,6 @@ import { api } from '../core/api';
 interface ChangePasswordModalProps {
     isOpen: boolean;
     staffId: string;
-    staffName: string;
     isForced?: boolean; // If true, user MUST change PIN (can't close)
     onSuccess: () => void;
     onClose?: () => void;
@@ -14,7 +13,6 @@ interface ChangePasswordModalProps {
 export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     isOpen,
     staffId,
-    staffName,
     isForced = false,
     onSuccess,
     onClose

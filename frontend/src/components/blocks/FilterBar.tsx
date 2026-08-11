@@ -33,7 +33,7 @@ SearchInput.displayName = 'SearchInput';
 //  SegmentedControl — أزرار تصفية متصلة لمسية
 // ═══════════════════════════════════════════════════════
 
-export interface SegmentOption<T extends string = string> {
+interface SegmentOption<T extends string = string> {
     id: T;
     label: string;
 }

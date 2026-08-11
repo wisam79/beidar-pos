@@ -8,18 +8,12 @@ export { PageShell } from './PageShell';
 export { SectionCard } from './SectionCard';
 
 // Data Display
-export { StatsGrid, StatCard, MiniCard } from './StatsGrid';
-export type { StatColor, MiniCardProps } from './StatsGrid';
+export { StatsGrid, StatCard } from './StatsGrid';
 
 // Navigation & Filtering
 export { FilterBar, SearchInput, SegmentedControl } from './FilterBar';
-export type { SegmentOption } from './FilterBar';
 export { TabNav } from './TabNav';
-export type { TabItem } from './TabNav';
 export { Pagination } from './Pagination';
-
-// Actions
-export { ActionButton } from './ActionButton';
 
 // Feedback
 export { LoadingState } from './LoadingState';

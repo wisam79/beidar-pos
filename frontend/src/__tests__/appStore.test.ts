@@ -14,7 +14,6 @@ function resetAppStore() {
         isCommandPaletteOpen: false,
         isAiChatOpen: false,
         isShortcutsOpen: false,
-        notifications: [],
         appState: 'splash',
     });
 }

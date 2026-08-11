@@ -14,7 +14,6 @@ import { SalesAreaChart } from '../../components/charts';
 import { CustomerRank } from './components/ReportsComponents';
 import { forecastSales } from '../../core/ai';
 import { api, Sale, Product, Customer, Staff, StockMovement, DashboardStats } from '../../core/api';
-import { AppPreferences } from '../../core/types';
 import { logger } from '../../core/logger';
 import { usePreferences } from '../../components/PreferencesContext';
 import { queryKeys } from '../../core/queryClient';
@@ -64,7 +63,7 @@ export const ReportsPage: React.FC = () => {
     const [showExportMenu, setShowExportMenu] = useState(false);
 
     // ── React Query data fetching ──────────────────────────────────────────────
-    const { stats: dashboardStats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useDashboardStats(dateRange);
+    const { stats: dashboardStats, isLoading: statsLoading, isError: statsError } = useDashboardStats(dateRange);
     const { data: sales = [], isLoading: salesLoading, isError: salesError } = useQuery({
         queryKey: queryKeys.sales.list(0, 100, '', '', ''),
         queryFn: () => api.sales.list(0, 100, '', '', '').then(r => r.data),
@@ -303,7 +302,7 @@ export const ReportsPage: React.FC = () => {
             {/* Tab Content */}
             <div className="flex-1 min-h-0 overflow-hidden pt-2">
                 {activeTab === 'overview' && dashboardStats && (
-                    <OverviewTab stats={dashboardStats as DashboardStats} currency={currency} prefs={prefs} forecast={forecast} isForecasting={isForecasting} handleForecast={handleForecast} />
+                    <OverviewTab stats={dashboardStats as DashboardStats} currency={currency} forecast={forecast} isForecasting={isForecasting} handleForecast={handleForecast} />
                 )}
                 {activeTab === 'sales' && (
                     <SalesReportTab currency={currency} />
@@ -332,13 +331,12 @@ export const ReportsPage: React.FC = () => {
 interface OverviewTabProps {
     stats: DashboardStats;
     currency: string;
-    prefs?: AppPreferences;
     forecast: string | null;
     isForecasting: boolean;
     handleForecast: () => void;
 }
 
-const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forecast, isForecasting, handleForecast }) => {
+const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, forecast, isForecasting, handleForecast }) => {
     // Map backend numbers to UI
     const revenue = stats.totalRevenue || 0;
     const netProfit = stats.netProfit || 0;
@@ -487,11 +485,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, currency, prefs, forec
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📋 Sales Report Tab
 // ═══════════════════════════════════════════════════════════════════════════════
-
-interface SalesReportTabProps {
-    sales: Sale[];
-    currency: string;
-}
 
 const SalesReportTab: React.FC<{ currency: string }> = ({ currency }) => {
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });

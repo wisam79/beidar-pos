@@ -38,14 +38,8 @@ export const desktopApi = {
         test: (printer: string) => PrintHandler.TestPrinter(printer),
     },
     ai: {
-        setKey: (key: string) => SettingsHandler.SaveGlobalAIKeys([key], ""),
-        generateBasic: (prompt: string) => Promise.resolve(''),
-        generateComplex: (prompt: string) => Promise.resolve(''),
-        fetchGlobalKeys: () => SettingsHandler.FetchGlobalAIKeys(),
-        saveGlobalKeys: (keys: string[]) => SettingsHandler.SaveGlobalAIKeys(keys, ""),
-        listModels: () => Promise.resolve([]),
-        fetchUsageStats: () => Promise.resolve([]),
-        generateStream: (prompt: string) => Promise.resolve(),
+        generateBasic: (_prompt: string) => Promise.resolve(''),
+        generateComplex: (_prompt: string) => Promise.resolve(''),
     },
     license: {
         getUserLicenseStatus: () => CloudHandler.GetUserLicenseStatus().then(res => ({ licensed: res.licensed, message: res.message })),

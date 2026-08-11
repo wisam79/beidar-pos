@@ -24,7 +24,7 @@ export const ZohoSettings: React.FC<{ notify: (msg: string, type: 'success' | 'e
         try {
             const s = await GetZohoStatus();
             setStatus(s as ZohoStatus);
-        } catch (e) {
+        } catch {
             setStatus({ enabled: false, configured: false });
         }
         setLoading(false);
@@ -58,7 +58,7 @@ export const ZohoSettings: React.FC<{ notify: (msg: string, type: 'success' | 'e
             await DisableZohoIntegration();
             notify('تم إلغاء ربط Zoho', 'info');
             loadStatus();
-        } catch (e) {
+        } catch {
             notify('فشل إلغاء الربط', 'error');
         }
     };

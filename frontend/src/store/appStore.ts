@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { View, Notification } from '../core/types';
+import type { View } from '../core/types';
 import { toast } from 'sonner';
 
 interface AppState {
@@ -21,9 +21,7 @@ interface AppState {
     setShortcutsOpen: (open: boolean) => void;
 
     // Notifications
-    notifications: Notification[];
     notify: (message: string, type?: 'success' | 'error' | 'info') => void;
-    removeNotification: (id: number) => void;
 
     // Online Status
     onlineStatus: boolean;
@@ -63,8 +61,7 @@ export const useAppStore = create<AppState>()(
             isShortcutsOpen: false,
             setShortcutsOpen: (open) => set({ isShortcutsOpen: open }),
 
-            // Notifications via sonner
-            notifications: [], // Keep for backwards compatibility if any component reads it
+            // Notifications
             notify: (message, type = 'info') => {
                 const now = Date.now();
                 if (lastNotify.message === message && now - lastNotify.time < 2000) return;
@@ -74,7 +71,6 @@ export const useAppStore = create<AppState>()(
                 else if (type === 'error') toast.error(message);
                 else toast.info(message);
             },
-            removeNotification: (id) => {}, // No-op
 
             // Online Status
             onlineStatus: navigator.onLine,

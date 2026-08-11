@@ -35,30 +35,3 @@ export function usePageVisibility(): boolean {
 
     return isVisible;
 }
-
-/**
- * Hook to create an interval that automatically pauses when page is hidden.
- * This saves CPU and battery when user switches to another tab.
- * 
- * @param callback - Function to call on each interval
- * @param delay - Interval delay in milliseconds
- * @param enabled - Whether the interval should be active (default: true)
- */
-export function useVisibilityAwareInterval(
-    callback: () => void,
-    delay: number,
-    enabled: boolean = true
-): void {
-    const isVisible = usePageVisibility();
-
-    useEffect(() => {
-        // Don't run if not visible or not enabled
-        if (!isVisible || !enabled) return;
-
-        // Run immediately on visibility change
-        callback();
-
-        const interval = setInterval(callback, delay);
-        return () => clearInterval(interval);
-    }, [isVisible, enabled, delay, callback]);
-}

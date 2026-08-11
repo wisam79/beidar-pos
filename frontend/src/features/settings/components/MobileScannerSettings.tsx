@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Smartphone, RefreshCw, Wifi, QrCode, CheckCircle2 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { api } from '../../../core/api';
@@ -10,7 +9,6 @@ interface MobileScannerSettingsProps {
 }
 
 export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ notify }) => {
-    const { t } = useTranslation();
     const [qrData, setQrData] = useState<string>('');
     const [serverStatus, setServerStatus] = useState<{ running: boolean; ip: string; port: number }>({
         running: false,
@@ -59,7 +57,7 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
             await new Promise(r => setTimeout(r, 1000));
             notify('تم تشغيل سيرفر الاتصال بنجاح', 'success');
             fetchStatus();
-        } catch (e) {
+        } catch {
             notify('فشل تشغيل السيرفر', 'error');
         } finally {
             setIsLoading(false);

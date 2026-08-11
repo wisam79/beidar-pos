@@ -66,7 +66,7 @@ export const InvoicesPage: React.FC = () => {
             invalidateSales();
             invalidateAllData();
             loadData();
-        } catch (_e) {
+        } catch {
             notify('خطأ في الحذف', 'error');
         }
     };
@@ -109,7 +109,7 @@ export const InvoicesPage: React.FC = () => {
                     notify('الفاتورة غير موجودة', 'error');
                     return { success: false, message: 'فاتورة غير موجودة' };
                 }
-            } catch (_e) {
+            } catch {
                 playBeep('error');
                 notify('خطأ في تحميل الفاتورة', 'error');
                 return { success: false, message: 'خطأ في التحميل' };
@@ -221,7 +221,6 @@ export const InvoicesPage: React.FC = () => {
                             <tbody>
                                 {salesData.map((s: Sale) => {
                                     const isReturned = s.status === 'returned';
-                                    const isPending = s.status === 'pending';
                                     const isCompleted = s.status === 'completed';
                                     const healthColor = isCompleted ? 'bg-success' : isReturned ? 'bg-danger' : 'bg-warning';
 

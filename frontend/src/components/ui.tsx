@@ -9,10 +9,6 @@ interface CardProps {
     onClick?: () => void;
 }
 
-interface SpotlightCardProps extends CardProps {
-    spotlightColor?: string;
-}
-
 interface PageHeaderProps {
     title: string;
     icon: LucideIcon;
@@ -80,7 +76,7 @@ export const Card = memo(({ children, className = "", onClick }: CardProps) => (
 Card.displayName = 'Card';
 
 // Spotlight Card - Premium Hover Effect
-export const SpotlightCard = memo(({ children, className = "", spotlightColor, onClick }: SpotlightCardProps) => {
+export const SpotlightCard = memo(({ children, className = "", onClick }: CardProps) => {
     return (
         <div
             onClick={onClick}

@@ -5,7 +5,7 @@ import { useState, useCallback } from 'react';
 // Replaces duplicated useState+ConfirmModal boilerplate across pages
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export interface ConfirmModalState {
+interface ConfirmModalState {
     open: boolean;
     title: string;
     message: string;
@@ -14,7 +14,7 @@ export interface ConfirmModalState {
     onConfirm: () => void;
 }
 
-export interface OpenConfirmOptions {
+interface OpenConfirmOptions {
     title: string;
     message: string;
     type?: 'confirm' | 'warning' | 'error' | 'info';

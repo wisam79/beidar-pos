@@ -20,12 +20,6 @@ interface ImportResult {
     importedIds: string[];
 }
 
-interface ExportResult {
-    data: string;
-    filename: string;
-    count: number;
-}
-
 interface ImportExportModalProps {
     isOpen: boolean;
     onClose: () => void;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../../theme/cn';
-import { Check, AlertTriangle, Info, X } from '../../lib/icons';
+import { Check, AlertTriangle, Info, X } from 'lucide-react';
 
 export type BadgeVariant = 'default' | 'primary' | 'success' | 'danger' | 'warning' | 'info' | 'neutral';
 

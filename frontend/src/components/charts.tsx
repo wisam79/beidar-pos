@@ -166,7 +166,7 @@ export const SalesAreaChart = memo(({ data }: { data: ChartDataPoint[] }) => {
                 {points.map(([x, y], i) => (
                     <g
                         key={i}
-                        onMouseEnter={(e) => {
+                        onMouseEnter={() => {
                             // Calculate scaled coordinates based on actual DOM size
                             if (containerRef.current) {
                                 const rect = containerRef.current.getBoundingClientRect();
@@ -258,32 +258,6 @@ const PortalTooltip = ({ label, value, x, y }: { label: string, value: string, x
     );
 };
 
-
-export const BarChart = memo(({ data }: { data: { label: string, value: number }[] }) => {
-    const safeData = data.length > 0 ? data : Array(5).fill({ label: '-', value: 0 });
-    const max = Math.max(...safeData.map(d => d.value), 1);
-
-    return (
-        <div className="w-full h-48 flex items-end justify-between gap-3 pt-6 px-2 select-none">
-            {safeData.map((d, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end relative">
-                    <div className="w-full bg-surface-active rounded-t-lg relative h-full flex items-end overflow-hidden border-x border-t border-border">
-                        <div
-                            className="w-full bg-primary/40 rounded-t-lg transition-all duration-700 relative"
-                            style={{ height: `${(d.value / max) * 100}%` }}
-                        >
-                            <div className="absolute top-0 w-full h-[1px] bg-white/30"></div>
-                        </div>
-                    </div>
-                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-all bg-surface border border-border px-3 py-1.5 rounded-xl text-xs font-bold text-text-main shadow-xl z-10 transform translate-y-2 group-hover:translate-y-0 font-mono">
-                        {d.value}
-                    </div>
-                    <span className="text-[9px] text-text-muted font-bold group-hover:text-text-main transition-colors truncate w-full text-center uppercase">{d.label}</span>
-                </div>
-            ))}
-        </div>
-    );
-});
 
 export const DonutChart = memo(({ data }: { data: { label: string, value: number, color: string }[] }) => {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);

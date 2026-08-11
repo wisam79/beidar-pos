@@ -5,14 +5,12 @@ interface ErrorMessageProps {
     message: string;
     hint?: string;
     type?: 'error' | 'warning' | 'info';
-    field?: string;
 }
 
 export const ErrorMessage: React.FC<ErrorMessageProps> = ({
     message,
     hint,
     type = 'error',
-    field
 }) => {
     const getIcon = () => {
         switch (type) {

@@ -46,7 +46,6 @@ const NAV_ITEMS: NavItem[] = [
 export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
     theme,
     onToggleTheme,
-    currentUser,
     appVersion,
     activeView,
     onNavigate,

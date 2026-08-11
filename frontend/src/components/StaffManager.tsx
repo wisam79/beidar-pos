@@ -19,21 +19,6 @@ const ROLES: { value: StaffRole; label: string; color: string }[] = [
     { value: 'viewer', label: 'مشاهد', color: 'text-gray-400 bg-gray-500/10' },
 ];
 
-const PERMISSIONS = [
-    { key: 'sales', label: 'المبيعات' },
-    { key: 'products', label: 'المنتجات' },
-    { key: 'inventory', label: 'المخزون' },
-    { key: 'customers', label: 'العملاء' },
-    { key: 'invoices', label: 'الفواتير' },
-    { key: 'reports', label: 'التقارير' },
-    { key: 'finance', label: 'المالية' },
-    { key: 'settings', label: 'الإعدادات' },
-    { key: 'staff_manage', label: 'إدارة الموظفين' },
-    { key: 'discounts', label: 'الخصومات' },
-    { key: 'delete_sales', label: 'حذف المبيعات' },
-    { key: 'edit_prices', label: 'تعديل الأسعار' },
-];
-
 const emptyStaff: Staff = {
     id: '',
     name: '',
@@ -70,7 +55,7 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
         try {
             const data = await api.staff.list();
             setStaffList(data || []);
-        } catch (e) {
+        } catch {
             notify('فشل تحميل قائمة الموظفين', 'error');
         }
         setLoading(false);
@@ -176,7 +161,7 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
                 try {
                     const jsonPart = errStr.includes('{') ? errStr.substring(errStr.indexOf('{')) : errStr;
                     appError = JSON.parse(jsonPart);
-                } catch (e) { /* Not JSON */ }
+                } catch { /* Not JSON */ }
 
                 // Check for allowForce option
                 const appErr = appError as AppError | null;
@@ -217,7 +202,7 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
         try {
             await api.staff.toggle(id);
             loadStaff();
-        } catch (e) {
+        } catch {
             notify('فشل تغيير الحالة', 'error');
         }
     };

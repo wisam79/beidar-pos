@@ -43,7 +43,6 @@ export const SalesPage: React.FC = () => {
         addToCart: addToCartHook,
         updateQty,
         removeFromCart,
-        clearCart,
         justAddedId,
         isZenMode,
         setIsZenMode,
@@ -212,7 +211,7 @@ export const SalesPage: React.FC = () => {
             setCart([]);
             setSelectedCustomer(null);
             setDiscount(0);
-        } catch (_e) {
+        } catch {
             notify('فشل تعليق الفاتورة', 'error');
         }
     };
@@ -228,7 +227,7 @@ export const SalesPage: React.FC = () => {
             }
             setShowParkedModal(false);
             notify('تم استرجاع الفاتورة', 'success');
-        } catch (_e) {
+        } catch {
             notify('فشل استرجاع الفاتورة', 'error');
         }
     };
@@ -255,7 +254,7 @@ export const SalesPage: React.FC = () => {
             setShowQuickAddModal(false);
             setQuickForm({ name: '', price: 0 });
             notify('تم إضافة المنتج وبيعه', 'success');
-        } catch (_e) {
+        } catch {
             notify('فشل إضافة المنتج', 'error');
         }
     };
@@ -275,7 +274,7 @@ export const SalesPage: React.FC = () => {
                     notify('الفاتورة غير موجودة', 'error');
                     return { success: false, message: 'فاتورة غير موجودة' };
                 }
-            } catch (_e) {
+            } catch {
                 playBeep('error');
                 notify('خطأ في تحميل الفاتورة', 'error');
                 return { success: false, message: 'خطأ في التحميل' };

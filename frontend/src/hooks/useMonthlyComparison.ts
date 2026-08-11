@@ -31,7 +31,7 @@ export interface MonthData {
 /**
  * بيانات المقارنة الشهرية
  */
-export interface MonthlyComparisonData {
+interface MonthlyComparisonData {
     currentMonth: MonthData;    // بيانات الشهر الحالي
     previousMonth: MonthData;   // بيانات الشهر السابق
     revenueChange: number;      // نسبة التغير في الإيراد (%)

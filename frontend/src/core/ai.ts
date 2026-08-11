@@ -42,12 +42,7 @@ function incrementUsage(): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-export function getRemainingAIRequests(): number {
-  const data = getUsageData();
-  return Math.max(0, DAILY_AI_LIMIT - data.count);
-}
-
-export function isAILimitReached(): boolean {
+function isAILimitReached(): boolean {
   return getUsageData().count >= DAILY_AI_LIMIT;
 }
 
@@ -58,8 +53,7 @@ export function isAILimitReached(): boolean {
 async function executeAIRequest(
   complexity: 'BASIC' | 'COMPLEX',
   prompt: string,
-  systemInstruction?: string,
-  useSearch: boolean = false
+  systemInstruction?: string
 ): Promise<string> {
   // Check usage limit before making request
   if (isAILimitReached()) {
@@ -153,47 +147,10 @@ export const analyzeInventoryRisk = async (lowStockItems: Product[]): Promise<st
   return await executeAIRequest('BASIC', prompt, "أنت مدير مخزون ذكي. إجابتك يجب أن تكون سطراً واحداً فقط.");
 };
 
-export const chatWithCopilot = async (message: string, contextSummary: string): Promise<string> => {
-  const systemInstruction = `أنت "مساعد بيدر" 🤝 - صديق ذكي ومساند لصاحب المتجر.
-
-📊 معلومات المتجر: ${contextSummary}
-
-**شخصيتك:**
-• ودود ومريح - كأنك صديق يفهم تحديات التجارة
-• مشجع وإيجابي - ابدأ بتقدير جهودهم أو بكلمة طيبة
-• عملي ومفيد - قدم حلول واضحة وممكنة التنفيذ
-• متفهم - اعترف بالتحديات قبل تقديم الحلول
-
-**أسلوب الرد:**
-• ابدأ بـ "أهلاً!" أو "ممتاز!" أو تعليق مشجع قصير
-• استخدم الإيموجي بشكل طبيعي 😊 💪 ✨
-• أجب بـ 2-4 نقاط مفيدة كحد أقصى
-• اختم بتشجيع أو عبارة داعمة عند الحاجة
-• اللغة: عربية بسيطة وودودة (مثل محادثة صديق)
-
-**مثال على الأسلوب:**
-"أهلاً! 😊 سؤال ممتاز...
-✅ [نصيحة 1]
-💡 [نصيحة 2]
-أنت على الطريق الصحيح! 💪"`;
-
-  return await executeAIRequest('COMPLEX', message, systemInstruction);
-};
-
 export const suggestProductPrice = async (name: string, cost: number): Promise<string> => {
   const prompt = `المنتج: "${name}"، التكلفة: ${cost}. اقترح سعر بيع تنافسي بالدينار العراقي (IQD) بناءً على هامش ربح معقول (20-30%). أعد فقط الرقم المقترح بدون نص.`;
   const res = await executeAIRequest('BASIC', prompt);
   return res.replace(/[^0-9]/g, '');
-};
-
-export const suggestCategory = async (name: string, existingCategories: string[]): Promise<string> => {
-  const prompt = `المنتج: "${name}". الفئات الموجودة: [${existingCategories.join(', ')}]. اختر أنسب فئة من القائمة. إذا لم تجد، اقترح اسم فئة جديد قصير ومعبر بالعربية. أعد فقط اسم الفئة.`;
-  return await executeAIRequest('BASIC', prompt);
-};
-
-export const generateSocialPost = async (product: Product, storeName: string): Promise<string> => {
-  const prompt = `اكتب منشوراً ترويجياً لمنصات التواصل الاجتماعي (فيسبوك/انستغرام) للمنتج "${product.name}" المتوفر في "${storeName}". السعر: ${product.price}. استخدم الإيموجي واجعل الأسلوب حماسياً ومشوقاً باللهجة العراقية البيضاء أو العربية الفصحى السهلة.`;
-  return await executeAIRequest('COMPLEX', prompt);
 };
 
 export const analyzeCustomerProfile = async (name: string, totalPurchases: number, debt: number): Promise<string> => {
@@ -234,14 +191,6 @@ export const forecastSales = async (dailyRevenues: number[]): Promise<string> =>
 // 🧠 SMART AI INSIGHTS - Advanced Business Analytics
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface ProductData {
-  name: string;
-  stock: number;
-  minStock: number;
-  price: number;
-  cost: number;
-}
-
 /**
  * Generate a comprehensive daily business summary
  */
@@ -271,118 +220,6 @@ export const generateDailySummary = async (
 };
 
 /**
- * Analyze inventory and provide recommendations
- */
-export const analyzeInventory = async (products: ProductData[]): Promise<string> => {
-  const lowStock = products.filter(p => p.stock <= p.minStock);
-  const outOfStock = products.filter(p => p.stock === 0);
-  const overstocked = products.filter(p => p.stock > p.minStock * 5);
-
-  const prompt = `📦 تحليل مخزون:
-• 🔴 نافذ: ${outOfStock.length} (${outOfStock.slice(0, 2).map(p => p.name).join('، ')})
-• 🟡 منخفض: ${lowStock.length}
-• 🟢 مكدس: ${overstocked.length}
-• الإجمالي: ${products.length}
-
-**أجب بـ 3 إجراءات فقط:**
-🔴 [إجراء عاجل]
-🟡 [إجراء متوسط]
-💡 [تحسين عام]`;
-
-  return await executeAIRequest('BASIC', prompt);
-};
-
-/**
- * Generate smart restock suggestions
- */
-export const generateRestockSuggestions = async (
-  lowStockProducts: { name: string; stock: number; minStock: number }[]
-): Promise<string> => {
-  if (lowStockProducts.length === 0) {
-    return "✅ جميع المنتجات متوفرة بكميات كافية!";
-  }
-
-  const productsList = lowStockProducts.slice(0, 10).map(p =>
-    `${p.name}: ${p.stock}/${p.minStock}`
-  ).join('\n');
-
-  const prompt = `المنتجات التالية تحتاج إعادة تخزين:
-${productsList}
-
-اكتب قائمة طلب موجزة مرتبة حسب الأولوية مع الكميات المقترحة. استخدم تنسيق بسيط.`;
-
-  return await executeAIRequest('BASIC', prompt);
-};
-
-/**
- * Comprehensive business analysis with AI
- */
-export const generateBusinessInsights = async (data: {
-  weeklyRevenue: number[];
-  topSellingProducts: string[];
-  slowProducts: string[];
-  customerCount: number;
-  averageOrderValue: number;
-  profitMargin: number;
-}): Promise<string> => {
-  const trend = data.weeklyRevenue.length >= 2
-    ? (data.weeklyRevenue[data.weeklyRevenue.length - 1] > data.weeklyRevenue[0] ? 'تصاعدي ↑' : 'تنازلي ↓')
-    : 'مستقر →';
-
-  const prompt = `📊 بيانات سريعة:
-• الاتجاه: ${trend}
-• متوسط الطلب: ${data.averageOrderValue} د.ع
-• الهامش: ${data.profitMargin}%
-• الأكثر مبيعاً: ${data.topSellingProducts.slice(0, 2).join('، ')}
-
-**أعطني توصية واحدة فقط في سطر واحد مختصر وتوجيهي:**
-[إيموجي] [التوصية الاستراتيجية] → [الإجراء المطلوب الآن]
-
-مثال: 🚀 المبيعات تتصاعد → ارفع أسعار المنتجات الرائجة 5%`;
-
-  return await executeAIRequest('BASIC', prompt, "أنت مستشار أعمال ذكي. أجب بسطر واحد فقط، مختصر وتوجيهي.");
-};
-
-/**
- * Predict next week's sales trend
- */
-export const predictSalesTrend = async (dailySales: number[]): Promise<{
-  prediction: string;
-  confidence: 'high' | 'medium' | 'low';
-  recommendation: string;
-}> => {
-  const prompt = `بيانات المبيعات اليومية للأسبوع الماضي: [${dailySales.join(', ')}]
-  
-حلل البيانات وأجب بتنسيق JSON فقط:
-{
-  "prediction": "توقع قصير للأسبوع القادم",
-  "trend": "up/down/stable",
-  "recommendation": "نصيحة عملية واحدة"
-}`;
-
-  try {
-    const response = await executeAIRequest('COMPLEX', prompt);
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        prediction: parsed.prediction || 'لا توجد بيانات كافية',
-        confidence: dailySales.length >= 7 ? 'high' : dailySales.length >= 3 ? 'medium' : 'low',
-        recommendation: parsed.recommendation || 'جمع المزيد من البيانات'
-      };
-    }
-  } catch (e) {
-    console.error('Prediction parse error', e);
-  }
-
-  return {
-    prediction: 'لا توجد بيانات كافية للتنبؤ',
-    confidence: 'low',
-    recommendation: 'استمر في تسجيل المبيعات يومياً'
-  };
-};
-
-/**
  * Generate quick AI insight for dashboard widget
  */
 export const getQuickInsight = async (
@@ -399,11 +236,3 @@ export const getQuickInsight = async (
 
   return await executeAIRequest('BASIC', prompt);
 };
-
-// Note: editProductImage is temporarily disabled or needs a backend implementation for multi-part encoding.
-// For now, returning null/not implemented.
-export const editProductImage = async (base64Image: string, editPrompt: string): Promise<string | null> => {
-
-  console.warn("AI Image Edit features moved to backend - Not yet implemented");
-  return null;
-}
