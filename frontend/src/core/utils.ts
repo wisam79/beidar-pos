@@ -7,6 +7,9 @@ import { SoundManager } from './sound';
  * @returns Formatted currency string (e.g. "1,250 IQD")
  */
 export const formatCurrency = (amount: number, currency: string = 'IQD'): string => {
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || Number.isNaN(amount)) {
+        return `0 ${currency}`;
+    }
     // Format number with thousands separator
     const formatted = new Intl.NumberFormat('en-US', {
         maximumFractionDigits: 2,
@@ -161,11 +164,14 @@ export const getLocalDateString = (d: Date = new Date()): string => {
 };
 
 /**
- * Formats an integer cents/fils value from backend into standard display currency.
+ * Formats integer cent values from backend into standard display currency (Zero Float Drift).
  * @param cents Monetary value in cents (e.g. 1250 -> 12.50)
  * @param currency Currency code (default: 'IQD')
  */
 export const formatCents = (cents: number, currency: string = 'IQD'): string => {
+    if (typeof cents !== 'number' || !Number.isFinite(cents) || Number.isNaN(cents)) {
+        return `0.00 ${currency}`;
+    }
     const isNegative = cents < 0;
     const absCents = Math.abs(cents);
     const dollars = Math.floor(absCents / 100);

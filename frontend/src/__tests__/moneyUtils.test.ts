@@ -154,4 +154,17 @@ describe('Financial & Money Utilities (Zero Floating-Point Drift Protocol)', () 
         expect(parseCentsFromInput(' 1,250.50 ')).toBe(125050);
         expect(parseCentsFromInput(25.75)).toBe(2575);
     });
+
+    /**
+     * Test 6: Extreme locale values, NaN, and Infinity formatting safety
+     */
+    it('test_FormatCurrency_Locales_RTL_NoNaN', () => {
+        expect(formatCents(NaN, 'IQD')).toBe('0.00 IQD');
+        expect(formatCents(Infinity, 'IQD')).toBe('0.00 IQD');
+        expect(formatCents(-Infinity, 'IQD')).toBe('0.00 IQD');
+
+        expect(formatCurrency(NaN, 'IQD')).toBe('0 IQD');
+        expect(formatCurrency(Infinity, 'IQD')).toBe('0 IQD');
+    });
 });
+
