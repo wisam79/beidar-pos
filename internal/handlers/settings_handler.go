@@ -76,13 +76,16 @@ func (h *SettingsHandler) DownloadUpdate(url string) (string, error) {
 }
 
 func (h *SettingsHandler) InstallUpdate(installerPath string) error {
-	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+	if err := auth.RequireAdmin(); err != nil {
 		return err
 	}
 	return h.settingsService.InstallUpdate(installerPath)
 }
 
 func (h *SettingsHandler) SkipVersion(version string) error {
+	if err := auth.RequireAdmin(); err != nil {
+		return err
+	}
 	return h.settingsService.SkipVersion(version)
 }
 

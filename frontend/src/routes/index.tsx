@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { useAuth } from '../core/AuthContext';
 
 const Dashboard = lazy(() => import('../features/dashboard/dashboard').then((m) => ({ default: m.Dashboard })));
 const SalesPage = lazy(() => import('../features/pos/pos').then((m) => ({ default: m.SalesPage })));
@@ -12,6 +13,25 @@ const InvoicesPage = lazy(() => import('../features/invoices/invoices').then((m)
 const CustomersPage = lazy(() => import('../features/customers/customers').then((m) => ({ default: m.CustomersPage })));
 const FinancePage = lazy(() => import('../features/finance/finance').then((m) => ({ default: m.FinancePage })));
 const ShiftsPage = lazy(() => import('../features/shifts/shifts').then((m) => ({ default: m.ShiftsPage })));
+
+interface ProtectedRouteProps {
+  children: React.ReactElement;
+  permission?: string;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, permission }) => {
+  const { isAuthenticated, hasPermission } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (permission && !hasPermission(permission)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
 
 const preloadRoutes = () => {
   const routes = [
@@ -52,10 +72,10 @@ export const AppRoutes: React.FC = () => {
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/invoices" element={<InvoicesPage />} />
         <Route path="/customers" element={<CustomersPage />} />
-        <Route path="/finance" element={<FinancePage />} />
-        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/finance" element={<ProtectedRoute permission="view_reports"><FinancePage /></ProtectedRoute>} />
+        <Route path="/reports" element={<ProtectedRoute permission="view_reports"><ReportsPage /></ProtectedRoute>} />
         <Route path="/shifts" element={<ShiftsPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings" element={<ProtectedRoute permission="settings"><SettingsPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Suspense>

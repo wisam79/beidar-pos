@@ -315,7 +315,8 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
                                         {editingStaff ? 'رمز PIN جديد (اختياري)' : 'رمز PIN للدخول'}
                                     </label>
                                     <input
-                                        type="text"
+                                        type="password"
+                                        inputMode="numeric"
                                         value={pin}
                                         onChange={e => {
                                             const digits = e.target.value.replace(/\D/g, '').slice(0, 4);

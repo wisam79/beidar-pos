@@ -18,10 +18,6 @@ var (
 func VerifyAdminPin(adminPinHash, pin string) bool {
 	// 1. Verify credentials
 	err := bcrypt.CompareHashAndPassword([]byte(adminPinHash), []byte(pin))
-	if err != nil && adminPinHash == pin {
-		// Fallback for unmigrated plain-text PINs
-		err = nil
-	}
 
 	if err != nil {
 		// On failure: record failure and calculate exponential delay

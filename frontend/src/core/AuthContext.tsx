@@ -42,18 +42,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [idleMinutesRemaining, setIdleMinutesRemaining] = useState(DEFAULT_IDLE_TIMEOUT);
     const [idleTimeout, setIdleTimeoutState] = useState(DEFAULT_IDLE_TIMEOUT);
 
-    // Load session from localStorage on mount and sync to Go backend
+    // Load session from localStorage on mount and re-validate with Go backend
     useEffect(() => {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
             try {
                 const session = JSON.parse(stored);
-                if (session.user && session.permissions) {
-                    setCurrentUser(session.user);
-                    setPermissions(session.permissions);
-                    // 🔐 CRITICAL: Restore session on Go Backend so permissions pass
-                    api.staff.restoreSession(session.user.id).catch(() => {
-                        // Backend binding may be absent in tests
+                if (session.user && session.user.id) {
+                    // Re-verify session with Go Backend for fresh, authoritative permissions
+                    api.staff.restoreSession(session.user.id).then((res) => {
+                        if (res && res.success && res.staff) {
+                            setCurrentUser(res.staff);
+                            setPermissions(res.permissions || []);
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                                user: res.staff,
+                                permissions: res.permissions || []
+                            }));
+                        } else {
+                            setCurrentUser(null);
+                            setPermissions([]);
+                            localStorage.removeItem(STORAGE_KEY);
+                        }
+                    }).catch(() => {
+                        // Fallback if backend binding unavailable (e.g. offline/mock tests)
+                        setCurrentUser(session.user);
+                        setPermissions(session.permissions || []);
                     });
                 }
             } catch {

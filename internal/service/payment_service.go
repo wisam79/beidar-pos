@@ -269,7 +269,9 @@ func (s *paymentService) PayInstallment(saleID string, installmentIndex int, amo
 		}
 
 		requiredAmount := sale.InstallmentPlan.Schedule[installmentIndex].Amount
-		if amount != requiredAmount {
+		if amount <= 0 {
+			amount = requiredAmount
+		} else if amount != requiredAmount {
 			return pkgerrors.NewAppError(
 				pkgerrors.ModulePayment,
 				"EXACT_AMOUNT_REQUIRED",
@@ -296,10 +298,6 @@ func (s *paymentService) PayInstallment(saleID string, installmentIndex int, amo
 		planJSON, err := json.Marshal(sale.InstallmentPlan)
 		if err != nil {
 			return fmt.Errorf("failed to marshal installment plan: %w", err)
-		}
-
-		if err := txSaleRepo.Update(sale); err != nil {
-			return err
 		}
 
 		if err := txSaleRepo.UpdateSaleInstallmentPlan(sale.ID, string(planJSON), sale.Status); err != nil {

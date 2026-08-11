@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"beidar-desktop/internal/core/domain"
 	"gorm.io/gorm"
 )
@@ -58,5 +60,14 @@ func (r *discountRepository) ValidateCoupon(code string, now string) (*domain.Di
 }
 
 func (r *discountRepository) IncrementUsageCount(id string) error {
-	return r.db.Model(&domain.Discount{}).Where("id = ?", id).Update("usage_count", gorm.Expr("usage_count + 1")).Error
+	res := r.db.Model(&domain.Discount{}).
+		Where("id = ? AND (usage_limit = 0 OR usage_count < usage_limit)", id).
+		Update("usage_count", gorm.Expr("usage_count + 1"))
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("discount usage limit reached")
+	}
+	return nil
 }

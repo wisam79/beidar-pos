@@ -115,12 +115,14 @@ func roundDiv(a, b int64) int64 {
 	return q
 }
 
-// RoundToNearest rounds the amount down to the nearest multiple of unit.
+// RoundToNearest rounds the amount down to the nearest multiple of unit (floor rounding).
 // For example, 129_999.RoundToNearest(25_000) = 125_000.
-// Uses floor division (truncation toward zero) to match the legacy float64 behavior.
 func (a Amount) RoundToNearest(unit Amount) Amount {
 	if unit <= 0 {
 		return a
+	}
+	if a < 0 {
+		return ((a - unit + 1) / unit) * unit
 	}
 	return (a / unit) * unit
 }

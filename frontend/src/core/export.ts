@@ -124,6 +124,15 @@ export async function exportMultiSheetExcel(
 // 📕 PDF EXPORT (Native Browser Print Strategy)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+function escapeHTML(str: string): string {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 /**
  * Export data to PDF using Native Browser Print Window
  * This guarantees perfect Arabic font support and table styling.
@@ -134,15 +143,17 @@ export async function exportToPDF<T extends Record<string, unknown>>(
     options: ExportOptions
 ): Promise<void> {
     const date = new Date().toLocaleDateString('ar-IQ');
-    const storeName = options.storeName || 'المتجر';
+    const storeName = escapeHTML(options.storeName || 'المتجر');
+    const title = escapeHTML(options.title || 'تقرير');
+    const subtitle = escapeHTML(options.subtitle || '');
 
     // Generate Table HTML
-    const tableHeader = columns.map(c => `<th class="px-4 py-2 border border-gray-300 bg-gray-100 font-bold text-gray-700">${c.header}</th>`).join('');
+    const tableHeader = columns.map(c => `<th class="px-4 py-2 border border-gray-300 bg-gray-100 font-bold text-gray-700">${escapeHTML(c.header)}</th>`).join('');
 
     const tableRows = data.map((item, idx) => {
         const rowCells = columns.map(col => {
             const val = item[col.key];
-            const displayVal = (val === null || val === undefined) ? '' : String(val);
+            const displayVal = (val === null || val === undefined) ? '' : escapeHTML(String(val));
             return `<td class="px-4 py-2 border border-gray-300 text-gray-800 text-center">${displayVal}</td>`;
         }).join('');
         const bgClass = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50';
@@ -173,8 +184,8 @@ export async function exportToPDF<T extends Record<string, unknown>>(
                 <p class="text-gray-500 text-sm mt-1">تاريخ الطباعة: ${date}</p>
             </div>
             <div class="text-center">
-                <h2 class="text-xl font-bold text-gray-800">${options.title || 'تقرير'}</h2>
-                <p class="text-gray-600 mt-1">${options.subtitle || ''}</p>
+                <h2 class="text-xl font-bold text-gray-800">${title}</h2>
+                <p class="text-gray-600 mt-1">${subtitle}</p>
             </div>
             <div class="text-left w-32"></div>
         </div>

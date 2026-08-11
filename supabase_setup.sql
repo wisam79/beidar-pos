@@ -150,8 +150,8 @@ CREATE POLICY "Admin access to backups" ON public.user_backups
     FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- F. global_settings policies
-CREATE POLICY "Public Read Settings" ON public.global_settings
-    FOR SELECT TO anon, authenticated, service_role USING (true);
+CREATE POLICY "Authenticated Read Settings" ON public.global_settings
+    FOR SELECT TO authenticated, service_role USING (true);
 
 CREATE POLICY "Admin Write Settings" ON public.global_settings
     FOR ALL TO service_role USING (true) WITH CHECK (true);

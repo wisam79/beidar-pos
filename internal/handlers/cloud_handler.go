@@ -89,6 +89,9 @@ func (h *CloudHandler) RecoverPassword(email string) (*domain.SupabaseAuthResult
 }
 
 func (h *CloudHandler) DeleteCurrentUser() error {
+	if err := auth.RequireAdmin(); err != nil {
+		return err
+	}
 	return h.cloudService.DeleteCurrentUser()
 }
 
@@ -154,10 +157,16 @@ func (h *CloudHandler) DisableZohoIntegration() error {
 
 // License Verification & Management
 func (h *CloudHandler) VerifyLicense(key string) (*domain.LicenseResult, error) {
+	if err := auth.RequireAdmin(); err != nil {
+		return nil, err
+	}
 	return h.cloudService.VerifyLicense(key)
 }
 
 func (h *CloudHandler) ActivateLicense(key string) (*domain.LicenseResult, error) {
+	if err := auth.RequireAdmin(); err != nil {
+		return nil, err
+	}
 	return h.cloudService.ActivateLicense(key)
 }
 
@@ -165,8 +174,11 @@ func (h *CloudHandler) GetCachedLicense() (*domain.LicenseResult, error) {
 	return h.cloudService.GetCachedLicense()
 }
 
-func (h *CloudHandler) GetStoredLicenseKey() string {
-	return h.cloudService.GetStoredLicenseKey()
+func (h *CloudHandler) GetStoredLicenseKey() (string, error) {
+	if err := auth.RequireAdmin(); err != nil {
+		return "", err
+	}
+	return h.cloudService.GetStoredLicenseKey(), nil
 }
 
 func (h *CloudHandler) GetUserLicenseStatus() (*domain.LicenseResult, error) {

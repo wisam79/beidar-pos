@@ -178,21 +178,41 @@ export const CustomersPage: React.FC = () => {
         }
     };
 
+    const [payingKey, setPayingKey] = useState<string | null>(null);
+
     // ═══════════════════════════════════════════════════════════════════════════════
     // 💳 Installment Payment Handler - تسديد قسط معين من خطة الأقساط
     // ═══════════════════════════════════════════════════════════════════════════════
     const handlePayInstallment = async (saleId: string, index: number, amount: number) => {
+        const key = `${saleId}-${index}`;
+        if (payingKey === key) return;
+        setPayingKey(key);
         try {
             // استدعاء API تسديد القسط
             await api.payments.payInstallment(saleId, index, amount, 'cash');
             notify('تم تسديد القسط بنجاح', 'success');
-            // إبطال صريح لكل كاش المبيعات (المودال، الفواتير، التقارير) + تجديد شامل
+            // إبطال صريح لكاش المبيعات والعملاء لتحديث الصفحة والمودال فوراً
             queryClient.invalidateQueries({ queryKey: queryKeys.sales.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.customers.all });
+            if (installmentModal) {
+                queryClient.invalidateQueries({ queryKey: queryKeys.sales.installments(installmentModal) });
+            }
             invalidateAllData();
         } catch (e: unknown) {
             console.error('Error paying installment:', e);
-            const errMsg = (e as { message?: string })?.message || (typeof e === 'string' ? e : 'حدث خطأ أثناء تسديد القسط');
+            let appError: unknown = null;
+            const errStr = String(e);
+            try {
+                const jsonPart = errStr.includes('{') ? errStr.substring(errStr.indexOf('{')) : errStr;
+                appError = JSON.parse(jsonPart);
+            } catch { /* Not JSON */ }
+
+            const errMsg = (appError as { message?: string })?.message ||
+                (e as { message?: string })?.message ||
+                (typeof e === 'string' ? e : 'حدث خطأ أثناء تسديد القسط');
             notify(errMsg, 'error');
+        } finally {
+            setPayingKey(null);
         }
     };
 
@@ -541,10 +561,12 @@ export const CustomersPage: React.FC = () => {
                                             <span className="text-xs text-success font-bold flex items-center gap-1"><Check size={14} /> تم الدفع</span>
                                         ) : (
                                             <button
+                                                type="button"
+                                                disabled={payingKey === `${s.id}-${idx}`}
                                                 onClick={() => handlePayInstallment(s.id, idx, inst.amount)}
-                                                className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-bold hover:bg-primary hover:text-primary-fg transition-all"
+                                                className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-bold hover:bg-primary hover:text-primary-fg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                             >
-                                                تسديد الآن
+                                                {payingKey === `${s.id}-${idx}` ? 'جاري التسديد...' : 'تسديد الآن'}
                                             </button>
                                         )}
                                     </div>

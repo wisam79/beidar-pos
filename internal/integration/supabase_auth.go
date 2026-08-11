@@ -76,24 +76,19 @@ func getPinnedClient() *http.Client {
 	return pinnedHTTPClient
 }
 
-const (
-	DefaultSupabaseURL     = "https://qiwfbilkcxqqlregduuz.supabase.co"
-	DefaultSupabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpd2ZiaWxrY3hxcWxyZWdkdXV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExOTcwMjEsImV4cCI6MjA5Njc3MzAyMX0.vKhaRj9YSNb7W_fF6Ssbb4fLQCyk3f4wbiKw4eqap1k"
-)
-
 func (s *cloudService) InitSecrets() {
 	if supabaseURL == "" {
 		if url, err := secureconfig.GetSupabaseURL(); err == nil && url != "" {
 			supabaseURL = url
 		} else {
-			supabaseURL = DefaultSupabaseURL
+			supabaseURL = os.Getenv("SUPABASE_URL")
 		}
 	}
 	if supabaseKey == "" {
 		if key, err := secureconfig.GetSupabaseKey(); err == nil && key != "" {
 			supabaseKey = key
 		} else {
-			supabaseKey = DefaultSupabaseAnonKey
+			supabaseKey = os.Getenv("SUPABASE_ANON_KEY")
 		}
 	}
 	if supabaseURL != "" {
