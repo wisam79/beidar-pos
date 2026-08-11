@@ -32,6 +32,13 @@ func SetupDB(t *testing.T, models ...interface{}) (*gorm.DB, func()) {
 		t.Fatalf("testutil.SetupDB: failed to open in-memory DB: %v", err)
 	}
 
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("testutil.SetupDB: failed to get sql.DB: %v", err)
+	}
+	_, _ = sqlDB.Exec("PRAGMA busy_timeout=5000;")
+	sqlDB.SetMaxOpenConns(1)
+
 	if len(models) > 0 {
 		if err := db.AutoMigrate(models...); err != nil {
 			t.Fatalf("testutil.SetupDB: AutoMigrate failed: %v", err)
@@ -97,11 +104,12 @@ func SeedPreferences(t *testing.T, db *gorm.DB) {
 func NewProduct(t *testing.T, db *gorm.DB, name string, price float64, stock float64) *domain.Product {
 	t.Helper()
 	p := &domain.Product{
-		ID:    uuid.New().String(),
-		Name:  name,
-		Price: domain.NewAmount(price),
-		Cost:  domain.NewAmount(price * 0.7),
-		Stock: stock,
+		ID:      uuid.New().String(),
+		Barcode: uuid.New().String()[:12],
+		Name:    name,
+		Price:   domain.NewAmount(price),
+		Cost:    domain.NewAmount(price * 0.7),
+		Stock:   stock,
 	}
 	if err := db.Create(p).Error; err != nil {
 		t.Fatalf("testutil.NewProduct: failed to create product %q: %v", name, err)

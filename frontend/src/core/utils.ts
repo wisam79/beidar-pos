@@ -160,3 +160,82 @@ export const getLocalDateString = (d: Date = new Date()): string => {
     return `${year}-${month}-${day}`;
 };
 
+/**
+ * Formats an integer cents/fils value from backend into standard display currency.
+ * @param cents Monetary value in cents (e.g. 1250 -> 12.50)
+ * @param currency Currency code (default: 'IQD')
+ */
+export const formatCents = (cents: number, currency: string = 'IQD'): string => {
+    const isNegative = cents < 0;
+    const absCents = Math.abs(cents);
+    const dollars = Math.floor(absCents / 100);
+    const remCents = absCents % 100;
+    const formattedDollars = new Intl.NumberFormat('en-US').format(dollars);
+    const formatted = `${isNegative ? '-' : ''}${formattedDollars}.${remCents.toString().padStart(2, '0')}`;
+    return `${formatted} ${currency}`;
+};
+
+/**
+ * Calculates cart total using integer/cents math to prevent floating-point drift.
+ */
+export const calculateCartTotal = (
+    items: Array<{ price: number; qty: number; itemDiscount?: number }>
+): number => {
+    const totalCents = items.reduce((sum, item) => {
+        const itemPriceCents = Math.round(item.price * 100);
+        const itemDiscountCents = Math.round((item.itemDiscount || 0) * 100);
+        const lineTotalCents = Math.round(itemPriceCents * item.qty) - itemDiscountCents;
+        return sum + lineTotalCents;
+    }, 0);
+    return Math.round(totalCents) / 100;
+};
+
+/**
+ * Calculates discount percentage in the integer/cents domain with rounding to nearest whole cent.
+ */
+export const calculateDiscount = (amount: number, discountPercent: number): number => {
+    const amountCents = Math.round(amount * 100);
+    const discountCents = Math.round(amountCents * (discountPercent / 100));
+    return discountCents / 100;
+};
+
+/**
+ * Safely parses user input strings ("0", "0.1", "99.999", "", "abc", "-5") into valid integer cents.
+ */
+export const parseCentsFromInput = (input: string | number | null | undefined): number => {
+    if (input === null || input === undefined) return 0;
+    if (typeof input === 'number') {
+        if (!Number.isFinite(input)) return 0;
+        return Math.round(input * 100);
+    }
+    const cleanStr = input.trim().replace(/,/g, '');
+    if (!cleanStr) return 0;
+    const parsed = Number(cleanStr);
+    if (Number.isNaN(parsed) || !Number.isFinite(parsed)) return 0;
+    return Math.round(parsed * 100);
+};
+
+/**
+ * Sanitizes CSV cell content against CSV Formula Injection (CWE-1236).
+ * Prepends a single quote `'` if the cell begins with `=`, `+`, `-`, or `@`.
+ */
+export const sanitizeCSVCell = (value: unknown): string => {
+    if (value === null || value === undefined) return '';
+    const str = String(value);
+    if (str.length > 0 && /^[=+\-@]/.test(str)) {
+        return `'${str}`;
+    }
+    return str;
+};
+
+/**
+ * Sanitizes text input to eliminate script tags and HTML elements (XSS prevention).
+ */
+export const sanitizeInput = (input: string): string => {
+    if (!input) return '';
+    return input
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<[^>]+>/g, '')
+        .trim();
+};
+

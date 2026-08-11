@@ -24,7 +24,8 @@ export const priceSchema = z
 
 export const stockSchema = z
     .number()
-    .int('الكمية يجب أن تكون عدد صحيح');
+    .int('الكمية يجب أن تكون عدد صحيح')
+    .nonnegative('الكمية يجب أن تكون صفر أو أكبر');
 
 export const timestampSchema = z.number().int().positive();
 

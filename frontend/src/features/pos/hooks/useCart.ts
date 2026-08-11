@@ -36,6 +36,7 @@ interface UseCartReturn {
     // Actions
     addToCart: (product: Product, silent?: boolean) => void;
     updateQty: (id: string, delta: number) => void;
+    setItemQuantity: (id: string, qty: number) => void;
     removeFromCart: (id: string) => void;
     clearCart: () => void;
     setDiscount: (amount: number) => void;
@@ -193,6 +194,18 @@ export function useCart(options: UseCartOptions = {}): UseCartReturn {
         );
     }, []);
 
+    const setItemQuantity = useCallback((id: string, qty: number) => {
+        if (qty <= 0) {
+            setCart(prev => prev.filter(item => item.id !== id));
+        } else {
+            setCart(prev =>
+                prev.map(item =>
+                    item.id === id ? { ...item, qty } : item
+                )
+            );
+        }
+    }, []);
+
     const removeFromCart = useCallback((id: string) => {
         setCart(prev => prev.filter(item => item.id !== id));
     }, []);
@@ -224,6 +237,7 @@ export function useCart(options: UseCartOptions = {}): UseCartReturn {
         // Actions
         addToCart,
         updateQty,
+        setItemQuantity,
         removeFromCart,
         clearCart,
         setDiscount,

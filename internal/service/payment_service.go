@@ -64,6 +64,13 @@ func (s *paymentService) createPayment(payment domain.Payment, allowOverpay bool
 
 	payment.Timestamp = time.Now().UnixMilli()
 
+	requireShift := false
+	if payment.Method == "cash" && s.preferencesRepo != nil {
+		if prefs, err := s.preferencesRepo.Get(); err == nil {
+			requireShift = prefs.RequireShift
+		}
+	}
+
 	return &payment, s.paymentRepo.Transaction(func(tx domain.Tx) error {
 		txPaymentRepo := s.paymentRepo.WithTx(tx)
 		txCustomerRepo := s.customerRepo.WithTx(tx)
@@ -137,10 +144,6 @@ func (s *paymentService) createPayment(payment domain.Payment, allowOverpay bool
 
 		if payment.Method == "cash" {
 			txShiftRepo := s.shiftRepo.WithTx(tx)
-			requireShift := false
-			if prefs, err := s.preferencesRepo.Get(); err == nil {
-				requireShift = prefs.RequireShift
-			}
 			if err := txShiftRepo.UpdateShiftSales(0, payment.Amount, false, requireShift); err != nil {
 				return err
 			}
@@ -210,6 +213,13 @@ func (s *paymentService) PayInstallment(saleID string, installmentIndex int, amo
 			i18n.GetHint("INVALID_PAYMENT_AMOUNT"),
 			"amount",
 		)
+	}
+
+	requireShift := false
+	if method == "cash" && s.preferencesRepo != nil {
+		if prefs, err := s.preferencesRepo.Get(); err == nil {
+			requireShift = prefs.RequireShift
+		}
 	}
 
 	return s.paymentRepo.Transaction(func(tx domain.Tx) error {
@@ -326,10 +336,6 @@ func (s *paymentService) PayInstallment(saleID string, installmentIndex int, amo
 
 		if method == "cash" {
 			txShiftRepo := s.shiftRepo.WithTx(tx)
-			requireShift := false
-			if prefs, err := s.preferencesRepo.Get(); err == nil {
-				requireShift = prefs.RequireShift
-			}
 			if err := txShiftRepo.UpdateShiftSales(0, amount, false, requireShift); err != nil {
 				return err
 			}

@@ -33,6 +33,9 @@ func ParseAmount(s string) (Amount, error) {
 	if err != nil {
 		return Zero(), fmt.Errorf("invalid amount: %w", err)
 	}
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return Zero(), fmt.Errorf("invalid amount: not a finite number")
+	}
 	return NewAmount(v), nil
 }
 
@@ -179,6 +182,9 @@ func (a *Amount) UnmarshalJSON(data []byte) error {
 	v, err := strconv.ParseFloat(string(data), 64)
 	if err != nil {
 		return fmt.Errorf("invalid amount JSON: %s: %w", string(data), err)
+	}
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return fmt.Errorf("invalid amount JSON: %s: not a finite number", string(data))
 	}
 	*a = NewAmount(v)
 	return nil

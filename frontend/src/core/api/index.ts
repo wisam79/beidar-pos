@@ -42,3 +42,4 @@ export const api = {
 };
 
 export { desktopApi };
+export { apiClient, type ApiResponse } from './client';

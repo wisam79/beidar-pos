@@ -30,6 +30,7 @@ interface AppState {
     // App Lifecycle
     appState: 'splash' | 'cloud-auth' | 'license' | 'login' | 'app';
     setAppState: (state: 'splash' | 'cloud-auth' | 'license' | 'login' | 'app') => void;
+    clearAuthSession: () => void;
 }
 
 // Track last notification for deduplication
@@ -79,6 +80,12 @@ export const useAppStore = create<AppState>()(
             // App Lifecycle
             appState: 'splash',
             setAppState: (appState) => set({ appState }),
+            clearAuthSession: () => {
+                localStorage.removeItem('beidar_auth_session');
+                localStorage.removeItem('beidar_auth_token');
+                localStorage.removeItem('beidar_last_activity');
+                set({ appState: 'login' });
+            },
         }),
         {
             name: 'beidar-app-store',
