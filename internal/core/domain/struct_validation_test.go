@@ -206,10 +206,7 @@ func TestSale_Validation(t *testing.T) {
 					}
 					calculatedTotal += item.Price.Cents() * int64(item.Quantity)
 				}
-				if calculatedTotal != s.Total.Cents() {
-					return false
-				}
-				return true
+				return calculatedTotal == s.Total.Cents()
 			}
 
 			err := !isValid(tt.sale)

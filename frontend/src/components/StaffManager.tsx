@@ -48,6 +48,7 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
 
     useEffect(() => {
         if (isOpen) loadStaff();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
 
     const loadStaff = async () => {

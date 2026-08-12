@@ -31,6 +31,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
     // Fetch active shift on mount
     useEffect(() => {
         fetchActiveShift();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchActiveShift = async () => {

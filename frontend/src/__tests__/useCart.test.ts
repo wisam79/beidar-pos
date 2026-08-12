@@ -190,7 +190,7 @@ describe('useCart Hook', () => {
         // Check storage
         const stored = window.localStorage.getItem('beidar_pos_cart');
         expect(stored).toBeTruthy();
-        expect(JSON.parse(stored!)[0].id).toBe('p1');
+        expect(JSON.parse(stored || '[]')[0]?.id).toBe('p1');
     });
 
     // Note: Testing "Load from storage" is tricky with renderHook because it usually clears or mocks are reset.

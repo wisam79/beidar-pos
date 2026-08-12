@@ -36,7 +36,7 @@ func TestLAN_Server_SessionToken_Authentication_SuccessAndFailure(t *testing.T) 
 	if err != nil {
 		t.Fatalf("failed to start LAN server: %v", err)
 	}
-	defer lanSvc.StopServer()
+	defer func() { _ = lanSvc.StopServer() }()
 
 	status := lanSvc.GetServerStatus()
 	serverURL := fmt.Sprintf("http://127.0.0.1:%d", status.Port)
@@ -115,7 +115,7 @@ func TestLAN_Server_ConnectRateLimiting_Tarpit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to start server: %v", err)
 	}
-	defer lanSvc.StopServer()
+	defer func() { _ = lanSvc.StopServer() }()
 
 	status := lanSvc.GetServerStatus()
 	serverURL := fmt.Sprintf("http://127.0.0.1:%d", status.Port)
@@ -259,7 +259,7 @@ func TestLAN_Server_ClientDisconnect_RevokesSession(t *testing.T) {
 	lanSvc := network.NewLanService(netRepo, prodSvc, nil, nil, nil, nil, settingsSvc, nil, nil)
 
 	_ = lanSvc.StartServer(0)
-	defer lanSvc.StopServer()
+	defer func() { _ = lanSvc.StopServer() }()
 
 	status := lanSvc.GetServerStatus()
 	serverURL := fmt.Sprintf("http://127.0.0.1:%d", status.Port)

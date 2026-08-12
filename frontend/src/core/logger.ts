@@ -70,10 +70,14 @@ function log(level: LogLevel, message: string, data?: unknown, context?: string)
     const style = STYLES[level];
 
     if (data !== undefined) {
+        // eslint-disable-next-line no-console
         console.groupCollapsed(`%c${prefix} ${message}`, style);
+        // eslint-disable-next-line no-console
         console.log('Data:', data);
+        // eslint-disable-next-line no-console
         console.groupEnd();
     } else {
+        // eslint-disable-next-line no-console
         console.log(`%c${prefix} ${message}`, style);
     }
 }

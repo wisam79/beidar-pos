@@ -186,11 +186,15 @@ export const UtilitiesDock = ({ onLock }: UtilitiesDockProps) => {
                         {/* Header */}
                         <div className="flex items-center justify-between p-3 border-b border-white/5 bg-black/10">
                             <div className="flex items-center gap-2">
-                                {tools.find(t => t.id === activeTool)?.icon && (
-                                    <div className={`w-7 h-7 rounded-lg ${tools.find(t => t.id === activeTool)?.bg} flex items-center justify-center border`}>
-                                        {React.createElement(tools.find(t => t.id === activeTool)!.icon, { size: 14, className: tools.find(t => t.id === activeTool)?.color })}
-                                    </div>
-                                )}
+                                {(() => {
+                                    const tool = tools.find(t => t.id === activeTool);
+                                    if (!tool || !tool.icon) return null;
+                                    return (
+                                        <div className={`w-7 h-7 rounded-lg ${tool.bg} flex items-center justify-center border`}>
+                                            {React.createElement(tool.icon, { size: 14, className: tool.color })}
+                                        </div>
+                                    );
+                                })()}
                                 <span className="text-xs font-bold text-text-main">
                                     {activeTool === 'calculator' && 'الآلة الحاسبة'}
                                     {activeTool === 'notes' && 'ملاحظات سريعة'}

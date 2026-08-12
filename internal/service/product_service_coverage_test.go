@@ -81,10 +81,7 @@ func TestProductCoverage_BarcodeAndCategoryValidations(t *testing.T) {
 					return false
 				}
 				cleanCode := strings.TrimSpace(code)
-				if strings.ContainsAny(cleanCode, "\n\r\t-ABCD") {
-					return false
-				}
-				return true
+				return !strings.ContainsAny(cleanCode, "\n\r\t-ABCD")
 			}
 
 			valid := validate(tt.barcode, tt.categoryName)

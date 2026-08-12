@@ -49,7 +49,8 @@ class SoundManagerClass {
     public playSuccess() {
         if (!this.enabled || !this.ensureContext()) return;
 
-        const t = this.ctx!.currentTime;
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
         // Playing slightly shorter, snappier tones
         this.playTone(523.25, 'sine', t, 0.08); // C5
         this.playTone(659.25, 'sine', t + 0.08, 0.08); // E5

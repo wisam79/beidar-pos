@@ -89,7 +89,7 @@ func TestSale_SplitDetails_SerializationIntegrity(t *testing.T) {
 		if err := json.Unmarshal(data, &outNil); err != nil {
 			t.Fatalf("Unmarshal nil SplitDetails failed: %v", err)
 		}
-		if outNil.SplitDetails != nil && len(outNil.SplitDetails) != 0 {
+		if len(outNil.SplitDetails) != 0 {
 			t.Errorf("expected empty or nil split details, got %v", outNil.SplitDetails)
 		}
 	})

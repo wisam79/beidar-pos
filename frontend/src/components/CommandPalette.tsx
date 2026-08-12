@@ -78,7 +78,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         }
     }, [isOpen]);
 
-    const allResults = [...filteredPages, ...products.map((p: Product) => ({ ...p, type: 'product' }))];
+    const allResults = useMemo(() => [...filteredPages, ...products.map((p: Product) => ({ ...p, type: 'product' }))], [filteredPages, products]);
 
     // Reset selection on query change
     useEffect(() => { setSelectedIndex(0); }, [query]);
