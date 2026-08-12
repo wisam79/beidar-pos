@@ -237,10 +237,10 @@ export async function mockWails(page: Page) {
                         }),
                         CRMHandler: makeMockHandler({
                             GetCustomers: () => Promise.resolve([
-                                { id: 'cust-1', name: 'عميل تجريبي', phone: '123456789', debt: 5000, totalPurchases: 10000, balance: -5000 }
+                                { id: 'cust-1', name: 'عميل تجريبي', phone: '123456789', debt: 5000, installmentDebt: 2000, totalPurchases: 10000, balance: -7000 }
                             ]),
                             SearchCustomers: (q: string) => Promise.resolve([
-                                { id: 'cust-1', name: 'عميل تجريبي', phone: '123456789', debt: 5000, totalPurchases: 10000, balance: -5000 }
+                                { id: 'cust-1', name: 'عميل تجريبي', phone: '123456789', debt: 5000, installmentDebt: 2000, totalPurchases: 10000, balance: -7000 }
                             ]),
                             GetSuppliers: () => Promise.resolve([
                                 { id: 'supp-1', name: 'مورد تجريبي', companyName: 'مورد تجريبي ش.م.م', phone: '987654321', totalPurchases: 12000, balance: 0 }
@@ -251,7 +251,20 @@ export async function mockWails(page: Page) {
                             DeleteSupplier: (id: string, hard: boolean) => Promise.resolve(),
                         }),
                         PaymentHandler: makeMockHandler({
-                            GetCustomerInstallments: (customerId: string) => Promise.resolve([]),
+                            GetCustomerInstallments: (customerId: string) => Promise.resolve([
+                                {
+                                    id: 'INV-789101',
+                                    total: 2000,
+                                    installmentPlan: {
+                                        months: 2,
+                                        startDate: new Date().toISOString(),
+                                        schedule: [
+                                            { number: 1, dueDate: '2026-07-16', amount: 1000, status: 'pending' },
+                                            { number: 2, dueDate: '2026-08-16', amount: 1000, status: 'pending' }
+                                        ]
+                                    }
+                                }
+                            ]),
                             GetInstallmentSummary: (customerId: string) => Promise.resolve({ alertCount: 0, alerts: [] }),
                             GetPaymentsByCustomer: (customerId: string) => Promise.resolve([]),
                             GetPaymentsBySale: (saleId: string) => Promise.resolve([]),
@@ -392,3 +405,41 @@ export async function mockWails(page: Page) {
         });
     });
 }
+
+/**
+ * Ensures user is authenticated through PIN screen and routed to the requested target URL
+ */
+export async function ensureLoggedIn(page: Page, targetUrl: string = '/#/dashboard') {
+    await page.goto(targetUrl);
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(600);
+
+    // If account selection screen is visible, click Admin
+    const selectAccountText = page.locator('h2').filter({ hasText: /اختر حسابك|اختر الحساب|Select your account/i }).first();
+    if (await selectAccountText.isVisible().catch(() => false)) {
+        const adminButton = page.locator('button').filter({ hasText: /Admin|admin/i }).first();
+        if (await adminButton.isVisible().catch(() => false)) {
+            await adminButton.click().catch(() => {});
+            await page.waitForTimeout(400);
+        }
+    }
+
+    // If keypad is visible, click 0 four times
+    const zeroButton = page.locator('button').filter({ hasText: /^0$/ }).first();
+    if (await zeroButton.isVisible().catch(() => false)) {
+        for (let i = 0; i < 4; i++) {
+            await zeroButton.click().catch(() => {});
+            await page.waitForTimeout(100);
+        }
+        await page.waitForTimeout(2000);
+    }
+
+    // If not on targetUrl, navigate there
+    const cleanTarget = targetUrl.replace('/#', '');
+    if (!page.url().includes(cleanTarget)) {
+        await page.goto(targetUrl);
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(800);
+    }
+}
+

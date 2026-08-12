@@ -1,36 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { mockWails } from './mock-wails';
+import { mockWails, ensureLoggedIn } from './mock-wails';
 
 test.setTimeout(90000);
 
 test.describe('Inventory & Products Scenario', () => {
     test.beforeEach(async ({ page }) => {
         await mockWails(page);
-        await page.goto('/#/products');
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(1500);
-
-        // Handle pin-login if needed
-        const selectAccountText = page.locator('h2').filter({ hasText: /اختر حسابك|اختر الحساب|Select your account/i }).first();
-        if (await selectAccountText.isVisible().catch(() => false)) {
-            const adminButton = page.locator('button').filter({ hasText: /Admin|admin/i }).first();
-            if (await adminButton.isVisible().catch(() => false)) {
-                await adminButton.click();
-                await page.waitForTimeout(800);
-
-                const zeroButton = page.locator('button').filter({ hasText: /^0$/ }).first();
-                if (await zeroButton.isVisible().catch(() => false)) {
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(4000); // Wait for login animation and redirection to products
-                }
-            }
-        }
+        await ensureLoggedIn(page, '/#/products');
     });
 
     test('should add a new product and perform inventory quick adjustments', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockWails } from './mock-wails';
+import { mockWails, ensureLoggedIn } from './mock-wails';
 
 test.setTimeout(90000);
 
@@ -7,34 +7,7 @@ test.describe('POS & Invoices Complete Sales & Returns Scenario', () => {
     test.beforeEach(async ({ page }) => {
         // Inject Wails mock endpoints
         await mockWails(page);
-        
-        // Navigate to the POS sales page
-        await page.goto('/#/sales');
-        await page.waitForLoadState('networkidle');
-        await page.locator('#root').waitFor({ state: 'visible' });
-
-        // Handle pin-login if needed
-        const selectAccountText = page.locator('h2').filter({ hasText: /اختر حسابك|اختر الحساب|Select your account/i }).first();
-        if (await selectAccountText.isVisible().catch(() => false)) {
-            const adminButton = page.locator('button').filter({ hasText: /Admin|admin/i }).first();
-            if (await adminButton.isVisible().catch(() => false)) {
-                await adminButton.click();
-                
-                const zeroButton = page.locator('button').filter({ hasText: /^0$/ }).first();
-                await zeroButton.waitFor({ state: 'visible', timeout: 5000 });
-
-                await zeroButton.click();
-                await page.waitForTimeout(150);
-                await zeroButton.click();
-                await page.waitForTimeout(150);
-                await zeroButton.click();
-                await page.waitForTimeout(150);
-                await zeroButton.click();
-                
-                // Wait for login animation and redirection to sales
-                await page.locator('input[placeholder*="بحث"], input[placeholder*="search"]').first().waitFor({ state: 'visible', timeout: 10000 });
-            }
-        }
+        await ensureLoggedIn(page, '/#/sales');
     });
 
     test('should execute full POS sale cycle followed by return', async ({ page }) => {

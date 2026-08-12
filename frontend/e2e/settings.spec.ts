@@ -1,36 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { mockWails } from './mock-wails';
+import { mockWails, ensureLoggedIn } from './mock-wails';
 
 test.setTimeout(90000);
 
 test.describe('Settings & Staff Scenario', () => {
     test.beforeEach(async ({ page }) => {
         await mockWails(page);
-        await page.goto('/#/settings');
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(1500);
-
-        // Handle pin-login if needed
-        const selectAccountText = page.locator('h2').filter({ hasText: /اختر حسابك|اختر الحساب|Select your account/i }).first();
-        if (await selectAccountText.isVisible().catch(() => false)) {
-            const adminButton = page.locator('button').filter({ hasText: /Admin|admin/i }).first();
-            if (await adminButton.isVisible().catch(() => false)) {
-                await adminButton.click();
-                await page.waitForTimeout(800);
-
-                const zeroButton = page.locator('button').filter({ hasText: /^0$/ }).first();
-                if (await zeroButton.isVisible().catch(() => false)) {
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(4000); // Wait for login animation and redirection to settings
-                }
-            }
-        }
+        await ensureLoggedIn(page, '/#/settings');
     });
 
     test('should modify store preferences and manage staff accounts', async ({ page }) => {
@@ -54,13 +30,20 @@ test.describe('Settings & Staff Scenario', () => {
         const savedBtn = page.locator('button').filter({ hasText: /محفوظ/i }).first();
         await expect(savedBtn).toBeVisible();
 
-        // 3. Switch to Security Tab ("الأمان")
-        const securityTabBtn = page.locator('button').filter({ hasText: /^الأمان$/ }).first();
-        await expect(securityTabBtn).toBeVisible();
-        await securityTabBtn.click();
-        await page.waitForTimeout(1000);
+        // 3. Switch to System Tab ("النظام") and Security subtab ("الأمان")
+        const systemTabBtn = page.locator('button').filter({ hasText: /النظام/i }).first();
+        if (await systemTabBtn.isVisible().catch(() => false)) {
+            await systemTabBtn.click();
+            await page.waitForTimeout(800);
+        }
 
-        // Click "إدارة الموظفين" button to open Staff Manager
+        const securitySubTabBtn = page.locator('button').filter({ hasText: /الأمان/i }).first();
+        if (await securitySubTabBtn.isVisible().catch(() => false)) {
+            await securitySubTabBtn.click();
+            await page.waitForTimeout(800);
+        }
+
+        // Click "إدارة الموظفين والصلاحيات" button to open Staff Manager
         const manageStaffBtn = page.locator('button').filter({ hasText: /إدارة الموظفين/i }).first();
         await expect(manageStaffBtn).toBeVisible();
         await manageStaffBtn.click();

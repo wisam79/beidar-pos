@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockWails } from './mock-wails';
+import { mockWails, ensureLoggedIn } from './mock-wails';
 
 test.setTimeout(120000); // 2 minutes for full scenario
 
@@ -7,33 +7,7 @@ test.describe('Master Simulation: Full E2E Business Flow', () => {
     test.beforeEach(async ({ page }) => {
         // Inject our stateful Wails mock endpoints
         await mockWails(page);
-        
-        // Start at root
-        await page.goto('/#/');
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(1500);
-
-        // Handle pin-login if we land on POS/Sales first and it prompts
-        const selectAccountText = page.locator('h2').filter({ hasText: /اختر حسابك|اختر الحساب|Select your account/i }).first();
-        if (await selectAccountText.isVisible().catch(() => false)) {
-            const adminButton = page.locator('button').filter({ hasText: /Admin|admin/i }).first();
-            if (await adminButton.isVisible().catch(() => false)) {
-                await adminButton.click();
-                await page.waitForTimeout(800);
-
-                const zeroButton = page.locator('button').filter({ hasText: /^0$/ }).first();
-                if (await zeroButton.isVisible().catch(() => false)) {
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(150);
-                    await zeroButton.click();
-                    await page.waitForTimeout(4000); 
-                }
-            }
-        }
+        await ensureLoggedIn(page, '/#/');
     });
 
     test('should simulate the entire application lifecycle continuously', async ({ page }) => {
@@ -46,13 +20,20 @@ test.describe('Master Simulation: Full E2E Business Flow', () => {
             await page.waitForLoadState('networkidle');
             await page.waitForTimeout(1000);
 
-            // Switch to Security Tab ("الأمان")
-            const securityTabBtn = page.locator('button').filter({ hasText: /^الأمان$/ }).first();
-            await expect(securityTabBtn).toBeVisible();
-            await securityTabBtn.click();
-            await page.waitForTimeout(1000);
+            // Switch to System Tab ("النظام") and Security subtab ("الأمان")
+            const systemTabBtn = page.locator('button').filter({ hasText: /النظام/i }).first();
+            if (await systemTabBtn.isVisible().catch(() => false)) {
+                await systemTabBtn.click();
+                await page.waitForTimeout(800);
+            }
 
-            // Click "إدارة الموظفين" button to open Staff Manager
+            const securitySubTabBtn = page.locator('button').filter({ hasText: /الأمان/i }).first();
+            if (await securitySubTabBtn.isVisible().catch(() => false)) {
+                await securitySubTabBtn.click();
+                await page.waitForTimeout(800);
+            }
+
+            // Click "إدارة الموظفين والصلاحيات" button to open Staff Manager
             const manageStaffBtn = page.locator('button').filter({ hasText: /إدارة الموظفين/i }).first();
             await expect(manageStaffBtn).toBeVisible();
             await manageStaffBtn.click();
@@ -306,13 +287,12 @@ test.describe('Master Simulation: Full E2E Business Flow', () => {
             await page.waitForLoadState('networkidle');
             await page.waitForTimeout(1000);
 
-            // Validate Revenue Card
-            const revenueCard = page.locator('span').filter({ hasText: /^الإيرادات$/ }).first();
-            await expect(revenueCard).toBeVisible();
+            // Validate Dashboard Sections
+            const salesSection = page.locator('button').filter({ hasText: /المبيعات/i }).first();
+            await expect(salesSection).toBeVisible();
 
-            // Validate Products Card
-            const productsCard = page.locator('span').filter({ hasText: /^المنتجات$/ }).first();
-            await expect(productsCard).toBeVisible();
+            const reportsSection = page.locator('button').filter({ hasText: /التقارير/i }).first();
+            await expect(reportsSection).toBeVisible();
 
             // End of master simulation!
             await page.waitForTimeout(1000);

@@ -31,18 +31,54 @@ func ResetDB() error {
 	if activeDB == nil {
 		return fmt.Errorf("database not initialized")
 	}
-	err := activeDB.Migrator().DropTable(
-		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Customer{}, &domain.Supplier{},
-		&domain.Expense{}, &domain.Category{}, &domain.StockMovement{}, &domain.AppPreferences{},
-		&domain.Payment{}, &domain.ParkedSale{}, &domain.LoginAttempt{}, &domain.Staff{}, &domain.Shift{},
-		&domain.CashMovement{}, &domain.PurchaseOrder{}, &domain.PurchaseOrderItem{}, &domain.BlockedDevice{},
-		&domain.Discount{}, &domain.AuditLog{},
-	)
-	if err != nil {
-		return err
+
+	models := []interface{}{
+		&domain.PurchaseOrderItem{}, &domain.PurchaseOrder{},
+		&domain.SaleItem{}, &domain.Sale{},
+		&domain.CashMovement{}, &domain.Shift{},
+		&domain.Payment{}, &domain.StockMovement{},
+		&domain.Expense{}, &domain.Customer{}, &domain.Supplier{},
+		&domain.Product{}, &domain.Category{}, &domain.AppPreferences{},
+		&domain.ParkedSale{}, &domain.LoginAttempt{}, &domain.Staff{},
+		&domain.BlockedDevice{}, &domain.Discount{}, &domain.AuditLog{},
 	}
-	_, err = InitDB()
-	return err
+
+	sqlDB, err := activeDB.DB()
+	if err == nil {
+		_, _ = sqlDB.Exec("PRAGMA foreign_keys = OFF;")
+		defer func() {
+			_, _ = sqlDB.Exec("PRAGMA foreign_keys = ON;")
+		}()
+	}
+
+	for _, model := range models {
+		if activeDB.Migrator().HasTable(model) {
+			if err := activeDB.Migrator().DropTable(model); err != nil {
+				return fmt.Errorf("failed to drop table: %w", err)
+			}
+		}
+	}
+
+	if err := activeDB.AutoMigrate(models...); err != nil {
+		return fmt.Errorf("failed to auto migrate: %w", err)
+	}
+
+	// Seed default preferences if not exists
+	var count int64
+	activeDB.Model(&domain.AppPreferences{}).Count(&count)
+	if count == 0 {
+		defaultPrefs := domain.AppPreferences{
+			StoreName:       "متجر بيدر",
+			Currency:        "IQD",
+			Theme:           "dark",
+			AccentColor:     "#306D29",
+			Language:        "ar",
+			LowStockTrigger: 5,
+		}
+		activeDB.Create(&defaultPrefs)
+	}
+
+	return nil
 }
 
 // BackupPath renames current DB to backup and returns the backup path
