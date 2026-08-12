@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, ShoppingCart, Package, LayoutGrid, Archive, Receipt, Users, Landmark, BarChart, Settings, CornerDownLeft, Loader2, LucideIcon } from 'lucide-react';
 import { formatCurrency } from '../core/utils';
