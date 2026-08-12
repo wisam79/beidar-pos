@@ -187,13 +187,8 @@ func TestE2E_LANBlockedDeviceRejected(t *testing.T) {
 		t.Fatalf("blocked devices = %d, want 1", len(blocked))
 	}
 
-	// A fresh client registering with the same device ID must be rejected.
-	rejected, rejectedCleanup := NewHarness(t)
-	defer rejectedCleanup()
-	rejected.LoginAsAdmin(t)
-	defer rejected.DeferLogout()
-
-	if err := rejected.LanHandler.ConnectToLanServer("127.0.0.1", port, secret); err == nil {
+	// The client registering with the blocked device ID must be rejected.
+	if err := client.LanHandler.ConnectToLanServer("127.0.0.1", port, secret); err == nil {
 		t.Fatal("blocked device must not be able to connect")
 	}
 
@@ -204,6 +199,10 @@ func TestE2E_LANBlockedDeviceRejected(t *testing.T) {
 	blocked2, _ := server.LanHandler.GetBlockedDevices()
 	if len(blocked2) != 0 {
 		t.Errorf("blocked devices after unblock = %d, want 0", len(blocked2))
+	}
+
+	if err := client.LanHandler.ConnectToLanServer("127.0.0.1", port, secret); err != nil {
+		t.Fatalf("reconnect after unblock failed: %v", err)
 	}
 }
 
