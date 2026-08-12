@@ -71,7 +71,8 @@ func TestE2E_LANServerAdminOps(t *testing.T) {
 		t.Errorf("TestLanConnection when disconnected = %q", s)
 	}
 
-	if err := client.LanHandler.ConnectToLanServer("127.0.0.1", network.DefaultLanPort, secret); err != nil {
+	status := server.LanHandler.GetServerStatus()
+	if err := client.LanHandler.ConnectToLanServer("127.0.0.1", status.Port, secret); err != nil {
 		t.Fatalf("ConnectToLanServer failed: %v", err)
 	}
 
@@ -138,7 +139,8 @@ func TestE2E_LANServerAdminOps(t *testing.T) {
 	}
 
 	// Client-side disconnect from the server.
-	if err := client.LanHandler.ConnectToLanServer("127.0.0.1", network.DefaultLanPort, secret); err != nil {
+	status = server.LanHandler.GetServerStatus()
+	if err := client.LanHandler.ConnectToLanServer("127.0.0.1", status.Port, secret); err != nil {
 		t.Fatalf("reconnect failed: %v", err)
 	}
 	client.LanHandler.DisconnectFromLanServer()
