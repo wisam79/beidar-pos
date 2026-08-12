@@ -6,7 +6,7 @@ import { useAppStore } from './store/appStore';
 import { createRoot } from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient, invalidateAllData } from './core/queryClient';
-import { EventsOn } from '../wailsjs/runtime/runtime';
+import { EventsOn, EventsOff } from '../wailsjs/runtime/runtime';
 import './i18n';
 import '@fontsource-variable/readex-pro';
 import './index.css';
@@ -143,7 +143,13 @@ const App = () => {
   // LAN clients (or any backend-initiated change). Refresh the cache globally.
   useEffect(() => {
     const off = EventsOn('data-changed', () => invalidateAllData());
-    return off;
+    return () => {
+      if (typeof off === 'function') {
+        off();
+      } else {
+        EventsOff('data-changed');
+      }
+    };
   }, []);
 
   useEffect(() => {

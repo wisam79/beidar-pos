@@ -169,6 +169,7 @@ export const FinancePage: React.FC = () => {
             await api.expenses.save(e);
             notify(expenseForm.id ? 'تم تحديث المصروف' : 'تم إضافة المصروف', 'success');
             setExpenseModal(false);
+            invalidateAllData();
             loadData();
         } catch { notify('خطأ في الحفظ', 'error'); }
     };

@@ -6,6 +6,7 @@ import { formatCurrency } from '../../core/utils';
 import { PageHeader, EmptyState } from '../../components/ui';
 import { analyzeInventoryRisk } from '../../core/ai';
 import { api } from '../../core/api';
+import { invalidateAllData } from '../../core/queryClient';
 import { useInvalidateProducts, useDashboardStats, useInventoryProducts, useInventoryMetadata, useInventoryMovements } from '../../hooks';
 import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination, TabNav } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
@@ -136,6 +137,7 @@ export const InventoryPage: React.FC = () => {
                 await api.products.save({ ...p, stock: newStock });
                 await api.stock.log(p.id, p.name, change > 0 ? 'in' : 'out', Math.abs(change), 'تعديل سريع للمخزون');
                 invalidateProducts();
+                invalidateAllData();
                 notify('تم تحديث المخزون', 'success');
             }
         } catch (e: unknown) {

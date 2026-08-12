@@ -207,6 +207,7 @@ export const SalesPage: React.FC = () => {
                 customer: selectedCustomer,
                 total,
             });
+            invalidateAllData();
             notify('تم تعليق الفاتورة', 'success');
             setCart([]);
             setSelectedCustomer(null);
@@ -226,6 +227,7 @@ export const SalesPage: React.FC = () => {
                 if (cust) setSelectedCustomer(cust);
             }
             setShowParkedModal(false);
+            invalidateAllData();
             notify('تم استرجاع الفاتورة', 'success');
         } catch {
             notify('فشل استرجاع الفاتورة', 'error');
@@ -249,6 +251,7 @@ export const SalesPage: React.FC = () => {
         try {
             await api.products.save(newProduct);
             invalidateProducts();
+            invalidateAllData();
             addToCart(newProduct);
 
             setShowQuickAddModal(false);

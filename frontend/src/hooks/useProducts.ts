@@ -99,10 +99,10 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsReturn
 // Mutation hook for invalidating products cache after changes
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function useInvalidateProducts() {
-    const queryClient = useQueryClient();
+import { invalidateProducts } from '../core/queryClient';
 
+export function useInvalidateProducts() {
     return () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+        invalidateProducts();
     };
 }

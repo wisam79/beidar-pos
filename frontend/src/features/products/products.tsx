@@ -12,6 +12,7 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { ImportExportModal } from '../../components/ImportExportModal';
 import { api } from '../../core/api';
 import { generateProductDescription, improveText, suggestProductPrice, suggestProductEmoji } from '../../core/ai';
+import { invalidateAllData } from '../../core/queryClient';
 import { useInvalidateProducts, useWindowSize, useUsbScannerDetection, useProducts, useConfirmModal } from '../../hooks';
 import { usePreferences } from '../../components/PreferencesContext';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -288,6 +289,7 @@ export const ProductsPage: React.FC = () => {
             notify(form.id ? t('products.productUpdated') : t('products.productAdded'), 'success');
             setModalOpen(false);
             invalidateProducts();
+            invalidateAllData();
             refetchProducts();
 
             if (productImage === '📦' && form.name && !form.image?.startsWith('data')) {
@@ -298,6 +300,7 @@ export const ProductsPage: React.FC = () => {
                         if (savedProduct) {
                             await api.products.save({ ...savedProduct, image: suggestedEmoji });
                             invalidateProducts();
+                            invalidateAllData();
                             refetchProducts();
                         }
                     }
@@ -316,6 +319,7 @@ export const ProductsPage: React.FC = () => {
                 await api.products.delete(id);
                     notify(t('products.productDeleted'), 'success');
                     invalidateProducts();
+                    invalidateAllData();
                     refetchProducts();
                     closeConfirm();
             } catch (err: unknown) {
@@ -367,6 +371,7 @@ export const ProductsPage: React.FC = () => {
                     setSelectedIds([]);
                     notify('تم الحذف بنجاح', 'success');
                     invalidateProducts();
+                    invalidateAllData();
                     refetchProducts();
                 } catch { notify('خطأ', 'error'); }
                 closeConfirm();
@@ -395,6 +400,8 @@ export const ProductsPage: React.FC = () => {
         try {
             await api.products.save({ ...p, stock: newStock });
             await api.stock.log(p.id, p.name, change > 0 ? 'in' : 'out', Math.abs(change), 'تعديل سريع للمخزون');
+            invalidateProducts();
+            invalidateAllData();
             refetchProducts();
         } catch {
             refetchProducts();

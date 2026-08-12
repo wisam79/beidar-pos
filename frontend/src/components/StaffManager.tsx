@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Users, Plus, Edit2, Trash2, Shield, Key, UserCheck, UserX, Mail, Phone, BadgeCheck } from 'lucide-react';
 import { api, Staff, StaffRole } from '../core/api';
+import { invalidateAllData, invalidateStaff } from '../core/queryClient';
 import { ConfirmModal } from './ConfirmModal';
 import { validateStaffInput, pinSchema } from '../core/schemas/staff.schema';
 import { ErrorMessage, FieldError } from './ErrorMessage';
@@ -128,6 +129,8 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
                 notify('تم إضافة الموظف بنجاح', 'success');
             }
             resetForm();
+            invalidateStaff();
+            invalidateAllData();
             loadStaff();
         } catch (e: unknown) {
             // Parse structured error from backend
@@ -152,6 +155,8 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
             try {
                 await api.staff.delete(id, force);
                 notify('تم حذف الموظف بنجاح', 'success');
+                invalidateStaff();
+                invalidateAllData();
                 loadStaff();
                 setConfirmModal(prev => ({ ...prev, open: false }));
             } catch (err: unknown) {
@@ -202,6 +207,8 @@ export const StaffManager: React.FC<StaffManagerProps> = ({ isOpen, onClose, not
     const handleToggleStatus = async (id: string) => {
         try {
             await api.staff.toggle(id);
+            invalidateStaff();
+            invalidateAllData();
             loadStaff();
         } catch {
             notify('فشل تغيير الحالة', 'error');

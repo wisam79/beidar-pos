@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, LogIn, LogOut, Plus, Minus, DollarSign, X, CheckCircle, AlertTriangle } from 'lucide-react';
 import { api } from '../core/api';
+import { invalidateAllData, invalidateShifts } from '../core/queryClient';
 import { Shift } from '../core/types';
 import { formatCurrency } from '../core/utils';
 
@@ -58,6 +59,8 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
             onShiftChange?.(shift);
             setShowOpenModal(false);
             setOpeningBalance(0);
+            invalidateShifts();
+            invalidateAllData();
             notify('تم فتح الشفت بنجاح', 'success');
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : 'فشل فتح الشفت';
@@ -74,6 +77,8 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
             setShowCloseModal(false);
             setClosingBalance(0);
             setCloseNote('');
+            invalidateShifts();
+            invalidateAllData();
 
             // Show variance result
             if (shift && shift.variance !== 0) {
@@ -106,6 +111,8 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
             setShowMovementModal(false);
             setMovementAmount(0);
             setMovementReason('');
+            invalidateShifts();
+            invalidateAllData();
             notify(movementType === 'cash_in' ? 'تم إضافة النقد' : 'تم سحب النقد', 'success');
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : 'فشل تسجيل الحركة';

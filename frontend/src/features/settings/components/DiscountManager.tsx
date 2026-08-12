@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal } from '../../../components/ui';
 import { api, Discount } from '../../../core/api';
+import { invalidateAllData, invalidateDiscounts } from '../../../core/queryClient';
 import {
     Tag, Percent, DollarSign, Trash2,
     Plus, Edit2, Power, Gift, ShoppingBag, Layers, X, Check,
@@ -67,6 +68,8 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
             setEditingDiscount(null);
             setForm(emptyDiscount);
             setErrors({});
+            invalidateDiscounts();
+            invalidateAllData();
             loadDiscounts();
         } catch {
             notify('فشل في حفظ الخصم', 'error');
@@ -77,6 +80,8 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
         try {
             await api.discounts.delete(id);
             notify('تم حذف الخصم', 'success');
+            invalidateDiscounts();
+            invalidateAllData();
             loadDiscounts();
         } catch {
             notify('فشل في الحذف', 'error');
@@ -86,6 +91,8 @@ export const DiscountManager: React.FC<DiscountManagerProps> = ({ isOpen, onClos
     const handleToggle = async (id: string) => {
         try {
             await api.discounts.toggle(id);
+            invalidateDiscounts();
+            invalidateAllData();
             loadDiscounts();
         } catch {
             notify('فشل في تغيير الحالة', 'error');

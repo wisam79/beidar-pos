@@ -4,6 +4,7 @@ import { formatCurrency } from '../../../core/utils';
 import { Modal, Badge, EmptyState, SpotlightCard } from '../../../components/ui';
 import { ConfirmModal } from '../../../components/ConfirmModal';
 import { api, PurchaseOrder, ReceiveOrderItem, Supplier, Product } from '../../../core/api';
+import { invalidateAllData, invalidateProducts, invalidateFinance } from '../../../core/queryClient';
 import { useConfirmModal, usePurchaseOrders, useInventoryProducts } from '../../../hooks';
 
 interface PurchaseOrdersTabProps {
@@ -86,6 +87,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
             notify('تم إنشاء أمر الشراء بنجاح', 'success');
             setShowCreateModal(false);
             setCreateForm({ supplierId: '', note: '', items: [] });
+            invalidateAllData();
             loadOrders();
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'فشل إنشاء أمر الشراء';
@@ -135,6 +137,8 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
             notify('تم تسجيل الاستلام بنجاح', 'success');
             setShowReceiveModal(false);
             setSelectedOrder(null);
+            invalidateProducts();
+            invalidateAllData();
             loadOrders();
             onRefresh(); // Refresh supplier data
         } catch (err: unknown) {
@@ -153,6 +157,8 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
             setShowPayModal(false);
             setSelectedOrder(null);
             setPayAmount(0);
+            invalidateFinance();
+            invalidateAllData();
             loadOrders();
             onRefresh();
         } catch (err: unknown) {
@@ -171,6 +177,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                 try {
                     await api.purchaseOrders.cancel(order.id!);
                     notify('تم إلغاء الأمر', 'success');
+                    invalidateAllData();
                     loadOrders();
                 } catch (err: unknown) {
                     const msg = err instanceof Error ? err.message : 'فشل الإلغاء';
@@ -191,6 +198,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                 try {
                     await api.purchaseOrders.delete(order.id!);
                     notify('تم حذف الأمر', 'success');
+                    invalidateAllData();
                     loadOrders();
                 } catch (err: unknown) {
                     const msg = err instanceof Error ? err.message : 'فشل الحذف';
