@@ -972,7 +972,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
     const MonthCard = ({ month, isCurrent }: { month: MonthData; isCurrent: boolean }) => (
         <div className={`bg-surface border rounded-2xl p-5 ${isCurrent ? 'border-success/40' : 'border-border/80'}`}>
             <div className="flex items-center gap-3 mb-5">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isCurrent ? 'bg-success text-primary-fg' : 'bg-surface-hover text-text-muted border border-border/60'}`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isCurrent ? 'bg-primary text-primary-fg shadow-sm shadow-primary/20' : 'bg-surface-hover text-text-muted border border-border/60'}`}>
                     <Calendar size={24} />
                 </div>
                 <div>

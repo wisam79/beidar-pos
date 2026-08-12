@@ -171,8 +171,9 @@ wails dev
 ```
 
 ### بناء نسخة إنتاج (Production Build)
-```bash
-wails build -clean -platform windows/amd64
+```powershell
+# استخدم السكربت المخصص لضمان حقن أسرار Supabase
+pwsh ./scripts/build.ps1 -Installer
 # المخرج: build/bin/beidar-desktop.exe
 # مثبت Windows: build/bin/beidar-desktop-amd64-installer.exe
 ```

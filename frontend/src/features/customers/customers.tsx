@@ -256,7 +256,7 @@ export const CustomersPage: React.FC = () => {
                     >
                         <Users size={18} />
                     </button>
-                    <button onClick={handleInitAdd} className="bg-success text-primary-fg font-black hover:bg-success h-10 px-4 rounded-xl flex items-center gap-2 transition-transform active:scale-[0.98] text-xs border border-success touch-target cursor-pointer"><Plus size={16} /> إضافة عميل جديد</button>
+                    <button onClick={handleInitAdd} className="bg-primary text-primary-fg font-black hover:brightness-110 h-10 px-4 rounded-xl flex items-center gap-2 transition-transform active:scale-[0.98] text-xs shadow-sm shadow-primary/20 cursor-pointer"><Plus size={16} /> إضافة عميل جديد</button>
                 </div>
             }>
             </PageHeader>
@@ -472,7 +472,7 @@ export const CustomersPage: React.FC = () => {
                                                     <button
                                                         type="button"
                                                         onClick={() => setPayDebtModal(c)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-success hover:bg-success text-primary-fg font-extrabold text-xs shadow-sm active:scale-95 transition-all"
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary hover:brightness-110 text-primary-fg font-extrabold text-xs shadow-sm shadow-primary/20 active:scale-95 transition-all"
                                                         title="تسديد دفعة من الدين"
                                                     >
                                                         <Wallet size={13} />

@@ -275,7 +275,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
 
             {/* Current Mode Status Card */}
             <div className={`p-6 rounded-3xl border shadow-sm transition-all ${mode === 'server' ? 'bg-primary/10 border-primary/20 shadow-primary/5' :
-                mode === 'client' ? 'bg-surface-active/50 border-border' :
+                mode === 'client' ? 'bg-surface-active border-border' :
                     'bg-surface border-border'
                 }`}>
                 <div className="flex items-center gap-4">
@@ -331,7 +331,7 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
 
                             {/* Connected Clients Panel */}
                             <div className="bg-surface rounded-2xl border border-border overflow-hidden">
-                                <div className="flex border-b border-border bg-surface-active/30">
+                                <div className="flex border-b border-border bg-surface-active">
                                     <button
                                         onClick={() => setActiveTab('clients')}
                                         className={`flex-1 py-3 text-sm font-bold transition-all ${activeTab === 'clients' ? 'bg-surface text-primary border-t-2 border-primary' : 'text-text-muted hover:bg-surface'}`}

@@ -28,6 +28,7 @@ describe('Heavyweight & Memory Bounds Test Suite', () => {
             cost: 1000,
             stock: 50000,
             minStock: 5,
+            wholesalePrice: 1200,
             category: 'General',
             image: ''
         };
@@ -60,6 +61,7 @@ describe('Heavyweight & Memory Bounds Test Suite', () => {
             cost: 1500,
             stock: 100,
             minStock: 2,
+            wholesalePrice: 1800,
             category: 'General',
             image: ''
         };

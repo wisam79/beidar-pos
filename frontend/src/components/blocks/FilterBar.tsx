@@ -58,10 +58,10 @@ export const SegmentedControl = memo(<T extends string>({
                 <button
                     key={opt.id}
                     onClick={() => onChange(opt.id)}
-                    className={`px-4 py-2 min-h-[40px] rounded-lg font-extrabold text-xs md:text-sm whitespace-nowrap transition-colors touch-target outline-none cursor-pointer select-none ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg text-[11px] font-extrabold transition-colors touch-target outline-none cursor-pointer ${
                         isActive
-                            ? 'bg-success text-primary-fg font-black'
-                            : 'text-text-muted hover:text-text-main hover:bg-surface'
+                            ? 'bg-primary text-primary-fg font-black shadow-sm'
+                            : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                     }`}
                 >
                     {opt.label}

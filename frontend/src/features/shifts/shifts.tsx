@@ -309,7 +309,7 @@ export const ShiftsPage: React.FC = () => {
                                 <div className="space-y-3">
                                     <h4 className="text-xs font-black text-text-muted uppercase tracking-wider mb-3 px-1">الملخص المالي</h4>
 
-                                    <div className="flex justify-between items-center p-3.5 bg-surface-active/30 rounded-2xl border border-border/50">
+                                    <div className="flex justify-between items-center p-3.5 bg-surface-active rounded-2xl border border-border/50">
                                         <span className="text-sm font-bold text-text-muted">رصيد الافتتاح</span>
                                         <span className="font-mono font-black text-text-main text-lg">{formatCurrency(selectedShift.openingBalance, prefs.currency)}</span>
                                     </div>
@@ -368,7 +368,7 @@ export const ShiftsPage: React.FC = () => {
                                         ) : (
                                             <div className="space-y-2.5">
                                             {movements.map((mov) => (
-                                                <div key={mov.id} className="flex justify-between items-center bg-surface-active/30 p-3 rounded-2xl border border-border/50 hover:border-border transition-colors">
+                                                <div key={mov.id} className="flex justify-between items-center bg-surface-active p-3 rounded-2xl border border-border/50 hover:border-border transition-colors">
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${mov.type === 'cash_in' ? 'bg-success/10 border-success/20 text-success' : 'bg-warning/10 border-warning/20 text-warning'}`}>
                                                             {mov.type === 'cash_in' ? <ArrowDownRight size={18} /> : <ArrowUpRight size={18} />}

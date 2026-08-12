@@ -269,7 +269,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                                     type="number"
                                     value={openingBalance || ''}
                                     onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)}
-                                    className="w-full bg-surface-active/30 border border-border rounded-xl pl-10 pr-4 py-3.5 text-text-main font-mono text-lg font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                                    className="w-full bg-input-bg border border-border rounded-xl pl-10 pr-4 py-3.5 text-text-main font-mono text-lg font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                                     placeholder="0"
                                     autoFocus
                                 />
@@ -308,7 +308,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                                 type="number"
                                 value={closingBalance || ''}
                                 onChange={(e) => setClosingBalance(parseFloat(e.target.value) || 0)}
-                                className="w-full bg-surface-active/30 border border-border rounded-xl px-4 py-3.5 text-text-main font-mono text-lg font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                                className="w-full bg-input-bg border border-border rounded-xl px-4 py-3.5 text-text-main font-mono text-lg font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                                 placeholder="0"
                                 autoFocus
                             />
@@ -329,7 +329,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                             <textarea
                                 value={closeNote}
                                 onChange={(e) => setCloseNote(e.target.value)}
-                                className="w-full bg-surface-active/30 border border-border rounded-xl px-4 py-3 text-text-main resize-none h-24 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-text-muted/50"
+                                className="w-full bg-input-bg border border-border rounded-xl px-4 py-3 text-text-main resize-none h-24 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-text-muted/50"
                                 placeholder="أي ملاحظات إضافية حول الإغلاق..."
                             />
                         </div>
@@ -369,7 +369,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                                     type="number"
                                     value={movementAmount || ''}
                                     onChange={(e) => setMovementAmount(parseFloat(e.target.value) || 0)}
-                                    className="w-full bg-surface-active/30 border border-border rounded-xl pl-10 pr-4 py-3.5 text-text-main font-mono text-lg font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                                    className="w-full bg-input-bg border border-border rounded-xl pl-10 pr-4 py-3.5 text-text-main font-mono text-lg font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                                     placeholder="0"
                                     autoFocus
                                 />
@@ -382,7 +382,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ staff, currency, not
                                 type="text"
                                 value={movementReason}
                                 onChange={(e) => setMovementReason(e.target.value)}
-                                className="w-full bg-surface-active/30 border border-border rounded-xl px-4 py-3.5 text-text-main font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-text-muted/50"
+                                className="w-full bg-input-bg border border-border rounded-xl px-4 py-3.5 text-text-main font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-text-muted/50"
                                 placeholder={movementType === 'cash_in' ? 'مثال: إضافة فكة' : 'مثال: سحب للمصروفات'}
                             />
                         </div>
