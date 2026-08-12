@@ -39,46 +39,18 @@ func generatePDF(sale domain.Sale, prefs domain.AppPreferences, format string, s
 	return generateA4PDF(sale, prefs, savePath)
 }
 
-// prepareTajawalFonts extracts the embedded Tajawal fonts to a temp directory
-// (gofpdf/Maroto require a filesystem path) and returns both font paths.
-// It returns a clear error instead of silently falling back to Helvetica,
-// which would render Arabic text as garbage in the PDF.
-func prepareTajawalFonts() (regularPath, boldPath string, err error) {
-	const regularName = "Tajawal-Regular.ttf"
-	const boldName = "Tajawal-Bold.ttf"
-
-	fontsDir := filepath.Join(os.TempDir(), "beidar-fonts")
-	if err := os.MkdirAll(fontsDir, 0755); err != nil {
-		return "", "", fmt.Errorf("failed to create fonts dir: %w", err)
-	}
-
-	extract := func(name string) (string, error) {
-		target, absErr := filepath.Abs(filepath.Join(fontsDir, name))
-		if absErr != nil {
-			target = filepath.Join(fontsDir, name)
-		}
-		if info, err := os.Stat(target); err == nil && info.Size() > 0 {
-			return target, nil
-		}
-		data, rerr := embeddedFonts.ReadFile("fonts/" + name)
-		if rerr != nil {
-			return "", fmt.Errorf("embedded font %s is missing: %w", name, rerr)
-		}
-		if werr := os.WriteFile(target, data, 0644); werr != nil {
-			return "", fmt.Errorf("failed to extract font %s: %w", name, werr)
-		}
-		return target, nil
-	}
-
-	regularPath, err = extract(regularName)
+// prepareTajawalFontBytes loads the embedded Tajawal fonts directly from memory
+// for gofpdf and Maroto without touching the filesystem.
+func prepareTajawalFontBytes() (regularBytes, boldBytes []byte, err error) {
+	regularBytes, err = embeddedFonts.ReadFile("fonts/Tajawal-Regular.ttf")
 	if err != nil {
-		return "", "", err
+		return nil, nil, fmt.Errorf("embedded font Tajawal-Regular.ttf is missing: %w", err)
 	}
-	boldPath, err = extract(boldName)
+	boldBytes, err = embeddedFonts.ReadFile("fonts/Tajawal-Bold.ttf")
 	if err != nil {
-		return "", "", err
+		return nil, nil, fmt.Errorf("embedded font Tajawal-Bold.ttf is missing: %w", err)
 	}
-	return regularPath, boldPath, nil
+	return regularBytes, boldBytes, nil
 }
 
 func generateThermalPDF(sale domain.Sale, prefs domain.AppPreferences, savePath string) (string, error) {
@@ -99,13 +71,13 @@ func generateThermalPDF(sale domain.Sale, prefs domain.AppPreferences, savePath 
 	pdf.SetMargins(2, 2, 2)
 	lineWidth := paperWidth - 4 // 2mm margins on each side
 
-	// Arabic requires Tajawal; fail loudly instead of printing garbled text.
-	regularFontPath, boldFontPath, err := prepareTajawalFonts()
+	// Arabic requires Tajawal; load directly from embedded bytes.
+	regularFontBytes, boldFontBytes, err := prepareTajawalFontBytes()
 	if err != nil {
 		return "", err
 	}
-	pdf.AddUTF8Font("arabic", "", regularFontPath)
-	pdf.AddUTF8Font("arabic", "B", boldFontPath)
+	pdf.AddUTF8FontFromBytes("arabic", "", regularFontBytes)
+	pdf.AddUTF8FontFromBytes("arabic", "B", boldFontBytes)
 
 	pdf.AddPage()
 	pdf.SetFont("arabic", "B", 14)
@@ -218,8 +190,8 @@ func generateThermalPDF(sale domain.Sale, prefs domain.AppPreferences, savePath 
 }
 
 func generateA4PDF(sale domain.Sale, prefs domain.AppPreferences, savePath string) (string, error) {
-	// Arabic requires Tajawal; fail loudly instead of printing garbled text.
-	regularFontPath, boldFontPath, err := prepareTajawalFonts()
+	// Arabic requires Tajawal; load directly from embedded bytes.
+	regularFontBytes, boldFontBytes, err := prepareTajawalFontBytes()
 	if err != nil {
 		return "", err
 	}
@@ -227,8 +199,8 @@ func generateA4PDF(sale domain.Sale, prefs domain.AppPreferences, savePath strin
 	m := pdf.NewMaroto(consts.Portrait, consts.A4)
 	m.SetBorder(false)
 
-	m.AddUTF8Font("arabic", consts.Normal, regularFontPath)
-	m.AddUTF8Font("arabic", consts.Bold, boldFontPath)
+	m.AddUTF8FontFromBytes("arabic", consts.Normal, regularFontBytes)
+	m.AddUTF8FontFromBytes("arabic", consts.Bold, boldFontBytes)
 
 	fontFamily := "arabic"
 
