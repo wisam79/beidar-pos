@@ -222,7 +222,7 @@ func BenchmarkLAN_PingLatency(b *testing.B) {
 
 	lanSvc := network.NewLanService(netRepo, prodSvc, nil, nil, nil, nil, settingsSvc, nil, nil)
 	_ = lanSvc.StartServer(0)
-	defer lanSvc.StopServer()
+	defer func() { _ = lanSvc.StopServer() }()
 
 	status := lanSvc.GetServerStatus()
 	pingURL := fmt.Sprintf("http://127.0.0.1:%d/api/ping", status.Port)
