@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"beidar-desktop/internal/core/domain"
-	"beidar-desktop/internal/network"
 )
 
 // TestE2E_LANServerAdminOps covers the LAN handler operations that manage the
@@ -71,7 +70,7 @@ func TestE2E_LANServerAdminOps(t *testing.T) {
 		t.Errorf("TestLanConnection when disconnected = %q", s)
 	}
 
-	status := server.LanHandler.GetServerStatus()
+	status = server.LanHandler.GetLanServerStatus()
 	if err := client.LanHandler.ConnectToLanServer("127.0.0.1", status.Port, secret); err != nil {
 		t.Fatalf("ConnectToLanServer failed: %v", err)
 	}
@@ -139,7 +138,7 @@ func TestE2E_LANServerAdminOps(t *testing.T) {
 	}
 
 	// Client-side disconnect from the server.
-	status = server.LanHandler.GetServerStatus()
+	status = server.LanHandler.GetLanServerStatus()
 	if err := client.LanHandler.ConnectToLanServer("127.0.0.1", status.Port, secret); err != nil {
 		t.Fatalf("reconnect failed: %v", err)
 	}
