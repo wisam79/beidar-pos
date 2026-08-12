@@ -40,7 +40,7 @@ func setupTestLANServer(t *testing.T) (network.LanService, string, func()) {
 	serverURL := fmt.Sprintf("http://127.0.0.1:%d", status.Port)
 
 	fullCleanup := func() {
-		lanSvc.StopServer()
+		_ = lanSvc.StopServer()
 		cleanup()
 	}
 

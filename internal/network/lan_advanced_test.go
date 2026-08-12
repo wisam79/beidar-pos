@@ -313,7 +313,7 @@ func TestLAN_Server_SuspendAndResumeClient_Behavior(t *testing.T) {
 	lanSvc := network.NewLanService(netRepo, prodSvc, nil, nil, nil, nil, settingsSvc, nil, nil)
 
 	_ = lanSvc.StartServer(0)
-	defer lanSvc.StopServer()
+	defer func() { _ = lanSvc.StopServer() }()
 
 	status := lanSvc.GetServerStatus()
 	serverURL := fmt.Sprintf("http://127.0.0.1:%d", status.Port)
@@ -412,7 +412,7 @@ func TestLAN_Server_ConcurrentClientSync_NoRaceConditions(t *testing.T) {
 	lanSvc := network.NewLanService(netRepo, nil, nil, nil, nil, nil, settingsSvc, nil, nil)
 
 	_ = lanSvc.StartServer(0)
-	defer lanSvc.StopServer()
+	defer func() { _ = lanSvc.StopServer() }()
 
 	var wg sync.WaitGroup
 	concurrentClients := 10
