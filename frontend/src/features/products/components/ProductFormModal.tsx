@@ -151,7 +151,18 @@ export const ProductFormModal = ({
                                             value={form.barcode || ''}
                                             onChange={e => setForm({ ...form, barcode: e.target.value })}
                                         />
-                                        <button className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-surface rounded-lg text-text-muted transition-colors opacity-50 hover:opacity-100" title="توليد باركود عشوائي">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const randomBarcode = Math.floor(100000000000 + Math.random() * 900000000000).toString();
+                                                setForm({ ...form, barcode: randomBarcode });
+                                                if (errors && errors.barcode) {
+                                                    delete errors.barcode;
+                                                }
+                                            }}
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-surface rounded-lg text-text-muted transition-colors opacity-50 hover:opacity-100"
+                                            title="توليد باركود عشوائي"
+                                        >
                                             <RefreshCw size={12} />
                                         </button>
                                     </div>

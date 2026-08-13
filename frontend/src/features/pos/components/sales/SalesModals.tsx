@@ -133,7 +133,7 @@ const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
             const customer: Customer = {
                 id: customerId,
                 name: newCustomer.name.trim(),
-                phone: newCustomer.phone.trim(),
+                phone: newCustomer.phone.replace(/[^0-9]/g, ''),
                 totalPurchases: 0,
                 debt: 0,
                 installmentDebt: 0,

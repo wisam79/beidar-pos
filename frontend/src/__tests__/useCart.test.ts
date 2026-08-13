@@ -111,7 +111,7 @@ describe('useCart Hook', () => {
         expect(result.current.cart[0].qty).toBe(3);
     });
 
-    it('should not allow zero or negative quantity via updateQty', () => {
+    it('should remove item from cart if updateQty reduces quantity to zero or negative', () => {
         const { result } = renderHook(() => useCart());
 
         act(() => {
@@ -119,10 +119,10 @@ describe('useCart Hook', () => {
         });
 
         act(() => {
-            result.current.updateQty('p1', -10); // Should stay at minimum (0.01)
+            result.current.updateQty('p1', -10); // Reduces qty <= 0, removing the item
         });
 
-        expect(result.current.cart[0].qty).toBe(0.01); // Minimum qty for fractional support
+        expect(result.current.cart.length).toBe(0);
     });
 
     it('should remove item from cart', () => {

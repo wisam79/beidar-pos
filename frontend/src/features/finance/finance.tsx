@@ -40,10 +40,10 @@ export const FinancePage: React.FC = () => {
 
     // React Query Cached Data
     const { data: financeData, isLoading: loading, refetch: loadData } = useFinanceData();
-    const expenses = financeData?.expenses || [];
-    const suppliers = financeData?.suppliers || [];
-    const sales = financeData?.sales || [];
-    const purchaseOrders = financeData?.purchaseOrders || [];
+    const expenses = useMemo(() => financeData?.expenses || [], [financeData?.expenses]);
+    const suppliers = useMemo(() => financeData?.suppliers || [], [financeData?.suppliers]);
+    const sales = useMemo(() => financeData?.sales || [], [financeData?.sales]);
+    const purchaseOrders = useMemo(() => financeData?.purchaseOrders || [], [financeData?.purchaseOrders]);
 
     // --- Analytics Engine ---
     const stats = useMemo(() => {

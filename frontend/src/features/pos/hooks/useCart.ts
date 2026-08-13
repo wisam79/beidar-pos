@@ -185,13 +185,16 @@ export function useCart(options: UseCartOptions = {}): UseCartReturn {
     }, []);
 
     const updateQty = useCallback((id: string, delta: number) => {
-        setCart(prev =>
-            prev.map(item =>
-                item.id === id
-                    ? { ...item, qty: Math.max(0.01, item.qty + delta) } // Allow fractions (manual), buttons enforce 1
-                    : item
-            )
-        );
+        setCart(prev => {
+            const updated = prev.map(item => {
+                if (item.id === id) {
+                    const newQty = item.qty + delta;
+                    return { ...item, qty: newQty };
+                }
+                return item;
+            });
+            return updated.filter(item => item.qty > 0.001);
+        });
     }, []);
 
     const setItemQuantity = useCallback((id: string, qty: number) => {

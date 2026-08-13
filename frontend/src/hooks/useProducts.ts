@@ -2,7 +2,7 @@
 // 📦 useProducts Hook - Product Data Fetching with React Query
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { api } from '../core/api';
 import { Product } from '../core/types';

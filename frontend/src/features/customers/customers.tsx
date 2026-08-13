@@ -98,7 +98,7 @@ export const CustomersPage: React.FC = () => {
                 totalPurchases: Number(form.totalPurchases) || 0,
                 // Ensure required fields
                 name: form.name,
-                phone: form.phone
+                phone: form.phone.replace(/[^0-9]/g, '')
             } as Customer;
 
             await api.customers.save(customerToSave);

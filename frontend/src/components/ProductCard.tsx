@@ -14,7 +14,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard = memo(({ product, onClick, isJustAdded, onPrint, currency = 'IQD', isWholesale = false }: ProductCardProps) => {
-    const isOut = product.stock === 0;
+    const isOut = product.stock <= 0;
     const isLow = product.stock <= (product.minStock || 5) && !isOut;
     let imageUrl = product.image;
     if (product.image && !product.image.startsWith('data') && !product.image.startsWith('http') && product.image.includes('.')) {
