@@ -161,46 +161,9 @@ func InitDB() (*gorm.DB, error) {
 	// especially when serving multiple LAN clients.
 	sqlDB.SetMaxOpenConns(1)
 
-	// Auto Migrate Domain Models
-	err = db.AutoMigrate(
-		&domain.Product{},
-		&domain.Sale{},
-		&domain.SaleItem{},
-		&domain.Customer{},
-		&domain.Supplier{},
-		&domain.Expense{},
-		&domain.Payment{},
-		&domain.Category{},
-		&domain.StockMovement{},
-		&domain.AppPreferences{},
-		&domain.ParkedSale{},
-		&domain.LoginAttempt{},
-		&domain.Staff{},
-		&domain.Shift{},
-		&domain.CashMovement{},
-		&domain.PurchaseOrder{},
-		&domain.PurchaseOrderItem{},
-		&domain.BlockedDevice{},
-		&domain.Discount{},
-		&domain.AuditLog{},
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to auto migrate: %w", err)
-	}
-
-	// Seed default preferences if not exists
-	var prefs domain.AppPreferences
-	if result := db.First(&prefs); result.Error != nil {
-		defaultPrefs := domain.AppPreferences{
-			StoreName:       "متجر بيدر",
-			Currency:        "IQD",
-			Theme:           "dark",
-			AccentColor:     "#306D29",
-			Language:        "ar",
-			LowStockTrigger: 5,
-		}
-		db.Create(&defaultPrefs)
+	// Apply Numbered Schema Migrations (including baseline v2.0.8 domain models)
+	if err := RunMigrations(db); err != nil {
+		return nil, fmt.Errorf("failed to run database migrations: %w", err)
 	}
 
 	activeDB = db

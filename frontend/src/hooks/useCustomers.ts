@@ -36,6 +36,43 @@ export function useCustomers(): UseCustomersReturn {
     };
 }
 
+interface UseCustomersPagedReturn {
+    customers: Customer[];
+    total: number;
+    totalPages: number;
+    page: number;
+    pageSize: number;
+    isLoading: boolean;
+    isError: boolean;
+    error: Error | null;
+    refetch: () => void;
+}
+
+export function useCustomersPaged(page: number = 1, pageSize: number = 50, search: string = ''): UseCustomersPagedReturn {
+    const {
+        data,
+        isLoading,
+        isError,
+        error,
+        refetch,
+    } = useQuery({
+        queryKey: queryKeys.customers.listPaged(page, pageSize, search),
+        queryFn: () => api.customers.listPaged(page, pageSize, search),
+    });
+
+    return {
+        customers: data?.data || [],
+        total: data?.total || 0,
+        totalPages: data?.totalPages || 1,
+        page: data?.page || page,
+        pageSize: data?.pageSize || pageSize,
+        isLoading,
+        isError,
+        error: error as Error | null,
+        refetch,
+    };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Mutation hook for invalidating customers cache after changes
 // ═══════════════════════════════════════════════════════════════════════════════

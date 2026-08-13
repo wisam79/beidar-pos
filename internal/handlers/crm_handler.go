@@ -5,6 +5,8 @@ import (
 	"beidar-desktop/internal/network"
 	"beidar-desktop/pkg/auth"
 	"context"
+	"fmt"
+	"net/url"
 	"strings"
 )
 
@@ -35,6 +37,25 @@ func (h *CRMHandler) GetCustomers() ([]domain.Customer, error) {
 		return result, err
 	}
 	return h.crmService.GetCustomers()
+}
+
+func (h *CRMHandler) GetCustomersPaged(page int, pageSize int, search string) (*domain.PaginatedCustomers, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 || pageSize > 200 {
+		pageSize = 50
+	}
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		var result domain.PaginatedCustomers
+		endpoint := fmt.Sprintf("/api/customers?page=%d&pageSize=%d&search=%s", page, pageSize, url.QueryEscape(search))
+		err := h.lanService.RemoteGet(endpoint, &result)
+		return &result, err
+	}
+	return h.crmService.GetCustomersPaged(page, pageSize, search)
 }
 
 func (h *CRMHandler) SearchCustomers(query string) ([]domain.Customer, error) {
@@ -92,6 +113,25 @@ func (h *CRMHandler) GetSuppliers() ([]domain.Supplier, error) {
 		return result, err
 	}
 	return h.crmService.GetSuppliers()
+}
+
+func (h *CRMHandler) GetSuppliersPaged(page int, pageSize int, search string) (*domain.PaginatedSuppliers, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 || pageSize > 200 {
+		pageSize = 50
+	}
+	if h.lanService != nil && h.lanService.IsClientMode() {
+		var result domain.PaginatedSuppliers
+		endpoint := fmt.Sprintf("/api/suppliers?page=%d&pageSize=%d&search=%s", page, pageSize, url.QueryEscape(search))
+		err := h.lanService.RemoteGet(endpoint, &result)
+		return &result, err
+	}
+	return h.crmService.GetSuppliersPaged(page, pageSize, search)
 }
 
 func (h *CRMHandler) SaveSupplier(s domain.Supplier) error {

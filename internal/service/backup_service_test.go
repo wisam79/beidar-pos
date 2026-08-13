@@ -175,9 +175,17 @@ func TestBackupOperations(t *testing.T) {
 	}
 
 	// 4. RestoreBackup
+	backupCountBeforeRestore := len(list)
 	err = backupService.RestoreBackup(res.Path)
 	if err != nil {
 		t.Fatalf("Expected no error from RestoreBackup, got %v", err)
+	}
+	backupsAfterRestore, err := backupService.ListBackups()
+	if err != nil {
+		t.Fatalf("Expected to list backups after restore: %v", err)
+	}
+	if len(backupsAfterRestore) <= backupCountBeforeRestore {
+		t.Error("expected restore to create a recovery snapshot before importing data")
 	}
 
 	// 5. CleanOldBackups (with 0 days to delete all)

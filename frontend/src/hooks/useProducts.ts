@@ -52,7 +52,7 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsReturn
         enabled,
     });
 
-    const products = data?.data || [];
+    const products = useMemo(() => data?.data ?? [], [data?.data]);
 
     // Client-side filtering for instant search
     const filteredProducts = useMemo(() => {

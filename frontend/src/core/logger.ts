@@ -43,6 +43,62 @@ function formatTimestamp(): string {
     });
 }
 
+export function maskPhone(phone: string): string {
+    const cleaned = (phone || '').trim();
+    if (!cleaned) return '';
+    if (cleaned.length <= 4) return '***';
+    if (cleaned.length <= 7) return `${cleaned.slice(0, 2)}****${cleaned.slice(-1)}`;
+    const prefixLen = cleaned.startsWith('+') ? 5 : 4;
+    const suffixLen = 3;
+    const maskedCount = cleaned.length - prefixLen - suffixLen;
+    if (maskedCount <= 0) return `${cleaned.slice(0, 2)}****${cleaned.slice(-2)}`;
+    return `${cleaned.slice(0, prefixLen)}${'*'.repeat(maskedCount)}${cleaned.slice(-suffixLen)}`;
+}
+
+const PHONE_REGEX = /(?:\+?964|0)?7[0-9]{8,9}/g;
+const SENSITIVE_KEY_REGEX = /^(pin|password|secret|token|apiKey|authorization|privateKey|accessToken|refreshToken)$/i;
+
+export function sanitizeLogData(data: unknown, depth = 0): unknown {
+    if (data === null || data === undefined) return data;
+    if (depth > 5) return '[NESTED_OBJECT]';
+
+    if (typeof data === 'string') {
+        return data.replace(PHONE_REGEX, (m) => maskPhone(m));
+    }
+
+    if (typeof data === 'number' || typeof data === 'boolean') {
+        return data;
+    }
+
+    if (data instanceof Error) {
+        return {
+            name: data.name,
+            message: sanitizeLogData(data.message, depth + 1),
+            stack: data.stack ? sanitizeLogData(data.stack, depth + 1) : undefined,
+        };
+    }
+
+    if (Array.isArray(data)) {
+        return data.map((item) => sanitizeLogData(item, depth + 1));
+    }
+
+    if (typeof data === 'object') {
+        const sanitized: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (SENSITIVE_KEY_REGEX.test(key)) {
+                sanitized[key] = '[REDACTED]';
+            } else if (/(phone|mobile)/i.test(key) && typeof value === 'string') {
+                sanitized[key] = maskPhone(value);
+            } else {
+                sanitized[key] = sanitizeLogData(value, depth + 1);
+            }
+        }
+        return sanitized;
+    }
+
+    return String(data);
+}
+
 function addToBuffer(entry: LogEntry): void {
     LOG_BUFFER.push(entry);
     if (LOG_BUFFER.length > MAX_BUFFER_SIZE) {
@@ -51,11 +107,14 @@ function addToBuffer(entry: LogEntry): void {
 }
 
 function log(level: LogLevel, message: string, data?: unknown, context?: string): void {
+    const sanitizedMsg = typeof message === 'string' ? message.replace(PHONE_REGEX, (m) => maskPhone(m)) : message;
+    const sanitizedData = data !== undefined ? sanitizeLogData(data) : undefined;
+
     const entry: LogEntry = {
         level,
-        message,
+        message: sanitizedMsg,
         timestamp: Date.now(),
-        data,
+        data: sanitizedData,
         context,
     };
 
@@ -69,16 +128,16 @@ function log(level: LogLevel, message: string, data?: unknown, context?: string)
     const prefix = `${ICONS[level]} [${formatTimestamp()}]${context ? ` [${context}]` : ''}`;
     const style = STYLES[level];
 
-    if (data !== undefined) {
+    if (sanitizedData !== undefined) {
         // eslint-disable-next-line no-console
-        console.groupCollapsed(`%c${prefix} ${message}`, style);
+        console.groupCollapsed(`%c${prefix} ${sanitizedMsg}`, style);
         // eslint-disable-next-line no-console
-        console.log('Data:', data);
+        console.log('Data:', sanitizedData);
         // eslint-disable-next-line no-console
         console.groupEnd();
     } else {
         // eslint-disable-next-line no-console
-        console.log(`%c${prefix} ${message}`, style);
+        console.log(`%c${prefix} ${sanitizedMsg}`, style);
     }
 }
 

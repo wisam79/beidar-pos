@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { NotifyFunction, AppPreferences } from '../core/types';
 import { playBeep, getLocalDateString, sanitizePrefsForStorage } from '../core/utils';
+import { logger } from '../core/logger';
 
 export function useAutoBackup(
   appState: string,
@@ -30,12 +31,12 @@ export function useAutoBackup(
         const updated: AppPreferences = { ...prefs, lastBackupDate: now };
         setPrefs(updated);
         localStorage.setItem('beidar_preferences', JSON.stringify(sanitizePrefsForStorage(updated as unknown as Record<string, unknown>)));
-        api.prefs.set(updated).catch(console.error);
+        api.prefs.set(updated).catch((error: unknown) => logger.error('Failed to persist backup timestamp', error, 'AutoBackup'));
 
         notify('تم إجراء النسخ الاحتياطي التلقائي بنجاح ✅', 'success');
         playBeep('success');
       } catch (e) {
-        console.error('Auto backup failed', e);
+        logger.error('Auto backup failed', e, 'AutoBackup');
         notify('فشل النسخ الاحتياطي التلقائي', 'error');
       }
     };

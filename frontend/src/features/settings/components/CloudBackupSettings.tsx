@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Cloud, Check, AlertCircle, Loader2, Info, Database, RefreshCw, User, LogOut, Download, Trash2 } from 'lucide-react';
 import { ConfirmModal } from '../../../components/ConfirmModal';
 import { useConfirmModal } from '../../../hooks';
 import * as CloudHandler from '../../../../wailsjs/go/handlers/CloudHandler';
+import { logger } from '../../../core/logger';
 
 // Types
 interface UserSession {
@@ -36,10 +37,6 @@ export function CloudBackupSettings() {
 
     const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
 
-    useEffect(() => {
-        checkLoginStatus();
-    }, []);
-
     // 🔒 Poll session validity every 30 seconds to detect login from another device
     useEffect(() => {
         if (!isLoggedIn) return;
@@ -55,14 +52,25 @@ export function CloudBackupSettings() {
                     setBackups([]);
                 }
             } catch (error) {
-                console.error('Session check failed:', error);
+                logger.error('Session check failed', error, 'CloudBackup');
             }
         }, 30000); // Check every 30 seconds
 
         return () => clearInterval(interval);
     }, [isLoggedIn]);
 
-    const checkLoginStatus = async () => {
+    const loadBackups = useCallback(async () => {
+        try {
+            const list = await CloudHandler.ListCloudBackupsForUser();
+            setBackups((list || []) as CloudBackup[]);
+            const config = await window.go.handlers.SettingsHandler.GetBackupConfig();
+            setAutoSync(config.cloudAutoSync);
+        } catch (error) {
+            logger.error('Load backups failed', error, 'CloudBackup');
+        }
+    }, []);
+
+    const checkLoginStatus = useCallback(async () => {
         try {
             const loggedIn = await CloudHandler.IsLoggedIn();
             setIsLoggedIn(loggedIn);
@@ -72,21 +80,13 @@ export function CloudBackupSettings() {
                 loadBackups();
             }
         } catch (error) {
-            console.error('Check login failed:', error);
+            logger.error('Check login failed', error, 'CloudBackup');
         }
-    };
+    }, [loadBackups]);
 
-    const loadBackups = async () => {
-        try {
-            const list = await CloudHandler.ListCloudBackupsForUser();
-            setBackups((list || []) as CloudBackup[]);
-            // Load auto-sync setting
-            const config = await window.go.handlers.SettingsHandler.GetBackupConfig();
-            setAutoSync(config.cloudAutoSync);
-        } catch (error) {
-            console.error('Load backups failed:', error);
-        }
-    };
+    useEffect(() => {
+        void checkLoginStatus();
+    }, [checkLoginStatus]);
 
     const handleAutoSyncToggle = async () => {
         try {
@@ -97,7 +97,7 @@ export function CloudBackupSettings() {
             setMessage({ type: 'success', text: newValue ? 'تم تفعيل النسخ السحابي التلقائي' : 'تم إيقاف النسخ السحابي التلقائي' });
             setTimeout(() => setMessage(null), 3000);
         } catch (error) {
-            console.error('Failed to toggle auto sync:', error);
+            logger.error('Failed to toggle auto sync', error, 'CloudBackup');
             setMessage({ type: 'error', text: 'فشل تغيير الإعدادات' });
         }
     };
@@ -112,7 +112,7 @@ export function CloudBackupSettings() {
             // Redirect to login (reload app to trigger auth check)
             setTimeout(() => window.location.reload(), 1000);
         } catch (error) {
-            console.error('Logout failed:', error);
+            logger.error('Logout failed', error, 'CloudBackup');
         }
     };
 

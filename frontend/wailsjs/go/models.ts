@@ -1037,6 +1037,8 @@ export namespace domain {
 	    port: number;
 	    deviceId: string;
 	    lastSeen: number;
+	    useTls: boolean;
+	    fingerprint: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new DiscoveredServer(source);
@@ -1049,6 +1051,8 @@ export namespace domain {
 	        this.port = source["port"];
 	        this.deviceId = source["deviceId"];
 	        this.lastSeen = source["lastSeen"];
+	        this.useTls = source["useTls"];
+	        this.fingerprint = source["fingerprint"];
 	    }
 	}
 	
@@ -1094,6 +1098,8 @@ export namespace domain {
 	    connected: boolean;
 	    serverAddress: string;
 	    mode: string;
+	    useTls: boolean;
+	    fingerprint: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new LanClientStatus(source);
@@ -1104,6 +1110,8 @@ export namespace domain {
 	        this.connected = source["connected"];
 	        this.serverAddress = source["serverAddress"];
 	        this.mode = source["mode"];
+	        this.useTls = source["useTls"];
+	        this.fingerprint = source["fingerprint"];
 	    }
 	}
 	export class LanServerStatus {
@@ -1112,6 +1120,8 @@ export namespace domain {
 	    port: number;
 	    clientCount: number;
 	    clients: string[];
+	    useTls: boolean;
+	    fingerprint: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new LanServerStatus(source);
@@ -1124,6 +1134,8 @@ export namespace domain {
 	        this.port = source["port"];
 	        this.clientCount = source["clientCount"];
 	        this.clients = source["clients"];
+	        this.useTls = source["useTls"];
+	        this.fingerprint = source["fingerprint"];
 	    }
 	}
 	export class LicenseResult {
@@ -1216,6 +1228,44 @@ export namespace domain {
 		    return a;
 		}
 	}
+	export class PaginatedCustomers {
+	    data: Customer[];
+	    total: number;
+	    totalPages: number;
+	    page: number;
+	    pageSize: number;
+
+	    static createFrom(source: any = {}) {
+	        return new PaginatedCustomers(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.data = this.convertValues(source["data"], Customer);
+	        this.total = source["total"];
+	        this.totalPages = source["totalPages"];
+	        this.page = source["page"];
+	        this.pageSize = source["pageSize"];
+	    }
+
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class PaginatedSales {
 	    data: Sale[];
 	    total: number;
@@ -1236,6 +1286,44 @@ export namespace domain {
 	        this.stats = this.convertValues(source["stats"], InvoiceStats);
 	    }
 	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PaginatedSuppliers {
+	    data: Supplier[];
+	    total: number;
+	    totalPages: number;
+	    page: number;
+	    pageSize: number;
+
+	    static createFrom(source: any = {}) {
+	        return new PaginatedSuppliers(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.data = this.convertValues(source["data"], Supplier);
+	        this.total = source["total"];
+	        this.totalPages = source["totalPages"];
+	        this.page = source["page"];
+	        this.pageSize = source["pageSize"];
+	    }
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;

@@ -10,10 +10,16 @@ configure environment variables.
 
 .PARAMETER Installer
 Creates an NSIS installer instead of just the raw executable. Defaults to true.
+
+.PARAMETER Output
+Name of the generated executable or binary.
 #>
 
 param (
-    [switch]$Installer = $true
+    [switch]$Installer = $true,
+    [ValidateSet("windows/amd64", "linux/amd64")]
+    [string]$Platform = "windows/amd64",
+    [string]$Output = "beidar-desktop.exe"
 )
 
 $ErrorActionPreference = "Stop"
@@ -40,6 +46,10 @@ $supabaseKey = ""
 
 function Get-EnvValue {
     param([string]$FilePath, [string]$Key)
+    $fromEnvironment = [Environment]::GetEnvironmentVariable($Key)
+    if ($fromEnvironment) {
+        return $fromEnvironment.Trim("`"", "'")
+    }
     if (Test-Path $FilePath) {
         $content = Get-Content $FilePath
         foreach ($line in $content) {
@@ -52,11 +62,13 @@ function Get-EnvValue {
 }
 
 # Try frontend/.env first, then root .env
-$supabaseUrl = Get-EnvValue "frontend\.env" "VITE_SUPABASE_URL"
+$supabaseUrl = Get-EnvValue "frontend\.env" "SUPABASE_URL"
+if (-not $supabaseUrl) { $supabaseUrl = Get-EnvValue "frontend\.env" "VITE_SUPABASE_URL" }
 if (-not $supabaseUrl) { $supabaseUrl = Get-EnvValue ".env" "VITE_SUPABASE_URL" }
 if (-not $supabaseUrl) { $supabaseUrl = Get-EnvValue ".env" "SUPABASE_URL" }
 
-$supabaseKey = Get-EnvValue "frontend\.env" "VITE_SUPABASE_ANON_KEY"
+$supabaseKey = Get-EnvValue "frontend\.env" "SUPABASE_ANON_KEY"
+if (-not $supabaseKey) { $supabaseKey = Get-EnvValue "frontend\.env" "VITE_SUPABASE_ANON_KEY" }
 if (-not $supabaseKey) { $supabaseKey = Get-EnvValue ".env" "VITE_SUPABASE_ANON_KEY" }
 if (-not $supabaseKey) { $supabaseKey = Get-EnvValue ".env" "SUPABASE_ANON_KEY" }
 
@@ -80,7 +92,7 @@ if ($supabaseUrl -and $supabaseKey) {
 $ldflags = $ldflags.Trim()
 
 # 4. Build Command
-$buildCmd = "wails build -clean -platform windows/amd64"
+$buildCmd = "wails build -clean -platform $Platform -o $Output"
 if ($Installer) {
     $buildCmd += " -nsis"
 }

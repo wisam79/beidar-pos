@@ -2,6 +2,7 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"fmt"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -182,5 +183,51 @@ func TestCustomerRepository_GetForUpdate(t *testing.T) {
 
 	if _, err := repo.GetForUpdate("missing"); err == nil {
 		t.Error("Expected error for nonexistent customer")
+	}
+}
+
+func TestCustomerRepository_GetCustomersPaged(t *testing.T) {
+	repo, cleanup := setupCustomerTestDB(t)
+	defer cleanup()
+
+	for i := 1; i <= 15; i++ {
+		c := &domain.Customer{
+			ID:    fmt.Sprintf("cust_%02d", i),
+			Name:  fmt.Sprintf("Customer %02d", i),
+			Phone: fmt.Sprintf("07900000%02d", i),
+		}
+		if err := repo.Create(c); err != nil {
+			t.Fatalf("Failed to create customer %d: %v", i, err)
+		}
+	}
+
+	// Test page 1 with pageSize 5
+	paged, err := repo.GetCustomersPaged(1, 5, "")
+	if err != nil {
+		t.Fatalf("GetCustomersPaged failed: %v", err)
+	}
+	if paged.Total != 15 {
+		t.Errorf("Total = %d, want 15", paged.Total)
+	}
+	if paged.TotalPages != 3 {
+		t.Errorf("TotalPages = %d, want 3", paged.TotalPages)
+	}
+	if len(paged.Data) != 5 {
+		t.Errorf("Data len = %d, want 5", len(paged.Data))
+	}
+	if paged.Page != 1 || paged.PageSize != 5 {
+		t.Errorf("Page=%d, PageSize=%d, want 1, 5", paged.Page, paged.PageSize)
+	}
+
+	// Test search filter
+	pagedSearch, err := repo.GetCustomersPaged(1, 5, "05")
+	if err != nil {
+		t.Fatalf("GetCustomersPaged with search failed: %v", err)
+	}
+	if pagedSearch.Total != 1 {
+		t.Errorf("Search total = %d, want 1", pagedSearch.Total)
+	}
+	if len(pagedSearch.Data) != 1 || pagedSearch.Data[0].Name != "Customer 05" {
+		t.Errorf("Expected Customer 05, got %+v", pagedSearch.Data)
 	}
 }

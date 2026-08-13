@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 )
@@ -90,9 +92,10 @@ func InitLogger(logLevel LogLevel, logToFile bool) *AppLogger {
 			out = io.MultiWriter(writers...)
 		}
 
-		// Setup slog handler
+		// Setup slog handler with automatic PII sanitization
 		opts := &slog.HandlerOptions{
-			Level: logLevel.slogLevel(),
+			Level:       logLevel.slogLevel(),
+			ReplaceAttr: sanitizeAttr,
 		}
 
 		handler := slog.NewTextHandler(out, opts)
@@ -240,4 +243,59 @@ func LogFinancial(operation string, customerID string, oldDebt, newDebt float64)
 
 func (l *AppLogger) Writer() io.Writer {
 	return l.file
+}
+
+// MaskPhone masks phone numbers for PII protection (e.g. 07701234567 -> 0770****567)
+func MaskPhone(phone string) string {
+	cleaned := strings.TrimSpace(phone)
+	if len(cleaned) == 0 {
+		return ""
+	}
+	if len(cleaned) <= 4 {
+		return "***"
+	}
+	if len(cleaned) <= 7 {
+		return cleaned[:2] + "****" + cleaned[len(cleaned)-1:]
+	}
+	// Standard phone numbers: preserve prefix and last 3 digits
+	prefixLen := 4
+	if strings.HasPrefix(cleaned, "+") && len(cleaned) > 5 {
+		prefixLen = 5
+	}
+	suffixLen := 3
+	maskedCount := len(cleaned) - prefixLen - suffixLen
+	if maskedCount <= 0 {
+		return cleaned[:2] + "****" + cleaned[len(cleaned)-2:]
+	}
+	return cleaned[:prefixLen] + strings.Repeat("*", maskedCount) + cleaned[len(cleaned)-suffixLen:]
+}
+
+var phoneRegex = regexp.MustCompile(`(?:\+?964|0)?7[0-9]{8,9}`)
+
+// MaskSensitiveText scrubs PII and sensitive patterns from free text
+func MaskSensitiveText(text string) string {
+	if text == "" {
+		return ""
+	}
+	return phoneRegex.ReplaceAllStringFunc(text, func(m string) string {
+		return MaskPhone(m)
+	})
+}
+
+func sanitizeAttr(groups []string, a slog.Attr) slog.Attr {
+	key := strings.ToLower(a.Key)
+	switch {
+	case strings.Contains(key, "pin") || strings.Contains(key, "password") || strings.Contains(key, "secret") || strings.Contains(key, "token") || strings.Contains(key, "apikey") || strings.Contains(key, "authorization"):
+		return slog.String(a.Key, "[REDACTED]")
+	case strings.Contains(key, "phone") || strings.Contains(key, "mobile"):
+		return slog.String(a.Key, MaskPhone(a.Value.String()))
+	case a.Value.Kind() == slog.KindString:
+		val := a.Value.String()
+		if phoneRegex.MatchString(val) {
+			return slog.String(a.Key, MaskSensitiveText(val))
+		}
+		return a
+	default:
+		return a
+	}
 }

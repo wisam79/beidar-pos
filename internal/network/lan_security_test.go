@@ -2,6 +2,7 @@ package network_test
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,6 +17,15 @@ import (
 	"beidar-desktop/internal/service"
 	"beidar-desktop/internal/testutil"
 )
+
+func testHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+}
 
 // Helper function to setup a test LAN server
 func setupTestLANServer(t *testing.T) (network.LanService, string, func()) {
@@ -37,7 +47,7 @@ func setupTestLANServer(t *testing.T) (network.LanService, string, func()) {
 	}
 
 	status := lanSvc.GetServerStatus()
-	serverURL := fmt.Sprintf("http://127.0.0.1:%d", status.Port)
+	serverURL := fmt.Sprintf("https://127.0.0.1:%d", status.Port)
 
 	fullCleanup := func() {
 		_ = lanSvc.StopServer()
@@ -60,7 +70,7 @@ func TestNetwork_LAN_LargePayloadDoS(t *testing.T) {
 		"data":     hugeData,
 	})
 
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := testHTTPClient()
 	resp, err := client.Post(serverURL+"/api/connect", "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		// Server closing connection on large payload is acceptable behavior
@@ -88,7 +98,8 @@ func TestNetwork_LAN_UnauthorizedRoleAccess(t *testing.T) {
 		"role":       string(domain.RoleCashier),
 	})
 
-	respConnect, err := http.Post(serverURL+"/api/connect", "application/json", bytes.NewBuffer(connectPayload))
+	client := testHTTPClient()
+	respConnect, err := client.Post(serverURL+"/api/connect", "application/json", bytes.NewBuffer(connectPayload))
 	if err != nil || respConnect.StatusCode != http.StatusOK {
 		t.Fatalf("failed to connect as cashier: %v", err)
 	}
@@ -108,7 +119,7 @@ func TestNetwork_LAN_UnauthorizedRoleAccess(t *testing.T) {
 		"/api/stats/dashboard",
 	}
 
-	client := &http.Client{Timeout: 2 * time.Second}
+	client = testHTTPClient()
 
 	for _, ep := range adminEndpoints {
 		req, _ := http.NewRequest("GET", serverURL+ep, nil)
@@ -138,7 +149,7 @@ func TestNetwork_LAN_InvalidSessionTokenReplay(t *testing.T) {
 		"",
 	}
 
-	client := &http.Client{Timeout: 2 * time.Second}
+	client := testHTTPClient()
 
 	for _, token := range invalidTokens {
 		req, _ := http.NewRequest("GET", serverURL+"/api/products", nil)
@@ -170,7 +181,7 @@ func TestNetwork_LAN_MalformedJSONPayloads(t *testing.T) {
 		[]byte(""),
 	}
 
-	client := &http.Client{Timeout: 2 * time.Second}
+	client := testHTTPClient()
 
 	for i, payload := range garbagePayloads {
 		resp, err := client.Post(serverURL+"/api/connect", "application/json", bytes.NewBuffer(payload))
@@ -195,7 +206,7 @@ func TestNetwork_LAN_RemoteScan_SecretProtection(t *testing.T) {
 		"secret":  "invalid-secret",
 	})
 
-	client := &http.Client{Timeout: 2 * time.Second}
+	client := testHTTPClient()
 	resp, err := client.Post(serverURL+"/api/remote-scan", "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		t.Fatalf("failed to post /api/remote-scan: %v", err)
@@ -225,9 +236,9 @@ func BenchmarkLAN_PingLatency(b *testing.B) {
 	defer func() { _ = lanSvc.StopServer() }()
 
 	status := lanSvc.GetServerStatus()
-	pingURL := fmt.Sprintf("http://127.0.0.1:%d/api/ping", status.Port)
+	pingURL := fmt.Sprintf("https://127.0.0.1:%d/api/ping", status.Port)
 
-	client := &http.Client{Timeout: 1 * time.Second}
+	client := testHTTPClient()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

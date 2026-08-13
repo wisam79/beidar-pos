@@ -3,6 +3,7 @@ package network
 import (
 	"beidar-desktop/internal/core/domain"
 	"context"
+	"crypto/tls"
 	"net"
 	"net/http"
 	"sync"
@@ -100,13 +101,16 @@ type lanService struct {
 	staffService    domain.StaffService
 
 	// Server state
-	server          *http.Server
-	serverMux       *http.ServeMux
-	serverMutex     sync.Mutex
-	serverStatus    string // "stopped", "running", "error"
-	actualPort      int
-	secret          string
-	secretMutex     sync.RWMutex
+	server            *http.Server
+	serverMux         *http.ServeMux
+	serverMutex       sync.Mutex
+	serverStatus      string // "stopped", "running", "error"
+	actualPort        int
+	secret            string
+	secretMutex       sync.RWMutex
+	serverTlsCert     tls.Certificate
+	serverFingerprint string
+	serverUseTls      bool
 
 	// Per-IP rate limiting for /api/connect
 	connectRateLimits map[string]*connectRateEntry
@@ -117,11 +121,12 @@ type lanService struct {
 	clientsMutex     sync.RWMutex
 
 	// Client state (on client connecting to server)
-	clientMode     bool
-	serverAddress  string
-	sessionToken   string
-	clientMutex    sync.RWMutex
-	httpClient     *http.Client
+	clientMode        bool
+	serverAddress     string
+	sessionToken      string
+	serverFingerprintClient string
+	clientMutex       sync.RWMutex
+	httpClient        *http.Client
 
 	// UDP Discovery state
 	isBroadcasting  bool
@@ -162,6 +167,8 @@ func (s *lanService) Startup(ctx context.Context) {
 	s.ctxMutex.Lock()
 	s.ctx = ctx
 	s.ctxMutex.Unlock()
+
+	s.loadSavedLanConfig()
 
 	// Start background network connectivity checking loop
 	go s.startConnectivityBroadcaster(ctx)

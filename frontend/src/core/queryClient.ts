@@ -62,6 +62,7 @@ export const invalidateSales = () => {
 /** Invalidate all finance, expenses, suppliers, and purchase orders caches */
 export const invalidateFinance = () => {
     queryClient.invalidateQueries({ queryKey: ['finance_data'] });
+    queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
     queryClient.invalidateQueries({ queryKey: ['reports', 'expenses'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard_stats'] });
@@ -103,6 +104,14 @@ export const queryKeys = {
     customers: {
         all: ['customers'] as const,
         list: () => [...queryKeys.customers.all, 'list'] as const,
+        listPaged: (page = 1, pageSize = 50, search = '') =>
+            [...queryKeys.customers.all, 'paged', page, pageSize, search] as const,
+    },
+    suppliers: {
+        all: ['suppliers'] as const,
+        list: () => [...queryKeys.suppliers.all, 'list'] as const,
+        listPaged: (page = 1, pageSize = 50, search = '') =>
+            [...queryKeys.suppliers.all, 'paged', page, pageSize, search] as const,
     },
     sales: {
         all: ['sales'] as const,

@@ -98,6 +98,22 @@ export interface PaginatedProducts {
     stats: ProductStats;
 }
 
+export interface PaginatedCustomers {
+    data: Customer[];
+    total: number;
+    totalPages: number;
+    page: number;
+    pageSize: number;
+}
+
+export interface PaginatedSuppliers {
+    data: Supplier[];
+    total: number;
+    totalPages: number;
+    page: number;
+    pageSize: number;
+}
+
 export interface ProductStats {
     totalStock: number;
     totalValue: number;

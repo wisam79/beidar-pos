@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"bytes"
+	"crypto/tls"
 	"net"
 	"net/http"
 	"strconv"
@@ -38,7 +39,13 @@ func postBarcode(base, secret, code string) int {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Server-Secret", secret)
-	resp, err := http.DefaultClient.Do(req)
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return -1
 	}
@@ -218,7 +225,7 @@ func TestE2E_RemoteScanEndpointRequiresSecret(t *testing.T) {
 	}
 	defer func() { _ = server.Lan.StopServer() }()
 
-	base := "http://127.0.0.1:" + itoa(port)
+	base := "https://127.0.0.1:" + itoa(port)
 	secret, _ := server.LanHandler.GetServerSecret()
 
 	// No secret is rejected by /api/remote-scan.

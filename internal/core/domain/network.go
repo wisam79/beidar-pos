@@ -28,6 +28,8 @@ type LanServerStatus struct {
 	Port        int      `json:"port"`
 	ClientCount int      `json:"clientCount"`
 	Clients     []string `json:"clients"`
+	UseTLS      bool     `json:"useTls"`
+	Fingerprint string   `json:"fingerprint"`
 }
 
 // LanClientStatus represents the current client state
@@ -35,13 +37,17 @@ type LanClientStatus struct {
 	Connected     bool   `json:"connected"`
 	ServerAddress string `json:"serverAddress"`
 	Mode          string `json:"mode"` // "standalone", "server", "client"
+	UseTLS        bool   `json:"useTls"`
+	Fingerprint   string `json:"fingerprint"`
 }
 
 // DiscoveredServer represents a server found on the network
 type DiscoveredServer struct {
-	ServerName string `json:"serverName"`
-	ServerIP   string `json:"serverIP"`
+	ServerName  string `json:"serverName"`
+	ServerIP    string `json:"serverIP"`
 	Port        int    `json:"port"`
-	DeviceID   string `json:"deviceId"`
-	LastSeen   int64  `json:"lastSeen"`
+	DeviceID    string `json:"deviceId"`
+	LastSeen    int64  `json:"lastSeen"`
+	UseTLS      bool   `json:"useTls"`
+	Fingerprint string `json:"fingerprint"`
 }

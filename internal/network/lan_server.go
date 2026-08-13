@@ -3,6 +3,7 @@ package network
 import (
 	"beidar-desktop/internal/core/domain"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -61,8 +62,23 @@ func (s *lanService) StartServer(port int) error {
 		fmt.Println("🔑 Generated new LAN server secret")
 	}
 
+	// Load or generate TLS 1.3 server certificate
+	tlsCert, fingerprint, err := GetOrGenerateServerCert()
+	if err != nil {
+		return fmt.Errorf("فشل إعداد شهادة الأمان (TLS): %w", err)
+	}
+	s.serverTlsCert = tlsCert
+	s.serverFingerprint = fingerprint
+	s.serverUseTls = true
+
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+		MinVersion:   tls.VersionTLS13,
+	}
+
 	s.server = &http.Server{
 		Handler:           s.serverMux,
+		TLSConfig:         tlsConfig,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      30 * time.Second,
@@ -70,10 +86,12 @@ func (s *lanService) StartServer(port int) error {
 	}
 	s.actualPort = actualPort
 
+	tlsListener := tls.NewListener(listener, tlsConfig)
+
 	go func() {
 		s.serverStatus = "running"
-		fmt.Printf("🌐 LAN Server started on port %d\n", actualPort)
-		if err := s.server.Serve(listener); err != nil && err != http.ErrServerClosed {
+		fmt.Printf("🔒 LAN Server started with TLS 1.3 on port %d (Fingerprint: %s)\n", actualPort, fingerprint)
+		if err := s.server.Serve(tlsListener); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("LAN Server error: %v\n", err)
 			s.serverMutex.Lock()
 			s.serverStatus = "error"
@@ -133,12 +151,21 @@ func (s *lanService) GetServerStatus() domain.LanServerStatus {
 		port = DefaultLanPort
 	}
 
+	fingerprint := s.serverFingerprint
+	if fingerprint == "" {
+		if _, fp, err := GetOrGenerateServerCert(); err == nil {
+			fingerprint = fp
+		}
+	}
+
 	return domain.LanServerStatus{
 		Running:     s.IsServerRunning(),
 		LocalIP:     ip,
 		Port:        port,
 		ClientCount: len(clients),
 		Clients:     clientIPs,
+		UseTLS:      true,
+		Fingerprint: fingerprint,
 	}
 }
 
@@ -148,12 +175,12 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 	// webview (served from localhost) only. LAN clients talk plain HTTP without
 	// a browser Origin header and are unaffected.
 	allowedCORSOrigins := map[string]bool{
-		"http://localhost:5173": true, // Vite dev server
-		"http://127.0.0.1:5173": true,
-		"http://wails.localhost": true,
+		"http://localhost:5173":   true, // Vite dev server
+		"http://127.0.0.1:5173":   true,
+		"http://wails.localhost":  true,
 		"https://wails.localhost": true,
-		"http://localhost": true,
-		"http://127.0.0.1": true,
+		"http://localhost":        true,
+		"http://127.0.0.1":        true,
 	}
 
 	corsMiddleware := func(next http.HandlerFunc) http.HandlerFunc {
@@ -202,36 +229,9 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 
 			s.UpdateClientActivity(token)
 
-			// Simple check for Role permission gates
-			if client != nil && client.Role != "admin" {
-				allowedCashierPosts := map[string]bool{
-					"/api/sales/process": true,
-					"/api/customers":     true,
-				}
-
-				// Reject cashier from accessing sensitive admin/stats endpoints (any HTTP method)
-				if r.URL.Path == "/api/database/export" ||
-					r.URL.Path == "/api/stats/dashboard" ||
-					r.URL.Path == "/api/stats/comparison" ||
-					r.URL.Path == "/api/expenses" ||
-					r.URL.Path == "/api/stock/movements" ||
-					r.URL.Path == "/api/admin/clients" ||
-					r.URL.Path == "/api/admin/blocked" {
-					http.Error(w, `{"error":"غير مصرح لك بهذه العملية - صلاحيات المدير مطلوبة"}`, http.StatusForbidden)
-					return
-				}
-
-				if r.Method == "DELETE" {
-					http.Error(w, `{"error":"غير مصرح لك بالحذف - صلاحيات المدير مطلوبة"}`, http.StatusForbidden)
-					return
-				}
-
-				if r.Method == "POST" {
-					if !allowedCashierPosts[r.URL.Path] {
-						http.Error(w, `{"error":"غير مصرح لك بهذه العملية - صلاحيات المدير مطلوبة"}`, http.StatusForbidden)
-						return
-					}
-				}
+			if client == nil || !lanRoleAllows(domain.Role(client.Role), r.Method, r.URL.Path) {
+				http.Error(w, `{"error":"غير مصرح لك بهذه العملية"}`, http.StatusForbidden)
+				return
 			}
 
 			next(w, r)
@@ -272,6 +272,50 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/stock/movements", authMiddleware(s.handleStockMovements))
 	mux.HandleFunc("/api/database/export", authMiddleware(s.handleDatabaseExport))
 	mux.HandleFunc("/api/remote-scan", corsMiddleware(s.requireServerSecret(s.handleRemoteScan)))
+}
+
+// lanRoleAllows is the single, fail-closed authorization policy for LAN API
+// sessions. Adding a route requires explicitly granting it to a role here;
+// otherwise authenticated clients are denied by default.
+func lanRoleAllows(role domain.Role, method, path string) bool {
+	if role == domain.RoleAdmin {
+		return true
+	}
+
+	readOnlyCashierPaths := map[string]bool{
+		"/api/products":        true,
+		"/api/products/detail": true,
+		"/api/products/search": true,
+		"/api/sales":           true,
+		"/api/customers":       true,
+		"/api/suppliers":       true,
+		"/api/categories":      true,
+		"/api/preferences":     true,
+	}
+	if role == domain.RoleCashier {
+		if method == http.MethodGet {
+			return readOnlyCashierPaths[path]
+		}
+		return method == http.MethodPost && (path == "/api/sales/process" || path == "/api/customers")
+	}
+
+	// Managers can operate the day-to-day catalogue and finance endpoints, but
+	// cannot use administrative device controls or database export.
+	if role == domain.RoleManager {
+		if method == http.MethodDelete {
+			return path == "/api/sales" || path == "/api/products"
+		}
+		if method == http.MethodPost {
+			return path == "/api/products" || path == "/api/sales/process" ||
+				path == "/api/sales/return" || path == "/api/sales/return-partial" ||
+				path == "/api/customers" || path == "/api/suppliers" ||
+				path == "/api/categories" || path == "/api/expenses" ||
+				path == "/api/stock/movements"
+		}
+		return method == http.MethodGet && path != "/api/database/export"
+	}
+
+	return false
 }
 
 // statusWriter captures the HTTP status code so we can tell whether a write
@@ -668,6 +712,28 @@ func (s *lanService) handleCustomers(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
+		if r.URL.Query().Has("page") || r.URL.Query().Has("pageSize") || r.URL.Query().Has("search") {
+			page, pageSize := 1, 50
+			if v := r.URL.Query().Get("page"); v != "" {
+				if p, err := strconv.Atoi(v); err == nil && p > 0 {
+					page = p
+				}
+			}
+			if v := r.URL.Query().Get("pageSize"); v != "" {
+				if ps, err := strconv.Atoi(v); err == nil && ps > 0 && ps <= 200 {
+					pageSize = ps
+				}
+			}
+			search := r.URL.Query().Get("search")
+			paged, err := s.crmService.GetCustomersPaged(page, pageSize, search)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			_ = json.NewEncoder(w).Encode(paged)
+			return
+		}
+
 		customers, err := s.crmService.GetCustomers()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -703,6 +769,28 @@ func (s *lanService) handleSuppliers(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
+		if r.URL.Query().Has("page") || r.URL.Query().Has("pageSize") || r.URL.Query().Has("search") {
+			page, pageSize := 1, 50
+			if v := r.URL.Query().Get("page"); v != "" {
+				if p, err := strconv.Atoi(v); err == nil && p > 0 {
+					page = p
+				}
+			}
+			if v := r.URL.Query().Get("pageSize"); v != "" {
+				if ps, err := strconv.Atoi(v); err == nil && ps > 0 && ps <= 200 {
+					pageSize = ps
+				}
+			}
+			search := r.URL.Query().Get("search")
+			paged, err := s.crmService.GetSuppliersPaged(page, pageSize, search)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			_ = json.NewEncoder(w).Encode(paged)
+			return
+		}
+
 		suppliers, err := s.crmService.GetSuppliers()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

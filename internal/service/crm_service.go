@@ -34,6 +34,16 @@ func (s *crmService) GetCustomers() ([]domain.Customer, error) {
 	return s.customerRepo.GetAll()
 }
 
+func (s *crmService) GetCustomersPaged(page int, pageSize int, search string) (*domain.PaginatedCustomers, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 || pageSize > 200 {
+		pageSize = 50
+	}
+	return s.customerRepo.GetCustomersPaged(page, pageSize, search)
+}
+
 func (s *crmService) SearchCustomers(query string) ([]domain.Customer, error) {
 	return s.customerRepo.Search(query)
 }
@@ -162,6 +172,16 @@ func (s *crmService) DeleteCustomer(id string, force bool) error {
 
 func (s *crmService) GetSuppliers() ([]domain.Supplier, error) {
 	return s.supplierRepo.GetAll()
+}
+
+func (s *crmService) GetSuppliersPaged(page int, pageSize int, search string) (*domain.PaginatedSuppliers, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 || pageSize > 200 {
+		pageSize = 50
+	}
+	return s.supplierRepo.GetSuppliersPaged(page, pageSize, search)
 }
 
 func (s *crmService) SaveSupplier(sup domain.Supplier) error {

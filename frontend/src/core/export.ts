@@ -1,10 +1,7 @@
 /**
- * 📊 Export Utilities - Excel & Native Print Export
- * تصدير التقارير بصيغة Excel وطباعة PDF تقارير ناتيف
+ * 📊 Export Utilities - Spreadsheet-safe CSV & Native Print Export
+ * تصدير التقارير بصيغة CSV المتوافقة مع Excel وطباعة PDF تقارير ناتيف
  */
-
-// Lazy-load xlsx library (~500KB) only when needed
-const getXLSX = () => import('xlsx');
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📊 TYPES
@@ -26,20 +23,39 @@ export interface ExportOptions {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 📗 EXCEL EXPORT
+// 📗 CSV EXPORT (Excel-compatible)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const sanitizeCSVCell = (value: unknown): string => {
+    const stringValue = value === null || value === undefined ? '' : String(value);
+    return /^[=+\-@]/.test(stringValue) ? `'${stringValue}` : stringValue;
+};
+
+const quoteCSVCell = (value: unknown): string => {
+    const sanitized = sanitizeCSVCell(value);
+    return `"${sanitized.replace(/"/g, '""')}"`;
+};
+
+const downloadCSV = (content: string, filename: string): void => {
+    // UTF-8 BOM ensures Arabic text displays correctly in Microsoft Excel.
+    const blob = new Blob(["\uFEFF", content], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+};
+
 /**
- * Export data to Excel file with Enhanced Metadata
+ * Export data to an Excel-compatible CSV. We intentionally avoid XLSX parsing
+ * and generation because the former dependency has unresolved security issues.
  */
 export async function exportToExcel<T extends Record<string, unknown>>(
     data: T[],
     columns: ExportColumn[],
     options: ExportOptions
 ): Promise<void> {
-    const XLSX = await getXLSX();
-
-    // 1. Prepare Metadata Rows
     const date = new Date().toLocaleDateString('ar-IQ');
     const store = options.storeName || 'المتجر';
     const metadata = [
@@ -50,7 +66,6 @@ export async function exportToExcel<T extends Record<string, unknown>>(
         [''] // Row 5: Empty Spacer
     ];
 
-    // 2. Prepare Headers & Data
     const headers = columns.map(col => col.header);
     const rows = data.map(item =>
         columns.map(col => {
@@ -61,31 +76,11 @@ export async function exportToExcel<T extends Record<string, unknown>>(
         })
     );
 
-    const wsData = [...metadata, headers, ...rows];
-
-    // 3. Create Workbook & Sheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-    // 4. Styling & Config
-    ws['!cols'] = columns.map(col => ({ wch: col.width || 15 }));
-    if (options.rtl !== false) {
-        ws['!dir'] = 'rtl';
-    }
-
-    // Merge title cells for better look (A1:C1, etc)
-    ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }, // Store Name
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }, // Report Title
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 2 } }, // Date
-    ];
-
-    XLSX.utils.book_append_sheet(wb, ws, options.sheetName || 'Sheet1');
-
-    // 5. Download
+    const csv = [...metadata, headers, ...rows]
+        .map(row => row.map(quoteCSVCell).join(','))
+        .join('\r\n');
     const filenameDate = new Date().toISOString().split('T')[0];
-    const filename = `${options.filename}_${filenameDate}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    downloadCSV(csv, `${options.filename}_${filenameDate}.csv`);
 }
 
 /**
@@ -95,9 +90,7 @@ export async function exportMultiSheetExcel(
     sheets: { name: string; data: Record<string, unknown>[]; columns: ExportColumn[] }[],
     options: ExportOptions
 ): Promise<void> {
-    const XLSX = await getXLSX();
-    const wb = XLSX.utils.book_new();
-
+    const date = new Date().toISOString().split('T')[0];
     sheets.forEach(sheet => {
         const headers = sheet.columns.map(col => col.header);
         const rows = sheet.data.map(item =>
@@ -108,16 +101,11 @@ export async function exportMultiSheetExcel(
             })
         );
 
-        const wsData = [headers, ...rows];
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        ws['!cols'] = sheet.columns.map(col => ({ wch: col.width || 15 }));
-        if (options.rtl !== false) ws['!dir'] = 'rtl';
-
-        XLSX.utils.book_append_sheet(wb, ws, sheet.name);
+        const csv = [headers, ...rows]
+            .map(row => row.map(quoteCSVCell).join(','))
+            .join('\r\n');
+        downloadCSV(csv, `${options.filename}_${sheet.name}_${date}.csv`);
     });
-
-    const date = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `${options.filename}_${date}.xlsx`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

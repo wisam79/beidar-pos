@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Package, Printer, Plus, Layers, FileSpreadsheet, BarChart2 } from 'lucide-react';
@@ -125,6 +125,14 @@ export const ProductsPage: React.FC = () => {
         };
     }, [allProducts, search, selectedCategory, selectedSupplier, statusFilter, page, pageSize, t]);
 
+    const handleInitAdd = useCallback(() => {
+        setForm({
+            name: '', price: 0, cost: 0, stock: 0, minStock: 5, category: selectedCategory !== t('common.all') ? selectedCategory : 'عام',
+            barcode: Math.floor(100000 + Math.random() * 900000).toString(), image: '📦', customDetails: {}
+        });
+        setEditingProduct(null); setActiveTab('details'); setModalOpen(true);
+    }, [selectedCategory, t]);
+
     // ═══════════════════════════════════════════════════════════════════════════════
     // 🔗 Pending Action Handler (from QuickActionsBar)
     // يتحقق من وجود إجراء معلق من لوحة التحكم ويفتح المودال المناسب
@@ -139,7 +147,7 @@ export const ProductsPage: React.FC = () => {
                 handleInitAdd();
             }, 100);
         }
-    }, []);
+    }, [handleInitAdd]);
 
     const totalLabels = useMemo(() => printQueue.reduce((acc, item) => acc + item.qty, 0), [printQueue]);
 
@@ -172,7 +180,7 @@ export const ProductsPage: React.FC = () => {
     }, [form.category, categories]);
 
     // --- Handlers ---
-    const handleScan = async (code: string): Promise<ScanResult> => {
+    const handleScan = useCallback(async (code: string): Promise<ScanResult> => {
         try {
             const searchResult = await api.products.search(code);
             const exists = searchResult?.find((p: Product) => p.barcode === code);
@@ -201,7 +209,7 @@ export const ProductsPage: React.FC = () => {
                 return { success: true, message: t('products.addProduct') };
             }
         }
-    };
+    }, [allProducts, handleInitAdd, t]);
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // 📱 Mobile Scanner Integration
@@ -227,21 +235,13 @@ export const ProductsPage: React.FC = () => {
         return () => {
             if (window.runtime) window.runtime.EventsOff("remote-scan-received");
         };
-    }, []);
+    }, [notify]);
 
     // USB Scanner Detection
     useUsbScannerDetection({
         onScan: (code) => handleScan(code),
         onUsbDetected: () => notify('تم اكتشاف قارئ USB ✅', 'success')
     });
-
-    const handleInitAdd = () => {
-        setForm({
-            name: '', price: 0, cost: 0, stock: 0, minStock: 5, category: selectedCategory !== t('common.all') ? selectedCategory : 'عام',
-            barcode: Math.floor(100000 + Math.random() * 900000).toString(), image: '📦', customDetails: {}
-        });
-        setEditingProduct(null); setActiveTab('details'); setModalOpen(true);
-    };
 
     const handleInitEdit = (p: Product) => {
         setForm({ ...p, customDetails: p.customDetails || {} }); setEditingProduct(p); setActiveTab('details'); setModalOpen(true);

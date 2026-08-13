@@ -44,14 +44,26 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
+      - name: Verify signing secrets
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:SIGNING_CERT) -or [string]::IsNullOrWhiteSpace($env:SIGNING_PASSWORD)) {
+            throw "Windows release signing certificate and password are required."
+          }
+        env:
+          SIGNING_CERT: ${{ secrets.WINDOWS_SIGNING_CERT }}
+          SIGNING_PASSWORD: ${{ secrets.WINDOWS_SIGNING_PASSWORD }}
+
       - name: Build Wails App
-        run: wails build -platform windows/amd64 -o beidar-desktop.exe -clean -ldflags "-X beidar-desktop/pkg/updater.CurrentVersion=$env:APP_VERSION -X beidar-desktop/pkg/crashreporter.AppVersion=$env:APP_VERSION"
+        shell: pwsh
+        run: ./scripts/build.ps1 -Installer:$false -Platform windows/amd64 -Output beidar-desktop.exe
         env:
           NODE_ENV: production
           APP_VERSION: ${{ env.APP_VERSION }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
-      - name: Sign Binary (إذا توفر المفتاح)
-        if: env.SIGNING_CERT != ''
+      - name: Sign Binary
         shell: pwsh
         run: |
           Add-Content -Path "$env:RUNNER_TEMP\cert.pfx" -Value ([System.Convert]::FromBase64String("$env:SIGNING_CERT")) -Encoding Byte
@@ -100,10 +112,13 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build Wails App
-        run: wails build -platform linux/amd64 -o beidar-desktop -clean -ldflags "-X beidar-desktop/pkg/updater.CurrentVersion=$APP_VERSION -X beidar-desktop/pkg/crashreporter.AppVersion=$APP_VERSION"
+        shell: pwsh
+        run: ./scripts/build.ps1 -Installer:$false -Platform linux/amd64 -Output beidar-desktop
         env:
           NODE_ENV: production
           APP_VERSION: ${{ env.APP_VERSION }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Upload AppImage Artifact
         uses: actions/upload-artifact@v4

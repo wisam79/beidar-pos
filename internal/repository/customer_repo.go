@@ -2,6 +2,8 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"strings"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -28,6 +30,47 @@ func (r *customerRepository) GetAll() ([]domain.Customer, error) {
 	var customers []domain.Customer
 	err := r.db.Find(&customers).Error
 	return customers, err
+}
+
+func (r *customerRepository) GetCustomersPaged(page int, pageSize int, search string) (*domain.PaginatedCustomers, error) {
+	const maxPageSize = 200
+	if pageSize <= 0 || pageSize > maxPageSize {
+		pageSize = 50
+	}
+	if page < 1 {
+		page = 1
+	}
+
+	query := r.db.Model(&domain.Customer{})
+
+	if search != "" {
+		trimmed := strings.TrimSpace(search)
+		query = query.Where("name LIKE ? OR phone LIKE ? OR notes LIKE ?", "%"+trimmed+"%", "%"+trimmed+"%", "%"+trimmed+"%")
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, err
+	}
+
+	offset := (page - 1) * pageSize
+	var customers []domain.Customer
+	if err := query.Order("name ASC").Offset(offset).Limit(pageSize).Find(&customers).Error; err != nil {
+		return nil, err
+	}
+
+	totalPages := int(total) / pageSize
+	if pageSize > 0 && int(total)%pageSize > 0 {
+		totalPages++
+	}
+
+	return &domain.PaginatedCustomers{
+		Data:       customers,
+		Total:      total,
+		TotalPages: totalPages,
+		Page:       page,
+		PageSize:   pageSize,
+	}, nil
 }
 
 func (r *customerRepository) GetByID(id string) (*domain.Customer, error) {

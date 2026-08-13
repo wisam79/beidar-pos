@@ -31,3 +31,13 @@ export const useFinanceData = () => {
         placeholderData: keepPreviousData,
     });
 };
+
+export const useSuppliersPaged = (page: number = 1, pageSize: number = 50, search: string = '') => {
+    return useQuery({
+        queryKey: ['suppliers', 'paged', page, pageSize, search],
+        queryFn: async () => {
+            return api.suppliers.listPaged(page, pageSize, search);
+        },
+        placeholderData: keepPreviousData,
+    });
+};

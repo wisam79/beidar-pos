@@ -133,7 +133,7 @@ export const SalesPage: React.FC = () => {
             setCart(updatedCart);
             notify(isWholesale ? 'تم تفعيل أسعار الجملة' : 'تم تفعيل أسعار المفرد', 'info');
         }
-    }, [isWholesale, products]);
+    }, [cart, isWholesale, notify, products, setCart]);
 
     const remove = removeFromCart;
 
@@ -262,7 +262,7 @@ export const SalesPage: React.FC = () => {
         }
     };
 
-    const handleScan = async (code: string): Promise<ScanResult> => {
+    const handleScan = useCallback(async (code: string): Promise<ScanResult> => {
         if (code.startsWith('INV:')) {
             const invoiceId = code.split('|')[0].replace('INV:', '');
             setIsLoadingInvoice(true);
@@ -293,7 +293,7 @@ export const SalesPage: React.FC = () => {
         }
         setConfirmState({ open: true, barcode: code });
         return { success: true, message: 'المنتج غير موجود - أكمل الإضافة على الكمبيوتر' };
-    };
+    }, [addToCart, notify, products]);
 
     const handleConfirmAddProduct = () => {
         setNewProductBarcode(confirmState.barcode);
@@ -341,7 +341,7 @@ export const SalesPage: React.FC = () => {
         return () => {
             if (window.runtime) window.runtime.EventsOff("remote-scan-received");
         };
-    }, []);
+    }, [notify]);
 
     const handleInstallmentConfirm = async () => {
         try {

@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { useProducts, useInvalidateProducts } from './useProducts';
-export { useCustomers, useInvalidateCustomers } from './useCustomers';
+export { useCustomers, useCustomersPaged, useInvalidateCustomers } from './useCustomers';
 export { useParkedSales } from './useParkedSales';
 export { useDashboardStats } from './useDashboardStats';
 
@@ -17,5 +17,5 @@ export { useConfirmModal } from './useConfirmModal';
 export { useShiftsHistory, useShiftMovements } from './useShifts';
 export { useInvoices } from './useInvoices';
 export { useInventoryProducts, useInventoryMetadata, useInventoryMovements } from './useInventory';
-export { usePurchaseOrders, useFinanceData } from './useFinance';
+export { usePurchaseOrders, useFinanceData, useSuppliersPaged } from './useFinance';
 export { useDiscounts } from './useDiscounts';

@@ -18,11 +18,13 @@ const (
 )
 
 type DiscoveryMessage struct {
-	Magic      string `json:"magic"`
-	ServerName string `json:"serverName"`
-	ServerIP   string `json:"serverIP"`
-	Port       int    `json:"port"`
-	DeviceID   string `json:"deviceId"`
+	Magic       string `json:"magic"`
+	ServerName  string `json:"serverName"`
+	ServerIP    string `json:"serverIP"`
+	Port        int    `json:"port"`
+	DeviceID    string `json:"deviceId"`
+	UseTLS      bool   `json:"useTls"`
+	Fingerprint string `json:"fingerprint"`
 }
 
 // GetLocalIP returns the local IP address of this machine
@@ -99,11 +101,13 @@ func (s *lanService) StartBroadcasting(httpPort int) error {
 	hostname := "Beidar POS Server"
 
 	msg := DiscoveryMessage{
-		Magic:      DiscoveryMagic,
-		ServerName: hostname,
-		ServerIP:   localIP,
-		Port:       httpPort,
-		DeviceID:   deviceID,
+		Magic:       DiscoveryMagic,
+		ServerName:  hostname,
+		ServerIP:    localIP,
+		Port:        httpPort,
+		DeviceID:    deviceID,
+		UseTLS:      true,
+		Fingerprint: s.serverFingerprint,
 	}
 	msgBytes, _ := json.Marshal(msg)
 
@@ -213,14 +217,16 @@ func (s *lanService) discoverViaUDP() []domain.DiscoveredServer {
 		}
 
 		servers = append(servers, domain.DiscoveredServer{
-			ServerName: msg.ServerName,
-			ServerIP:   msg.ServerIP,
-			Port:       msg.Port,
-			DeviceID:   msg.DeviceID,
-			LastSeen:   time.Now().Unix(),
+			ServerName:  msg.ServerName,
+			ServerIP:    msg.ServerIP,
+			Port:        msg.Port,
+			DeviceID:    msg.DeviceID,
+			LastSeen:    time.Now().Unix(),
+			UseTLS:      msg.UseTLS,
+			Fingerprint: msg.Fingerprint,
 		})
 
-		fmt.Printf("📡 Found server via UDP: %s at %s:%d\n", msg.ServerName, msg.ServerIP, msg.Port)
+		fmt.Printf("📡 Found server via UDP: %s at %s:%d (TLS: %v)\n", msg.ServerName, msg.ServerIP, msg.Port, msg.UseTLS)
 	}
 
 	return servers

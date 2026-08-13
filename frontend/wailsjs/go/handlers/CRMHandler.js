@@ -14,8 +14,16 @@ export function GetCustomers() {
   return window['go']['handlers']['CRMHandler']['GetCustomers']();
 }
 
+export function GetCustomersPaged(arg1, arg2, arg3) {
+  return window['go']['handlers']['CRMHandler']['GetCustomersPaged'](arg1, arg2, arg3);
+}
+
 export function GetSuppliers() {
   return window['go']['handlers']['CRMHandler']['GetSuppliers']();
+}
+
+export function GetSuppliersPaged(arg1, arg2, arg3) {
+  return window['go']['handlers']['CRMHandler']['GetSuppliersPaged'](arg1, arg2, arg3);
 }
 
 export function SaveCustomer(arg1) {

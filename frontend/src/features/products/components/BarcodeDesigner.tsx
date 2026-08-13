@@ -181,13 +181,13 @@ export const BarcodeDesigner: React.FC<BarcodeDesignerProps> = ({ onClose, initi
         const format = PAGE_FORMATS[pageFormat];
         const newCols = autoCalculateColumns(settings.width || 50, format.width, gridSettings.gap, gridSettings.pageMargin);
         setGridSettings(prev => ({ ...prev, columns: newCols }));
-    }, [pageFormat, settings.width]);
+    }, [pageFormat, settings.width, gridSettings.gap, gridSettings.pageMargin]);
 
     useEffect(() => {
         if (initialProduct && queue.length === 0 && onAddToQueue) {
             onAddToQueue(initialProduct, 1);
         }
-    }, []);
+    }, [initialProduct, onAddToQueue, queue.length]);
 
     const applyLabelPreset = (preset: typeof LABEL_PRESETS[number]) => {
         setSettings(prev => ({ ...prev, width: preset.width, height: preset.height }));

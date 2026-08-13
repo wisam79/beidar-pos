@@ -34,12 +34,16 @@ interface ServerStatus {
     port: number;
     clientCount: number;
     clients: string[];
+    useTls?: boolean;
+    fingerprint?: string;
 }
 
 interface ClientStatus {
     connected: boolean;
     serverAddress: string;
     mode: string;
+    useTls?: boolean;
+    fingerprint?: string;
 }
 
 interface ConnectedClient {
@@ -63,6 +67,10 @@ interface DiscoveredServer {
     serverName: string;
     serverIP: string;
     port: number;
+    deviceId?: string;
+    lastSeen?: number;
+    useTls?: boolean;
+    fingerprint?: string;
 }
 
 export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
@@ -309,24 +317,41 @@ export const LanSyncPanel: React.FC<LanSyncPanelProps> = ({ notify }) => {
                     {serverStatus?.running ? (
                         <div className="space-y-6">
                             {/* Server Address Box */}
-                            <div className="p-6 bg-surface border border-border rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-                                <div>
-                                    <p className="text-xs font-bold text-text-muted mb-2">عنوان IP للاتصال (اعطه للكاشير)</p>
-                                    <div className="flex items-center gap-3">
-                                        <code className="bg-black/80 text-success px-4 py-2 rounded-lg text-lg font-mono tracking-wider shadow-inner" dir="ltr">
-                                            {serverStatus.localIP}
-                                        </code>
-                                        <div className="h-8 w-px bg-border mx-2" />
-                                        <span className="text-sm font-mono text-text-muted">Port: {serverStatus.port}</span>
+                            <div className="p-6 bg-surface border border-border rounded-2xl flex flex-col gap-4">
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                                    <div>
+                                        <p className="text-xs font-bold text-text-muted mb-2">عنوان IP للاتصال (اعطه للكاشير)</p>
+                                        <div className="flex items-center gap-3">
+                                            <code className="bg-black/80 text-success px-4 py-2 rounded-lg text-lg font-mono tracking-wider shadow-inner" dir="ltr">
+                                                {serverStatus.localIP}
+                                            </code>
+                                            <div className="h-8 w-px bg-border mx-2" />
+                                            <span className="text-sm font-mono text-text-muted">Port: {serverStatus.port}</span>
+                                            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-success/10 text-success border border-success/20 flex items-center gap-1">
+                                                <Shield size={12} /> TLS 1.3 مشفر
+                                            </span>
+                                        </div>
                                     </div>
+                                    <button
+                                        onClick={copyAddress}
+                                        className="p-3 bg-surface-active hover:bg-success hover:text-white rounded-xl transition-all group border border-border"
+                                        title="نسخ العنوان"
+                                    >
+                                        {copied ? <Check size={20} /> : <Copy size={20} />}
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={copyAddress}
-                                    className="p-3 bg-surface-active hover:bg-success hover:text-white rounded-xl transition-all group border border-border"
-                                    title="نسخ العنوان"
-                                >
-                                    {copied ? <Check size={20} /> : <Copy size={20} />}
-                                </button>
+
+                                {serverStatus.fingerprint && (
+                                    <div className="p-3 bg-bg border border-border/60 rounded-xl text-right">
+                                        <p className="text-[11px] font-bold text-text-muted mb-1 flex items-center gap-1.5 justify-end">
+                                            <span>بصمة شهادة الأمان الرقمية (SHA-256 Fingerprint)</span>
+                                            <Shield size={13} className="text-primary" />
+                                        </p>
+                                        <p className="font-mono text-xs text-primary font-bold break-all select-all dir-ltr text-left bg-surface/50 p-2 rounded-lg border border-border/40">
+                                            {serverStatus.fingerprint}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Connected Clients Panel */}

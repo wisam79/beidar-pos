@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Landmark, TrendingDown, TrendingUp, Users, Trash2, Sparkles, Building2, Wallet, PieChart, Minus, FileText, ShoppingCart, LayoutDashboard, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import React, { useState, useMemo, useDeferredValue } from 'react';
+import { Landmark, TrendingDown, TrendingUp, Users, Trash2, Sparkles, Building2, Wallet, PieChart, Minus, FileText, ShoppingCart, LayoutDashboard, ArrowUpRight, ArrowDownRight, ArrowRight } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { formatCurrency, getLocalDateString } from '../../core/utils';
 import { Badge, Modal, PageHeader, EmptyState } from '../../components/ui';
@@ -12,7 +12,7 @@ import { invalidateAllData } from '../../core/queryClient';
 import { PurchaseOrdersTab } from './components/PurchaseOrdersTab';
 import { PageShell, StatsGrid, StatCard, LoadingState, TabNav, SearchInput } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
-import { useFinanceData } from '../../hooks/useFinance';
+import { useFinanceData, useSuppliersPaged } from '../../hooks/useFinance';
 import { Button } from '../../components/ds/Button';
 
 export const FinancePage: React.FC = () => {
@@ -20,6 +20,16 @@ export const FinancePage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'overview' | 'expenses' | 'suppliers' | 'purchases'>('overview');
     const [showStats, setShowStats] = useState(false);
     const [search, setSearch] = useState('');
+    const [supplierPage, setSupplierPage] = useState(1);
+    const [supplierPageSize] = useState(50);
+    const deferredSupplierSearch = useDeferredValue(search);
+
+    // Suppliers Paged Query
+    const { data: pagedSuppliersData } = useSuppliersPaged(
+        supplierPage,
+        supplierPageSize,
+        activeTab === 'suppliers' ? deferredSupplierSearch : ''
+    );
 
     // Expenses State
     const [expenseModal, setExpenseModal] = useState(false);
@@ -91,7 +101,7 @@ export const FinancePage: React.FC = () => {
         }).reverse();
 
         return { expenseBreakdown, trendData };
-    }, [expenses, sales]);
+    }, [expenses, sales, prefs?.currency]);
 
     // Revenue Growth Percentage (Current Month vs Previous Month)
     const revenueGrowthPct = useMemo(() => {
@@ -282,6 +292,9 @@ export const FinancePage: React.FC = () => {
 
     const filteredExpenses = expenses.filter(e => e.title.includes(search));
     const filteredSuppliers = suppliers.filter(s => s.name.includes(search) || s.companyName.includes(search));
+    const suppliersList = pagedSuppliersData?.data || filteredSuppliers;
+    const totalSuppliers = pagedSuppliersData?.total ?? filteredSuppliers.length;
+    const totalSupplierPages = pagedSuppliersData?.totalPages ?? 1;
 
     const expenseColumns: ColumnDef<Expense, string | number>[] = [
         { accessorKey: 'title', header: 'العنوان', size: 250, cell: (info) => <div className="font-bold text-text-main text-sm">{info.getValue() as string}</div> },
@@ -587,8 +600,8 @@ export const FinancePage: React.FC = () => {
 
                     {activeTab === 'suppliers' && (
                         <div className="space-y-4">
-                            <SearchInput value={search} onChange={setSearch} placeholder="بحث عن مورد..." />
-                            {filteredSuppliers.length === 0 ? <EmptyState icon={Users} title="لا يوجد موردين" /> : (
+                            <SearchInput value={search} onChange={(val) => { setSearch(val); setSupplierPage(1); }} placeholder="بحث عن مورد..." />
+                            {suppliersList.length === 0 ? <EmptyState icon={Users} title="لا يوجد موردين" /> : (
                                 <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
                                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                                         <table className="w-full text-right text-sm border-collapse">
@@ -600,7 +613,7 @@ export const FinancePage: React.FC = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {filteredSuppliers.map((s) => (
+                                                {suppliersList.map((s) => (
                                                     <tr
                                                         key={s.id}
                                                         className="border-b border-border/30 hover:bg-surface-hover transition-colors group"
@@ -631,6 +644,34 @@ export const FinancePage: React.FC = () => {
                                                 ))}
                                             </tbody>
                                         </table>
+                                    </div>
+                                    {/* Suppliers Pagination Controls */}
+                                    <div className="shrink-0 py-3 flex items-center justify-between border-t border-border px-4 bg-surface rounded-b-xl">
+                                        <span className="text-[10px] text-text-muted font-mono flex items-center gap-2 font-bold">
+                                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_var(--color-primary)]"></div>
+                                            عرض {suppliersList.length} من {totalSuppliers} مورد
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                disabled={supplierPage <= 1}
+                                                onClick={() => setSupplierPage(p => Math.max(1, p - 1))}
+                                                className="p-2 bg-bg border border-border rounded-xl text-text-main hover:bg-surface-hover disabled:opacity-30 transition-colors"
+                                                title="الصفحة السابقة"
+                                            >
+                                                <ArrowRight size={16} className="rotate-180" />
+                                            </button>
+                                            <span className="text-xs font-bold text-text-main min-w-[32px] text-center bg-bg py-2 px-3 rounded-xl border border-border">
+                                                {supplierPage} / {totalSupplierPages}
+                                            </span>
+                                            <button
+                                                disabled={supplierPage >= totalSupplierPages}
+                                                onClick={() => setSupplierPage(p => p + 1)}
+                                                className="p-2 bg-bg border border-border rounded-xl text-text-main hover:bg-surface-hover disabled:opacity-30 transition-colors"
+                                                title="الصفحة التالية"
+                                            >
+                                                <ArrowRight size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             )}

@@ -10,6 +10,9 @@ export default defineConfig({
         setupFiles: './src/setupTests.ts',
         css: true,
         include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-        pool: 'threads',
+        // Forks are stable with the WebView/jsdom mocks on Windows. The threads
+        // pool can stall before running tests under newer Node versions.
+        pool: 'forks',
+        fileParallelism: false,
     },
 });

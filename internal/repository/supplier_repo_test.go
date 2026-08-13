@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"testing"
 
 	"beidar-desktop/internal/core/domain"
@@ -139,5 +140,49 @@ func TestSupplierRepository_Delete(t *testing.T) {
 
 	if _, err := repo.GetByID("sup_del"); err == nil {
 		t.Error("expected error after delete")
+	}
+}
+
+func TestSupplierRepository_GetSuppliersPaged(t *testing.T) {
+	repo, cleanup := setupSupplierTestDB(t)
+	defer cleanup()
+
+	for i := 1; i <= 12; i++ {
+		s := &domain.Supplier{
+			ID:          fmt.Sprintf("sup_%02d", i),
+			Name:        fmt.Sprintf("Supplier %02d", i),
+			CompanyName: fmt.Sprintf("Company %02d", i),
+			Phone:       fmt.Sprintf("07800000%02d", i),
+		}
+		if err := repo.Create(s); err != nil {
+			t.Fatalf("Create failed: %v", err)
+		}
+	}
+
+	// Page 1 with pageSize 5
+	paged, err := repo.GetSuppliersPaged(1, 5, "")
+	if err != nil {
+		t.Fatalf("GetSuppliersPaged failed: %v", err)
+	}
+	if paged.Total != 12 {
+		t.Errorf("Total = %d, want 12", paged.Total)
+	}
+	if paged.TotalPages != 3 {
+		t.Errorf("TotalPages = %d, want 3", paged.TotalPages)
+	}
+	if len(paged.Data) != 5 {
+		t.Errorf("Data len = %d, want 5", len(paged.Data))
+	}
+
+	// Search filter
+	pagedSearch, err := repo.GetSuppliersPaged(1, 5, "Company 03")
+	if err != nil {
+		t.Fatalf("GetSuppliersPaged with search failed: %v", err)
+	}
+	if pagedSearch.Total != 1 {
+		t.Errorf("Search total = %d, want 1", pagedSearch.Total)
+	}
+	if len(pagedSearch.Data) != 1 || pagedSearch.Data[0].Name != "Supplier 03" {
+		t.Errorf("Expected Supplier 03, got %+v", pagedSearch.Data)
 	}
 }

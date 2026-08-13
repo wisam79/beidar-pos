@@ -39,7 +39,7 @@ func TestLAN_Server_SessionToken_Authentication_SuccessAndFailure(t *testing.T) 
 	defer func() { _ = lanSvc.StopServer() }()
 
 	status := lanSvc.GetServerStatus()
-	serverURL := fmt.Sprintf("http://127.0.0.1:%d", status.Port)
+	serverURL := fmt.Sprintf("https://127.0.0.1:%d", status.Port)
 
 	// 1. Connect using valid secret
 	secret := lanSvc.GetServerSecret()
@@ -49,7 +49,8 @@ func TestLAN_Server_SessionToken_Authentication_SuccessAndFailure(t *testing.T) 
 		"secret":     secret,
 	})
 
-	respConnect, err := http.Post(serverURL+"/api/connect", "application/json", bytes.NewBuffer(connectPayload))
+	client := testHTTPClient()
+	respConnect, err := client.Post(serverURL+"/api/connect", "application/json", bytes.NewBuffer(connectPayload))
 	if err != nil {
 		t.Fatalf("failed to post /api/connect: %v", err)
 	}
@@ -73,7 +74,7 @@ func TestLAN_Server_SessionToken_Authentication_SuccessAndFailure(t *testing.T) 
 	reqPing, _ := http.NewRequest("GET", serverURL+"/api/products", nil)
 	reqPing.Header.Set("X-Session-Token", token)
 
-	client := &http.Client{Timeout: 2 * time.Second}
+	client = testHTTPClient()
 	respPing, err := client.Do(reqPing)
 	if err != nil {
 		t.Fatalf("failed to send GET /api/products with token: %v", err)
@@ -118,9 +119,9 @@ func TestLAN_Server_ConnectRateLimiting_Tarpit(t *testing.T) {
 	defer func() { _ = lanSvc.StopServer() }()
 
 	status := lanSvc.GetServerStatus()
-	serverURL := fmt.Sprintf("http://127.0.0.1:%d", status.Port)
+	serverURL := fmt.Sprintf("https://127.0.0.1:%d", status.Port)
 
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := testHTTPClient()
 
 	// Send invalid connect requests to trigger rate limiting
 	badPayload, _ := json.Marshal(map[string]string{
@@ -262,7 +263,7 @@ func TestLAN_Server_ClientDisconnect_RevokesSession(t *testing.T) {
 	defer func() { _ = lanSvc.StopServer() }()
 
 	status := lanSvc.GetServerStatus()
-	serverURL := fmt.Sprintf("http://127.0.0.1:%d", status.Port)
+	serverURL := fmt.Sprintf("https://127.0.0.1:%d", status.Port)
 
 	// Connect client
 	connectPayload, _ := json.Marshal(map[string]string{
@@ -271,7 +272,8 @@ func TestLAN_Server_ClientDisconnect_RevokesSession(t *testing.T) {
 		"secret":     lanSvc.GetServerSecret(),
 	})
 
-	resp, err := http.Post(serverURL+"/api/connect", "application/json", bytes.NewBuffer(connectPayload))
+	client := testHTTPClient()
+	resp, err := client.Post(serverURL+"/api/connect", "application/json", bytes.NewBuffer(connectPayload))
 	if err != nil {
 		t.Fatalf("failed to connect: %v", err)
 	}
@@ -288,8 +290,8 @@ func TestLAN_Server_ClientDisconnect_RevokesSession(t *testing.T) {
 	req, _ := http.NewRequest("GET", serverURL+"/api/products", nil)
 	req.Header.Set("X-Session-Token", token)
 
-	client := &http.Client{Timeout: 2 * time.Second}
-	respPing, err := client.Do(req)
+	clientDo := testHTTPClient()
+	respPing, err := clientDo.Do(req)
 	if err == nil {
 		defer respPing.Body.Close()
 		if respPing.StatusCode != http.StatusUnauthorized {
@@ -316,7 +318,7 @@ func TestLAN_Server_SuspendAndResumeClient_Behavior(t *testing.T) {
 	defer func() { _ = lanSvc.StopServer() }()
 
 	status := lanSvc.GetServerStatus()
-	serverURL := fmt.Sprintf("http://127.0.0.1:%d", status.Port)
+	serverURL := fmt.Sprintf("https://127.0.0.1:%d", status.Port)
 
 	// Connect client
 	connectPayload, _ := json.Marshal(map[string]string{
@@ -325,7 +327,8 @@ func TestLAN_Server_SuspendAndResumeClient_Behavior(t *testing.T) {
 		"secret":     lanSvc.GetServerSecret(),
 	})
 
-	resp, _ := http.Post(serverURL+"/api/connect", "application/json", bytes.NewBuffer(connectPayload))
+	client := testHTTPClient()
+	resp, _ := client.Post(serverURL+"/api/connect", "application/json", bytes.NewBuffer(connectPayload))
 	var connectRes map[string]interface{}
 	_ = json.NewDecoder(resp.Body).Decode(&connectRes)
 	token, _ := connectRes["token"].(string)
@@ -337,9 +340,9 @@ func TestLAN_Server_SuspendAndResumeClient_Behavior(t *testing.T) {
 	// Call API while suspended -> 401 Unauthorized or 403 Forbidden
 	req, _ := http.NewRequest("GET", serverURL+"/api/products", nil)
 	req.Header.Set("X-Session-Token", token)
-	client := &http.Client{Timeout: 2 * time.Second}
+	clientDo := testHTTPClient()
 
-	respSuspended, err := client.Do(req)
+	respSuspended, err := clientDo.Do(req)
 	if err == nil {
 		defer respSuspended.Body.Close()
 		if respSuspended.StatusCode != http.StatusUnauthorized && respSuspended.StatusCode != http.StatusForbidden {
@@ -351,7 +354,7 @@ func TestLAN_Server_SuspendAndResumeClient_Behavior(t *testing.T) {
 	_ = lanSvc.ResumeClient("device-suspend-test")
 
 	// Call API after resume -> 200 OK
-	respResumed, err := client.Do(req)
+	respResumed, err := clientDo.Do(req)
 	if err == nil {
 		defer respResumed.Body.Close()
 		if respResumed.StatusCode != http.StatusOK {

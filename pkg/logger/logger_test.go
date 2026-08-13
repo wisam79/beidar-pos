@@ -177,3 +177,74 @@ func TestLogFilePathIsUnderLogsDir(t *testing.T) {
 		t.Errorf("log path %q is not under ./logs", lg.GetLogFilePath())
 	}
 }
+
+func TestMaskPhone(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"", ""},
+		{"12", "***"},
+		{"1234", "***"},
+		{"0770123", "07****3"},
+		{"07701234567", "0770****567"},
+		{"+9647701234567", "+9647******567"},
+	}
+
+	for _, tt := range tests {
+		got := MaskPhone(tt.input)
+		if got != tt.want {
+			t.Errorf("MaskPhone(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestMaskSensitiveText(t *testing.T) {
+	input := "Customer with phone 07701234567 requested statement"
+	got := MaskSensitiveText(input)
+	if strings.Contains(got, "07701234567") {
+		t.Errorf("MaskSensitiveText failed to mask phone number: %s", got)
+	}
+	if !strings.Contains(got, "0770****567") {
+		t.Errorf("MaskSensitiveText expected masked phone, got: %s", got)
+	}
+}
+
+func TestSanitizeAttr(t *testing.T) {
+	resetLogger()
+	t.Chdir(t.TempDir())
+	lg := InitLogger(DEBUG, true)
+	defer lg.Close()
+
+	// Direct slog logging with sensitive attributes
+	lg.slogger.Info("User logged in",
+		"adminPin", "1234",
+		"sessionToken", "secret-token-xyz",
+		"customerPhone", "07701234567",
+		"apiKey", "ai-key-secret-12345",
+	)
+
+	// Read log file and verify redacted fields
+	lg.Close()
+	content, err := os.ReadFile(lg.GetLogFilePath())
+	if err != nil {
+		t.Fatalf("Failed to read log file: %v", err)
+	}
+	logStr := string(content)
+
+	if strings.Contains(logStr, "1234") {
+		t.Errorf("Log contains unmasked PIN: %s", logStr)
+	}
+	if strings.Contains(logStr, "secret-token-xyz") {
+		t.Errorf("Log contains unmasked token: %s", logStr)
+	}
+	if strings.Contains(logStr, "ai-key-secret-12345") {
+		t.Errorf("Log contains unmasked apiKey: %s", logStr)
+	}
+	if strings.Contains(logStr, "07701234567") {
+		t.Errorf("Log contains unmasked phone number: %s", logStr)
+	}
+	if !strings.Contains(logStr, "[REDACTED]") {
+		t.Errorf("Log expected [REDACTED] placeholder: %s", logStr)
+	}
+}

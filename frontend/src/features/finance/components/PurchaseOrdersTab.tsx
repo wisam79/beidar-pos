@@ -127,13 +127,13 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
 
     // Receive order
     const handleReceiveOrder = async () => {
-        if (!selectedOrder) return;
+        if (!selectedOrder?.id) return;
 
         const itemsToReceive = receiveItems.filter(i => i.receivedQty > 0);
         if (itemsToReceive.length === 0) { notify('يرجى تحديد الكميات المستلمة', 'error'); return; }
 
         try {
-            await api.purchaseOrders.receive(selectedOrder.id!, itemsToReceive);
+            await api.purchaseOrders.receive(selectedOrder.id, itemsToReceive);
             notify('تم تسجيل الاستلام بنجاح', 'success');
             setShowReceiveModal(false);
             setSelectedOrder(null);
@@ -149,10 +149,10 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
 
     // Pay order
     const handlePayOrder = async () => {
-        if (!selectedOrder || payAmount <= 0) { notify('يرجى إدخال مبلغ صحيح', 'error'); return; }
+        if (!selectedOrder?.id || payAmount <= 0) { notify('يرجى إدخال مبلغ صحيح', 'error'); return; }
 
         try {
-            await api.purchaseOrders.pay(selectedOrder.id!, payAmount, payMethod);
+            await api.purchaseOrders.pay(selectedOrder.id, payAmount, payMethod);
             notify('تم تسجيل الدفع بنجاح', 'success');
             setShowPayModal(false);
             setSelectedOrder(null);
@@ -169,13 +169,15 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
 
     // Cancel order
     const handleCancelOrder = (order: PurchaseOrder) => {
+        if (!order.id) return;
+        const orderID = order.id;
         openConfirm({
             title: 'إلغاء أمر الشراء',
             message: `هل أنت متأكد من إلغاء أمر الشراء #${order.id}؟`,
             type: 'warning',
             onConfirm: async () => {
                 try {
-                    await api.purchaseOrders.cancel(order.id!);
+                    await api.purchaseOrders.cancel(orderID);
                     notify('تم إلغاء الأمر', 'success');
                     invalidateAllData();
                     loadOrders();
@@ -190,13 +192,15 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
 
     // Delete order
     const handleDeleteOrder = (order: PurchaseOrder) => {
+        if (!order.id) return;
+        const orderID = order.id;
         openConfirm({
             title: 'حذف أمر الشراء',
             message: `هل أنت متأكد من حذف أمر الشراء #${order.id}؟ هذا الإجراء لا يمكن التراجع عنه.`,
             type: 'error',
             onConfirm: async () => {
                 try {
-                    await api.purchaseOrders.delete(order.id!);
+                    await api.purchaseOrders.delete(orderID);
                     notify('تم حذف الأمر', 'success');
                     invalidateAllData();
                     loadOrders();
@@ -310,7 +314,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                             {/* Order Header */}
                             <div
                                 className="p-4 flex items-center justify-between cursor-pointer"
-                                onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id!)}
+                                onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id ?? null)}
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">

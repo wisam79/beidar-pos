@@ -11,7 +11,9 @@ import (
 
 // GenerateSessionToken creates a unique session token for a client
 func (s *lanService) GenerateSessionToken() (string, error) {
-	bytes := make([]byte, 16)
+	// 256-bit random tokens make online guessing and token collisions
+	// computationally infeasible for LAN sessions.
+	bytes := make([]byte, 32)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", fmt.Errorf("failed to generate secure session token: %w", err)
 	}
@@ -20,6 +22,9 @@ func (s *lanService) GenerateSessionToken() (string, error) {
 
 // RegisterClient registers a new client connection
 func (s *lanService) RegisterClient(deviceID, deviceName, ipAddress string) (string, error) {
+	if deviceID == "" || deviceName == "" {
+		return "", fmt.Errorf("معرف واسم الجهاز مطلوبان")
+	}
 	// Check if device is blocked
 	blocked, err := s.networkRepo.IsDeviceBlocked(deviceID)
 	if err != nil {

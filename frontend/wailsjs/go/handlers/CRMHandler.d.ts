@@ -9,7 +9,11 @@ export function DeleteSupplier(arg1:string,arg2:boolean):Promise<void>;
 
 export function GetCustomers():Promise<Array<domain.Customer>>;
 
+export function GetCustomersPaged(arg1:number,arg2:number,arg3:string):Promise<domain.PaginatedCustomers>;
+
 export function GetSuppliers():Promise<Array<domain.Supplier>>;
+
+export function GetSuppliersPaged(arg1:number,arg2:number,arg3:string):Promise<domain.PaginatedSuppliers>;
 
 export function SaveCustomer(arg1:domain.Customer):Promise<void>;
 

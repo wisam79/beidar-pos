@@ -62,6 +62,7 @@ type CustomerRepository interface {
 	WithTx(tx Tx) CustomerRepository
 	Transaction(fn func(tx Tx) error) error
 	GetAll() ([]Customer, error)
+	GetCustomersPaged(page int, pageSize int, search string) (*PaginatedCustomers, error)
 	GetByID(id string) (*Customer, error)
 	GetForUpdate(id string) (*Customer, error)
 	GetByIDs(ids []string) ([]Customer, error)
@@ -156,6 +157,7 @@ type SupplierRepository interface {
 	WithTx(tx Tx) SupplierRepository
 	Transaction(fn func(tx Tx) error) error
 	GetAll() ([]Supplier, error)
+	GetSuppliersPaged(page int, pageSize int, search string) (*PaginatedSuppliers, error)
 	GetByID(id string) (*Supplier, error)
 	GetForUpdate(id string) (*Supplier, error)
 	Create(supplier *Supplier) error
@@ -303,11 +305,13 @@ type FinanceService interface {
 // CRMService defines the business logic for customers and suppliers
 type CRMService interface {
 	GetCustomers() ([]Customer, error)
+	GetCustomersPaged(page int, pageSize int, search string) (*PaginatedCustomers, error)
 	SaveCustomer(c Customer) error
 	DeleteCustomer(id string, force bool) error
 	SearchCustomers(query string) ([]Customer, error)
 
 	GetSuppliers() ([]Supplier, error)
+	GetSuppliersPaged(page int, pageSize int, search string) (*PaginatedSuppliers, error)
 	SaveSupplier(s Supplier) error
 	DeleteSupplier(id string, force bool) error
 }

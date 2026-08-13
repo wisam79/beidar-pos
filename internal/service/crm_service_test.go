@@ -6,6 +6,7 @@ import (
 	"beidar-desktop/internal/service"
 	"beidar-desktop/internal/testutil"
 	"beidar-desktop/pkg/logger"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -172,5 +173,64 @@ func TestSearchCustomers(t *testing.T) {
 	}
 	if len(results) != 0 {
 		t.Errorf("Expected 0 customers, got %d", len(results))
+	}
+}
+
+func TestCRMService_Pagination(t *testing.T) {
+	s, db, cleanup := setupCRMTestDB(t)
+	defer cleanup()
+
+	// Seed customers and suppliers
+	for i := 1; i <= 25; i++ {
+		db.Create(&domain.Customer{
+			ID:    fmt.Sprintf("cust_p_%02d", i),
+			Name:  fmt.Sprintf("Client %02d", i),
+			Phone: fmt.Sprintf("077000000%02d", i),
+		})
+		db.Create(&domain.Supplier{
+			ID:          fmt.Sprintf("sup_p_%02d", i),
+			Name:        fmt.Sprintf("Distributor %02d", i),
+			CompanyName: fmt.Sprintf("Vendor Corp %02d", i),
+			Phone:       fmt.Sprintf("078000000%02d", i),
+		})
+	}
+
+	// Test GetCustomersPaged
+	custPaged, err := s.GetCustomersPaged(1, 10, "")
+	if err != nil {
+		t.Fatalf("GetCustomersPaged failed: %v", err)
+	}
+	if custPaged.Total != 25 {
+		t.Errorf("Total = %d, want 25", custPaged.Total)
+	}
+	if custPaged.TotalPages != 3 {
+		t.Errorf("TotalPages = %d, want 3", custPaged.TotalPages)
+	}
+	if len(custPaged.Data) != 10 {
+		t.Errorf("Data len = %d, want 10", len(custPaged.Data))
+	}
+
+	// Test GetSuppliersPaged
+	supPaged, err := s.GetSuppliersPaged(2, 10, "")
+	if err != nil {
+		t.Fatalf("GetSuppliersPaged failed: %v", err)
+	}
+	if supPaged.Total != 25 {
+		t.Errorf("Total = %d, want 25", supPaged.Total)
+	}
+	if supPaged.Page != 2 {
+		t.Errorf("Page = %d, want 2", supPaged.Page)
+	}
+	if len(supPaged.Data) != 10 {
+		t.Errorf("Data len = %d, want 10", len(supPaged.Data))
+	}
+
+	// Test boundary inputs: negative page or zero pageSize
+	edgePaged, err := s.GetCustomersPaged(0, 0, "")
+	if err != nil {
+		t.Fatalf("GetCustomersPaged boundary failed: %v", err)
+	}
+	if edgePaged.Page != 1 || edgePaged.PageSize != 50 {
+		t.Errorf("Expected clamped page 1 and pageSize 50, got page=%d, pageSize=%d", edgePaged.Page, edgePaged.PageSize)
 	}
 }

@@ -64,11 +64,42 @@ func (s *backupService) CreateBackup() (*domain.BackupResult, error) {
 		return result, nil
 	}
 
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
+	// Milliseconds avoid filename collisions when an automatic safety snapshot is
+	// created immediately before a manual restore.
+	timestamp := time.Now().Format("2006-01-02_15-04-05.000")
 	filename := fmt.Sprintf("beidar_backup_%s.json", timestamp)
 	backupPath := filepath.Join(backupDir, filename)
 
-	if err := os.WriteFile(backupPath, jsonData, 0644); err != nil {
+	// Write to a private temporary file then atomically rename it. A power loss
+	// can therefore never leave a partially-written backup presented as valid.
+	tempFile, err := os.CreateTemp(backupDir, filename+"-*.tmp")
+	if err != nil {
+		result.Error = fmt.Sprintf("فشل إنشاء ملف النسخة المؤقت: %v", err)
+		return result, nil
+	}
+	tempPath := tempFile.Name()
+	defer func() { _ = os.Remove(tempPath) }()
+
+	if err := tempFile.Chmod(0600); err != nil {
+		_ = tempFile.Close()
+		result.Error = fmt.Sprintf("فشل حماية ملف النسخة: %v", err)
+		return result, nil
+	}
+	if _, err := tempFile.Write(jsonData); err != nil {
+		_ = tempFile.Close()
+		result.Error = fmt.Sprintf("فشل حفظ ملف النسخة: %v", err)
+		return result, nil
+	}
+	if err := tempFile.Sync(); err != nil {
+		_ = tempFile.Close()
+		result.Error = fmt.Sprintf("فشل مزامنة ملف النسخة: %v", err)
+		return result, nil
+	}
+	if err := tempFile.Close(); err != nil {
+		result.Error = fmt.Sprintf("فشل إغلاق ملف النسخة: %v", err)
+		return result, nil
+	}
+	if err := os.Rename(tempPath, backupPath); err != nil {
 		result.Error = fmt.Sprintf("فشل حفظ الملف: %v", err)
 		return result, nil
 	}
@@ -160,6 +191,16 @@ func (s *backupService) RestoreBackup(backupPath string) error {
 	var dbExport domain.DatabaseExport
 	if err := json.Unmarshal(data, &dbExport); err != nil {
 		return fmt.Errorf("فشل تحليل البيانات: %w", err)
+	}
+
+	// Take a recovery snapshot before replacing live data. Restoring a valid but
+	// unintended backup must remain reversible for the administrator.
+	preRestore, err := s.CreateBackup()
+	if err != nil || !preRestore.Success {
+		if err != nil {
+			return fmt.Errorf("فشل إنشاء نسخة أمان قبل الاستعادة: %w", err)
+		}
+		return fmt.Errorf("فشل إنشاء نسخة أمان قبل الاستعادة: %s", preRestore.Error)
 	}
 
 	if err := s.backupRepo.Import(dbExport); err != nil {
@@ -305,26 +346,26 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 
 	// Map headers (supports both Arabic and English)
 	headerMap := map[string]string{
-		"الباركود":        "barcode",
-		"barcode":         "barcode",
-		"اسم المنتج":      "name",
-		"name":            "name",
+		"الباركود":       "barcode",
+		"barcode":        "barcode",
+		"اسم المنتج":     "name",
+		"name":           "name",
 		"الوصف":          "description",
-		"description":     "description",
-		"الفئة":           "category",
-		"category":        "category",
-		"المورد":          "supplier",
-		"supplier":        "supplier",
-		"التكلفة":         "cost",
-		"cost":            "cost",
-		"السعر":           "price",
-		"price":           "price",
-		"المخزون":         "stock",
-		"stock":           "stock",
-		"الحد الأدنى":     "minstock",
-		"minstock":        "minstock",
-		"سعر الجملة":      "wholesaleprice",
-		"wholesaleprice":   "wholesaleprice",
+		"description":    "description",
+		"الفئة":          "category",
+		"category":       "category",
+		"المورد":         "supplier",
+		"supplier":       "supplier",
+		"التكلفة":        "cost",
+		"cost":           "cost",
+		"السعر":          "price",
+		"price":          "price",
+		"المخزون":        "stock",
+		"stock":          "stock",
+		"الحد الأدنى":    "minstock",
+		"minstock":       "minstock",
+		"سعر الجملة":     "wholesaleprice",
+		"wholesaleprice": "wholesaleprice",
 	}
 
 	firstRow := records[0]
@@ -646,5 +687,3 @@ func parseFloat(s string) (float64, error) {
 	}
 	return strconv.ParseFloat(s, 64)
 }
-
-

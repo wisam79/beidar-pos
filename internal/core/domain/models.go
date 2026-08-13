@@ -205,6 +205,22 @@ type PaginatedProducts struct {
 	Stats      ProductStats `json:"stats"`
 }
 
+type PaginatedCustomers struct {
+	Data       []Customer `json:"data"`
+	Total      int64      `json:"total"`
+	TotalPages int        `json:"totalPages"`
+	Page       int        `json:"page"`
+	PageSize   int        `json:"pageSize"`
+}
+
+type PaginatedSuppliers struct {
+	Data       []Supplier `json:"data"`
+	Total      int64      `json:"total"`
+	TotalPages int        `json:"totalPages"`
+	Page       int        `json:"page"`
+	PageSize   int        `json:"pageSize"`
+}
+
 type LoginAttempt struct {
 	ID          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 	Identifier  string `gorm:"uniqueIndex" json:"identifier"`

@@ -239,12 +239,30 @@ export async function mockWails(page: Page) {
                             GetCustomers: () => Promise.resolve([
                                 { id: 'cust-1', name: 'عميل تجريبي', phone: '123456789', debt: 5000, installmentDebt: 2000, totalPurchases: 10000, balance: -7000 }
                             ]),
+                            GetCustomersPaged: (page: number = 1, pageSize: number = 50, _search: string = '') => Promise.resolve({
+                                data: [
+                                    { id: 'cust-1', name: 'عميل تجريبي', phone: '123456789', debt: 5000, installmentDebt: 2000, totalPurchases: 10000, balance: -7000 }
+                                ],
+                                total: 1,
+                                page: page || 1,
+                                pageSize: pageSize || 50,
+                                totalPages: 1
+                            }),
                             SearchCustomers: (q: string) => Promise.resolve([
                                 { id: 'cust-1', name: 'عميل تجريبي', phone: '123456789', debt: 5000, installmentDebt: 2000, totalPurchases: 10000, balance: -7000 }
                             ]),
                             GetSuppliers: () => Promise.resolve([
                                 { id: 'supp-1', name: 'مورد تجريبي', companyName: 'مورد تجريبي ش.م.م', phone: '987654321', totalPurchases: 12000, balance: 0 }
                             ]),
+                            GetSuppliersPaged: (page: number = 1, pageSize: number = 50, _search: string = '') => Promise.resolve({
+                                data: [
+                                    { id: 'supp-1', name: 'مورد تجريبي', companyName: 'مورد تجريبي ش.م.م', phone: '987654321', totalPurchases: 12000, balance: 0 }
+                                ],
+                                total: 1,
+                                page: page || 1,
+                                pageSize: pageSize || 50,
+                                totalPages: 1
+                            }),
                             SaveCustomer: (customer: any) => Promise.resolve(),
                             SaveSupplier: (supplier: any) => Promise.resolve(),
                             DeleteCustomer: (id: string, hard: boolean) => Promise.resolve(),

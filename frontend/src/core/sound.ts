@@ -61,7 +61,9 @@ class SoundManagerClass {
      */
     public playError() {
         if (!this.enabled || !this.ensureContext()) return;
-        const t = this.ctx!.currentTime;
+        const ctx = this.ctx;
+        if (!ctx) return;
+        const t = ctx.currentTime;
         this.playTone(150, 'sawtooth', t, 0.1);
         this.playTone(100, 'sawtooth', t + 0.05, 0.15);
     }
@@ -71,7 +73,9 @@ class SoundManagerClass {
      */
     public playWarning() {
         if (!this.enabled || !this.ensureContext()) return;
-        const t = this.ctx!.currentTime;
+        const ctx = this.ctx;
+        if (!ctx) return;
+        const t = ctx.currentTime;
         this.playTone(440, 'triangle', t, 0.1);
     }
 
@@ -80,17 +84,19 @@ class SoundManagerClass {
      */
     public playClick() {
         if (!this.enabled || !this.clickBuffer || !this.ensureContext()) return;
+        const ctx = this.ctx;
+        if (!ctx) return;
 
         // Use a simple buffer source for maximum speed
-        const source = this.ctx!.createBufferSource();
+        const source = ctx.createBufferSource();
         source.buffer = this.clickBuffer;
 
         // Bypass gain node if possible for speed, or simple connection
-        const gain = this.ctx!.createGain();
+        const gain = ctx.createGain();
         gain.gain.value = 0.15; // Slightly louder but short
 
         source.connect(gain);
-        gain.connect(this.ctx!.destination);
+        gain.connect(ctx.destination);
         source.start(0);
     }
 

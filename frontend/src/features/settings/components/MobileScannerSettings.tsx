@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Smartphone, RefreshCw, Wifi, QrCode, CheckCircle2 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { api } from '../../../core/api';
 import { NotifyFunction } from '../../../core/types';
+import { logger } from '../../../core/logger';
 
 interface MobileScannerSettingsProps {
     notify: NotifyFunction;
@@ -17,7 +18,17 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
     });
     const [isLoading, setIsLoading] = useState(false);
 
-    const fetchStatus = async () => {
+    const generateQR = useCallback(async (ip: string, port: number) => {
+        const payload = { ip, port, type: 'beidar-scanner', name: 'Desktop POS' };
+        try {
+            const url = await QRCode.toDataURL(JSON.stringify(payload), { width: 280, margin: 2 });
+            setQrData(url);
+        } catch (e) {
+            logger.error('Failed to generate LAN pairing QR', e, 'MobileScannerSettings');
+        }
+    }, []);
+
+    const fetchStatus = useCallback(async () => {
         setIsLoading(true);
         try {
             const status = await api.lan.getServerStatus();
@@ -28,27 +39,12 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
                 setServerStatus({ running: false, ip: '', port: 0 });
             }
         } catch (e) {
-            console.error(e);
+            logger.error('Failed to fetch LAN server status', e, 'MobileScannerSettings');
             notify('فشل في جلب حالة السيرفر', 'error');
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const generateQR = async (ip: string, port: number) => {
-        const payload = {
-            ip: ip,
-            port: port,
-            type: 'beidar-scanner',
-            name: 'Desktop POS'
-        };
-        try {
-            const url = await QRCode.toDataURL(JSON.stringify(payload), { width: 280, margin: 2 });
-            setQrData(url);
-        } catch (e) {
-            console.error(e);
-        }
-    };
+    }, [generateQR, notify]);
 
     const startServer = async () => {
         setIsLoading(true);
@@ -65,8 +61,8 @@ export const MobileScannerSettings: React.FC<MobileScannerSettingsProps> = ({ no
     };
 
     useEffect(() => {
-        fetchStatus();
-    }, []);
+        void fetchStatus();
+    }, [fetchStatus]);
 
     return (
         <div className="space-y-5 animate-in fade-in duration-300 pb-8 select-none">
