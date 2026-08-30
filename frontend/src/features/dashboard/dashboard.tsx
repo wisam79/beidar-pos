@@ -32,9 +32,9 @@ const TactileButton = memo(({
         onClick={onClick}
         className={cn(
             'group relative flex flex-col justify-between items-center text-center select-none outline-none cursor-pointer',
-            'rounded-2xl p-6 sm:p-7 transition-all duration-300 ease-out min-h-[220px] lg:min-h-[240px]',
+            'rounded-3xl p-5 sm:p-6 transition-all duration-300 ease-out aspect-square w-full max-w-[270px] mx-auto',
             'bg-surface hover:bg-surface-hover/90 border border-border/80 hover:border-primary/50',
-            'shadow-2xs hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1.5',
+            'shadow-2xs hover:shadow-xl hover:shadow-primary/15 hover:-translate-y-1.5',
             'active:scale-[0.98] active:translate-y-0 overflow-hidden'
         )}
     >
@@ -50,8 +50,8 @@ const TactileButton = memo(({
             </span>
         </div>
 
-        <div className="relative z-10 flex items-center justify-center my-auto transition-transform duration-300 group-hover:scale-110 group-hover:drop-shadow-lg">
-            <Icon3D size={190} />
+        <div className="relative z-10 flex items-center justify-center my-auto transition-transform duration-300 group-hover:scale-105">
+            <Icon3D size={76} />
         </div>
 
         <div className="relative z-10 w-full mt-2">
@@ -66,11 +66,11 @@ TactileButton.displayName = 'TactileButton';
 
 const SECTIONS = [
     { key: 'sales', title: 'المبيعات', sublabel: 'نقطة البيع', shortcut: 'F1', icon: Pos3DIcon },
-    { key: 'products', title: 'المخزون', sublabel: 'الأصناف', shortcut: 'F2', icon: Products3DIcon },
+    { key: 'products', title: 'المنتجات', sublabel: 'إدارة الأصناف', shortcut: 'F2', icon: Products3DIcon },
     { key: 'invoices', title: 'الفواتير', sublabel: 'سجل الطلبات', shortcut: 'F3', icon: Invoices3DIcon },
-    { key: 'shifts', title: 'الخزينة', sublabel: 'الورديات', shortcut: 'F4', icon: Vault3DIcon },
+    { key: 'shifts', title: 'الورديات', sublabel: 'الخزينة والصندوق', shortcut: 'F4', icon: Vault3DIcon },
     { key: 'customers', title: 'العملاء', sublabel: 'الديون والنقاط', shortcut: 'F5', icon: Customers3DIcon },
-    { key: 'reports', title: 'التقارير', sublabel: 'التحليلات', shortcut: 'F6', icon: Reports3DIcon },
+    { key: 'reports', title: 'التقارير', sublabel: 'التحليلات والمحاسبة', shortcut: 'F6', icon: Reports3DIcon },
 ] as const;
 
 export const Dashboard: React.FC = () => {
@@ -92,7 +92,7 @@ export const Dashboard: React.FC = () => {
     return (
         <PageShell className="p-0 h-full flex flex-col justify-between overflow-hidden select-none">
             <div className="flex-1 flex flex-col justify-center py-6 min-h-0">
-                <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7 max-w-5xl mx-auto w-full px-6">
+                <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6 max-w-4xl mx-auto w-full px-6">
                     {SECTIONS.map((section) => (
                         <TactileButton
                             key={section.key}
