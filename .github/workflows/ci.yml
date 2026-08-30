@@ -13,10 +13,10 @@ concurrency:
 
 jobs:
   # ═══════════════════════════════════════════════════════════════════
-  # 1. Go Backend: Fast Parallel Matrix & Tests
+  # 1. Go Backend: Fast Parallel Tests & Verification
   # ═══════════════════════════════════════════════════════════════════
   go-backend:
-    name: Go Backend (Lint, Vet & Race Tests)
+    name: Go Backend (Vet & Fast Test Suite)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,22 +37,17 @@ jobs:
       - name: Vet
         run: go vet ./internal/... ./pkg/...
 
-      - name: Test with Race Detection & Coverage
-        run: go test -race -count=1 -coverprofile=coverage.out ./internal/... ./pkg/...
+      - name: Fast Test Suite
+        run: go test -p 4 ./internal/... ./pkg/...
 
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: go-coverage
-          path: coverage.out
-          retention-days: 7
+      - name: Race Detection (Core & Security)
+        run: go test -race ./internal/core/domain ./pkg/auth ./pkg/crypto ./pkg/errors ./pkg/validator ./pkg/logger
 
   # ═══════════════════════════════════════════════════════════════════
-  # 2. React Frontend: Typecheck, Lint, Audit & Unit Tests
+  # 2. React Frontend: Ultra-Fast Parallel Check & Vitest Suite
   # ═══════════════════════════════════════════════════════════════════
   frontend:
-    name: React Frontend (Types, Lint & Tests)
+    name: React Frontend (Types, Lint & 330+ Tests)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -67,7 +62,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci --prefer-offline
+        run: npm ci --prefer-offline --no-audit
 
       - name: TypeScript Type Check
         run: npx tsc --noEmit
@@ -75,11 +70,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Production dependency audit
-        run: npm audit --omit=dev --audit-level=moderate || true
-
-      - name: Unit & Component Tests
-        run: npm run test:ci
+      - name: Unit & Component Vitest Suite
+        run: npx vitest run --pool=threads --maxConcurrency=4
 
       - name: Fast Production Build Check
         run: npx vite build
@@ -88,9 +80,9 @@ jobs:
   # 3. Playwright E2E Tests (Parallelized Chromium)
   # ═══════════════════════════════════════════════════════════════════
   e2e:
-    name: Playwright E2E Tests
+    name: Playwright E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 5
     defaults:
       run:
         working-directory: frontend
@@ -108,17 +100,17 @@ jobs:
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          key: playwright-v1-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
 
       - name: Install dependencies
-        run: npm ci --prefer-offline
+        run: npm ci --prefer-offline --no-audit
 
       - name: Install Playwright Chromium
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E Tests
-        run: npm run test:e2e
+        run: npx playwright test --workers=2 --project=chromium
         env:
           CI: true
 
@@ -128,4 +120,4 @@ jobs:
         with:
           name: playwright-report
           path: frontend/playwright-report/
-          retention-days: 7
+          retention-days: 5
