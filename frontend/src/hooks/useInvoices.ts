@@ -20,7 +20,11 @@ export const useInvoices = (
         queryKey: queryKeys.sales.list(page, pageSize, search, statusFilter, dateFilter),
         queryFn: async () => {
             const data = await api.sales.list(page, pageSize, search, statusFilter, dateFilter);
-            return data;
+            return {
+                data: data?.data || [],
+                total: data?.total || 0,
+                stats: data?.stats || { count: 0, total: 0, pending: 0, returns: 0 }
+            };
         },
         placeholderData: keepPreviousData // Keep previous data while fetching new page
     });

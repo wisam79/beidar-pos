@@ -25,6 +25,7 @@ type DiscoveryMessage struct {
 	DeviceID    string `json:"deviceId"`
 	UseTLS      bool   `json:"useTls"`
 	Fingerprint string `json:"fingerprint"`
+	Timestamp   int64  `json:"timestamp,omitempty"`
 }
 
 // GetLocalIP returns the local IP address of this machine
@@ -109,7 +110,6 @@ func (s *lanService) StartBroadcasting(httpPort int) error {
 		UseTLS:      true,
 		Fingerprint: s.serverFingerprint,
 	}
-	msgBytes, _ := json.Marshal(msg)
 
 	go func(ctx context.Context, conn *net.UDPConn) {
 		ticker := time.NewTicker(BroadcastInterval)
@@ -125,7 +125,10 @@ func (s *lanService) StartBroadcasting(httpPort int) error {
 				fmt.Println("📡 Stopping UDP discovery broadcast safely")
 				return
 			case <-ticker.C:
-				_, _ = conn.WriteToUDP(msgBytes, broadcastAddr)
+				msg.Timestamp = time.Now().Unix()
+				if updatedBytes, err := json.Marshal(msg); err == nil {
+					_, _ = conn.WriteToUDP(updatedBytes, broadcastAddr)
+				}
 			}
 		}
 	}(ctx, conn)
@@ -147,33 +150,26 @@ func (s *lanService) StopBroadcasting() {
 		s.broadcastCancel = nil
 	}
 	s.isBroadcasting = false
+	fmt.Println("📡 UDP discovery broadcast stopped")
 }
 
-// DiscoverServers scans for available Beidar servers on the network
+// DiscoverServers searches for Beidar POS servers on the local network
 func (s *lanService) DiscoverServers() ([]domain.DiscoveredServer, error) {
-	servers := make([]domain.DiscoveredServer, 0)
-	serverMap := make(map[string]*domain.DiscoveredServer)
+	fmt.Println("🔍 Starting LAN server discovery...")
+	servers := s.discoverViaUDP()
 
-	fmt.Println("🔍 Scanning for Beidar servers...")
-
-	// Try UDP discovery first
-	udpServers := s.discoverViaUDP()
-	for i := range udpServers {
-		srv := udpServers[i]
-		serverMap[srv.DeviceID] = &srv
-	}
-
-	// If no servers found via UDP (maybe same machine), try local check
-	if len(serverMap) == 0 {
-		localServer := s.discoverLocalServer()
-		if localServer != nil {
-			serverMap[localServer.DeviceID] = localServer
+	// Also check localhost
+	if localServer := s.discoverLocalServer(); localServer != nil {
+		exists := false
+		for _, srv := range servers {
+			if srv.Port == localServer.Port && (srv.ServerIP == "127.0.0.1" || srv.ServerIP == localServer.ServerIP) {
+				exists = true
+				break
+			}
 		}
-	}
-
-	// Convert map to slice
-	for _, server := range serverMap {
-		servers = append(servers, *server)
+		if !exists {
+			servers = append(servers, *localServer)
+		}
 	}
 
 	fmt.Printf("🔍 Scan complete. Found %d server(s)\n", len(servers))
@@ -181,23 +177,24 @@ func (s *lanService) DiscoverServers() ([]domain.DiscoveredServer, error) {
 }
 
 func (s *lanService) discoverViaUDP() []domain.DiscoveredServer {
-	servers := make([]domain.DiscoveredServer, 0)
+	serverMap := make(map[string]domain.DiscoveredServer)
 
 	conn, err := net.ListenUDP("udp4", &net.UDPAddr{Port: DiscoveryPort})
 	if err != nil {
 		conn, err = net.ListenUDP("udp4", nil)
 		if err != nil {
 			fmt.Printf("⚠️ UDP discovery failed: %v\n", err)
-			return servers
+			return []domain.DiscoveredServer{}
 		}
 	}
 	defer conn.Close()
 
 	_ = conn.SetReadDeadline(time.Now().Add(DiscoveryScanDuration))
 
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 2048)
+	now := time.Now().Unix()
 
-	for {
+	for len(serverMap) < 50 {
 		n, remoteAddr, err := conn.ReadFromUDP(buffer)
 		if err != nil {
 			break
@@ -212,21 +209,34 @@ func (s *lanService) discoverViaUDP() []domain.DiscoveredServer {
 			continue
 		}
 
-		if msg.ServerIP == "" || msg.ServerIP == "127.0.0.1" {
-			msg.ServerIP = remoteAddr.IP.String()
+		// Discard stale broadcasts older than 30 seconds
+		if msg.Timestamp > 0 && (now-msg.Timestamp) > 30 {
+			continue
 		}
 
-		servers = append(servers, domain.DiscoveredServer{
+		// Security: Always bind to the actual remote UDP IP
+		serverIP := remoteAddr.IP.String()
+		if msg.ServerIP != "" && isPrivateIP(msg.ServerIP) {
+			serverIP = msg.ServerIP
+		}
+
+		key := fmt.Sprintf("%s:%d", serverIP, msg.Port)
+		serverMap[key] = domain.DiscoveredServer{
 			ServerName:  msg.ServerName,
-			ServerIP:    msg.ServerIP,
+			ServerIP:    serverIP,
 			Port:        msg.Port,
 			DeviceID:    msg.DeviceID,
 			LastSeen:    time.Now().Unix(),
 			UseTLS:      msg.UseTLS,
 			Fingerprint: msg.Fingerprint,
-		})
+		}
 
-		fmt.Printf("📡 Found server via UDP: %s at %s:%d (TLS: %v)\n", msg.ServerName, msg.ServerIP, msg.Port, msg.UseTLS)
+		fmt.Printf("📡 Found server via UDP: %s at %s:%d (TLS: %v)\n", msg.ServerName, serverIP, msg.Port, msg.UseTLS)
+	}
+
+	servers := make([]domain.DiscoveredServer, 0, len(serverMap))
+	for _, srv := range serverMap {
+		servers = append(servers, srv)
 	}
 
 	return servers

@@ -198,6 +198,10 @@ func (s *paymentService) DeletePayment(id uint) error {
 			if err := txCustomerRepo.DecrementDebt(payment.CustomerID, -payment.Amount); err != nil {
 				return err
 			}
+			if payment.Method == "cash" && s.shiftRepo != nil {
+				txShiftRepo := s.shiftRepo.WithTx(tx)
+				_ = txShiftRepo.UpdateShiftSales(0, -payment.Amount, false, false)
+			}
 		}
 
 		return txPaymentRepo.Delete(id)
@@ -227,7 +231,7 @@ func (s *paymentService) PayInstallment(saleID string, installmentIndex int, amo
 		txCustomerRepo := s.customerRepo.WithTx(tx)
 		txSaleRepo := s.saleRepo.WithTx(tx)
 
-		sale, err := txSaleRepo.GetByID(saleID)
+		sale, err := txSaleRepo.GetForUpdate(saleID)
 		if err != nil {
 			return pkgerrors.NewAppError(
 				pkgerrors.ModulePayment,

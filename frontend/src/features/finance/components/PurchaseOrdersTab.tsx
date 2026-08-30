@@ -36,6 +36,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
         items: { productId: string; productName: string; quantity: number; unitCost: number }[];
     }>({ supplierId: '', note: '', items: [] });
 
+
     // Products for selection
     const [productSearch, setProductSearch] = useState('');
 
@@ -80,7 +81,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                     quantity: i.quantity,
                     receivedQty: 0,
                     unitCost: i.unitCost,
-                    total: i.quantity * i.unitCost
+                    total: Math.round(i.quantity * i.unitCost)
                 }))
             };
             await api.purchaseOrders.create(order);
@@ -216,7 +217,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
     // Open receive modal
     const openReceiveModal = (order: PurchaseOrder) => {
         setSelectedOrder(order);
-        setReceiveItems(order.items.map(i => ({
+        setReceiveItems((order.items || []).map(i => ({
             productId: i.productId,
             receivedQty: i.quantity - i.receivedQty // Default to remaining
         })));
@@ -246,7 +247,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
         p.name.includes(productSearch) || p.barcode?.includes(productSearch)
     ).slice(0, 10);
 
-    const createFormTotal = createForm.items.reduce((sum, i) => sum + (i.quantity * i.unitCost), 0);
+    const createFormTotal = createForm.items.reduce((sum, i) => sum + Math.round(i.quantity * i.unitCost), 0);
 
     if (loading) {
         return <div className="flex items-center justify-center py-12"><div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" /></div>;
@@ -357,7 +358,7 @@ export const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({ notify, cu
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {order.items.map((item, idx) => (
+                                                {(order.items || []).map((item, idx) => (
                                                     <tr key={idx} className="border-b border-border/30 hover:bg-surface-hover transition-colors">
                                                         <td className="font-bold text-text-main">{item.productName}</td>
                                                         <td className="text-center font-mono text-text-muted">{item.quantity}</td>

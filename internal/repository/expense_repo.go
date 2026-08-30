@@ -2,6 +2,7 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"errors"
 	"gorm.io/gorm"
 )
 
@@ -30,12 +31,18 @@ func (r *expenseRepository) GetExpenses(month string) ([]domain.Expense, error) 
 		query = query.Where("date LIKE ?", month+"%")
 	}
 	result := query.Find(&expenses)
+	if expenses == nil {
+		expenses = []domain.Expense{}
+	}
 	return expenses, result.Error
 }
 
 func (r *expenseRepository) GetExpenseByID(id string) (*domain.Expense, error) {
 	var expense domain.Expense
 	if err := r.db.First(&expense, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &expense, nil
@@ -56,12 +63,18 @@ func (r *expenseRepository) DeleteExpense(id string) error {
 func (r *expenseRepository) GetCategories() ([]domain.Category, error) {
 	var cats []domain.Category
 	result := r.db.Find(&cats)
+	if cats == nil {
+		cats = []domain.Category{}
+	}
 	return cats, result.Error
 }
 
 func (r *expenseRepository) GetCategoryByID(id string) (*domain.Category, error) {
 	var cat domain.Category
 	if err := r.db.First(&cat, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &cat, nil
@@ -70,6 +83,9 @@ func (r *expenseRepository) GetCategoryByID(id string) (*domain.Category, error)
 func (r *expenseRepository) GetCategoryByName(name string) (*domain.Category, error) {
 	var cat domain.Category
 	if err := r.db.First(&cat, "name = ?", name).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &cat, nil

@@ -14,7 +14,7 @@
     !define INFO_PRODUCTNAME "Beidar Desktop"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "2.0.8"
+    !define INFO_PRODUCTVERSION "2.1.0"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "Copyright 2026"

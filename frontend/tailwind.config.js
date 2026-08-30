@@ -9,15 +9,20 @@ export default {
         logo: ['Lemonada', 'cursive'],
       },
       fontSize: {
-        'xs': ['1.0rem', { lineHeight: '1.4rem' }],
-        'sm': ['1.15rem', { lineHeight: '1.6rem' }],
-        'base': ['1.35rem', { lineHeight: '1.9rem' }],
-        'lg': ['1.5rem', { lineHeight: '2.1rem' }],
-        'xl': ['1.7rem', { lineHeight: '2.3rem' }],
-        '2xl': ['2.05rem', { lineHeight: '2.6rem' }],
-        '3xl': ['2.5rem', { lineHeight: '3.1rem' }],
-        '4xl': ['3.0rem', { lineHeight: '3.6rem' }],
-        '5xl': ['4.0rem', { lineHeight: '1' }],
+        // ─────────────────────────────────────────────────────────────
+        // Desktop Typography Scale — calibrated for high information density
+        // Base: html { font-size: 14px } → 1rem = 14px
+        // ─────────────────────────────────────────────────────────────
+        '2xs':  ['0.714rem',  { lineHeight: '1rem'   }],  // 10px — badges, timestamps
+        'xs':   ['0.786rem',  { lineHeight: '1.071rem'}],  // 11px — table headers, secondary labels
+        'sm':   ['0.857rem',  { lineHeight: '1.214rem'}],  // 12px — compact body, tooltips
+        'base': ['0.929rem',  { lineHeight: '1.357rem'}],  // 13px — body text (default)
+        'lg':   ['1rem',      { lineHeight: '1.429rem'}],  // 14px — stat values, subtext
+        'xl':   ['1.143rem',  { lineHeight: '1.571rem'}],  // 16px — card titles
+        '2xl':  ['1.286rem',  { lineHeight: '1.714rem'}],  // 18px — section headings
+        '3xl':  ['1.571rem',  { lineHeight: '2rem'   }],   // 22px — page headings
+        '4xl':  ['2rem',      { lineHeight: '2.429rem'}],  // 28px — large numbers
+        '5xl':  ['2.571rem',  { lineHeight: '1'      }],   // 36px — display/hero
       },
       borderRadius: {
         'none': '0px',
@@ -84,9 +89,46 @@ export default {
         'card-hover': 'var(--shadow-md)',
       },
       transitionDuration: {
+        100: '100ms',
         120: '120ms',
+        160: '160ms',
         180: '180ms',
+        220: '220ms',
         240: '240ms',
+      },
+      transitionTimingFunction: {
+        spring: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'bounce-sm': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'ease-out-back': 'cubic-bezier(0.34, 1.3, 0.64, 1)',
+      },
+      keyframes: {
+        pageEnter: {
+          '0%': { opacity: '0', transform: 'translateY(4px) scale(0.996)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        modalPop: {
+          '0%': { opacity: '0', transform: 'scale(0.96) translateY(6px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        badgePop: {
+          '0%': { transform: 'scale(0.8)' },
+          '50%': { transform: 'scale(1.15)' },
+          '100%': { transform: 'scale(1)' },
+        },
+        pulseSubtle: {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.6', transform: 'scale(0.96)' },
+        },
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
+      animation: {
+        'page-enter': 'pageEnter 180ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'modal-pop': 'modalPop 200ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'badge-pop': 'badgePop 240ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+        'pulse-subtle': 'pulseSubtle 2.5s ease-in-out infinite',
+        shimmer: 'shimmer 1.8s infinite',
       },
     },
   },

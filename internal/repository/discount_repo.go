@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 
 	"beidar-desktop/internal/core/domain"
@@ -18,18 +19,27 @@ func NewDiscountRepository(db *gorm.DB) domain.DiscountRepository {
 func (r *discountRepository) GetDiscounts() ([]domain.Discount, error) {
 	var discounts []domain.Discount
 	err := r.db.Order("created_at desc").Find(&discounts).Error
+	if discounts == nil {
+		discounts = []domain.Discount{}
+	}
 	return discounts, err
 }
 
 func (r *discountRepository) GetActiveDiscounts(now string) ([]domain.Discount, error) {
 	var discounts []domain.Discount
 	err := r.db.Where("active = ? AND (start_date IS NULL OR start_date = '' OR start_date <= ?) AND (end_date IS NULL OR end_date = '' OR end_date >= ?)", true, now, now).Find(&discounts).Error
+	if discounts == nil {
+		discounts = []domain.Discount{}
+	}
 	return discounts, err
 }
 
 func (r *discountRepository) GetDiscountByID(id string) (*domain.Discount, error) {
 	var d domain.Discount
 	if err := r.db.First(&d, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &d, nil
@@ -54,6 +64,9 @@ func (r *discountRepository) ValidateCoupon(code string, now string) (*domain.Di
 		code, true, now, now,
 	).First(&d).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &d, nil

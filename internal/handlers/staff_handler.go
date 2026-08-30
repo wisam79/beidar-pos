@@ -69,7 +69,14 @@ func (h *StaffHandler) GetAllStaff() ([]domain.Staff, error) {
 // GetActiveStaff is intentionally open: it is called by the login screen before
 // any session exists, to list users for the PIN pad.
 func (h *StaffHandler) GetActiveStaff() ([]domain.Staff, error) {
-	return h.staffService.GetActiveStaff()
+	staff, err := h.staffService.GetActiveStaff()
+	if err != nil {
+		return nil, err
+	}
+	if staff == nil {
+		staff = []domain.Staff{}
+	}
+	return staff, nil
 }
 
 func (h *StaffHandler) ToggleStaffStatus(id string) error {
@@ -111,6 +118,13 @@ func (h *StaffHandler) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 }
 
 func (h *StaffHandler) RestoreSession(staffID string) (*domain.AuthResult, error) {
+	if !auth.IsActive() {
+		return &domain.AuthResult{Success: false, Message: "يجب تسجيل الدخول أولاً"}, nil
+	}
+	currentID := auth.CurrentStaffID()
+	if currentID != staffID {
+		return &domain.AuthResult{Success: false, Message: "جلسة غير مصرح بها"}, nil
+	}
 	result, err := h.staffService.RestoreSession(staffID)
 	if err != nil {
 		return nil, err
@@ -144,9 +158,6 @@ func (h *StaffHandler) UpdateStaffPIN(id string, pin string) error {
 }
 
 func (h *StaffHandler) GetStaffCount() (int64, error) {
-	if err := auth.Require(); err != nil {
-		return 0, err
-	}
 	return h.staffService.GetStaffCount()
 }
 

@@ -137,5 +137,9 @@ func (s *discountService) CalculateDiscountAmount(discountID string, subtotal do
 		discountAmount = d.MaxDiscount
 	}
 
+	if discountAmount < 0 {
+		discountAmount = domain.Zero()
+	}
+
 	return discountAmount, nil
 }

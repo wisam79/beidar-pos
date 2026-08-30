@@ -28,7 +28,7 @@ const resolveImage = (img: string | undefined) => {
 export const CartItemRow = memo(({ item, onUpdateQty, onRemove, onEdit, onQtyClick, currency = 'IQD' }: CartItemRowProps) => {
     const imageUrl = resolveImage(item.image);
     const qty = Number.isInteger(item.qty) ? item.qty : item.qty.toFixed(2).replace(/\.00$/, '');
-    const total = (item.price * item.qty) - (item.itemDiscount || 0);
+    const total = Math.round(item.price * item.qty) - (item.itemDiscount || 0);
 
     const formattedUnitPrice = formatCurrency(item.price, currency);
     const formattedTotal = formatCurrency(total, currency);

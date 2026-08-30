@@ -37,6 +37,11 @@ func (h *SettingsHandler) UpdatePreferences(prefs domain.AppPreferences) error {
 	if err := auth.RequirePermission(auth.PermSettings); err != nil {
 		return err
 	}
+	if prefs.AdminPin != "" && prefs.AdminPin != "********" {
+		if err := auth.RequireAdmin(); err != nil {
+			return err
+		}
+	}
 	return h.settingsService.UpdatePreferences(prefs)
 }
 
@@ -90,10 +95,16 @@ func (h *SettingsHandler) SkipVersion(version string) error {
 }
 
 func (h *SettingsHandler) EnableAutoStart() error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.settingsService.EnableAutoStart()
 }
 
 func (h *SettingsHandler) DisableAutoStart() error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	return h.settingsService.DisableAutoStart()
 }
 
@@ -116,7 +127,7 @@ func (h *SettingsHandler) GetCrashReportContent(filename string) (string, error)
 }
 
 func (h *SettingsHandler) ClearCrashReports() error {
-	if err := auth.Require(); err != nil {
+	if err := auth.RequireAdmin(); err != nil {
 		return err
 	}
 	return h.settingsService.ClearCrashReports()
@@ -127,7 +138,7 @@ func (h *SettingsHandler) ShowNativeNotification(title, message, notifType strin
 }
 
 func (h *SettingsHandler) FetchGlobalAIKeys() ([]string, error) {
-	if err := auth.Require(); err != nil {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
 		return nil, err
 	}
 	return h.settingsService.FetchGlobalAIKeys()
@@ -141,7 +152,7 @@ func (h *SettingsHandler) SaveGlobalAIKeys(keys []string, userToken string) erro
 }
 
 func (h *SettingsHandler) FetchGlobalGroqKeys() ([]string, error) {
-	if err := auth.Require(); err != nil {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
 		return nil, err
 	}
 	return h.settingsService.FetchGlobalGroqKeys()

@@ -145,7 +145,7 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
                                         onNavigate(item.id);
                                     }}
                                     className={cn(
-                                        'relative flex items-center justify-center h-10 px-4 rounded-xl font-bold text-xs transition-all shrink-0 active:scale-95 touch-target outline-none shadow-3xs',
+                                        'relative flex items-center justify-center h-10 px-4 rounded-xl font-bold text-xs transition-all shrink-0 pressable touch-target outline-none shadow-3xs',
                                         isActive
                                             ? 'bg-primary text-primary-fg font-black text-sm shadow-sm shadow-primary/20 ring-1 ring-white/20'
                                             : 'text-text-muted hover:text-text-main hover:bg-surface-hover/90'
@@ -156,7 +156,7 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
 
                                     {/* Low Stock Badge */}
                                     {badge !== undefined && badge > 0 && (
-                                        <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[9px] font-black text-white shadow-sm animate-pulse">
+                                        <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[9px] font-black text-white shadow-sm animate-badge-pop">
                                             {badge > 9 ? '9+' : badge}
                                         </span>
                                     )}
@@ -172,7 +172,7 @@ export const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
                         </div>
                         <span className="font-bold text-xs text-text-main tracking-tight">Beidar POS</span>
                         <span className="text-[10px] font-mono text-text-muted bg-surface-active/80 px-2 py-0.5 rounded-full border border-border/50">
-                            {appVersion || 'v2.0.8'}
+                            {appVersion || 'v2.1.0'}
                         </span>
                     </div>
                 )}

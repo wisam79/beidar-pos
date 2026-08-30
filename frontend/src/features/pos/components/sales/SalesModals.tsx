@@ -14,6 +14,7 @@ import { PrintPortal } from '../../../../components/PrintPortal';
 import { formatCurrency } from '../../../../core/utils';
 import { Customer, Sale, AppPreferences } from '../../../../core/types';
 import { ParkedSaleDB, api } from '../../../../core/api';
+import { invalidateAllData } from '../../../../core/queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -574,7 +575,7 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
                                 <div key={i} className="flex justify-between py-1.5 border-b border-border last:border-0">
                                     <span className="text-text-main text-sm">{item.name} × {item.qty}</span>
                                     <span className="text-text-main font-mono font-bold text-sm">
-                                        {formatCurrency(item.total || (item.price * item.qty), prefs.currency)}
+                                        {formatCurrency(item.total || Math.round(item.price * item.qty), prefs.currency)}
                                     </span>
                                 </div>
                             ))}
@@ -615,6 +616,7 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
                                     onClick={async () => {
                                         try {
                                             await api.sales.return(scannedInvoice.id);
+                                            invalidateAllData();
                                             notify('تم إرجاع الفاتورة بنجاح', 'success');
                                             onCloseScannedInvoice();
                                         } catch {

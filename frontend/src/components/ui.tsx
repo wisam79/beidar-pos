@@ -172,7 +172,7 @@ export const Modal = memo(({ title, description, onClose, children, footer, open
                     bg-surface border-t border-t-white/30 dark:border-t-white/10 border-x border-x-border/60 border-b-[4px] border-b-black/80
                     rounded-[32px] shadow-2xl
                     flex flex-col max-h-[90vh] 
-                    animate-scale-in
+                    animate-modal-pop
                     overflow-hidden select-none
                     ${className}
                 `}

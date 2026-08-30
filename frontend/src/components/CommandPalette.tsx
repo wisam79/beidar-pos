@@ -203,7 +203,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                         <span className="flex items-center gap-1"><kbd className="bg-white/10 px-1 rounded">↓</kbd> للتنقل</span>
                         <span className="flex items-center gap-1"><kbd className="bg-white/10 px-1 rounded">↵</kbd> للاختيار</span>
                     </div>
-                    <span>Beidar OS 1.2</span>
+                    <span>Beidar POS v2.1.0</span>
                 </div>
             </div>
         </div>,

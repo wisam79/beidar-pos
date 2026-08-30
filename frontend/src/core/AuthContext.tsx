@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
 import { Staff, AuthResult, api } from './api';
+import { invalidateAllData } from './queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🔐 AUTH CONTEXT - User Authentication & Permissions Management
@@ -58,15 +59,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                 user: res.staff,
                                 permissions: res.permissions || []
                             }));
+                            invalidateAllData();
                         } else {
                             setCurrentUser(null);
                             setPermissions([]);
                             localStorage.removeItem(STORAGE_KEY);
                         }
                     }).catch(() => {
-                        // Fallback if backend binding unavailable (e.g. offline/mock tests)
-                        setCurrentUser(session.user);
-                        setPermissions(session.permissions || []);
+                        setCurrentUser(null);
+                        setPermissions([]);
+                        localStorage.removeItem(STORAGE_KEY);
                     });
                 }
             } catch {
@@ -108,6 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }));
                 localStorage.setItem(LAST_STAFF_KEY, result.staff.id);
                 localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+                invalidateAllData();
             }
             return result;
         } catch {
@@ -131,6 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }));
                 localStorage.setItem(LAST_STAFF_KEY, result.staff.id);
                 localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+                invalidateAllData();
             }
             return result;
         } catch {

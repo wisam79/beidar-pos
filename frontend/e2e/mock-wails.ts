@@ -124,7 +124,7 @@ export async function mockWails(page: Page) {
                                 Object.assign((window as any).__mockPrefs, p);
                                 return Promise.resolve();
                             },
-                            GetCurrentVersion: () => Promise.resolve('2.0.8'),
+                            GetCurrentVersion: () => Promise.resolve('2.1.0'),
                             CheckForUpdates: () => Promise.resolve({ update_available: false }),
                             GetUpdateStatus: () => Promise.resolve({ status: 'idle' }),
                             GetDeviceID: () => Promise.resolve('e2e-mock-device-id'),

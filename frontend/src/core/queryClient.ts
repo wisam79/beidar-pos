@@ -7,13 +7,17 @@ import { QueryClient } from '@tanstack/react-query';
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            // Real-time responsive: data considered fresh for 10 seconds, refetches on mount if stale
-            staleTime: 1000 * 10,
+            // Desktop app: Go backend runs in the same process — instant local IPC.
+            // Data is fresh for 30 seconds; no need to hammer the backend.
+            staleTime: 1000 * 30,
             // Keep unused data in cache for 15 minutes
             gcTime: 1000 * 60 * 15,
-            // Retry failed requests twice with exponential backoff
-            retry: 2,
-            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+            // ⚡ ZERO retries for queries: Go backend is local (same process).
+            // If a query fails it's an auth error (session not ready yet) — NOT a network error.
+            // Retrying with backoff caused 1-3 second frozen screens on startup.
+            // Auth context calls invalidateAllData() once session is restored, triggering
+            // clean refetches automatically — no retry loops needed.
+            retry: 0,
             // Refetch when mounting components to guarantee fresh data across screen switches
             refetchOnMount: true,
             // Don't refetch on window focus for desktop app
@@ -22,8 +26,9 @@ export const queryClient = new QueryClient({
             refetchOnReconnect: false,
         },
         mutations: {
-            // Retry mutations once
+            // Retry mutations once for transient DB lock conflicts
             retry: 1,
+            retryDelay: 500,
         },
     },
 });

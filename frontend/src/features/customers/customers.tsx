@@ -6,7 +6,7 @@ import { Customer, Sale } from '../../core/types';
 import { formatCurrency } from '../../core/utils';
 import { Modal, Badge, PageHeader, EmptyState } from '../../components/ui';
 import { ConfirmModal } from '../../components/ConfirmModal';
-import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput } from '../../components/blocks';
+import { PageShell, StatsGrid, StatCard, SearchInput } from '../../components/blocks';
 import { analyzeCustomerProfile } from '../../core/ai';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCustomersPaged, useConfirmModal } from '../../hooks';
@@ -37,18 +37,6 @@ export const CustomersPage: React.FC = () => {
         setPage(1);
     }, [deferredSearch]);
 
-    // React Query Hooks
-    const { customers, total, totalPages, isLoading: customersLoading } = useCustomersPaged(page, pageSize, deferredSearch);
-    const { data: sales = [], isLoading: salesLoading } = useQuery({
-        queryKey: queryKeys.sales.list(0, 5000, '', '', ''),
-        queryFn: async () => {
-            const res = await api.sales.list(0, 5000, '', '', '');
-            return res?.data || [];
-        }
-    });
-
-    const loading = customersLoading || salesLoading;
-
     const [modalOpen, setModalOpen] = useState(false);
     const [historyModal, setHistoryModal] = useState<string | null>(null);
     const [payDebtModal, setPayDebtModal] = useState<Customer | null>(null);
@@ -59,6 +47,19 @@ export const CustomersPage: React.FC = () => {
     const [showOnlyDebt, setShowOnlyDebt] = useState(false);
     const [showStats, setShowStats] = useState(false); // Collapsible stats state
     const { confirmState, openConfirm, closeConfirm } = useConfirmModal();
+
+    // React Query Hooks
+    const { customers, total, totalPages, isLoading: customersLoading } = useCustomersPaged(page, pageSize, deferredSearch);
+    const { data: sales = [] } = useQuery({
+        queryKey: queryKeys.sales.list(0, 5000, '', '', ''),
+        queryFn: async () => {
+            const res = await api.sales.list(0, 5000, '', '', '');
+            return res?.data || [];
+        },
+        enabled: !!historyModal,
+    });
+
+    const loading = customersLoading;
 
     // Installment sales for the selected customer (dedicated query, no full-sales scan)
     const { data: customerInstallments = [] } = useQuery({
@@ -270,8 +271,6 @@ export const CustomersPage: React.FC = () => {
         overscan: 3,
     });
 
-    if (loading && customers.length === 0) return <LoadingState icon={Users} title="جاري تحميل بيانات العملاء..." subtitle="تحليل السجلات" />;
-
     return (
         <PageShell>
             <PageHeader title="العملاء" icon={User} description="إدارة علاقات العملاء، سجل المشتريات، والديون المستحقة." actions={
@@ -311,7 +310,12 @@ export const CustomersPage: React.FC = () => {
             </StatsGrid>
 
             <div ref={parentRef} className="flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar pb-4">
-                {filtered.length === 0 ? (
+                {loading && customers.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-24 text-center">
+                        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3" />
+                        <p className="text-xs text-text-muted">جاري تحميل بيانات العملاء...</p>
+                    </div>
+                ) : filtered.length === 0 ? (
                     <EmptyState
                         icon={User}
                         title="لا يوجد عملاء"
@@ -642,12 +646,12 @@ export const CustomersPage: React.FC = () => {
                                 <div>
                                     <p className="text-xs text-text-muted">المتبقي</p>
                                     <p className="text-danger font-bold font-mono">
-                                        {formatCurrency(s.installmentPlan?.schedule.filter(i => i.status !== 'paid').reduce((acc, i) => acc + i.amount, 0) || 0, prefs?.currency)}
+                                        {formatCurrency((s.installmentPlan?.schedule || []).filter(i => i.status !== 'paid').reduce((acc, i) => acc + i.amount, 0) || 0, prefs?.currency)}
                                     </p>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                {s.installmentPlan?.schedule.map((inst, idx) => (
+                                {(s.installmentPlan?.schedule || []).map((inst, idx) => (
                                     <div key={idx} className={`flex justify-between items-center p-3 rounded-xl border ${inst.status === 'paid' ? 'bg-success/5 border-success/20' : new Date(inst.dueDate) < new Date() ? 'bg-danger/5 border-danger/20' : 'bg-surface border-border'}`}>
                                         <div>
                                             <p className={`text-xs font-bold font-mono ${inst.status === 'paid' ? 'text-success' : 'text-text-main'}`}>قسط #{inst.number} - {formatCurrency(inst.amount)}</p>

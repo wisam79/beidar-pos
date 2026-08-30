@@ -35,47 +35,19 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                 const staff = await api.staff.listActive();
                 setStaffList(staff || []);
 
-                // Check for saved staff ID (quick login on restart)
-                const lastStaffId = localStorage.getItem('beidar_last_staff_id');
-                if (lastStaffId && staff && staff.length > 0) {
-                    const savedUser = staff.find(s => s.id === lastStaffId && s.active);
-                    if (savedUser) {
-                        // Found saved staff - go directly to PIN entry
-                        setSelectedStaff(savedUser);
-                        setUsername(savedUser.username);
-                        setQuickLoginMode(true);
-                        setMode('password');
-                        setLoadingStaff(false);
-                        return; // Skip auto-admin creation logic
-                    }
+                // If only 1 staff member exists, auto-select them for immediate PIN entry
+                if (staff && staff.length === 1) {
+                    const onlyUser = staff[0];
+                    setSelectedStaff(onlyUser);
+                    setUsername(onlyUser.username);
+                    setMode('password');
+                    setLoadingStaff(false);
+                    return;
                 }
 
-                // If no staff exists, create a default admin
+                // Backend automatically seeds default admin in GetActiveStaff() if empty
                 if (!staff || staff.length === 0) {
-                    try {
-                        // Create default admin
-                        // @ts-expect-error - Partial staff object for creation
-                        const newAdmin: Staff = {
-                            name: 'Admin',
-                            username: 'admin',
-                            role: 'admin',
-                            active: true,
-                            permissions: [],
-                            mustChangePin: true
-                        };
-
-                        // Pass password '0000' (admin role uses 4-digit PIN)
-                        const created = await api.staff.create(newAdmin, '0000');
-
-                        if (created) {
-                            // Refresh staff list so the new admin appears
-                            const refreshedStaff = await api.staff.listActive();
-                            setStaffList(refreshedStaff || []);
-                        }
-                    } catch (err) {
-                        console.error('Failed to auto-create admin:', err);
-                        setError('فشل في تكوين حساب المسؤول الأولي. يرجى إعادة التشغيل.');
-                    }
+                    setStaffList([]);
                 }
             } catch (e) {
                 console.error('Failed to load staff:', e);
@@ -175,6 +147,12 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                         {mode === 'select' && (
                             <div className="p-6">
                                 <h2 className="text-lg font-bold text-text-main mb-4 text-center">اختر حسابك</h2>
+
+                                {error && (
+                                    <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl text-danger text-xs text-center font-bold">
+                                        {error}
+                                    </div>
+                                )}
 
                                 <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
                                     {staffList.map((staff) => {
@@ -465,7 +443,7 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
 
                     {/* Footer */}
                     <p className="text-center text-text-muted text-xs mt-6">
-                        Beidar POS v1.3.9 • نظام نقاط البيع
+                        Beidar POS v2.1.0 • نظام نقاط البيع
                     </p>
                 </div>
             </div>

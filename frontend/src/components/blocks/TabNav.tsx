@@ -29,7 +29,7 @@ export const TabNav = memo(<T extends string>({
                     <button
                         key={tab.id}
                         onClick={() => onChange(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 min-h-[40px] rounded-xl text-xs md:text-sm font-extrabold transition-colors touch-target outline-none cursor-pointer ${
+                        className={`flex items-center gap-2 px-4 py-2 min-h-[40px] rounded-xl text-xs md:text-sm font-extrabold transition-all pressable touch-target outline-none cursor-pointer ${
                             isActive
                                 ? 'bg-primary text-primary-fg font-black shadow-sm'
                                 : 'text-text-muted hover:text-text-main hover:bg-surface-hover'

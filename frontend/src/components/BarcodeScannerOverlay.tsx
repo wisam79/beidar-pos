@@ -36,6 +36,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
     const [lastScannedCode, setLastScannedCode] = useState<string | null>(null);
 
     const [isProcessing, setIsProcessing] = useState(false);
+    const isProcessingRef = useRef(false);
     const scannerRef = useRef<Html5QrcodeType | null>(null);
     const isScanning = useRef(false);
     const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
@@ -110,7 +111,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                     disableFlip: false
                 },
                 async (decodedText: string) => {
-                    if (isProcessing) return; // Debounce
+                    if (isProcessingRef.current) return; // Debounce
 
                     // Check if same item was scanned recently (within delay period)
                     const now = Date.now();
@@ -120,6 +121,7 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                     // Prevent duplicate fast scans of the same error code to avoid spamming
                     if (decodedText === lastScannedCode && scanStatus === 'error') return;
 
+                    isProcessingRef.current = true;
                     setIsProcessing(true);
                     setLastScannedCode(decodedText);
                     lastScanTimeRef.current[decodedText] = now;
@@ -155,12 +157,14 @@ export const BarcodeScannerOverlay = ({ onClose, onScan, continuous = true }: Ba
                         } else {
                             // Reset logic for continuous scanning - faster for success
                             setTimeout(() => {
+                                isProcessingRef.current = false;
                                 setIsProcessing(false);
                                 setScanStatus('idle');
                                 setFeedbackMessage(null);
                             }, result.success ? 800 : 2000);
                         }
                     } catch {
+                        isProcessingRef.current = false;
                         setIsProcessing(false);
                     }
                 },

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"errors"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -27,6 +29,9 @@ func (r *purchaseOrderRepository) Transaction(fn func(tx domain.Tx) error) error
 func (r *purchaseOrderRepository) GetByID(id string) (*domain.PurchaseOrder, error) {
 	var order domain.PurchaseOrder
 	if err := r.db.Preload("Items").First(&order, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &order, nil
@@ -35,6 +40,9 @@ func (r *purchaseOrderRepository) GetByID(id string) (*domain.PurchaseOrder, err
 func (r *purchaseOrderRepository) GetForUpdate(id string) (*domain.PurchaseOrder, error) {
 	var order domain.PurchaseOrder
 	if err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).Preload("Items").First(&order, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &order, nil
@@ -53,6 +61,9 @@ func (r *purchaseOrderRepository) GetPurchaseOrders(status string, supplierID st
 
 	if err := query.Find(&orders).Error; err != nil {
 		return nil, err
+	}
+	if orders == nil {
+		orders = []domain.PurchaseOrder{}
 	}
 	return orders, nil
 }
@@ -89,6 +100,9 @@ func (r *purchaseOrderRepository) GetOrderItems(orderID string) ([]domain.Purcha
 	var items []domain.PurchaseOrderItem
 	if err := r.db.Where("order_id = ?", orderID).Find(&items).Error; err != nil {
 		return nil, err
+	}
+	if items == nil {
+		items = []domain.PurchaseOrderItem{}
 	}
 	return items, nil
 }

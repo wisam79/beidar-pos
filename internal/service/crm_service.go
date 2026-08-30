@@ -103,7 +103,7 @@ func (s *crmService) SaveCustomer(c domain.Customer) error {
 	}
 
 	// Update existing - merge safe fields only
-	existing, err := s.customerRepo.GetByID(c.ID)
+	_, err := s.customerRepo.GetByID(c.ID)
 	if err != nil {
 		return pkgerrors.NewAppError(
 			pkgerrors.ModuleCustomer,
@@ -114,14 +114,16 @@ func (s *crmService) SaveCustomer(c domain.Customer) error {
 		)
 	}
 
-	existing.Name = c.Name
-	existing.Phone = c.Phone
-	existing.Notes = c.Notes
+	updates := map[string]interface{}{
+		"name":  c.Name,
+		"phone": c.Phone,
+		"notes": c.Notes,
+	}
 
-	if err := s.customerRepo.Update(existing); err != nil {
+	if err := s.customerRepo.Updates(c.ID, updates); err != nil {
 		return errors.New(i18n.GetMessage("UPDATE_CUSTOMER_FAILED", err.Error()))
 	}
-	logger.LogCustomer("UPDATED", existing.ID, existing.Name)
+	logger.LogCustomer("UPDATED", c.ID, c.Name)
 	return nil
 }
 
@@ -213,7 +215,7 @@ func (s *crmService) SaveSupplier(sup domain.Supplier) error {
 		return s.supplierRepo.Create(&sup)
 	}
 
-	existing, err := s.supplierRepo.GetByID(sup.ID)
+	_, err := s.supplierRepo.GetByID(sup.ID)
 	if err != nil {
 		return pkgerrors.NewAppError(
 			pkgerrors.ModuleProduct,
@@ -224,13 +226,15 @@ func (s *crmService) SaveSupplier(sup domain.Supplier) error {
 		)
 	}
 
-	existing.Name = sup.Name
-	existing.CompanyName = sup.CompanyName
-	existing.Phone = sup.Phone
-	existing.Email = sup.Email
-	existing.Notes = sup.Notes
+	updates := map[string]interface{}{
+		"name":         sup.Name,
+		"company_name": sup.CompanyName,
+		"phone":        sup.Phone,
+		"email":        sup.Email,
+		"notes":        sup.Notes,
+	}
 
-	return s.supplierRepo.Update(existing)
+	return s.supplierRepo.Updates(sup.ID, updates)
 }
 
 func (s *crmService) DeleteSupplier(id string, force bool) error {
@@ -260,11 +264,16 @@ func (s *crmService) DeleteSupplier(id string, force bool) error {
 				Options: map[string]bool{"allowForce": true},
 			}
 		}
-
-		if err := s.productRepo.UnlinkSupplier(supplier.Name); err != nil {
-			return err
-		}
 	}
 
-	return s.supplierRepo.Delete(id)
+	return s.supplierRepo.Transaction(func(tx domain.Tx) error {
+		txSupplierRepo := s.supplierRepo.WithTx(tx)
+		txProductRepo := s.productRepo.WithTx(tx)
+		if productCount > 0 {
+			if err := txProductRepo.UnlinkSupplier(supplier.Name); err != nil {
+				return err
+			}
+		}
+		return txSupplierRepo.Delete(id)
+	})
 }

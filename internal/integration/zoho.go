@@ -15,6 +15,7 @@ import (
 
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/pkg/crypto"
+	"beidar-desktop/pkg/secureconfig"
 )
 
 var (
@@ -26,32 +27,39 @@ var (
 )
 
 func getZohoConfigPath() string {
-	configDir, _ := os.UserConfigDir()
-	return filepath.Join(configDir, "BeidarPOS_V3", "zoho_config.json")
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		configDir = "."
+	}
+	return filepath.Join(configDir, "beidar", "zoho_config.enc")
 }
 
-func (s *cloudService) LoadZohoConfig() (*domain.ZohoConfig, error) {
-	zohoConfigLock.Lock()
-	defer zohoConfigLock.Unlock()
-
+func (s *cloudService) GetZohoConfig() (*domain.ZohoConfig, error) {
+	zohoConfigLock.RLock()
 	if zohoConfig != nil {
+		defer zohoConfigLock.RUnlock()
 		return zohoConfig, nil
 	}
+	zohoConfigLock.RUnlock()
 
 	path := getZohoConfigPath()
-	data, err := os.ReadFile(path)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, nil // No config yet
+	}
+
+	encryptedData, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
 	key := deriveZohoKey()
-	decrypted, err := crypto.Decrypt(string(data), key)
+	decrypted, err := crypto.Decrypt(string(encryptedData), key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt Zoho config: %w", err)
 	}
 
 	var config domain.ZohoConfig
-	if err := json.Unmarshal(decrypted, &config); err != nil {
+	if err := json.Unmarshal([]byte(decrypted), &config); err != nil {
 		return nil, err
 	}
 
@@ -59,12 +67,13 @@ func (s *cloudService) LoadZohoConfig() (*domain.ZohoConfig, error) {
 	return zohoConfig, nil
 }
 
+func (s *cloudService) LoadZohoConfig() (*domain.ZohoConfig, error) {
+	return s.GetZohoConfig()
+}
+
 func deriveZohoKey() []byte {
-	host, err := os.Hostname()
-	if err != nil {
-		host = "beidar-zoho-default"
-	}
-	return crypto.DeriveKey(fmt.Sprintf("beidar-zoho-key-%s", host))
+	machineID := secureconfig.MachineID()
+	return crypto.DeriveKey(fmt.Sprintf("beidar-zoho-key-%s", machineID))
 }
 
 func (s *cloudService) SaveZohoConfig(config *domain.ZohoConfig) error {

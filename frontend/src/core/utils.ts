@@ -228,7 +228,8 @@ export const parseCentsFromInput = (input: string | number | null | undefined): 
 export const sanitizeCSVCell = (value: unknown): string => {
     if (value === null || value === undefined) return '';
     const str = String(value);
-    if (str.length > 0 && /^[=+\-@]/.test(str)) {
+    const trimmed = str.trimStart();
+    if (trimmed.length > 0 && /^[=+\-@\t\r\n|%]/.test(trimmed)) {
         return `'${str}`;
     }
     return str;

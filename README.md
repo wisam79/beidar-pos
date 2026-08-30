@@ -4,7 +4,7 @@
 ### نظام الجيل القادم لإدارة نقاط البيع، المخزون، الحسابات المالية، والموارد البشرية
 
 [![master CI](https://github.com/wisam79/beidar-pos/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/wisam79/beidar-pos/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/Version-2.0.8_Pro-blue.svg?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-2.1.0_Pro-blue.svg?style=for-the-badge)
 ![Go](https://img.shields.io/badge/Go-1.25-00ADD8?style=for-the-badge&logo=go&logoColor=white)
 ![React](https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Wails](https://img.shields.io/badge/Wails-v2.12-DF1A2A?style=for-the-badge&logo=wails&logoColor=white)

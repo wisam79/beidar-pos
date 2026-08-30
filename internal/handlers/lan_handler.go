@@ -51,8 +51,12 @@ func (h *LanHandler) ConnectToLanServer(serverIP string, port int, secret string
 	return h.lanService.ConnectToServer(serverIP, port, secret)
 }
 
-func (h *LanHandler) DisconnectFromLanServer() {
+func (h *LanHandler) DisconnectFromLanServer() error {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
+		return err
+	}
 	h.lanService.DisconnectFromServer()
+	return nil
 }
 
 func (h *LanHandler) GetLanClientStatus() domain.LanClientStatus {
@@ -92,7 +96,7 @@ func (h *LanHandler) GetServerSecret() (string, error) {
 }
 
 func (h *LanHandler) GetConnectedClients() []domain.ConnectedClient {
-	if err := auth.Require(); err != nil {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
 		return nil
 	}
 	return h.lanService.GetConnectedClients()
@@ -134,7 +138,7 @@ func (h *LanHandler) UnblockLanDevice(id uint) error {
 }
 
 func (h *LanHandler) GetBlockedDevices() ([]domain.BlockedDevice, error) {
-	if err := auth.Require(); err != nil {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
 		return nil, err
 	}
 	return h.lanService.GetBlockedDevices()

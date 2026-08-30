@@ -2,6 +2,7 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"errors"
 	"gorm.io/gorm"
 )
 
@@ -30,18 +31,27 @@ func (r *paymentRepository) Create(payment *domain.Payment) error {
 func (r *paymentRepository) GetPaymentsBySale(saleID string) ([]domain.Payment, error) {
 	var payments []domain.Payment
 	err := r.db.Where("sale_id = ?", saleID).Order("timestamp desc").Find(&payments).Error
+	if payments == nil {
+		payments = []domain.Payment{}
+	}
 	return payments, err
 }
 
 func (r *paymentRepository) GetPaymentsByCustomer(customerID string) ([]domain.Payment, error) {
 	var payments []domain.Payment
 	err := r.db.Where("customer_id = ?", customerID).Order("timestamp desc").Find(&payments).Error
+	if payments == nil {
+		payments = []domain.Payment{}
+	}
 	return payments, err
 }
 
 func (r *paymentRepository) GetByID(id uint) (*domain.Payment, error) {
 	var payment domain.Payment
 	if err := r.db.First(&payment, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &payment, nil

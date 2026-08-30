@@ -256,7 +256,7 @@ export const SettingsPage: React.FC = () => {
                             </div>
                             <div className="min-w-0 flex-1">
                                 <h5 className="font-black text-warning text-xs truncate">النسخة الاحترافية</h5>
-                                <p className="text-[9px] text-text-muted font-mono font-bold">Pro Edition 2.0.8</p>
+                                <p className="text-[9px] text-text-muted font-mono font-bold">Pro Edition 2.1.0</p>
                             </div>
                         </div>
                     </div>

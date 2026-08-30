@@ -107,7 +107,7 @@ func roundDiv(a, b int64) int64 {
 		absB = -absB
 	}
 
-	if absR*2 >= absB {
+	if absR >= (absB+1)/2 {
 		sameSign := (a < 0) == (b < 0)
 		if sameSign {
 			q++
@@ -149,6 +149,9 @@ func (a Amount) Abs() Amount {
 }
 
 func (a Amount) String() string {
+	if a == math.MinInt64 {
+		return "-92233720368547758.08"
+	}
 	sign := ""
 	if a < 0 {
 		sign = "-"

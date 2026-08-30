@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -69,8 +70,8 @@ func TestSaleRepo_GetForUpdate_LockAcquired(t *testing.T) {
 		_, err := txRepo.GetForUpdate("nonexistent-sale-id")
 		return err
 	})
-	if err != gorm.ErrRecordNotFound {
-		t.Errorf("Expected gorm.ErrRecordNotFound for nonexistent sale, got %v", err)
+	if !errors.Is(err, domain.ErrRecordNotFound) && err != gorm.ErrRecordNotFound {
+		t.Errorf("Expected domain.ErrRecordNotFound for nonexistent sale, got %v", err)
 	}
 }
 

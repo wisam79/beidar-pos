@@ -8,7 +8,7 @@ import { analyzeInventoryRisk } from '../../core/ai';
 import { api } from '../../core/api';
 import { invalidateAllData } from '../../core/queryClient';
 import { useInvalidateProducts, useDashboardStats, useInventoryProducts, useInventoryMetadata, useInventoryMovements } from '../../hooks';
-import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination, TabNav } from '../../components/blocks';
+import { PageShell, StatsGrid, StatCard, SearchInput, SegmentedControl, Pagination, TabNav } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
 
 // Internal debounce hook since lodash might not be available
@@ -147,8 +147,6 @@ export const InventoryPage: React.FC = () => {
     };
 
     const handlePrint = () => { window.print(); };
-
-    if (loading) return <LoadingState icon={Layers} title="جاري تحميل المخزون..." subtitle="تحضير المنتجات" />;
 
     return (
         <PageShell>
@@ -312,7 +310,12 @@ export const InventoryPage: React.FC = () => {
                         {/* Products Table - Standard Unified Style */}
                         <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
-                                {products.length === 0 ? (
+                                {loading && !productsData ? (
+                                    <div className="flex flex-col items-center justify-center py-24 text-center">
+                                        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3" />
+                                        <p className="text-xs text-text-muted">جاري تحميل المخزون...</p>
+                                    </div>
+                                ) : products.length === 0 ? (
                                     <EmptyState icon={Package} title="لا توجد منتجات" description={search ? "لا توجد نتائج مطابقة لبحثك." : "لم تتم إضافة أي منتجات بعد."} />
                                 ) : (
                                     <table className="w-full text-right text-sm border-collapse">
@@ -330,7 +333,7 @@ export const InventoryPage: React.FC = () => {
                                             {products.map((p) => {
                                                 const isLow = p.stock <= (p.minStock || 5);
                                                 const isOut = p.stock === 0;
-                                                const productVal = p.stock * p.price;
+                                                const productVal = Math.round(p.stock * p.price);
                                                 const abcClass = getABCClass(productVal);
                                                 const healthColor = isOut ? 'bg-danger' : isLow ? 'bg-warning' : 'bg-success';
 
@@ -452,7 +455,7 @@ export const InventoryPage: React.FC = () => {
                             <tr key={p.id} style={{ borderBottom: '1px solid #ccc' }}>
                                 <td>{p.name}</td>
                                 <td>{p.stock}</td>
-                                <td>{p.stock * p.price}</td>
+                                <td>{Math.round(p.stock * p.price)}</td>
                                 <td>{p.stock === 0 ? 'نافذ' : p.stock <= (p.minStock || 5) ? 'منخفض' : 'جيد'}</td>
                             </tr>
                         ))}

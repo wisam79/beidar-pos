@@ -74,7 +74,7 @@ export const ProductListView = memo(({
                     {virtualItems.map((virtualRow) => {
                         const p = products[virtualRow.index];
                         if (!p) return null;
-                        const productVal = p.stock * p.price;
+                        const productVal = Math.round(p.stock * p.price);
                         const abcClass = getABCClass(productVal, stats.totalValue);
                         return (
                             <tr

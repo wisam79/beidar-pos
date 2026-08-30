@@ -28,7 +28,8 @@ export interface ExportOptions {
 
 const sanitizeCSVCell = (value: unknown): string => {
     const stringValue = value === null || value === undefined ? '' : String(value);
-    return /^[=+\-@]/.test(stringValue) ? `'${stringValue}` : stringValue;
+    const trimmed = stringValue.trimStart();
+    return /^[=+\-@\t\r\n|%]/.test(trimmed) ? `'${stringValue}` : stringValue;
 };
 
 const quoteCSVCell = (value: unknown): string => {
@@ -161,6 +162,8 @@ export async function exportToPDF<T extends Record<string, unknown>>(
                 background: white !important;
                 color: black !important;
             }
+
+
             #print-container table { page-break-inside: auto; }
             #print-container tr { page-break-inside: avoid; page-break-after: auto; }
         </style>
@@ -268,10 +271,10 @@ export async function exportInventoryReport(
         ...p,
         minStock: p.minStock || 0,
         cost: p.cost || 0,
-        value: (p.stock * p.price).toLocaleString(),
+        value: Math.round(p.stock * p.price).toLocaleString(),
     }));
 
-    const totalValue = products.reduce((sum, p) => sum + (p.stock * p.price), 0);
+    const totalValue = products.reduce((sum, p) => sum + Math.round(p.stock * p.price), 0);
 
     const options: ExportOptions = {
         filename: 'تقرير_المخزون',

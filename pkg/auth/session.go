@@ -15,9 +15,13 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"beidar-desktop/internal/core/domain"
 )
+
+// DefaultIdleSessionTimeout defines the maximum inactivity period before a desktop session expires.
+const DefaultIdleSessionTimeout = 12 * time.Hour
 
 // Sentinel errors returned by the session checks. They carry JSON-friendly
 // codes/messages so the frontend can render localized toasts.
@@ -28,10 +32,11 @@ var (
 		Message: "يجب تسجيل الدخول أولاً لتنفيذ هذه العملية",
 	}
 
-	// ErrInsufficientPermission is returned when the active session lacks a permission.
+	// ErrInsufficientPermission is returned when the logged-in user lacks the
+	// specific permission required for the operation.
 	ErrInsufficientPermission = &AuthError{
 		Code:    "INSUFFICIENT_PERMISSION",
-		Message: "غير مصرح لك بهذه العملية - صلاحيات أعلى مطلوبة",
+		Message: "ليس لديك الصلاحية الكافية لتنفيذ هذا الإجراء",
 	}
 )
 
@@ -54,7 +59,7 @@ func (e *AuthError) Is(target error) bool {
 	return e.Code == other.Code
 }
 
-// SessionSnapshot is an immutable point-in-time copy of the active session.
+// SessionSnapshot is an immutable view of the session at a point in time.
 type SessionSnapshot struct {
 	Staff       domain.Staff
 	Permissions []string
@@ -77,11 +82,27 @@ func (s SessionSnapshot) HasPermission(perm string) bool {
 // state holds the process-wide active session. Guarded by mu.
 var (
 	state = struct {
-		mu    sync.RWMutex
-		staff *domain.Staff
-		perms []string
+		mu           sync.RWMutex
+		staff        *domain.Staff
+		perms        []string
+		lastActivity time.Time
 	}{}
 )
+
+// checkExpiryLocked resets session if idle timeout exceeded. Must be called with lock held.
+func checkExpiryLocked() bool {
+	if state.staff == nil {
+		return false
+	}
+	if !state.lastActivity.IsZero() && time.Since(state.lastActivity) > DefaultIdleSessionTimeout {
+		state.staff = nil
+		state.perms = nil
+		state.lastActivity = time.Time{}
+		return false
+	}
+	state.lastActivity = time.Now()
+	return true
+}
 
 // Set activates the session with the given staff member and permissions.
 // The caller should pass the authenticated staff struct (PasswordHash is
@@ -94,6 +115,7 @@ func Set(staff *domain.Staff, permissions []string) {
 	defer state.mu.Unlock()
 	state.staff = staff
 	state.perms = permsCopy
+	state.lastActivity = time.Now()
 }
 
 // Clear deactivates the session (logout).
@@ -102,21 +124,22 @@ func Clear() {
 	defer state.mu.Unlock()
 	state.staff = nil
 	state.perms = nil
+	state.lastActivity = time.Time{}
 }
 
-// IsActive reports whether a session is currently active.
+// IsActive reports whether a session is currently active and not expired.
 func IsActive() bool {
-	state.mu.RLock()
-	defer state.mu.RUnlock()
-	return state.staff != nil
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	return checkExpiryLocked()
 }
 
 // Snapshot returns an immutable copy of the current session. If no session is
 // active, ok is false.
 func Snapshot() (snap SessionSnapshot, ok bool) {
-	state.mu.RLock()
-	defer state.mu.RUnlock()
-	if state.staff == nil {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	if !checkExpiryLocked() {
 		return SessionSnapshot{}, false
 	}
 	permsCopy := make([]string, len(state.perms))
@@ -176,14 +199,13 @@ func RequirePermission(perm string) error {
 	return nil
 }
 
-// RequireAdmin returns an auth error unless an admin session is active.
+// RequireAdmin returns an auth error unless an active, unexpired admin session is present.
 func RequireAdmin() error {
-	state.mu.RLock()
-	defer state.mu.RUnlock()
-	if state.staff == nil {
+	snap, ok := Snapshot()
+	if !ok {
 		return ErrNotAuthenticated
 	}
-	if state.staff.Role != domain.RoleAdmin {
+	if snap.Staff.Role != domain.RoleAdmin {
 		return ErrInsufficientPermission
 	}
 	return nil

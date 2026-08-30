@@ -72,6 +72,16 @@ func (s *lanService) getConnectTarpitDelay(remoteAddr string) time.Duration {
 	defer s.connectRateMutex.Unlock()
 
 	now := time.Now()
+
+	// Periodic cleanup of expired rate limit entries
+	if len(s.connectRateLimits) > 100 {
+		for k, v := range s.connectRateLimits {
+			if now.After(v.expires) {
+				delete(s.connectRateLimits, k)
+			}
+		}
+	}
+
 	entry, ok := s.connectRateLimits[ip]
 	if !ok || now.After(entry.expires) {
 		s.connectRateLimits[ip] = &connectRateEntry{count: 1, expires: now.Add(connectRateWindow)}

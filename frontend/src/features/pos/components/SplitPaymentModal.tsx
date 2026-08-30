@@ -7,6 +7,7 @@ import { formatCurrency } from '../../../core/utils';
 export const SplitPaymentModal = ({ total, onClose, onConfirm, currency = 'IQD' }: { total: number, onClose: () => void, onConfirm: (cash: number, card: number) => void, currency?: string }) => {
     const [cash, setCash] = useState(total);
     const card = total - cash;
+    const step = currency === 'IQD' && total >= 250 ? (total % 250 === 0 ? 250 : 50) : (total < 100 ? 0.25 : 1);
 
     return (
         <Modal title="دفع مجزأ (Split Payment)" onClose={onClose} size="sm">
@@ -18,12 +19,12 @@ export const SplitPaymentModal = ({ total, onClose, onConfirm, currency = 'IQD' 
 
                 <div>
                     <label className="flex justify-between text-xs font-bold text-text-muted mb-2"><span>نقدي (Cash)</span><span className="text-text-main font-mono">{formatCurrency(cash, currency)}</span></label>
-                    <input type="range" min="0" max={total} step="250" value={cash} onChange={e => setCash(Number(e.target.value))} className="w-full h-2 bg-input-bg rounded-lg appearance-none cursor-pointer accent-success" />
+                    <input type="range" min="0" max={total} step={step} value={cash} onChange={e => setCash(Number(e.target.value))} className="w-full h-2 bg-input-bg rounded-lg appearance-none cursor-pointer accent-success" />
                 </div>
 
                 <div>
                     <label className="flex justify-between text-xs font-bold text-text-muted mb-2"><span>بطاقة (Card)</span><span className="text-text-main font-mono">{formatCurrency(card, currency)}</span></label>
-                    <input type="range" min="0" max={total} step="250" value={card} onChange={e => setCash(total - Number(e.target.value))} className="w-full h-2 bg-input-bg rounded-lg appearance-none cursor-pointer accent-primary" />
+                    <input type="range" min="0" max={total} step={step} value={card} onChange={e => setCash(total - Number(e.target.value))} className="w-full h-2 bg-input-bg rounded-lg appearance-none cursor-pointer accent-primary" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-2">

@@ -189,7 +189,7 @@ func (r *statsRepository) GetMonthStats(startDate, endDate string) (revenue doma
 	err = r.db.Table("sale_items").
 		Joins("JOIN sales ON sales.id = sale_items.sale_id").
 		Where("sales.date >= ? AND sales.date <= ? AND sales.status IN ?", startDate, endDate, revenueStatuses).
-		Select("CAST(COALESCE(SUM(sale_items.cost * sale_items.quantity), 0) AS INTEGER)").
+		Select("CAST(COALESCE(SUM(sale_items.cost * (sale_items.quantity - sale_items.returned_qty)), 0) AS INTEGER)").
 		Scan(&cogs).Error
 
 	return

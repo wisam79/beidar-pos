@@ -10,7 +10,7 @@ import { categorizeExpense, writeRestockEmail } from '../../core/ai';
 import { api, Expense, Supplier } from '../../core/api';
 import { invalidateAllData } from '../../core/queryClient';
 import { PurchaseOrdersTab } from './components/PurchaseOrdersTab';
-import { PageShell, StatsGrid, StatCard, LoadingState, TabNav, SearchInput } from '../../components/blocks';
+import { PageShell, StatsGrid, StatCard, TabNav, SearchInput } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
 import { useFinanceData, useSuppliersPaged } from '../../hooks/useFinance';
 import { Button } from '../../components/ds/Button';
@@ -135,10 +135,10 @@ export const FinancePage: React.FC = () => {
     const debtInfo = useMemo(() => {
         const total = stats.totalReceivables + stats.totalSupplierDebt;
         if (total === 0) {
-            return { receivablesPct: 50, payablesPct: 50, label: 'متزن' };
+            return { receivablesPct: 0, payablesPct: 0, label: 'لا توجد ديون' };
         }
-        const recPct = (stats.totalReceivables / total) * 100;
-        const payPct = (stats.totalSupplierDebt / total) * 100;
+        const recPct = Math.round((stats.totalReceivables / total) * 100);
+        const payPct = 100 - recPct;
         let label = 'متزن';
         if (stats.totalReceivables > stats.totalSupplierDebt * 1.5) {
             label = 'ممتاز (مستحقاتنا أعلى)';
@@ -322,8 +322,6 @@ export const FinancePage: React.FC = () => {
             )
         }
     ];
-
-    if (loading && !financeData) return <LoadingState icon={Landmark} title="جاري تحميل البيانات المالية..." subtitle="يرجى الانتظار" />;
 
     return (
         <PageShell>

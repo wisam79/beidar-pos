@@ -2,6 +2,7 @@ package service
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/pkg/auth"
 	pkgerrors "beidar-desktop/pkg/errors"
 	"beidar-desktop/pkg/i18n"
 	"beidar-desktop/pkg/logger"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 // RolePermissions defines default permissions for each role.
@@ -85,7 +85,7 @@ func (s *staffService) checkRateLimit(identifier string) (bool, string, error) {
 func (s *staffService) recordFailedAttempt(identifier string, maxAttempts int) error {
 	attempt, err := s.staffRepo.GetLoginAttempt(identifier)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, domain.ErrRecordNotFound) {
 			newAttempt := domain.LoginAttempt{
 				Identifier:  identifier,
 				Attempts:    1,
@@ -124,6 +124,7 @@ func (s *staffService) CreateStaff(staff domain.Staff, password string) (*domain
 		)
 	}
 
+	staff.Username = strings.ToLower(strings.TrimSpace(staff.Username))
 	if len(staff.Username) < 3 || len(staff.Username) > 20 {
 		return nil, pkgerrors.NewAppError(
 			pkgerrors.ModuleStaff,
@@ -346,9 +347,23 @@ func (s *staffService) UpdateStaff(staff domain.Staff) error {
 		}
 	}
 
+	// Privilege check: Only an Admin can promote someone to Admin or modify an Admin's account
+	if current.Role == domain.RoleAdmin || staff.Role == domain.RoleAdmin {
+		callerRole := auth.CurrentRole()
+		if callerRole != "" && callerRole != string(domain.RoleAdmin) {
+			return pkgerrors.NewAppError(
+				pkgerrors.ModuleStaff,
+				"UNAUTHORIZED_ADMIN_MODIFICATION",
+				"فقط مسؤول النظام يمكنه تعديل بيانات حساب المسؤول أو الترقية لرتبة مسؤول",
+				"",
+				"role",
+			)
+		}
+	}
+
 	// Fetch current to maintain hashed password, etc.
 	current.Name = staff.Name
-	current.Username = staff.Username
+	current.Username = strings.ToLower(strings.TrimSpace(staff.Username))
 	current.Role = staff.Role
 	current.Phone = staff.Phone
 	current.Email = staff.Email
@@ -375,6 +390,17 @@ func (s *staffService) UpdateStaffPassword(id string, newPassword string) error 
 	}
 
 	if staff.Role == domain.RoleAdmin {
+		callerID := auth.CurrentStaffID()
+		callerRole := auth.CurrentRole()
+		if callerID != "" && callerID != staff.ID && callerRole != string(domain.RoleAdmin) {
+			return pkgerrors.NewAppError(
+				pkgerrors.ModuleStaff,
+				"UNAUTHORIZED_ADMIN_MODIFICATION",
+				"غير مصرح لك بتعديل كلمة مرور حساب المسؤول",
+				"",
+				"id",
+			)
+		}
 		if len(newPassword) < 4 {
 			return pkgerrors.NewAppError(
 				pkgerrors.ModuleStaff,
@@ -499,7 +525,19 @@ func (s *staffService) GetAllStaff() ([]domain.Staff, error) {
 }
 
 func (s *staffService) GetActiveStaff() ([]domain.Staff, error) {
-	return s.staffRepo.GetActive()
+	staff, err := s.staffRepo.GetActive()
+	if err != nil {
+		return nil, err
+	}
+	if len(staff) == 0 {
+		if err := s.SeedDefaultAdmin(); err == nil {
+			staff, _ = s.staffRepo.GetActive()
+		}
+	}
+	if staff == nil {
+		staff = []domain.Staff{}
+	}
+	return staff, nil
 }
 
 func (s *staffService) ToggleStaffStatus(id string) error {
@@ -527,6 +565,7 @@ func (s *staffService) ToggleStaffStatus(id string) error {
 }
 
 func (s *staffService) AuthenticateByUsername(username, password string) (*domain.AuthResult, error) {
+	username = strings.ToLower(strings.TrimSpace(username))
 	locked, msg, err := s.checkRateLimit(username)
 	if err != nil {
 		return nil, err
@@ -746,7 +785,7 @@ func (s *staffService) pinAlreadyUsed(pin, excludeID string) (*domain.Staff, err
 
 
 func (s *staffService) CheckUsingDefaultPassword(password string) bool {
-	return password == "0000" || password == "admin123" || password == "password" || password == "123456" || password == "1234"
+	return password == "0000" || password == "admin123" || password == "password" || password == "123456" || password == "1234" || password == "1111"
 }
 
 func (s *staffService) GetStaffCount() (int64, error) {

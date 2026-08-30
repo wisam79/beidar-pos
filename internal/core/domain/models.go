@@ -71,7 +71,7 @@ type SaleItem struct {
 type Customer struct {
 	ID              string `gorm:"primaryKey" json:"id"`
 	Name            string `gorm:"index" json:"name"`
-	Phone           string `gorm:"uniqueIndex" json:"phone"`
+	Phone           string `gorm:"index" json:"phone"`
 	Debt            Amount `json:"debt"`
 	InstallmentDebt Amount `json:"installmentDebt"`
 	TotalPurchases  Amount `json:"totalPurchases"`

@@ -25,10 +25,13 @@ func (s *lanService) RegisterClient(deviceID, deviceName, ipAddress string) (str
 	if deviceID == "" || deviceName == "" {
 		return "", fmt.Errorf("معرف واسم الجهاز مطلوبان")
 	}
-	// Check if device is blocked
+	// Check if device or IP is blocked
 	blocked, err := s.networkRepo.IsDeviceBlocked(deviceID)
 	if err != nil {
 		return "", err
+	}
+	if !blocked && ipAddress != "" {
+		blocked, _ = s.networkRepo.IsDeviceBlocked(ipAddress)
 	}
 	if blocked {
 		return "", fmt.Errorf("هذا الجهاز محظور من الاتصال")
@@ -36,6 +39,18 @@ func (s *lanService) RegisterClient(deviceID, deviceName, ipAddress string) (str
 
 	s.clientsMutex.Lock()
 	defer s.clientsMutex.Unlock()
+
+	// Check if existing device is suspended
+	if existing, exists := s.connectedClients[deviceID]; exists && existing.Status == "suspended" {
+		return "", fmt.Errorf("هذا الجهاز معلّق من قبل المدير")
+	}
+
+	// Limit concurrent connected clients to prevent memory exhaustion
+	if len(s.connectedClients) >= 30 {
+		if _, exists := s.connectedClients[deviceID]; !exists {
+			return "", fmt.Errorf("تم الوصول للحد الأقصى لعدد الأجهزة المتصلة (30 جهازاً)")
+		}
+	}
 
 	token, err := s.GenerateSessionToken()
 	if err != nil {
@@ -85,16 +100,24 @@ func (s *lanService) ValidateSessionToken(token string, requestIP string) (*doma
 	return nil, fmt.Errorf("جلسة غير صالحة")
 }
 
-// UpdateClientActivity updates the last activity timestamp
+// UpdateClientActivity updates the last activity timestamp (throttled to reduce contention)
 func (s *lanService) UpdateClientActivity(token string) {
-	s.clientsMutex.Lock()
-	defer s.clientsMutex.Unlock()
+	now := time.Now().Unix()
 
+	s.clientsMutex.RLock()
+	var targetClient *domain.ConnectedClient
 	for _, client := range s.connectedClients {
 		if client.SessionToken == token {
-			client.LastActivity = time.Now().Unix()
-			return
+			targetClient = client
+			break
 		}
+	}
+	s.clientsMutex.RUnlock()
+
+	if targetClient != nil && (now-targetClient.LastActivity) > 10 {
+		s.clientsMutex.Lock()
+		targetClient.LastActivity = now
+		s.clientsMutex.Unlock()
 	}
 }
 

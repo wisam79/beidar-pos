@@ -2,6 +2,7 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 )
@@ -38,6 +39,9 @@ func (r *shiftRepository) GetActiveShift() (*domain.Shift, error) {
 func (r *shiftRepository) GetByID(id string) (*domain.Shift, error) {
 	var shift domain.Shift
 	if err := r.db.First(&shift, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &shift, nil
@@ -46,12 +50,18 @@ func (r *shiftRepository) GetByID(id string) (*domain.Shift, error) {
 func (r *shiftRepository) GetShiftMovements(shiftID string) ([]domain.CashMovement, error) {
 	var movements []domain.CashMovement
 	err := r.db.Where("shift_id = ?", shiftID).Order("timestamp desc").Find(&movements).Error
+	if movements == nil {
+		movements = []domain.CashMovement{}
+	}
 	return movements, err
 }
 
 func (r *shiftRepository) GetShiftHistory(limit int) ([]domain.Shift, error) {
 	var shifts []domain.Shift
 	err := r.db.Where("status = ?", "closed").Order("close_time desc").Limit(limit).Find(&shifts).Error
+	if shifts == nil {
+		shifts = []domain.Shift{}
+	}
 	return shifts, err
 }
 

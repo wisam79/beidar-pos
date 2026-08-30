@@ -112,8 +112,8 @@ func GenerateSelfSignedCert(ips []net.IP, hostname string) (tls.Certificate, str
 			CommonName:   hostname,
 		},
 		NotBefore:             time.Now().Add(-1 * time.Hour),
-		NotAfter:              time.Now().Add(10 * 365 * 24 * time.Hour), // 10 years validity
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		NotAfter:              time.Now().Add(365 * 24 * time.Hour), // 1 year validity
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyAgreement,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
 		DNSNames:              dnsNames,
@@ -150,6 +150,7 @@ func GetOrGenerateServerCert() (tlsCert tls.Certificate, fingerprint string, err
 	}
 
 	machineKey := deriveLanTLSKey()
+	localIPs := GetAllLocalIPs()
 
 	// Try loading existing cert and encrypted key
 	if certData, errCert := os.ReadFile(certPath); errCert == nil {
@@ -158,10 +159,26 @@ func GetOrGenerateServerCert() (tlsCert tls.Certificate, fingerprint string, err
 			if errDec == nil {
 				parsedCert, errPair := tls.X509KeyPair(certData, decryptedKeyPEM)
 				if errPair == nil && len(parsedCert.Certificate) > 0 {
-					// Verify certificate validity
+					// Verify certificate validity and IP coverage
 					leaf, errLeaf := x509.ParseCertificate(parsedCert.Certificate[0])
 					if errLeaf == nil && time.Now().Before(leaf.NotAfter.Add(-24*time.Hour)) {
-						return parsedCert, CalculateCertFingerprint(parsedCert.Certificate[0]), nil
+						hasAllIPs := true
+						for _, lip := range localIPs {
+							found := false
+							for _, cip := range leaf.IPAddresses {
+								if cip.Equal(lip) {
+									found = true
+									break
+								}
+							}
+							if !found {
+								hasAllIPs = false
+								break
+							}
+						}
+						if hasAllIPs {
+							return parsedCert, CalculateCertFingerprint(parsedCert.Certificate[0]), nil
+						}
 					}
 				}
 			}
@@ -170,7 +187,6 @@ func GetOrGenerateServerCert() (tlsCert tls.Certificate, fingerprint string, err
 
 	// Generate a new certificate
 	hostname, _ := os.Hostname()
-	localIPs := GetAllLocalIPs()
 
 	tlsCert, fingerprint, certPEM, keyPEM, err := GenerateSelfSignedCert(localIPs, hostname)
 	if err != nil {

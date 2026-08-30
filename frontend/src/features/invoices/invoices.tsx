@@ -12,7 +12,7 @@ import { BarcodeScannerOverlay, ScanResult } from '../../components/BarcodeScann
 import { api } from '../../core/api';
 import { invalidateAllData } from '../../core/queryClient';
 import { useInvalidateSales, useInvalidateProducts, useInvalidateCustomers, useInvoices } from '../../hooks';
-import { PageShell, StatsGrid, StatCard, LoadingState, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
+import { PageShell, StatsGrid, StatCard, SearchInput, SegmentedControl, Pagination } from '../../components/blocks';
 import { usePreferences } from '../../components/PreferencesContext';
 
 export const InvoicesPage: React.FC = () => {
@@ -121,8 +121,6 @@ export const InvoicesPage: React.FC = () => {
 
     useScanDetection({ onScan: handleScan });
 
-    if (loading && !data) return <LoadingState icon={FileText} title="جاري تحميل الفواتير..." subtitle="معالجة السجلات" />;
-
     return (
         <PageShell className="relative">
             <PinModal
@@ -200,7 +198,12 @@ export const InvoicesPage: React.FC = () => {
             {/* Invoices Table */}
             <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden flex-1 flex flex-col min-h-0">
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    {salesData.length === 0 ? (
+                    {loading && !data ? (
+                        <div className="flex flex-col items-center justify-center py-24 text-center">
+                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3" />
+                            <p className="text-xs text-text-muted">جاري تحميل الفواتير...</p>
+                        </div>
+                    ) : salesData.length === 0 ? (
                         <EmptyState
                             icon={FileText}
                             title="لا توجد فواتير"

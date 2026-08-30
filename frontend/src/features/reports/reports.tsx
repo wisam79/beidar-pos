@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, getLocalDateString } from '../../core/utils';
 import { PageHeader } from '../../components/ui';
-import { PageShell, LoadingState, TabNav, SegmentedControl, StatsGrid, StatCard, FilterBar } from '../../components/blocks';
+import { PageShell, TabNav, SegmentedControl, StatsGrid, StatCard, FilterBar } from '../../components/blocks';
 import { DataTable, ColumnDef } from '../../components/shared/DataTable';
 import { SalesAreaChart } from '../../components/charts';
 import { CustomerRank } from './components/ReportsComponents';
@@ -189,9 +189,6 @@ export const ReportsPage: React.FC = () => {
         } catch { setForecast('تعذر إنشاء التوقعات حالياً.'); }
         setIsForecasting(false);
     };
-
-    // Loading State
-    if (loading && !dashboardStats) return <LoadingState icon={BarChart3} title="جاري تحميل التقارير..." subtitle="تحليل البيانات" />;
 
     const currency = prefs?.currency || 'IQD';
     const storeName = prefs?.storeName;
@@ -1057,7 +1054,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
                         <div className="h-7 bg-surface-hover rounded-xl overflow-hidden border border-border/40">
                             <div
                                 className="h-full bg-success rounded-xl transition-all duration-500"
-                                style={{ width: `${Math.min(100, (data.currentMonth.revenue / Math.max(data.currentMonth.revenue, data.previousMonth.revenue)) * 100)}%` }}
+                                style={{ width: `${Math.max(data.currentMonth.revenue, data.previousMonth.revenue) > 0 ? Math.min(100, (data.currentMonth.revenue / Math.max(data.currentMonth.revenue, data.previousMonth.revenue)) * 100) : 0}%` }}
                             />
                         </div>
                     </div>
@@ -1069,7 +1066,7 @@ const MonthlyComparisonTab: React.FC<{ currency: string }> = ({ currency }) => {
                         <div className="h-7 bg-surface-hover rounded-xl overflow-hidden border border-border/40">
                             <div
                                 className="h-full bg-gray-500/40 rounded-xl transition-all duration-500"
-                                style={{ width: `${Math.min(100, (data.previousMonth.revenue / Math.max(data.currentMonth.revenue, data.previousMonth.revenue)) * 100)}%` }}
+                                style={{ width: `${Math.max(data.currentMonth.revenue, data.previousMonth.revenue) > 0 ? Math.min(100, (data.previousMonth.revenue / Math.max(data.currentMonth.revenue, data.previousMonth.revenue)) * 100) : 0}%` }}
                             />
                         </div>
                     </div>

@@ -5,7 +5,7 @@ import { Package, Printer, Plus, Layers, FileSpreadsheet, BarChart2 } from 'luci
 import { Product, CategoryDef } from '../../core/types';
 import { compressImage } from '../../core/utils';
 import { PageHeader, EmptyState } from '../../components/ui';
-import { PageShell, LoadingState } from '../../components/blocks';
+import { PageShell } from '../../components/blocks';
 import { BarcodeScannerOverlay, ScanResult } from '../../components/BarcodeScannerOverlay';
 import { BarcodeDesigner } from './components/BarcodeDesigner';
 import { ConfirmModal } from '../../components/ConfirmModal';
@@ -106,7 +106,7 @@ export const ProductsPage: React.FC = () => {
         }
 
         const total = filtered.length;
-        const start = page > 0 ? (page - 1) * pageSize : 0;
+        const start = page * pageSize;
         const paginated = filtered.slice(start, start + pageSize);
 
         let totalStock = 0;
@@ -511,9 +511,6 @@ export const ProductsPage: React.FC = () => {
     // --- UI State ---
     const [showStats, setShowStats] = useState(false);
 
-    // --- Loading State ---
-    if (loading && allProducts.length === 0) return <LoadingState icon={Package} title={t('common.loading')} subtitle={t('common.loading')} />;
-
     return (
         <PageShell>
             <PageHeader title={t('products.title')} icon={Package} description={t('products.productDetails')} actions={
@@ -550,7 +547,12 @@ export const ProductsPage: React.FC = () => {
             <BulkActions selectedCount={selectedIds.length} onPrintSelected={() => { selectedIds.forEach(id => { const p = allProducts.find(prod => prod.id === id); if (p) addToPrintQueue(p, 1); }); setSelectedIds([]); }} onDeleteSelected={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
 
             <div ref={parentRef} className="flex-1 overflow-y-auto min-h-0 pr-1 pb-4 custom-scrollbar">
-                {filteredProducts.length === 0 ? <EmptyState icon={Package} title={t('products.noProducts')} description={search ? t('common.noData') : t('products.addProduct')} action={!search && <button onClick={handleInitAdd} className="bg-surface hover:bg-surface-hover text-text-main px-5 py-2 rounded-xl border border-border text-sm font-bold">{t('products.addProduct')}</button>} /> : (
+                {loading && allProducts.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-24 text-center">
+                        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3" />
+                        <p className="text-xs text-text-muted">{t('common.loading')}</p>
+                    </div>
+                ) : filteredProducts.length === 0 ? <EmptyState icon={Package} title={t('products.noProducts')} description={search ? t('common.noData') : t('products.addProduct')} action={!search && <button onClick={handleInitAdd} className="bg-surface hover:bg-surface-hover text-text-main px-5 py-2 rounded-xl border border-border text-sm font-bold">{t('products.addProduct')}</button>} /> : (
                     isGrid ? (
                         <ProductGridView
                             virtualItems={virtualItems} products={filteredProducts} columns={columns} selectedIds={selectedIds}

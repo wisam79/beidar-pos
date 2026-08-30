@@ -2,6 +2,7 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"errors"
 	"strings"
 
 	"gorm.io/gorm"
@@ -29,6 +30,9 @@ func (r *customerRepository) Transaction(fn func(tx domain.Tx) error) error {
 func (r *customerRepository) GetAll() ([]domain.Customer, error) {
 	var customers []domain.Customer
 	err := r.db.Find(&customers).Error
+	if customers == nil {
+		customers = []domain.Customer{}
+	}
 	return customers, err
 }
 
@@ -64,6 +68,10 @@ func (r *customerRepository) GetCustomersPaged(page int, pageSize int, search st
 		totalPages++
 	}
 
+	if customers == nil {
+		customers = []domain.Customer{}
+	}
+
 	return &domain.PaginatedCustomers{
 		Data:       customers,
 		Total:      total,
@@ -76,6 +84,9 @@ func (r *customerRepository) GetCustomersPaged(page int, pageSize int, search st
 func (r *customerRepository) GetByID(id string) (*domain.Customer, error) {
 	var customer domain.Customer
 	if err := r.db.First(&customer, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &customer, nil
@@ -84,23 +95,32 @@ func (r *customerRepository) GetByID(id string) (*domain.Customer, error) {
 func (r *customerRepository) GetForUpdate(id string) (*domain.Customer, error) {
 	var customer domain.Customer
 	if err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).First(&customer, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &customer, nil
 }
 
 func (r *customerRepository) GetByIDs(ids []string) ([]domain.Customer, error) {
-	var customers []domain.Customer
 	if len(ids) == 0 {
-		return customers, nil
+		return []domain.Customer{}, nil
 	}
+	var customers []domain.Customer
 	err := r.db.Find(&customers, "id IN ?", ids).Error
+	if customers == nil {
+		customers = []domain.Customer{}
+	}
 	return customers, err
 }
 
 func (r *customerRepository) GetByPhone(phone string) (*domain.Customer, error) {
 	var customer domain.Customer
 	if err := r.db.First(&customer, "phone = ?", phone).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &customer, nil
@@ -125,6 +145,9 @@ func (r *customerRepository) Delete(id string) error {
 func (r *customerRepository) Search(query string) ([]domain.Customer, error) {
 	var customers []domain.Customer
 	err := r.db.Where("name LIKE ? OR phone LIKE ?", "%"+query+"%", "%"+query+"%").Find(&customers).Error
+	if customers == nil {
+		customers = []domain.Customer{}
+	}
 	return customers, err
 }
 
@@ -173,3 +196,19 @@ func (r *customerRepository) DecrementInstallmentDebt(id string, amount domain.A
 		UpdateColumn("installment_debt", gorm.Expr("CASE WHEN installment_debt - ? < 0 THEN 0 ELSE installment_debt - ? END", amount.Cents(), amount.Cents())).
 		Error
 }
+
+func (r *customerRepository) IncrementPurchasesAndDebt(id string, totalPurchases domain.Amount, points int, debtIncrease domain.Amount, installmentDebtIncrease domain.Amount, lastVisit string) error {
+	updates := map[string]interface{}{
+		"total_purchases": gorm.Expr("total_purchases + ?", totalPurchases.Cents()),
+		"last_visit":      lastVisit,
+		"points":          gorm.Expr("points + ?", points),
+	}
+	if debtIncrease > 0 {
+		updates["debt"] = gorm.Expr("debt + ?", debtIncrease.Cents())
+	}
+	if installmentDebtIncrease > 0 {
+		updates["installment_debt"] = gorm.Expr("installment_debt + ?", installmentDebtIncrease.Cents())
+	}
+	return r.db.Model(&domain.Customer{}).Where("id = ?", id).Updates(updates).Error
+}
+

@@ -2,9 +2,11 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"errors"
+	"time"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"time"
 )
 
 type saleRepository struct {
@@ -30,6 +32,9 @@ func (r *saleRepository) GetCustomerInstallments(customerID string) ([]domain.Sa
 	err := r.db.Where("customer_id = ? AND payment_method = ?", customerID, "installment").
 		Order("timestamp desc").
 		Find(&sales).Error
+	if sales == nil {
+		sales = []domain.Sale{}
+	}
 	return sales, err
 }
 
@@ -96,6 +101,10 @@ func (r *saleRepository) GetSales(page int, pageSize int, search string, statusF
 		totalPages++
 	}
 
+	if sales == nil {
+		sales = []domain.Sale{}
+	}
+
 	return &domain.PaginatedSales{
 		Data:       sales,
 		Total:      total,
@@ -108,6 +117,9 @@ func (r *saleRepository) GetSales(page int, pageSize int, search string, statusF
 func (r *saleRepository) GetByID(id string) (*domain.Sale, error) {
 	var sale domain.Sale
 	if err := r.db.Preload("Items").First(&sale, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &sale, nil
@@ -116,6 +128,9 @@ func (r *saleRepository) GetByID(id string) (*domain.Sale, error) {
 func (r *saleRepository) GetForUpdate(id string) (*domain.Sale, error) {
 	var sale domain.Sale
 	if err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).Preload("Items").First(&sale, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &sale, nil
@@ -132,6 +147,9 @@ func (r *saleRepository) Update(sale *domain.Sale) error {
 func (r *saleRepository) GetSaleItems(saleID string) ([]domain.SaleItem, error) {
 	var items []domain.SaleItem
 	err := r.db.Where("sale_id = ?", saleID).Find(&items).Error
+	if items == nil {
+		items = []domain.SaleItem{}
+	}
 	return items, err
 }
 
@@ -155,6 +173,9 @@ func (r *saleRepository) GetParkedSales() ([]domain.ParkedSale, error) {
 	var parked []domain.ParkedSale
 	if err := r.db.Order("created_at desc").Find(&parked).Error; err != nil {
 		return nil, err
+	}
+	if parked == nil {
+		parked = []domain.ParkedSale{}
 	}
 	return parked, nil
 }
@@ -185,6 +206,9 @@ func (r *saleRepository) DeleteParkedSale(id uint) error {
 func (r *saleRepository) GetUnsyncedSales() ([]domain.Sale, error) {
 	var sales []domain.Sale
 	err := r.db.Preload("Items").Where("zoho_synced = ?", false).Find(&sales).Error
+	if sales == nil {
+		sales = []domain.Sale{}
+	}
 	return sales, err
 }
 
@@ -205,5 +229,8 @@ func (r *saleRepository) GetInstallmentSales() ([]domain.Sale, error) {
 		Preload("Items").
 		Order("timestamp desc").
 		Find(&sales).Error
+	if sales == nil {
+		sales = []domain.Sale{}
+	}
 	return sales, err
 }

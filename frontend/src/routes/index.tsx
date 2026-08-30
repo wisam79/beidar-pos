@@ -1,6 +1,8 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAuth } from '../core/AuthContext';
 
 const Dashboard = lazy(() => import('../features/dashboard/dashboard').then((m) => ({ default: m.Dashboard })));
@@ -49,6 +51,32 @@ const preloadRoutes = () => {
   Promise.all(routes).catch(() => {});
 };
 
+const RouteErrorFallback: React.FC<{ pageName?: string }> = ({ pageName = 'الصفحة' }) => (
+  <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center bg-surface/40 rounded-2xl border border-border/60 m-6 animate-scale-in">
+    <div className="w-14 h-14 bg-danger/10 text-danger rounded-2xl flex items-center justify-center mb-4 border border-danger/20">
+      <AlertTriangle size={28} />
+    </div>
+    <h3 className="text-lg font-bold text-text-main mb-1.5">تعذر تحميل {pageName}</h3>
+    <p className="text-text-muted text-xs mb-5 max-w-sm">
+      حدث خطأ غير متوقع أثناء معالجة هذه الصفحة. يمكنك المحاولة مجدداً أو الانتقال لشاشة المبيعات.
+    </p>
+    <div className="flex gap-3">
+      <button
+        onClick={() => window.location.reload()}
+        className="px-4 py-2 bg-primary text-primary-fg rounded-xl font-bold text-xs hover:opacity-90 transition-opacity"
+      >
+        إعادة المحاولة
+      </button>
+      <a
+        href="#/sales"
+        className="px-4 py-2 bg-surface text-text-main rounded-xl font-bold text-xs border border-border hover:bg-surface-hover transition-colors"
+      >
+        الذهاب لنقاط البيع
+      </a>
+    </div>
+  </div>
+);
+
 export const AppRoutes: React.FC = () => {
   React.useEffect(() => {
     const trigger = () => {
@@ -66,16 +94,16 @@ export const AppRoutes: React.FC = () => {
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/sales" element={<SalesPage />} />
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/inventory" element={<InventoryPage />} />
-        <Route path="/invoices" element={<InvoicesPage />} />
-        <Route path="/customers" element={<CustomersPage />} />
-        <Route path="/finance" element={<ProtectedRoute permission="view_reports"><FinancePage /></ProtectedRoute>} />
-        <Route path="/reports" element={<ProtectedRoute permission="view_reports"><ReportsPage /></ProtectedRoute>} />
-        <Route path="/shifts" element={<ShiftsPage />} />
-        <Route path="/settings" element={<ProtectedRoute permission="settings"><SettingsPage /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ErrorBoundary fallback={<RouteErrorFallback pageName="لوحة التحكم" />}><Dashboard /></ErrorBoundary>} />
+        <Route path="/sales" element={<ErrorBoundary fallback={<RouteErrorFallback pageName="شاشة البيع" />}><SalesPage /></ErrorBoundary>} />
+        <Route path="/products" element={<ErrorBoundary fallback={<RouteErrorFallback pageName="المنتجات" />}><ProductsPage /></ErrorBoundary>} />
+        <Route path="/inventory" element={<ErrorBoundary fallback={<RouteErrorFallback pageName="المخزون" />}><InventoryPage /></ErrorBoundary>} />
+        <Route path="/invoices" element={<ErrorBoundary fallback={<RouteErrorFallback pageName="الفواتير" />}><InvoicesPage /></ErrorBoundary>} />
+        <Route path="/customers" element={<ErrorBoundary fallback={<RouteErrorFallback pageName="العملاء" />}><CustomersPage /></ErrorBoundary>} />
+        <Route path="/finance" element={<ProtectedRoute permission="finance"><ErrorBoundary fallback={<RouteErrorFallback pageName="المالية" />}><FinancePage /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/reports" element={<ProtectedRoute permission="reports"><ErrorBoundary fallback={<RouteErrorFallback pageName="التقارير" />}><ReportsPage /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/shifts" element={<ErrorBoundary fallback={<RouteErrorFallback pageName="الورديات" />}><ShiftsPage /></ErrorBoundary>} />
+        <Route path="/settings" element={<ProtectedRoute permission="settings"><ErrorBoundary fallback={<RouteErrorFallback pageName="الإعدادات" />}><SettingsPage /></ErrorBoundary></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Suspense>

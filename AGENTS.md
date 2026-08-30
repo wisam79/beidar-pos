@@ -1,7 +1,7 @@
 # Beidar - دليل المطورين والـ AI Agents (Zero-Hallucination Protocol)
 
-> **آخر تحديث**: 2026-07-21
-> **إصدار المنتج**: 2.0.8 | **العمارة**: Clean Architecture v3
+> **آخر تحديث**: 2026-08-30
+> **إصدار المنتج**: 2.1.0 | **العمارة**: Clean Architecture v3
 > **الحالة**: 🟢 قيد التطوير المستمر (تحسين وتثبيت الميزات الحالية)
 
 ---
@@ -194,5 +194,61 @@
 - **توافق أنواع دوال المحاكاة في الواجهة (`Vitest Mock Callbacks`):** عند كتابة اختبارات المكونات في React/Vitest، تجنب إسناد `vi.fn()` مباشرة للخصائص ذات التوقيع الصارم لتفادي أخطاء `TS2348` و `TS2322`، واستخدم دوال تغليف واضحة ومحددة الأنواع (`(v: number) => { ... }`).
 ---
 
+## 7. بروتوكول المراجعة والتدقيق الشامل للوكلاء الـ 10 (10-Agent A-to-Z Review Protocol)
+
+عند طلب مراجعة أو تدقيق شامل للتطبيق (مثل `/goal` لمراجعة التطبيق من الألف إلى الياء)، يجب تقسيم المهمة والتحقق وفق مصفوفة الوكلاء الـ 10:
+
+1. **الوكيل 1 (Core Domain & Architecture):**
+   - عزل طبقة `internal/core/domain` التام عن `gorm` والمكتبات الخارجية.
+   - التحقق من استخدام `domain.Amount` (`int64` cents) لجميع الحسابات المالية ومنع `float64` تماماً للأموال.
+
+2. **الوكيل 2 (Database, Concurrency & Migrations):**
+   - التأكد من ضبط SQLite على `WAL Mode` وحصر الاتصال بـ `MaxOpenConns(1)`.
+   - فحص القفل الحذر `clause.Locking{Strength: "UPDATE"}` والتحديث الذري `gorm.Expr`.
+   - التأكد من تنفيذ كافة المهاجرات مرقمة داخل Transactions وفحص `PRAGMA foreign_key_check`.
+
+3. **الوكيل 3 (Financial Services & Business Logic):**
+   - فحص شروط الفواتير: `Discount <= calculatedTotal`، ومنع الخصم السالب.
+   - فحص حساب الأقساط: `.RoundToNearest(25000)` وتسوية المتبقي بالشهر الأخير و `DownPayment <= Total`.
+   - فحص حماية CRM من الـ Mass-Assignment (تعديل الحقول الآمنة فقط وحماية الديون والنقاط).
+   - فحص قيد إنشاء العملاء (`c.ID == ""`) واستلام أوامر الشراء (`ReceivedQty`).
+
+4. **الوكيل 4 (LAN Network & Cloud Sync):**
+   - فحص بث اكتشاف الأجهزة UDP على البورت `9765` وخادم HTTP المحمي بـ `TLS 1.3`.
+   - فحص انتهاء صلاحية الجلسات بعد 12 ساعة خمول (`LastActivity`).
+   - فحص سياسة الصلاحيات المغلقة (`lanRoleAllows`) على كافة المسارات الشبكية.
+
+5. **الوكيل 5 (Security, Crypto & Compliance):**
+   - فحص اشتقاق المفاتيح بـ PBKDF2 (100k دورة + SHA-256) وتشفير AES-256-GCM.
+   - فحص مقارنة كلمات المرور بـ `bcrypt` مع التأخير الأسي `Tarpitting` (منع DoS).
+   - فحص المقارنة الزمنية الثابتة `subtle.ConstantTimeCompare` لرموز الجلسات.
+   - فحص تعقيم حقول التصدير CSV ضد ثغرات Formula Injection (`'`, `=`, `+`, `-`, `@`).
+   - فحص تعمية بيانات العملاء الشخصية PII في السجلات.
+
+6. **الوكيل 6 (Hardware, Printing & Desktop OS):**
+   - فحص منظومة الطباعة الحرارية الصامتة بالصور (Bitmap Receipt) عبر `winspool.drv` وأوامر `GS v 0`.
+   - فحص البديل البرمجي (PDF Generation) وقفل النسخة الواحدة `SingleInstance`.
+
+7. **الوكيل 7 (Wails Handlers & IPC Bridge):**
+   - فحص تصدير دوال Wails بـ `(result, error)` أو `error` والتغليف الهيكلي `%w`.
+   - فحص التحقق من الصلاحيات (`auth.RequirePermission`) في الواجهة الخلفية.
+
+8. **الوكيل 8 (Frontend State & Performance):**
+   - فحص إدارة الحالة في Zustand وعزل الـ Slices.
+   - فحص الالتقاط الصامت للباركود `useUsbScannerDetection` دون اشتراط حقل إدخال نشط.
+   - فحص القوائم والجداول الكبيرة باستخدام `@tanstack/react-virtual`.
+
+9. **الوكيل 9 (POS UI/UX & Navigation Parity):**
+   - فحص التطابق التام (100%) بين مسميات بطاقات لوحة الانطلاق وشريط التنقل والترجمة `ar.json`.
+   - فحص الواجهة اللمسية بنظام ثنائي الأقسام (Dual-Pane) ولوحة أرقام Numpad.
+   - حظر الـ Emojis واستخدام أيقونات Phosphor Duotone / Lucide المتجهة فقط.
+
+10. **الوكيل 10 (QA Suite & Build System):**
+    - تشغيل `go test ./internal/... ./pkg/...` و `go vet ./internal/... ./pkg/...`.
+    - تشغيل فحص الأنواع `npm run typecheck` واختبارات `npx vitest run --fileParallelism=false`.
+    - التحقق من سكربت البناء الرسمي `scripts/build.ps1`.
+---
+
 > **ملاحظة أخيرة ونهائية للوكيل (Final Directive):**
 > تذكر أنك تلمس كود إنتاجي يعمل لدى عملاء فعليين. **لا تقم بهندسة زائدة (Over-engineering)**، لا تمسح ميزات حالية ما لم يطلب ذلك صراحة، واحرص على قراءة الكود المحيط بالمنطقة التي تقوم بتعديلها لتفهم سياقها بدقة تامة وتتجنب الهلوسة.
+

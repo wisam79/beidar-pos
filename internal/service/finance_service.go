@@ -139,12 +139,17 @@ func (s *financeService) DeleteCategory(id string, force bool) error {
 				Options: map[string]bool{"allowForce": true},
 			}
 		}
-		if err := s.expenseRepo.UpdateProductCategory(cat.Name, "Uncategorized"); err != nil {
-			return err
-		}
 	}
 
-	return s.expenseRepo.DeleteCategory(id)
+	return s.expenseRepo.Transaction(func(tx domain.Tx) error {
+		txExpenseRepo := s.expenseRepo.WithTx(tx)
+		if productCount > 0 {
+			if err := txExpenseRepo.UpdateProductCategory(cat.Name, "Uncategorized"); err != nil {
+				return err
+			}
+		}
+		return txExpenseRepo.DeleteCategory(id)
+	})
 }
 
 func (s *financeService) GetPreferences() (*domain.AppPreferences, error) {
@@ -292,6 +297,12 @@ func (s *financeService) GetActiveShift() (*domain.Shift, error) {
 }
 
 func (s *financeService) AddCashMovement(shiftID, moveType, reason, staffID, staffName string, amount domain.Amount) (*domain.CashMovement, error) {
+	if amount <= 0 {
+		return nil, fmt.Errorf("مبلغ حركة الصندوق يجب أن يكون أكبر من الصفر")
+	}
+	if moveType != "cash_in" && moveType != "cash_out" {
+		return nil, fmt.Errorf("نوع حركة الصندوق غير صالح (يجب أن يكون إيداع أو سحب)")
+	}
 	var move domain.CashMovement
 	err := s.shiftRepo.Transaction(func(tx domain.Tx) error {
 		txShiftRepo := s.shiftRepo.WithTx(tx)
@@ -452,7 +463,7 @@ func (s *financeService) ReceivePurchaseOrder(orderID string, items []domain.Pur
 		txPurchaseRepo := s.purchaseRepo.WithTx(tx)
 		txProductRepo := s.productRepo.WithTx(tx)
 
-		order, err := txPurchaseRepo.GetByID(orderID)
+		order, err := txPurchaseRepo.GetForUpdate(orderID)
 		if err != nil {
 			return err
 		}

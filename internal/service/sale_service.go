@@ -10,7 +10,6 @@ import (
 	"beidar-desktop/pkg/i18n"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 
 	"beidar-desktop/pkg/auth"
 )
@@ -374,12 +373,6 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 				)
 			}
 
-			updates := map[string]interface{}{
-				"total_purchases": gorm.Expr("total_purchases + ?", sale.Total.Cents()),
-				"last_visit":      time.Now().Format("2006-01-02"),
-				"points":          gorm.Expr("points + ?", sale.PointsAwarded),
-			}
-
 			var debtIncrease, installmentDebtIncrease domain.Amount
 
 			if sale.PaymentMethod == "credit" {
@@ -394,14 +387,14 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 				debtIncrease = sale.SplitDetails["credit"]
 			}
 
-			if debtIncrease > 0 {
-				updates["debt"] = gorm.Expr("debt + ?", debtIncrease.Cents())
-			}
-			if installmentDebtIncrease > 0 {
-				updates["installment_debt"] = gorm.Expr("installment_debt + ?", installmentDebtIncrease.Cents())
-			}
-
-			if err := txCustomerRepo.Updates(customer.ID, updates); err != nil {
+			if err := txCustomerRepo.IncrementPurchasesAndDebt(
+				customer.ID,
+				sale.Total,
+				sale.PointsAwarded,
+				debtIncrease,
+				installmentDebtIncrease,
+				time.Now().Format("2006-01-02"),
+			); err != nil {
 				return err
 			}
 		}
@@ -592,6 +585,7 @@ func (s *saleService) ReturnSale(id string) error {
 			}
 		}
 
+		var creditOverpayCashRefund domain.Amount
 		if sale.CustomerID != "" {
 			// Revert only the points that were awarded for the REMAINING total.
 			// Partial returns already reverted their own shares; using the original
@@ -625,6 +619,7 @@ func (s *saleService) ReturnSale(id string) error {
 				}
 				
 				if refundAmount > 0 {
+					creditOverpayCashRefund = refundAmount
 					refundPayment := domain.Payment{
 						SaleID:     sale.ID,
 						CustomerID: sale.CustomerID,
@@ -750,6 +745,11 @@ func (s *saleService) ReturnSale(id string) error {
 			cashRefund = sale.Total
 		case "card":
 			totalRefund = sale.Total
+		case "credit":
+			if creditOverpayCashRefund > 0 {
+				totalRefund = creditOverpayCashRefund
+				cashRefund = creditOverpayCashRefund
+			}
 		case "installment":
 			if sale.InstallmentPlan != nil {
 				var paidSum domain.Amount
@@ -769,6 +769,10 @@ func (s *saleService) ReturnSale(id string) error {
 			}
 			if card, ok := splitRemaining["card"]; ok {
 				totalRefund = totalRefund.Add(card)
+			}
+			if creditOverpayCashRefund > 0 {
+				cashRefund = cashRefund.Add(creditOverpayCashRefund)
+				totalRefund = totalRefund.Add(creditOverpayCashRefund)
 			}
 		}
 		if totalRefund > 0 {
@@ -838,7 +842,7 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 
 		// If the product was deleted after the sale, skip restoring stock and the movement.
 		product, productErr := txProductRepo.GetByID(productID)
-		if productErr != nil && !errors.Is(productErr, gorm.ErrRecordNotFound) {
+		if productErr != nil && !errors.Is(productErr, domain.ErrRecordNotFound) {
 			return productErr
 		}
 		if productErr == nil {
@@ -1019,13 +1023,29 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 		}
 		sale.Status = newStatus
 
+		itemGrossTotal := item.Price.MulFloat(qtyToReturn)
+		if sale.Subtotal >= itemGrossTotal {
+			sale.Subtotal = sale.Subtotal.Sub(itemGrossTotal)
+		} else {
+			sale.Subtotal = domain.Zero()
+		}
+
 		var refundVat domain.Amount
 		if sale.Total > 0 && sale.VAT > 0 {
 			refundVat = domain.Amount((sale.VAT.Cents() * refundAmount.Cents()) / sale.Total.Cents())
 		}
 		sale.Total = sale.Total.Sub(refundAmount)
-		sale.Subtotal = sale.Subtotal.Sub(refundAmount.Sub(refundVat))
 		sale.VAT = sale.VAT.Sub(refundVat)
+
+		if sale.Total < 0 {
+			sale.Total = domain.Zero()
+		}
+		if sale.Subtotal < 0 {
+			sale.Subtotal = domain.Zero()
+		}
+		if sale.VAT < 0 {
+			sale.VAT = domain.Zero()
+		}
 
 		if err := txSaleRepo.Update(sale); err != nil {
 			return err

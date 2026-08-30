@@ -31,6 +31,9 @@ func (r *networkRepository) UnblockDevice(id uint) error {
 func (r *networkRepository) GetBlockedDevices() ([]domain.BlockedDevice, error) {
 	var devices []domain.BlockedDevice
 	err := r.db.Order("blocked_at desc").Find(&devices).Error
+	if devices == nil {
+		devices = []domain.BlockedDevice{}
+	}
 	return devices, err
 }
 

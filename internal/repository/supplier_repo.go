@@ -2,6 +2,7 @@ package repository
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"errors"
 	"strings"
 
 	"gorm.io/gorm"
@@ -65,6 +66,10 @@ func (r *supplierRepository) GetSuppliersPaged(page int, pageSize int, search st
 		totalPages++
 	}
 
+	if suppliers == nil {
+		suppliers = []domain.Supplier{}
+	}
+
 	return &domain.PaginatedSuppliers{
 		Data:       suppliers,
 		Total:      total,
@@ -77,6 +82,9 @@ func (r *supplierRepository) GetSuppliersPaged(page int, pageSize int, search st
 func (r *supplierRepository) GetByID(id string) (*domain.Supplier, error) {
 	var supplier domain.Supplier
 	if err := r.db.First(&supplier, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &supplier, nil
@@ -85,6 +93,9 @@ func (r *supplierRepository) GetByID(id string) (*domain.Supplier, error) {
 func (r *supplierRepository) GetForUpdate(id string) (*domain.Supplier, error) {
 	var supplier domain.Supplier
 	if err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).First(&supplier, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &supplier, nil
@@ -96,6 +107,10 @@ func (r *supplierRepository) Create(supplier *domain.Supplier) error {
 
 func (r *supplierRepository) Update(supplier *domain.Supplier) error {
 	return r.db.Save(supplier).Error
+}
+
+func (r *supplierRepository) Updates(id string, updates map[string]interface{}) error {
+	return r.db.Model(&domain.Supplier{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *supplierRepository) UpdateBalance(id string, amount domain.Amount) error {

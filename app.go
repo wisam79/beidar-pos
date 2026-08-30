@@ -259,7 +259,7 @@ func (a *App) startup(ctx context.Context) {
 
 	// 🔄 One-time migration: Move Base64 images from DB to filesystem
 	go func() {
-		migrated, err := a.BackupHandler.MigrateImagesToFilesystem()
+		migrated, err := a.backupService.MigrateImagesToFilesystem()
 		if err != nil {
 			fmt.Printf("Image migration error: %v\n", err)
 		} else if migrated > 0 {

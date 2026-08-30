@@ -114,7 +114,19 @@ export function useCart(options: UseCartOptions = {}): UseCartReturn {
                 setDiscount(Number(savedDiscount));
             }
             if (savedCustomer) {
-                setSelectedCustomer(JSON.parse(savedCustomer));
+                const parsed = JSON.parse(savedCustomer);
+                if (parsed?.id && parsed?.name) {
+                    setSelectedCustomer({
+                        id: parsed.id,
+                        name: parsed.name,
+                        phone: '',
+                        debt: 0,
+                        installmentDebt: 0,
+                        totalPurchases: 0,
+                        points: 0,
+                        lastVisit: ''
+                    });
+                }
             }
             if (savedPaymentMethod) {
                 setPaymentMethod(savedPaymentMethod as 'cash' | 'card' | 'credit' | 'split' | 'installment');
@@ -138,7 +150,7 @@ export function useCart(options: UseCartOptions = {}): UseCartReturn {
             localStorage.setItem(PAYMENT_METHOD_STORAGE_KEY, paymentMethod);
             // Zen Mode NOT saved anymore
             if (selectedCustomer) {
-                localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(selectedCustomer));
+                localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify({ id: selectedCustomer.id, name: selectedCustomer.name }));
             }
         } else {
             // Clear storage when cart is empty (after checkout)

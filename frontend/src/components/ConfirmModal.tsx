@@ -70,7 +70,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
             {/* Modal */}
             <div
-                className="relative w-full max-w-md bg-surface border-t border-t-white/30 dark:border-t-white/10 border-x border-x-border/60 border-b-[4px] border-b-black/80 rounded-3xl shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 overflow-hidden"
+                className="relative w-full max-w-md bg-surface border-t border-t-white/30 dark:border-t-white/10 border-x border-x-border/60 border-b-[4px] border-b-black/80 rounded-3xl shadow-2xl animate-modal-pop overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Content */}
@@ -91,13 +91,13 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 <div className="flex gap-3 p-6 pt-0">
                     <button
                         onClick={onCancel}
-                        className="flex-1 px-6 py-3 min-h-[48px] rounded-2xl border-t border-t-white/20 border-x border-x-border/60 border-b-[3px] border-b-black/60 dark:border-b-black/80 bg-surface text-text-muted font-extrabold hover:bg-surface-hover hover:text-text-main transition-all active:translate-y-0.5 touch-target outline-none cursor-pointer"
+                        className="flex-1 px-6 py-3 min-h-[48px] rounded-2xl border-t border-t-white/20 border-x border-x-border/60 border-b-[3px] border-b-black/60 dark:border-b-black/80 bg-surface text-text-muted font-extrabold hover:bg-surface-hover hover:text-text-main transition-all pressable touch-target outline-none cursor-pointer"
                     >
                         {cancelText}
                     </button>
                     <button
                         onClick={onConfirm}
-                        className={`flex-1 px-6 py-3 min-h-[48px] rounded-2xl transition-all active:translate-y-0.5 shadow-lg touch-target outline-none cursor-pointer ${confirmBtnStyle[type]}`}
+                        className={`flex-1 px-6 py-3 min-h-[48px] rounded-2xl transition-all pressable shadow-lg touch-target outline-none cursor-pointer ${confirmBtnStyle[type]}`}
                     >
                         {confirmText}
                     </button>

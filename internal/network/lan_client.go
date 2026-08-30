@@ -2,6 +2,7 @@ package network
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/pkg/crypto"
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
@@ -74,14 +75,20 @@ func (s *lanService) saveLanConfig() error {
 		return nil
 	}
 
-	data, err := json.MarshalIndent(config, "", "  ")
+	data, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	key := deriveLanTLSKey()
+	encStr, err := crypto.Encrypt(data, key)
 	if err != nil {
 		return err
 	}
 
 	configPath := getLanConfigPath()
 	_ = os.MkdirAll(filepath.Dir(configPath), 0755)
-	return os.WriteFile(configPath, data, 0600)
+	return os.WriteFile(configPath, []byte(encStr), 0600)
 }
 
 func (s *lanService) loadSavedLanConfig() {
@@ -90,8 +97,18 @@ func (s *lanService) loadSavedLanConfig() {
 	if err != nil {
 		return
 	}
+
+	key := deriveLanTLSKey()
+	var configBytes []byte
+	if dec, errDec := crypto.Decrypt(string(data), key); errDec == nil {
+		configBytes = dec
+	} else {
+		// Fallback for legacy plaintext configs
+		configBytes = data
+	}
+
 	var config LanConfig
-	if err := json.Unmarshal(data, &config); err == nil && config.ServerAddress != "" && config.SessionToken != "" {
+	if err := json.Unmarshal(configBytes, &config); err == nil && config.ServerAddress != "" && config.SessionToken != "" {
 		s.clientMutex.Lock()
 		s.serverAddress = config.ServerAddress
 		s.sessionToken = config.SessionToken
@@ -111,37 +128,23 @@ func (s *lanService) ConnectToServer(serverIP string, port int, secret string) e
 		port = DefaultLanPort
 	}
 
-	// Try HTTPS first (Default & Standard)
+	// Require HTTPS (TLS 1.3) exclusively for all LAN communications
 	var capturedFingerprint string
 	httpsClient := createSecureHTTPClient(&capturedFingerprint)
 	httpsAddress := fmt.Sprintf("https://%s:%d", serverIP, port)
 
 	resp, err := httpsClient.Get(httpsAddress + "/api/ping")
-	var address string
-	var client *http.Client
-
-	if err == nil && resp.StatusCode == http.StatusOK {
-		resp.Body.Close()
-		address = httpsAddress
-		client = httpsClient
-	} else {
-		if resp != nil {
-			resp.Body.Close()
-		}
-		// Fallback to plain HTTP if HTTPS connection fails (e.g. testing with mock server)
-		httpAddress := fmt.Sprintf("http://%s:%d", serverIP, port)
-		plainClient := &http.Client{Timeout: 10 * time.Second}
-		respHttp, errHttp := plainClient.Get(httpAddress + "/api/ping")
-		if errHttp != nil {
-			return fmt.Errorf("فشل الاتصال بالخادم عبر HTTPS أو HTTP: %v", err)
-		}
-		respHttp.Body.Close()
-		if respHttp.StatusCode != http.StatusOK {
-			return fmt.Errorf("الخادم غير متاح (كود: %d)", respHttp.StatusCode)
-		}
-		address = httpAddress
-		client = plainClient
+	if err != nil {
+		return fmt.Errorf("فشل الاتصال الآمن (HTTPS) بالخادم: %w", err)
 	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("الخادم غير متاح (كود: %d)", resp.StatusCode)
+	}
+
+	address := httpsAddress
+	client := httpsClient
 
 	deviceID, _ := s.settingsService.GetDeviceID()
 	hostname, _ := os.Hostname()
@@ -261,7 +264,7 @@ func (s *lanService) TestConnection() string {
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if len(body) > 500 {
 		return fmt.Sprintf("Success (Status %d)! Data preview: %s...", resp.StatusCode, string(body[:500]))
 	}
@@ -296,11 +299,11 @@ func (s *lanService) RemoteGet(endpoint string, result interface{}) error {
 		return fmt.Errorf("جلسة غير صالحة - أعد الاتصال")
 	}
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 		return fmt.Errorf("server error: %s", string(body))
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 10<<20))
 	if err != nil {
 		return err
 	}
@@ -340,12 +343,12 @@ func (s *lanService) RemotePost(endpoint string, data interface{}, result interf
 		return fmt.Errorf("جلسة غير صالحة - أعد الاتصال")
 	}
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 		return fmt.Errorf("server error: %s", string(body))
 	}
 
 	if result != nil {
-		return json.NewDecoder(resp.Body).Decode(result)
+		return json.NewDecoder(io.LimitReader(resp.Body, 10<<20)).Decode(result)
 	}
 	return nil
 }
@@ -376,7 +379,7 @@ func (s *lanService) RemoteDelete(endpoint string) error {
 		return fmt.Errorf("جلسة غير صالحة - أعد الاتصال")
 	}
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 		return fmt.Errorf("server error: %s", string(body))
 	}
 

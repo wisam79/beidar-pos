@@ -77,6 +77,7 @@ type CustomerRepository interface {
 	AdjustPoints(id string, delta int) error
 	DecrementDebt(id string, amount Amount) error
 	DecrementInstallmentDebt(id string, amount Amount) error
+	IncrementPurchasesAndDebt(id string, totalPurchases Amount, points int, debtIncrease Amount, installmentDebtIncrease Amount, lastVisit string) error
 }
 
 // StaffRepository defines database operations for staff
@@ -162,6 +163,7 @@ type SupplierRepository interface {
 	GetForUpdate(id string) (*Supplier, error)
 	Create(supplier *Supplier) error
 	Update(supplier *Supplier) error
+	Updates(id string, updates map[string]interface{}) error
 	UpdateBalance(id string, amount Amount) error
 	Delete(id string) error
 }

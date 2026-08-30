@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"beidar-desktop/internal/core/domain"
 	"gorm.io/gorm"
 )
@@ -50,12 +52,18 @@ func (r *staffRepository) GetByFastPIN(fastPIN string) (*domain.Staff, error) {
 func (r *staffRepository) GetAll() ([]domain.Staff, error) {
 	var staff []domain.Staff
 	err := r.db.Order("created_at DESC").Find(&staff).Error
+	if staff == nil {
+		staff = []domain.Staff{}
+	}
 	return staff, err
 }
 
 func (r *staffRepository) GetActive() ([]domain.Staff, error) {
 	var staff []domain.Staff
 	err := r.db.Where("active = ?", true).Order("name ASC").Find(&staff).Error
+	if staff == nil {
+		staff = []domain.Staff{}
+	}
 	return staff, err
 }
 
@@ -102,6 +110,9 @@ func (r *staffRepository) GetStaffPaymentsCount(staffID string) (int64, error) {
 func (r *staffRepository) GetLoginAttempt(identifier string) (*domain.LoginAttempt, error) {
 	var attempt domain.LoginAttempt
 	if err := r.db.Where("identifier = ?", identifier).First(&attempt).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &attempt, nil

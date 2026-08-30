@@ -119,6 +119,11 @@ func (h *FinanceHandler) UpdatePreferences(newPrefs domain.AppPreferences) error
 	if err := auth.RequirePermission(auth.PermSettings); err != nil {
 		return err
 	}
+	if newPrefs.AdminPin != "" && newPrefs.AdminPin != "********" {
+		if err := auth.RequireAdmin(); err != nil {
+			return err
+		}
+	}
 	if h.lanService != nil && h.lanService.IsClientMode() {
 		return h.lanService.RemotePost("/api/preferences", newPrefs, nil)
 	}

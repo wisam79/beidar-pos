@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"beidar-desktop/internal/core/domain"
 
 	"gorm.io/gorm"
@@ -36,12 +38,18 @@ func (r *productRepository) GetAll() ([]domain.Product, error) {
 	if err := r.db.Select("id, name, barcode, price, cost, stock, min_stock, category, CASE WHEN length(image) > 500 THEN '' ELSE image END as image, supplier, wholesale_price, description, custom_details").Find(&products).Error; err != nil {
 		return nil, err
 	}
+	if products == nil {
+		products = []domain.Product{}
+	}
 	return products, nil
 }
 
 func (r *productRepository) GetByID(id string) (*domain.Product, error) {
 	var product domain.Product
 	if err := r.db.First(&product, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &product, nil
@@ -55,6 +63,9 @@ func (r *productRepository) GetByIDs(ids []string) ([]domain.Product, error) {
 	if err := r.db.Select("id, name, barcode, price, cost, stock, min_stock, category, CASE WHEN length(image) > 500 THEN '' ELSE image END as image, supplier, wholesale_price, description, custom_details").Where("id IN ?", ids).Find(&products).Error; err != nil {
 		return nil, err
 	}
+	if products == nil {
+		products = []domain.Product{}
+	}
 	return products, nil
 }
 
@@ -65,6 +76,9 @@ func (r *productRepository) GetForUpdate(ids []string) ([]domain.Product, error)
 	var products []domain.Product
 	if err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id IN ?", ids).Find(&products).Error; err != nil {
 		return nil, err
+	}
+	if products == nil {
+		products = []domain.Product{}
 	}
 	return products, nil
 }
@@ -85,6 +99,9 @@ func (r *productRepository) Search(query string) ([]domain.Product, error) {
 	var products []domain.Product
 	if err := r.db.Select("id, name, barcode, price, cost, stock, min_stock, category, CASE WHEN length(image) > 500 THEN '' ELSE image END as image, supplier, wholesale_price, description, custom_details").Where("name LIKE ? OR barcode LIKE ?", "%"+query+"%", "%"+query+"%").Find(&products).Error; err != nil {
 		return nil, err
+	}
+	if products == nil {
+		products = []domain.Product{}
 	}
 	return products, nil
 }
@@ -109,6 +126,9 @@ func (r *productRepository) CreateStockMovement(movement *domain.StockMovement) 
 func (r *productRepository) GetStockMovements() ([]domain.StockMovement, error) {
 	var moves []domain.StockMovement
 	err := r.db.Order("timestamp desc").Limit(200).Find(&moves).Error
+	if moves == nil {
+		moves = []domain.StockMovement{}
+	}
 	return moves, err
 }
 
@@ -135,6 +155,9 @@ func (r *productRepository) GetProductsWithBase64Images() ([]domain.Product, err
 	// base64 images are typically long strings (> 200 characters)
 	if err := r.db.Where("length(image) > ?", 200).Find(&products).Error; err != nil {
 		return nil, err
+	}
+	if products == nil {
+		products = []domain.Product{}
 	}
 	return products, nil
 }

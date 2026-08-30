@@ -119,7 +119,14 @@ func (h *CloudHandler) ListCloudBackupsForUser() ([]domain.CloudBackup, error) {
 	if err := auth.RequirePermission(auth.PermExportData); err != nil {
 		return nil, err
 	}
-	return h.cloudService.ListCloudBackupsForUser()
+	backups, err := h.cloudService.ListCloudBackupsForUser()
+	if err != nil {
+		return nil, err
+	}
+	if backups == nil {
+		backups = []domain.CloudBackup{}
+	}
+	return backups, nil
 }
 
 func (h *CloudHandler) DeleteCloudBackup(backupID string) error {
@@ -156,17 +163,12 @@ func (h *CloudHandler) DisableZohoIntegration() error {
 }
 
 // License Verification & Management
+// Open: callable pre-login to verify and activate licenses
 func (h *CloudHandler) VerifyLicense(key string) (*domain.LicenseResult, error) {
-	if err := auth.RequireAdmin(); err != nil {
-		return nil, err
-	}
 	return h.cloudService.VerifyLicense(key)
 }
 
 func (h *CloudHandler) ActivateLicense(key string) (*domain.LicenseResult, error) {
-	if err := auth.RequireAdmin(); err != nil {
-		return nil, err
-	}
 	return h.cloudService.ActivateLicense(key)
 }
 
@@ -175,7 +177,7 @@ func (h *CloudHandler) GetCachedLicense() (*domain.LicenseResult, error) {
 }
 
 func (h *CloudHandler) GetStoredLicenseKey() (string, error) {
-	if err := auth.RequireAdmin(); err != nil {
+	if err := auth.RequirePermission(auth.PermSettings); err != nil {
 		return "", err
 	}
 	return h.cloudService.GetStoredLicenseKey(), nil

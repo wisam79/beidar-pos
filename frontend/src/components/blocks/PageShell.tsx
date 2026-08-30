@@ -10,7 +10,7 @@ interface PageShellProps {
 }
 
 export const PageShell = memo(({ children, className = '' }: PageShellProps) => (
-    <div className={`flex flex-col h-full gap-3 animate-in fade-in overflow-hidden ${className}`}>
+    <div className={`flex flex-col h-full gap-3 page-enter overflow-hidden ${className}`}>
         {children}
     </div>
 ));

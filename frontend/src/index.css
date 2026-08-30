@@ -39,6 +39,8 @@
   --shadow-xl: none;
   --shadow-card: none;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* 🚀 shadcn/ui Variable Mapping - Light Mode */
   --background: var(--color-bg);
@@ -117,11 +119,19 @@ body,
   overflow: hidden;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   📐 Typography Root — 1rem = 14px across entire application
+   All Tailwind rem-based font sizes are calibrated against this.
+   ══════════════════════════════════════════════════════════════════ */
+html {
+  font-size: 14px;
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-text-main);
   font-family: 'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif;
-  font-size: 15px;
+  font-size: 1rem; /* = 14px */
   user-select: none;
   cursor: default;
   overscroll-behavior: none;
@@ -238,8 +248,52 @@ select:focus-visible {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.996);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes badgePop {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.94);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 @keyframes spin {
@@ -248,21 +302,56 @@ select:focus-visible {
 
 .animate-fade-in,
 .fade-in {
-  animation: fadeIn 180ms var(--ease-out) both;
+  animation: fadeIn 160ms var(--ease-spring) both;
 }
 
 .animate-scale-in,
 .zoom-in-95,
 .zoom-in-50 {
-  animation: scaleIn 180ms var(--ease-out) both;
+  animation: scaleIn 180ms var(--ease-spring) both;
 }
 
 .animate-slide-in-down {
-  animation: slideUp 180ms var(--ease-out) both;
+  animation: slideUp 180ms var(--ease-spring) both;
 }
 
-.page-enter {
-  animation: fadeIn 120ms var(--ease-out) both;
+.page-enter,
+.animate-page-enter {
+  animation: pageEnter 180ms var(--ease-spring) both;
+}
+
+.animate-modal-pop {
+  animation: modalPop 200ms var(--ease-spring) both;
+}
+
+.animate-badge-pop {
+  animation: badgePop 240ms var(--ease-bounce) both;
+}
+
+.pulse-dot {
+  animation: pulseDot 2.2s ease-in-out infinite;
+}
+
+/* 🕹️ Tactile Micro-Interactions */
+.pressable {
+  transition: transform 100ms var(--ease-spring), background-color 150ms var(--ease-out), border-color 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
+}
+.pressable:active {
+  transform: scale(0.97) !important;
+}
+
+.pressable-subtle {
+  transition: transform 100ms var(--ease-spring), background-color 150ms var(--ease-out);
+}
+.pressable-subtle:active {
+  transform: scale(0.985) !important;
+}
+
+/* 🌊 Skeleton Shimmer */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-hover) 50%, var(--color-surface) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
 }
 
 .animate-spin,

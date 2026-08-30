@@ -11,10 +11,10 @@
     "email": "beidar@example.com"
   },
   "info": {
-    "productVersion": "2.0.8",
+    "productVersion": "2.1.0",
     "companyName": "Beidar",
     "productName": "Beidar Desktop",
-    "fileVersion": "2.0.8",
+    "fileVersion": "2.1.0",
     "copyright": "Copyright 2026"
   }
 }

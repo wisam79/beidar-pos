@@ -14,7 +14,7 @@ permissions:
 # Single source of truth for the application version. Kept in sync with
 # wails.json -> info.productVersion. Bump both when cutting a release.
 env:
-  APP_VERSION: '2.0.8'
+  APP_VERSION: '2.1.0'
 
 jobs:
   # ═══════════════════════════════════════════════════════════════════

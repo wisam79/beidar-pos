@@ -191,7 +191,7 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 				w.Header().Set("Vary", "Origin")
 			}
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Token, X-Server-Secret")
 
 			if r.Method == "OPTIONS" {
 				w.WriteHeader(http.StatusOK)
@@ -666,6 +666,14 @@ func (s *lanService) handleSalesReturn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := r.URL.Query().Get("id")
+	if id == "" && r.Body != nil {
+		var req struct {
+			ID string `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		id = req.ID
+	}
+
 	if id == "" {
 		http.Error(w, "Missing id", http.StatusBadRequest)
 		return
@@ -688,15 +696,35 @@ func (s *lanService) handleSalesReturnPartial(w http.ResponseWriter, r *http.Req
 	saleID := r.URL.Query().Get("saleId")
 	productID := r.URL.Query().Get("productId")
 	qtyStr := r.URL.Query().Get("qty")
+	var qty float64
 
-	if saleID == "" || productID == "" || qtyStr == "" {
-		http.Error(w, "Missing parameters", http.StatusBadRequest)
-		return
+	if (saleID == "" || productID == "") && r.Body != nil {
+		var req struct {
+			SaleID    string  `json:"saleId"`
+			ProductID string  `json:"productId"`
+			Quantity  float64 `json:"quantity"`
+			Qty       float64 `json:"qty"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err == nil {
+			saleID = req.SaleID
+			productID = req.ProductID
+			if req.Quantity > 0 {
+				qty = req.Quantity
+			} else {
+				qty = req.Qty
+			}
+		}
+	} else if qtyStr != "" {
+		var err error
+		qty, err = strconv.ParseFloat(qtyStr, 64)
+		if err != nil {
+			http.Error(w, "Invalid quantity", http.StatusBadRequest)
+			return
+		}
 	}
 
-	qty, err := strconv.ParseFloat(qtyStr, 64)
-	if err != nil {
-		http.Error(w, "Invalid quantity", http.StatusBadRequest)
+	if saleID == "" || productID == "" || qty <= 0 {
+		http.Error(w, "Missing parameters", http.StatusBadRequest)
 		return
 	}
 
@@ -963,16 +991,28 @@ func (s *lanService) handlePreferences(w http.ResponseWriter, r *http.Request) {
 
 func (s *lanService) handleStockMovements(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	if r.Method != http.MethodGet {
+	switch r.Method {
+	case http.MethodGet:
+		movements, err := s.productService.GetStockMovements()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(movements)
+	case http.MethodPost:
+		var mov domain.StockMovement
+		if err := json.NewDecoder(r.Body).Decode(&mov); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := s.productService.LogStockMovement(mov.ProductID, mov.ProductName, mov.Type, mov.Qty, mov.Reason); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "logged"})
+	default:
 		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
-		return
 	}
-	movements, err := s.productService.GetStockMovements()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	_ = json.NewEncoder(w).Encode(movements)
 }
 
 func (s *lanService) handleDatabaseExport(w http.ResponseWriter, r *http.Request) {
@@ -981,6 +1021,13 @@ func (s *lanService) handleDatabaseExport(w http.ResponseWriter, r *http.Request
 		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
 		return
 	}
+
+	host, _, _ := net.SplitHostPort(r.RemoteAddr)
+	if host != "127.0.0.1" && host != "::1" && host != "localhost" && host != "" {
+		http.Error(w, `{"error":"تصدير قاعدة البيانات متاح فقط من الجهاز المضيف"}`, http.StatusForbidden)
+		return
+	}
+
 	data, err := s.backupService.ExportDatabase()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

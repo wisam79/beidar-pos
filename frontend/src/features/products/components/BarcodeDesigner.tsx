@@ -344,7 +344,7 @@ export const BarcodeDesigner: React.FC<BarcodeDesignerProps> = ({ onClose, initi
 
     const totalLabels = itemsToPrint.length;
     const currentFormat = PAGE_FORMATS[pageFormat];
-    const labelsPerPage = Math.floor(currentFormat.height / settings.height) * gridSettings.columns;
+    const labelsPerPage = Math.max(1, Math.floor(currentFormat.height / Math.max(1, settings.height)) * Math.max(1, gridSettings.columns));
     const totalPages = Math.ceil(totalLabels / labelsPerPage);
 
 
