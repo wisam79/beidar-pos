@@ -1234,11 +1234,11 @@ export namespace domain {
 	    totalPages: number;
 	    page: number;
 	    pageSize: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new PaginatedCustomers(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.data = this.convertValues(source["data"], Customer);
@@ -1247,7 +1247,7 @@ export namespace domain {
 	        this.page = source["page"];
 	        this.pageSize = source["pageSize"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1310,11 +1310,11 @@ export namespace domain {
 	    totalPages: number;
 	    page: number;
 	    pageSize: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new PaginatedSuppliers(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.data = this.convertValues(source["data"], Supplier);
@@ -1323,7 +1323,7 @@ export namespace domain {
 	        this.page = source["page"];
 	        this.pageSize = source["pageSize"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
