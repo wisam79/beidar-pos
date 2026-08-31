@@ -133,7 +133,7 @@ func enumPrinterNames() ([]string, error) {
 		uintptr(unsafe.Pointer(&returned)),
 	)
 	if ret == 0 {
-		return nil, fmt.Errorf("failed to enumerate printers: %v", err)
+		return nil, fmt.Errorf("failed to enumerate printers: %w", err)
 	}
 
 	const size = unsafe.Sizeof(printerInfo2{})
@@ -173,7 +173,7 @@ func getDefaultPrinterNative() (string, error) {
 		uintptr(unsafe.Pointer(&size)),
 	)
 	if ret == 0 {
-		return "", fmt.Errorf("failed to query default printer: %v", err)
+		return "", fmt.Errorf("failed to query default printer: %w", err)
 	}
 	name := syscall.UTF16ToString(buf)
 	if name == "" {
@@ -221,7 +221,7 @@ func printRawSpooler(printerName string, data []byte) error {
 		0,
 	)
 	if ret == 0 {
-		return fmt.Errorf("failed to open printer: %v", err)
+		return fmt.Errorf("failed to open printer: %w", err)
 	}
 	defer func() { _, _, _ = procClosePrinter.Call(hPrinter) }()
 
@@ -245,13 +245,13 @@ func printRawSpooler(printerName string, data []byte) error {
 		uintptr(unsafe.Pointer(&docInfo)),
 	)
 	if ret == 0 {
-		return fmt.Errorf("failed to start document: %v", err)
+		return fmt.Errorf("failed to start document: %w", err)
 	}
 	defer func() { _, _, _ = procEndDocPrinter.Call(hPrinter) }()
 
 	ret, _, err = procStartPagePrinter.Call(hPrinter)
 	if ret == 0 {
-		return fmt.Errorf("failed to start page: %v", err)
+		return fmt.Errorf("failed to start page: %w", err)
 	}
 	defer func() { _, _, _ = procEndPagePrinter.Call(hPrinter) }()
 
@@ -264,7 +264,7 @@ func printRawSpooler(printerName string, data []byte) error {
 	)
 	if ret == 0 {
 		_, _, _ = procAbortPrinter.Call(hPrinter)
-		return fmt.Errorf("failed to write to printer: %v", err)
+		return fmt.Errorf("failed to write to printer: %w", err)
 	}
 
 	return nil
@@ -446,7 +446,7 @@ func PrintRawNetwork(ipAddress string, data []byte) error {
 	defer conn.Close()
 
 	// Never let a stuck socket block the caller forever (mirrors spoolCallTimeout).
-	_ = conn.SetWriteDeadline(time.Now().Add(spoolCallTimeout))
+	_ = conn.SetDeadline(time.Now().Add(spoolCallTimeout))
 
 	_, err = conn.Write(data)
 	if err != nil {

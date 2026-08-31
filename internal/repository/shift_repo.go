@@ -133,12 +133,12 @@ func (r *shiftRepository) UpdateShiftRefunds(totalRefund, cashRefund domain.Amou
 	}
 
 	updates := map[string]interface{}{
-		"total_sales":      gorm.Expr("total_sales - ?", int64(totalRefund)),
-		"cash_sales":       gorm.Expr("cash_sales - ?", int64(cashRefund)),
-		"expected_balance": gorm.Expr("expected_balance - ?", int64(cashRefund)),
+		"total_sales":      gorm.Expr("CASE WHEN total_sales - ? < 0 THEN 0 ELSE total_sales - ? END", int64(totalRefund), int64(totalRefund)),
+		"cash_sales":       gorm.Expr("CASE WHEN cash_sales - ? < 0 THEN 0 ELSE cash_sales - ? END", int64(cashRefund), int64(cashRefund)),
+		"expected_balance": gorm.Expr("CASE WHEN expected_balance - ? < 0 THEN 0 ELSE expected_balance - ? END", int64(cashRefund), int64(cashRefund)),
 	}
 	if isFullReturn {
-		updates["sales_count"] = gorm.Expr("sales_count - 1")
+		updates["sales_count"] = gorm.Expr("CASE WHEN sales_count - 1 < 0 THEN 0 ELSE sales_count - 1 END")
 	}
 
 	return r.db.Model(&domain.Shift{}).Where("id = ?", id).Updates(updates).Error

@@ -41,14 +41,6 @@ func (r *staffRepository) GetByUsername(username string) (*domain.Staff, error) 
 	return &s, nil
 }
 
-func (r *staffRepository) GetByFastPIN(fastPIN string) (*domain.Staff, error) {
-	var s domain.Staff
-	if err := r.db.Where("fast_pin = ? AND active = ?", fastPIN, true).First(&s).Error; err != nil {
-		return nil, err
-	}
-	return &s, nil
-}
-
 func (r *staffRepository) GetAll() ([]domain.Staff, error) {
 	var staff []domain.Staff
 	err := r.db.Order("created_at DESC").Find(&staff).Error

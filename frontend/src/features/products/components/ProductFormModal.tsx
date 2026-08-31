@@ -85,10 +85,10 @@ export const ProductFormModal = ({
                                                 : 'border-border/80 bg-input-bg hover:border-primary/50 hover:bg-primary/5 hover:shadow-[0_0_15px_var(--color-primary-dim)]'
                                         }`}>
                                             {form.image ? (
-                                                form.image.startsWith('data') ? (
+                                                (form.image.startsWith('data') || form.image.startsWith('http') || form.image.includes('.')) ? (
                                                     <img src={form.image} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" alt="Product" />
                                                 ) : (
-                                                    <span className="text-5xl group-hover:scale-110 transition-transform duration-300 block select-none">{form.image}</span>
+                                                    <div className="flex items-center justify-center w-full h-full text-primary/70"><Package size={36} /></div>
                                                 )
                                             ) : (
                                                 <div className="text-center group-hover:scale-105 transition-transform duration-300">

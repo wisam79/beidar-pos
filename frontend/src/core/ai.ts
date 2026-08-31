@@ -112,22 +112,8 @@ export const generateProductDescription = async (name: string, category: string)
   return await executeAIRequest('BASIC', prompt);
 };
 
-export const suggestProductEmoji = async (name: string, category?: string): Promise<string> => {
-  const prompt = `اختر إيموجي واحد فقط يمثل هذا المنتج بشكل مناسب:
-المنتج: "${name}"
-${category ? `الفئة: "${category}"` : ''}
-
-أمثلة:
-- "عصير برتقال" -> 🍊
-- "لبن" -> 🥛
-- "خبز" -> 🍞
-
-أجب فقط بإيموجي واحد بدون أي نص إضافي.`;
-
-  const result = await executeAIRequest('BASIC', prompt);
-  // Extract only emoji from response (filter out any text)
-  const emojiMatch = result.match(/[\p{Emoji}]/gu);
-  return emojiMatch ? emojiMatch[0] : '📦'; // Default to package emoji
+export const suggestProductEmoji = async (_name: string, _category?: string): Promise<string> => {
+  return '';
 };
 
 export const improveText = async (text: string): Promise<string> => {

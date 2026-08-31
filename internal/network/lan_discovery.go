@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net"
 	"time"
 )
@@ -117,12 +118,12 @@ func (s *lanService) StartBroadcasting(httpPort int) error {
 		defer conn.Close()
 
 		broadcastAddr, _ := net.ResolveUDPAddr("udp4", "255.255.255.255:"+fmt.Sprint(DiscoveryPort))
-		fmt.Printf("📡 Starting UDP discovery broadcast on port %d\n", DiscoveryPort)
+		slog.Info("Starting UDP discovery broadcast", slog.Int("port", DiscoveryPort))
 
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("📡 Stopping UDP discovery broadcast safely")
+				slog.Info("Stopping UDP discovery broadcast safely")
 				return
 			case <-ticker.C:
 				msg.Timestamp = time.Now().Unix()
@@ -150,12 +151,12 @@ func (s *lanService) StopBroadcasting() {
 		s.broadcastCancel = nil
 	}
 	s.isBroadcasting = false
-	fmt.Println("📡 UDP discovery broadcast stopped")
+	slog.Info("UDP discovery broadcast stopped")
 }
 
 // DiscoverServers searches for Beidar POS servers on the local network
 func (s *lanService) DiscoverServers() ([]domain.DiscoveredServer, error) {
-	fmt.Println("🔍 Starting LAN server discovery...")
+	slog.Info("Starting LAN server discovery...")
 	servers := s.discoverViaUDP()
 
 	// Also check localhost

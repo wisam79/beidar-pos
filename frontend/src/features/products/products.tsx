@@ -11,7 +11,7 @@ import { BarcodeDesigner } from './components/BarcodeDesigner';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { ImportExportModal } from '../../components/ImportExportModal';
 import { api } from '../../core/api';
-import { generateProductDescription, improveText, suggestProductPrice, suggestProductEmoji } from '../../core/ai';
+import { generateProductDescription, improveText, suggestProductPrice } from '../../core/ai';
 import { invalidateAllData } from '../../core/queryClient';
 import { useInvalidateProducts, useWindowSize, useUsbScannerDetection, useProducts, useConfirmModal } from '../../hooks';
 import { usePreferences } from '../../components/PreferencesContext';
@@ -128,21 +128,18 @@ export const ProductsPage: React.FC = () => {
     const handleInitAdd = useCallback(() => {
         setForm({
             name: '', price: 0, cost: 0, stock: 0, minStock: 5, category: selectedCategory !== t('common.all') ? selectedCategory : 'عام',
-            barcode: Math.floor(100000 + Math.random() * 900000).toString(), image: '📦', customDetails: {}
+            barcode: Math.floor(100000 + Math.random() * 900000).toString(), image: '', customDetails: {}
         });
         setEditingProduct(null); setActiveTab('details'); setModalOpen(true);
     }, [selectedCategory, t]);
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // 🔗 Pending Action Handler (from QuickActionsBar)
-    // يتحقق من وجود إجراء معلق من لوحة التحكم ويفتح المودال المناسب
     // ═══════════════════════════════════════════════════════════════════════════════
     useEffect(() => {
         const pendingAction = sessionStorage.getItem('pendingAction');
         if (pendingAction === 'openAddModal') {
-            // مسح الإجراء المعلق حتى لا يتكرر
             sessionStorage.removeItem('pendingAction');
-            // تأخير بسيط للتأكد من تحميل البيانات
             setTimeout(() => {
                 handleInitAdd();
             }, 100);
@@ -223,7 +220,6 @@ export const ProductsPage: React.FC = () => {
             window.runtime.EventsOn("remote-scan-received", (data: unknown) => {
                 const scanData = data as { code?: string };
                 if (scanData && scanData.code) {
-                    // Call the latest handleScan via ref
                     handleScanRef.current(scanData.code as string).then(result => {
                         if (result.success) {
                             notify(result.message || `تم مسح: ${result.name}`, 'success');
@@ -244,21 +240,33 @@ export const ProductsPage: React.FC = () => {
     });
 
     const handleInitEdit = (p: Product) => {
-        setForm({ ...p, customDetails: p.customDetails || {} }); setEditingProduct(p); setActiveTab('details'); setModalOpen(true);
+        setForm({ ...p, customDetails: p.customDetails || {} });
+        setEditingProduct(p);
+        setActiveTab('details');
+        setModalOpen(true);
     };
 
     const handleDuplicate = (p: Product) => {
-        setForm({ ...p, id: undefined, name: `${p.name} (نسخة)`, barcode: Math.floor(100000 + Math.random() * 900000).toString(), customDetails: p.customDetails || {} });
-        setEditingProduct(null); setActiveTab('details'); setModalOpen(true);
+        setForm({
+            ...p,
+            id: undefined,
+            name: `${p.name} (نسخة)`,
+            barcode: Math.floor(100000 + Math.random() * 900000).toString(),
+            customDetails: p.customDetails || {}
+        });
+        setEditingProduct(null);
+        setActiveTab('details');
+        setModalOpen(true);
     };
 
     const handleSave = async () => {
         const validation = validateProductInput(form);
         if (!validation.success) {
             const newErrors: Record<string, string> = {};
-            validation.error.errors.forEach(err => { if (err.path[0]) newErrors[err.path[0] as string] = err.message; });
+            validation.error.errors.forEach(err => {
+                if (err.path[0]) newErrors[err.path[0] as string] = err.message;
+            });
             setErrors(newErrors);
-            // Notify the first specific error
             const firstErrorKey = Object.keys(newErrors)[0];
             const firstErrorMsg = newErrors[firstErrorKey];
             notify(firstErrorMsg ? `خطأ: ${firstErrorMsg}` : t('errors.required'), 'error');
@@ -267,7 +275,7 @@ export const ProductsPage: React.FC = () => {
         setErrors({});
 
         try {
-            const productImage: string = form.image || '📦';
+            const productImage: string = form.image || '';
             const productId: string = form.id || '';
             const p: Product = {
                 id: productId,
@@ -291,21 +299,6 @@ export const ProductsPage: React.FC = () => {
             invalidateProducts();
             invalidateAllData();
             refetchProducts();
-
-            if (productImage === '📦' && form.name && !form.image?.startsWith('data')) {
-                suggestProductEmoji(form.name, form.category).then(async (suggestedEmoji) => {
-                    if (suggestedEmoji && suggestedEmoji !== '📦') {
-                        const products = await api.products.search(form.barcode ?? '');
-                        const savedProduct = products.find((prod: Product) => prod.barcode === form.barcode);
-                        if (savedProduct) {
-                            await api.products.save({ ...savedProduct, image: suggestedEmoji });
-                            invalidateProducts();
-                            invalidateAllData();
-                            refetchProducts();
-                        }
-                    }
-                }).catch((_e) => { console.warn('Emoji AI error'); });
-            }
         } catch (e: unknown) {
             console.error('Save failed', e);
             const msg = e instanceof Error ? e.message : String(e);
@@ -317,26 +310,21 @@ export const ProductsPage: React.FC = () => {
         const performDelete = async () => {
             try {
                 await api.products.delete(id);
-                    notify(t('products.productDeleted'), 'success');
-                    invalidateProducts();
-                    invalidateAllData();
-                    refetchProducts();
-                    closeConfirm();
+                notify(t('products.productDeleted'), 'success');
+                invalidateProducts();
+                invalidateAllData();
+                refetchProducts();
+                closeConfirm();
             } catch (err: unknown) {
-                // Try to parse the error as JSON (AppError)
                 let appError: unknown = null;
                 const errStr = String(err);
                 try {
-                    // Wails error usually comes as "Error: {...}" or just "{...}" if we return JSON string
-                    // Sometimes it's wrapped in "Error: " prefix
                     const jsonPart = errStr.includes('{') ? errStr.substring(errStr.indexOf('{')) : errStr;
                     appError = JSON.parse(jsonPart);
                 } catch { /* Not JSON */ }
 
-                // Check if it's an AppError with allowForce
                 const appErr = appError as AppError | null;
                 if (appErr?.options?.allowForce) {
-                    // Show Force Delete Dialog
                     openConfirm({
                         title: 'تعذر الحذف - مطلوب تأكيد إضافي',
                         message: `${appErr.message}\n\n${appErr.hint || ''}`,
@@ -455,9 +443,8 @@ export const ProductsPage: React.FC = () => {
                 notify('تم حذف الفئة بنجاح', 'success');
                 refetchCategories(); refetchProducts();
                 closeConfirm();
-                setCategoryModalOpen(false); // Also close manager modal if open
+                setCategoryModalOpen(false);
             } catch (err: unknown) {
-                // Try to parse the error as JSON (AppError)
                 let appError: unknown = null;
                 const errStr = String(err);
                 try {
@@ -465,7 +452,6 @@ export const ProductsPage: React.FC = () => {
                     appError = JSON.parse(jsonPart);
                 } catch { /* Not JSON */ }
 
-                // Check for allowForce option
                 const appErr = appError as AppError | null;
                 if (appErr?.options?.allowForce) {
                     openConfirm({

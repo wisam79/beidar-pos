@@ -6,6 +6,9 @@ import {
     Vault,
     UsersThree,
     ChartLineUp,
+    Warehouse,
+    Coins,
+    GearSix,
     IconProps
 } from '@phosphor-icons/react';
 
@@ -42,6 +45,8 @@ export const Invoices3DIcon = makePhosphorDuotoneIcon(Receipt);
 export const Vault3DIcon = makePhosphorDuotoneIcon(Vault);
 export const Customers3DIcon = makePhosphorDuotoneIcon(UsersThree);
 export const Reports3DIcon = makePhosphorDuotoneIcon(ChartLineUp);
+export const Inventory3DIcon = makePhosphorDuotoneIcon(Warehouse);
+export const Finance3DIcon = makePhosphorDuotoneIcon(Coins);
+export const Settings3DIcon = makePhosphorDuotoneIcon(GearSix);
 
 export const AI3DIcon = Pos3DIcon;
-export const Settings3DIcon = Pos3DIcon;

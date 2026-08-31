@@ -58,20 +58,6 @@ func TestStaffRepository(t *testing.T) {
 		if gotByUsername.ID != "staff-2" {
 			t.Errorf("Expected ID 'staff-2', got %q", gotByUsername.ID)
 		}
-
-		gotByPIN, err := repo.GetByFastPIN("1234")
-		if err != nil {
-			t.Fatalf("GetByFastPIN failed: %v", err)
-		}
-		if gotByPIN.Name != "John Doe" {
-			t.Errorf("Expected name 'John Doe', got %q", gotByPIN.Name)
-		}
-
-		// Non-active or wrong PIN should return error
-		_, err = repo.GetByFastPIN("5678") // s2 is inactive
-		if err == nil {
-			t.Error("Expected error fetching PIN for inactive staff")
-		}
 	})
 
 	t.Run("GetAllAndActive", func(t *testing.T) {

@@ -128,47 +128,59 @@ func (s *crmService) SaveCustomer(c domain.Customer) error {
 }
 
 func (s *crmService) DeleteCustomer(id string, force bool) error {
-	customer, err := s.customerRepo.GetByID(id)
-	if err != nil {
-		return pkgerrors.NewAppError(
-			pkgerrors.ModuleCustomer,
-			"CUSTOMER_NOT_FOUND",
-			i18n.GetMessage("CUSTOMER_NOT_FOUND"),
-			i18n.GetHint("CUSTOMER_NOT_FOUND"),
-			"id",
-		)
-	}
+	var deletedCustomer *domain.Customer
+	err := s.customerRepo.Transaction(func(tx domain.Tx) error {
+		txCustomerRepo := s.customerRepo.WithTx(tx)
 
-	activeInstallments, err := s.customerRepo.GetActiveInstallmentsCount(id)
+		customer, err := txCustomerRepo.GetForUpdate(id)
+		if err != nil {
+			return pkgerrors.NewAppError(
+				pkgerrors.ModuleCustomer,
+				"CUSTOMER_NOT_FOUND",
+				i18n.GetMessage("CUSTOMER_NOT_FOUND"),
+				i18n.GetHint("CUSTOMER_NOT_FOUND"),
+				"id",
+			)
+		}
+
+		activeInstallments, err := txCustomerRepo.GetActiveInstallmentsCount(id)
+		if err != nil {
+			return err
+		}
+		if activeInstallments > 0 {
+			return &pkgerrors.AppError{
+				Module:  pkgerrors.ModuleCustomer,
+				Code:    "CUSTOMER_HAS_ACTIVE_INSTALLMENTS",
+				Message: i18n.GetMessage("CUSTOMER_HAS_ACTIVE_INSTALLMENTS", activeInstallments),
+				Hint:    i18n.GetHint("CUSTOMER_HAS_ACTIVE_INSTALLMENTS"),
+			}
+		}
+
+		if customer.Debt != 0 {
+			if !force {
+				return &pkgerrors.AppError{
+					Module:  pkgerrors.ModuleCustomer,
+					Code:    "CUSTOMER_HAS_DEBT",
+					Message: i18n.GetMessage("CUSTOMER_HAS_DEBT", customer.Debt),
+					Hint:    i18n.GetMessage("CUSTOMER_HAS_DEBT_FORCE_HINT"),
+					Options: map[string]bool{"allowForce": true},
+				}
+			}
+			logger.LogFinancial("DELETE_FORCE", customer.ID, float64(customer.Debt.Cents())/100.0, 0)
+		}
+
+		if err := txCustomerRepo.Delete(id); err != nil {
+			return errors.New(i18n.GetMessage("DELETE_CUSTOMER_FAILED", err.Error()))
+		}
+		deletedCustomer = customer
+		return nil
+	})
 	if err != nil {
 		return err
 	}
-	if activeInstallments > 0 {
-		return &pkgerrors.AppError{
-			Module:  pkgerrors.ModuleCustomer,
-			Code:    "CUSTOMER_HAS_ACTIVE_INSTALLMENTS",
-			Message: i18n.GetMessage("CUSTOMER_HAS_ACTIVE_INSTALLMENTS", activeInstallments),
-			Hint:    i18n.GetHint("CUSTOMER_HAS_ACTIVE_INSTALLMENTS"),
-		}
+	if deletedCustomer != nil {
+		logger.LogCustomer("DELETED", deletedCustomer.ID, deletedCustomer.Name)
 	}
-
-	if customer.Debt > 0 {
-		if !force {
-			return &pkgerrors.AppError{
-				Module:  pkgerrors.ModuleCustomer,
-				Code:    "CUSTOMER_HAS_DEBT",
-				Message: i18n.GetMessage("CUSTOMER_HAS_DEBT", customer.Debt),
-				Hint:    i18n.GetMessage("CUSTOMER_HAS_DEBT_FORCE_HINT"),
-				Options: map[string]bool{"allowForce": true},
-			}
-		}
-		logger.Logger.Warn("CRM", i18n.GetMessage("FORCE_DELETE_CUSTOMER_LOG", customer.Name, customer.Debt))
-	}
-
-	if err := s.customerRepo.Delete(id); err != nil {
-		return errors.New(i18n.GetMessage("DELETE_CUSTOMER_FAILED", err.Error()))
-	}
-	logger.LogCustomer("DELETED", customer.ID, customer.Name)
 	return nil
 }
 

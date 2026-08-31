@@ -47,6 +47,9 @@ func (h *CloudHandler) CompleteGoogleAuth() error {
 }
 
 func (h *CloudHandler) IsGoogleConnected() bool {
+	if err := auth.Require(); err != nil {
+		return false
+	}
 	return h.cloudService.IsGoogleConnected()
 }
 
@@ -96,14 +99,23 @@ func (h *CloudHandler) DeleteCurrentUser() error {
 }
 
 func (h *CloudHandler) IsLoggedIn() bool {
+	if err := auth.Require(); err != nil {
+		return false
+	}
 	return h.cloudService.IsLoggedIn()
 }
 
 func (h *CloudHandler) GetCurrentUser() *domain.UserSession {
+	if err := auth.Require(); err != nil {
+		return nil
+	}
 	return h.cloudService.GetCurrentUser()
 }
 
 func (h *CloudHandler) CheckSessionValidity() *domain.SessionValidityResult {
+	if err := auth.Require(); err != nil {
+		return &domain.SessionValidityResult{Valid: false, Message: "غير مصرح"}
+	}
 	return h.cloudService.CheckSessionValidity()
 }
 
@@ -152,6 +164,9 @@ func (h *CloudHandler) SetupZohoIntegration(clientID, clientSecret, authCode str
 }
 
 func (h *CloudHandler) GetZohoStatus() map[string]interface{} {
+	if err := auth.Require(); err != nil {
+		return map[string]interface{}{"enabled": false}
+	}
 	return h.cloudService.GetZohoStatus()
 }
 
@@ -184,10 +199,16 @@ func (h *CloudHandler) GetStoredLicenseKey() (string, error) {
 }
 
 func (h *CloudHandler) GetUserLicenseStatus() (*domain.LicenseResult, error) {
+	if err := auth.Require(); err != nil {
+		return nil, err
+	}
 	return h.cloudService.GetUserLicenseStatus()
 }
 
 func (h *CloudHandler) KeepAliveSupabase() {
+	if err := auth.Require(); err != nil {
+		return
+	}
 	h.cloudService.KeepAliveSupabase()
 }
 

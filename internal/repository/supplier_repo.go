@@ -114,7 +114,10 @@ func (r *supplierRepository) Updates(id string, updates map[string]interface{}) 
 }
 
 func (r *supplierRepository) UpdateBalance(id string, amount domain.Amount) error {
-	return r.db.Model(&domain.Supplier{}).Where("id = ?", id).UpdateColumn("balance", gorm.Expr("balance - ?", amount.Cents())).Error
+	return r.db.Model(&domain.Supplier{}).
+		Where("id = ?", id).
+		UpdateColumn("balance", gorm.Expr("CASE WHEN balance - ? < 0 THEN 0 ELSE balance - ? END", amount.Cents(), amount.Cents())).
+		Error
 }
 
 func (r *supplierRepository) Delete(id string) error {

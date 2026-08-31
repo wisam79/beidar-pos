@@ -924,6 +924,7 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 			return err
 		}
 
+		var creditOverpayCashRefund domain.Amount
 		if sale.CustomerID != "" {
 			pointsToRevert := int(refundAmount.Div(1000).Cents())
 
@@ -936,8 +937,29 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 
 			switch sale.PaymentMethod {
 			case "credit":
+				customer, err := txCustomerRepo.GetByID(sale.CustomerID)
+				if err != nil {
+					return err
+				}
+				if customer.Debt < refundAmount {
+					creditOverpayCashRefund = refundAmount.Sub(customer.Debt)
+				}
 				if err := txCustomerRepo.DecrementDebt(sale.CustomerID, refundAmount); err != nil {
 					return err
+				}
+				if creditOverpayCashRefund > 0 {
+					refundPayment := domain.Payment{
+						SaleID:     sale.ID,
+						CustomerID: sale.CustomerID,
+						Amount:     domain.Amount(-creditOverpayCashRefund.Cents()),
+						Method:     "cash",
+						Timestamp:  time.Now().UnixMilli(),
+						Note:       fmt.Sprintf("استرداد نقدي لمدفوعات آجل (مرتجع جزئي: %.2f x %s)", qtyToReturn, item.Name),
+						StaffID:    sale.StaffID,
+					}
+					if err := txPaymentRepo.Create(&refundPayment); err != nil {
+						return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)
+					}
 				}
 			case "installment":
 				if err := txCustomerRepo.DecrementInstallmentDebt(sale.CustomerID, refundAmount); err != nil {
@@ -978,7 +1000,7 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 					}
 				}
 			}
-		} else {
+		} else if sale.PaymentMethod != "credit" {
 			refundPayment := domain.Payment{
 				SaleID:     sale.ID,
 				CustomerID: sale.CustomerID,
@@ -1002,6 +1024,8 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 				if cashAmount > 0 {
 					cashRefund = domain.Amount((int64(refundAmount) * int64(cashAmount)) / int64(sale.Total))
 				}
+			} else if creditOverpayCashRefund > 0 {
+				cashRefund = creditOverpayCashRefund
 			}
 			if err := txShiftRepo.UpdateShiftRefunds(refundAmount, cashRefund, false); err != nil {
 				return fmt.Errorf("%s: %w", i18n.GetMessage("SALE_PROCESS_FAILED", ""), err)
@@ -1107,8 +1131,13 @@ func saleRemainingLegs(sale *domain.Sale) map[string]domain.Amount {
 	if diff := sale.Total.Sub(allocated); diff > 0 {
 		if credit, ok := remaining["credit"]; ok {
 			remaining["credit"] = credit.Add(diff)
+		} else if cash, ok := remaining["cash"]; ok {
+			remaining["cash"] = cash.Add(diff)
 		} else {
-			remaining["cash"] = remaining["cash"].Add(diff)
+			for m, leg := range remaining {
+				remaining[m] = leg.Add(diff)
+				break
+			}
 		}
 	}
 

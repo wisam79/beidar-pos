@@ -47,5 +47,8 @@ func (h *AIHandler) AI_GenerateStream(prompt string) error {
 
 // AI_CancelStream cancels the current AI generation stream
 func (h *AIHandler) AI_CancelStream() {
+	if err := auth.Require(); err != nil {
+		return
+	}
 	h.aiService.CancelStream()
 }

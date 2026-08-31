@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -161,7 +162,7 @@ func (s *lanService) ConnectToServer(serverIP string, port int, secret string) e
 
 	resp, err = client.Post(address+"/api/connect", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		return fmt.Errorf("فشل التسجيل: %v", err)
+		return fmt.Errorf("فشل التسجيل: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -211,7 +212,7 @@ func (s *lanService) DisconnectFromServer() {
 		_ = s.saveLanConfig()
 	}()
 
-	fmt.Println("🔌 Disconnected from LAN server")
+	slog.Info("Disconnected from LAN server")
 }
 
 func (s *lanService) IsClientMode() bool {

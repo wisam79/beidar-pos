@@ -8,6 +8,9 @@ import {
     Vault3DIcon,
     Customers3DIcon,
     Reports3DIcon,
+    Inventory3DIcon,
+    Finance3DIcon,
+    Settings3DIcon,
 } from '../../components/icons3d';
 import { cn } from '../../theme/cn';
 import { Command } from 'lucide-react';
@@ -67,10 +70,13 @@ TactileButton.displayName = 'TactileButton';
 const SECTIONS = [
     { key: 'sales', title: 'المبيعات', sublabel: 'نقطة البيع', shortcut: 'F1', icon: Pos3DIcon },
     { key: 'products', title: 'المنتجات', sublabel: 'إدارة الأصناف', shortcut: 'F2', icon: Products3DIcon },
-    { key: 'invoices', title: 'الفواتير', sublabel: 'سجل الطلبات', shortcut: 'F3', icon: Invoices3DIcon },
-    { key: 'shifts', title: 'الورديات', sublabel: 'الخزينة والصندوق', shortcut: 'F4', icon: Vault3DIcon },
-    { key: 'customers', title: 'العملاء', sublabel: 'الديون والنقاط', shortcut: 'F5', icon: Customers3DIcon },
-    { key: 'reports', title: 'التقارير', sublabel: 'التحليلات والمحاسبة', shortcut: 'F6', icon: Reports3DIcon },
+    { key: 'inventory', title: 'المخزون', sublabel: 'الجرد والتوريد', shortcut: 'F3', icon: Inventory3DIcon },
+    { key: 'invoices', title: 'الفواتير', sublabel: 'سجل الفواتير', shortcut: 'F4', icon: Invoices3DIcon },
+    { key: 'shifts', title: 'الورديات', sublabel: 'الخزينة والصندوق', shortcut: 'F5', icon: Vault3DIcon },
+    { key: 'customers', title: 'العملاء', sublabel: 'الديون والنقاط', shortcut: 'F6', icon: Customers3DIcon },
+    { key: 'finance', title: 'المالية', sublabel: 'المصاريف والإيرادات', shortcut: 'F7', icon: Finance3DIcon },
+    { key: 'reports', title: 'التقارير', sublabel: 'التحليلات والمحاسبة', shortcut: 'F8', icon: Reports3DIcon },
+    { key: 'settings', title: 'الإعدادات', sublabel: 'النظام والخيارات', shortcut: 'F9', icon: Settings3DIcon },
 ] as const;
 
 export const Dashboard: React.FC = () => {
@@ -91,8 +97,8 @@ export const Dashboard: React.FC = () => {
 
     return (
         <PageShell className="p-0 h-full flex flex-col justify-between overflow-hidden select-none">
-            <div className="flex-1 flex flex-col justify-center py-6 min-h-0">
-                <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6 max-w-4xl mx-auto w-full px-6">
+            <div className="flex-1 flex flex-col justify-center py-4 min-h-0 overflow-y-auto">
+                <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5 max-w-5xl mx-auto w-full px-6 py-2">
                     {SECTIONS.map((section) => (
                         <TactileButton
                             key={section.key}

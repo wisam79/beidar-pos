@@ -86,7 +86,6 @@ type StaffRepository interface {
 	Transaction(fn func(tx Tx) error) error
 	GetByID(id string) (*Staff, error)
 	GetByUsername(username string) (*Staff, error)
-	GetByFastPIN(fastPIN string) (*Staff, error)
 	GetAll() ([]Staff, error)
 	GetActive() ([]Staff, error)
 	Create(staff *Staff) error

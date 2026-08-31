@@ -245,7 +245,7 @@ export const SalesPage: React.FC = () => {
             name: quickForm.name,
             price: Number(quickForm.price),
             barcode: newProductBarcode || Math.floor(Date.now() / 1000).toString(),
-            cost: 0, stock: 1, minStock: 5, wholesalePrice: 0, category: 'عام', image: '📦'
+            cost: 0, stock: 1, minStock: 5, wholesalePrice: 0, category: 'عام', image: ''
         };
 
         try {

@@ -42,7 +42,7 @@ func (h *PrintHandler) GenerateInvoicePDF(saleID string, format string) (string,
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("dialog error: %v", err)
+		return "", fmt.Errorf("dialog error: %w", err)
 	}
 
 	if savePath == "" {

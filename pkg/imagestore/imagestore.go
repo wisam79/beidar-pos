@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,8 +33,8 @@ func GetImageStoreDir() (string, error) {
 		return "", err
 	}
 
-	imageStoreDir = filepath.Join(configDir, "BeidarPOS_V3", ImagesDir)
-	if err := os.MkdirAll(imageStoreDir, 0755); err != nil {
+	dir := filepath.Join(configDir, "BeidarPOS_V3", ImagesDir)
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", err
 	}
 
@@ -44,7 +45,7 @@ func GetImageStoreDir() (string, error) {
 			for _, entry := range entries {
 				if !entry.IsDir() {
 					oldPath := filepath.Join(legacyDir, entry.Name())
-					newPath := filepath.Join(imageStoreDir, entry.Name())
+					newPath := filepath.Join(dir, entry.Name())
 					if _, err := os.Stat(newPath); os.IsNotExist(err) {
 						_ = copyFile(oldPath, newPath)
 					}
@@ -53,7 +54,8 @@ func GetImageStoreDir() (string, error) {
 		}
 	}
 
-	return imageStoreDir, nil
+	imageStoreDir = dir
+	return dir, nil
 }
 
 func copyFile(src, dst string) error {
@@ -78,7 +80,7 @@ func copyFile(src, dst string) error {
 
 // StartImageServer is an empty stub because images are served natively via Wails AssetHandler
 func StartImageServer() error {
-	fmt.Println("🖼️ Images will be served natively via Wails Custom AssetHandler")
+	slog.Info("Images will be served natively via Wails Custom AssetHandler")
 	return nil
 }
 
@@ -126,7 +128,7 @@ func SaveImageFromBase64(base64Data, productID string) (string, error) {
 
 	decoded, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
-		return "", fmt.Errorf("failed to decode base64: %v", err)
+		return "", fmt.Errorf("failed to decode base64: %w", err)
 	}
 
 	filename := fmt.Sprintf("prod_%s%s", sanitizeFilename(productID), ext)
@@ -138,10 +140,10 @@ func SaveImageFromBase64(base64Data, productID string) (string, error) {
 
 	filePath := filepath.Join(dir, filename)
 	if err := os.WriteFile(filePath, decoded, 0644); err != nil {
-		return "", fmt.Errorf("failed to write image file: %v", err)
+		return "", fmt.Errorf("failed to write image file: %w", err)
 	}
 
-	fmt.Printf("💾 Saved image: %s (%d KB)\n", filename, len(decoded)/1024)
+	slog.Info("Saved image", slog.String("filename", filename), slog.Int("sizeKB", len(decoded)/1024))
 	return filename, nil
 }
 

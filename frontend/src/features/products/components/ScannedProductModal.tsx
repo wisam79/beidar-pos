@@ -54,7 +54,7 @@ export const ScannedProductModal = ({
                             {resolveImage(scannedProduct.image) ? (
                                 <img src={resolveImage(scannedProduct.image) || ''} className="w-full h-full object-cover" alt={scannedProduct.name} />
                             ) : (
-                                <span className="text-6xl">{scannedProduct.image || '📦'}</span>
+                                <div className="flex items-center justify-center w-full h-full text-primary/60"><Package size={48} /></div>
                             )}
                         </div>
 

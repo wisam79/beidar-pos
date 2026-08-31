@@ -234,9 +234,23 @@ func loadOrCreateMasterKey() ([]byte, error) {
 }
 
 // getEncryptionKey returns the device-bound AES key derived from the master
-// key AND the hardware machine ID (MachineGuid on Windows, machine-id on
-// Unix). Combining the two binds the license cache to this specific device.
+// key AND the hardware machine ID using PBKDF2 (100,000 rounds).
+// Combining the two binds the license cache cryptographically to this specific device.
 func (s *cloudService) getEncryptionKey() ([]byte, error) {
+	mk, err := loadOrCreateMasterKey()
+	if err != nil {
+		return nil, err
+	}
+	machineID := secureconfig.MachineID()
+	seed := append(mk, []byte(machineID)...)
+	seed = append(seed, []byte("BeidarPOS_License_AES_v3")...)
+	return pkgcrypto.DeriveKey(string(seed)), nil
+}
+
+// directSha256EncryptionKey reproduces the direct SHA-256 derivation so we can
+// decrypt caches written by previous builds and automatically migrate them
+// to the PBKDF2-derived key on the next write.
+func directSha256EncryptionKey() ([]byte, error) {
 	mk, err := loadOrCreateMasterKey()
 	if err != nil {
 		return nil, err
@@ -284,14 +298,21 @@ func (s *cloudService) encrypt(plaintext []byte) ([]byte, error) {
 func (s *cloudService) decrypt(data []byte) ([]byte, error) {
 	encoded := string(data)
 
-	// 1. Try the new machine-ID-bound key.
+	// 1. Try the PBKDF2 machine-ID-bound key.
 	if key, err := s.getEncryptionKey(); err == nil {
 		if pt, derr := pkgcrypto.Decrypt(encoded, key); derr == nil {
 			return pt, nil
 		}
 	}
 
-	// 2. Previous key (master key only, no machine ID). Automatically
+	// 2. Direct SHA-256 machine-ID key (previous build).
+	if key, err := directSha256EncryptionKey(); err == nil {
+		if pt, derr := pkgcrypto.Decrypt(encoded, key); derr == nil {
+			return pt, nil
+		}
+	}
+
+	// 3. Previous key (master key only, no machine ID). Automatically
 	//    migrates old caches to the new key on the next write.
 	if key, err := prevEncryptionKey(); err == nil {
 		if pt, derr := pkgcrypto.Decrypt(encoded, key); derr == nil {
@@ -299,7 +320,7 @@ func (s *cloudService) decrypt(data []byte) ([]byte, error) {
 		}
 	}
 
-	// 3. Legacy hardcoded key (for caches from builds before per-device
+	// 4. Legacy hardcoded key (for caches from builds before per-device
 	//    master keys existed).
 	return pkgcrypto.Decrypt(encoded, legacyEncryptionKey())
 }

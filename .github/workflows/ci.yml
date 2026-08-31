@@ -71,7 +71,7 @@ jobs:
         run: npm run lint
 
       - name: Unit & Component Vitest Suite
-        run: npx vitest run --pool=threads --maxConcurrency=4
+        run: npx vitest run --fileParallelism=false
 
       - name: Fast Production Build Check
         run: npx vite build

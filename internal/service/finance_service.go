@@ -445,17 +445,29 @@ func (s *financeService) DeletePurchaseOrder(id string) error {
 }
 
 func (s *financeService) CancelPurchaseOrder(id string) error {
-	order, err := s.purchaseRepo.GetByID(id)
-	if err != nil {
-		return err
-	}
+	return s.purchaseRepo.Transaction(func(tx domain.Tx) error {
+		txPurchaseRepo := s.purchaseRepo.WithTx(tx)
+		txSupplierRepo := s.supplierRepo.WithTx(tx)
 
-	if order.Status != domain.POStatusPending && order.Status != domain.POStatusPartial {
-		return fmt.Errorf("لا يمكن إلغاء هذا الأمر")
-	}
+		order, err := txPurchaseRepo.GetForUpdate(id)
+		if err != nil {
+			return err
+		}
 
-	order.Status = domain.POStatusCancelled
-	return s.purchaseRepo.Update(order)
+		if order.Status != domain.POStatusPending && order.Status != domain.POStatusPartial {
+			return fmt.Errorf("لا يمكن إلغاء هذا الأمر")
+		}
+
+		// Revert any payment made against the supplier's balance
+		if order.PaidAmount > 0 && order.SupplierID != "" {
+			if err := txSupplierRepo.UpdateBalance(order.SupplierID, -order.PaidAmount); err != nil {
+				return err
+			}
+		}
+
+		order.Status = domain.POStatusCancelled
+		return txPurchaseRepo.Update(order)
+	})
 }
 
 func (s *financeService) ReceivePurchaseOrder(orderID string, items []domain.PurchaseOrderItem) error {
@@ -602,7 +614,14 @@ func (s *financeService) PayPurchaseOrder(orderID string, amount domain.Amount, 
 			return err
 		}
 
+		if order.Status == domain.POStatusCancelled {
+			return fmt.Errorf("لا يمكن الدفع لأمر شراء ملغي")
+		}
+
 		remaining := order.TotalAmount.Sub(order.PaidAmount)
+		if remaining <= 0 {
+			return fmt.Errorf("أمر الشراء مدفوع بالكامل")
+		}
 		if amount > remaining {
 			return fmt.Errorf("المبلغ أكبر من المتبقي (%s)", remaining.String())
 		}

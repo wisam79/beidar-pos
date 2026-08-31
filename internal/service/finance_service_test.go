@@ -170,7 +170,7 @@ func TestFinanceService(t *testing.T) {
 		supplier := domain.Supplier{
 			ID:      uuid.New().String(),
 			Name:    "Global Supplier",
-			Balance: domain.Zero(),
+			Balance: domain.NewAmount(200000),
 		}
 		db.Create(&supplier)
 
@@ -236,8 +236,8 @@ func TestFinanceService(t *testing.T) {
 
 		var sup domain.Supplier
 		db.First(&sup, "id = ?", supplier.ID)
-		if sup.Balance != domain.NewAmount(-100000) {
-			t.Errorf("Expected supplier balance -100000, got %s", sup.Balance.String())
+		if sup.Balance != domain.NewAmount(100000) {
+			t.Errorf("Expected supplier balance 100000, got %s", sup.Balance.String())
 		}
 	})
 

@@ -206,8 +206,8 @@ func (s *lanService) startConnectivityBroadcaster(ctx context.Context) {
 				runtime.EventsEmit(ctx, "network-status", online)
 				lastStatus = online
 			}
-			// Clean up inactive LAN clients (inactive for > 5 minutes)
-			s.CleanupInactiveClients(300)
+			// Clean up inactive LAN clients (inactive for > 12 hours)
+			s.CleanupInactiveClients(12 * 3600)
 		}
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -78,7 +79,7 @@ func main() {
 	// 🔒 Single Instance Lock
 	cleanup, err := checkSingleInstance()
 	if err != nil {
-		fmt.Println("❌ Application instance already running. Exiting...")
+		slog.Error("Application instance already running. Exiting...")
 		return
 	}
 	defer cleanup()
@@ -178,14 +179,14 @@ func main() {
 			WebviewUserDataPath:              getWebviewCacheDir(), // WebView2 cache path
 			DisableWindowIcon:                 false,
 			OnSuspend: func() {
-				fmt.Println("💤 System entering suspend mode. Closing SQLite database safely...")
+				slog.Info("System entering suspend mode. Closing SQLite database safely...")
 				_ = repository.CloseDB()
 			},
 			OnResume: func() {
-				fmt.Println("☀️ System resumed from suspend. Re-opening SQLite database...")
+				slog.Info("System resumed from suspend. Re-opening SQLite database...")
 				_, err := repository.InitDB()
 				if err != nil {
-					fmt.Printf("⚠️ Error re-opening database on resume: %v\n", err)
+					slog.Error("Error re-opening database on resume", slog.Any("error", err))
 				}
 				if app != nil && app.ctx != nil {
 					wailsruntime.EventsEmit(app.ctx, "system-resumed")
@@ -212,7 +213,7 @@ func main() {
 	})
 
 	if err != nil {
-		println("Error:", err.Error())
+		slog.Error("Application exited with error", slog.Any("error", err))
 	}
 }
 

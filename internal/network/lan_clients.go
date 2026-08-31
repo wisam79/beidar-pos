@@ -6,6 +6,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"time"
 )
 
@@ -107,7 +108,7 @@ func (s *lanService) UpdateClientActivity(token string) {
 	s.clientsMutex.RLock()
 	var targetClient *domain.ConnectedClient
 	for _, client := range s.connectedClients {
-		if client.SessionToken == token {
+		if subtle.ConstantTimeCompare([]byte(client.SessionToken), []byte(token)) == 1 {
 			targetClient = client
 			break
 		}
@@ -213,7 +214,7 @@ func (s *lanService) CleanupInactiveClients(maxInactiveSeconds int64) {
 	for deviceID, client := range s.connectedClients {
 		if now-client.LastActivity > maxInactiveSeconds {
 			delete(s.connectedClients, deviceID)
-			fmt.Printf("🧹 Cleaned up inactive client: %s\n", deviceID)
+			slog.Info("Cleaned up inactive client", slog.String("deviceID", deviceID))
 		}
 	}
 }

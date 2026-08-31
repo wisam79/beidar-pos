@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"strconv"
@@ -59,7 +60,7 @@ func (s *lanService) StartServer(port int) error {
 		if _, err := s.GenerateServerSecret(); err != nil {
 			return fmt.Errorf("فشل توليد سر الخادم: %w", err)
 		}
-		fmt.Println("🔑 Generated new LAN server secret")
+		slog.Info("Generated new LAN server secret")
 	}
 
 	// Load or generate TLS 1.3 server certificate
@@ -90,9 +91,9 @@ func (s *lanService) StartServer(port int) error {
 
 	go func() {
 		s.serverStatus = "running"
-		fmt.Printf("🔒 LAN Server started with TLS 1.3 on port %d (Fingerprint: %s)\n", actualPort, fingerprint)
+		slog.Info("LAN Server started with TLS 1.3", slog.Int("port", actualPort), slog.String("fingerprint", fingerprint))
 		if err := s.server.Serve(tlsListener); err != nil && err != http.ErrServerClosed {
-			fmt.Printf("LAN Server error: %v\n", err)
+			slog.Error("LAN Server error", slog.Any("error", err))
 			s.serverMutex.Lock()
 			s.serverStatus = "error"
 			s.serverMutex.Unlock()
@@ -101,7 +102,7 @@ func (s *lanService) StartServer(port int) error {
 
 	// Start UDP discovery broadcast
 	if err := s.StartBroadcasting(actualPort); err != nil {
-		fmt.Printf("⚠️ Failed to start UDP broadcast: %v\n", err)
+		slog.Warn("Failed to start UDP broadcast", slog.Any("error", err))
 	}
 
 	return nil
@@ -127,7 +128,7 @@ func (s *lanService) StopServer() error {
 
 	s.ClearAllClients()
 
-	fmt.Println("🔌 LAN Server stopped")
+	slog.Info("LAN Server stopped")
 	return err
 }
 

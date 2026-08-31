@@ -203,20 +203,29 @@ export const BarcodeDesigner: React.FC<BarcodeDesignerProps> = ({ onClose, initi
         return list;
     }, [queue]);
 
+    const escapeHtml = (unsafe: string = ''): string => {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
     const handlePrint = () => {
         if (itemsToPrint.length === 0) return;
 
-        // Generate labels HTML
+        // Generate labels HTML with XSS sanitization
         const labelsHTML = itemsToPrint.map((p: Partial<Product>) => `
             <div class="label-item">
-                ${settings.showStoreName ? `<div class="store-name">${prefs?.storeName || 'Store'}</div>` : ''}
-                <div class="product-name">${p.name}</div>
+                ${settings.showStoreName ? `<div class="store-name">${escapeHtml(prefs?.storeName || 'Store')}</div>` : ''}
+                <div class="product-name">${escapeHtml(p.name || '')}</div>
                 <div class="barcode-container">
-                    <svg class="barcode-svg" data-value="${p.barcode || '000000'}" data-show-value="${settings.showProductCode}"></svg>
+                    <svg class="barcode-svg" data-value="${escapeHtml(p.barcode || '000000')}" data-show-value="${settings.showProductCode}"></svg>
                 </div>
                 ${(settings.showPrice || settings.showDate) ? `
                     <div class="footer">
-                        ${settings.showDate ? `<span class="date">${new Date().toLocaleDateString('en-GB')}</span>` : ''}
+                        ${settings.showDate ? `<span class="date">${escapeHtml(new Date().toLocaleDateString('en-GB'))}</span>` : ''}
                         ${settings.showPrice ? `<span class="price">${(p.price || 0).toLocaleString()} د.ع</span>` : ''}
                     </div>
                 ` : ''}

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -294,22 +295,22 @@ func (a *App) startAutomatedBackups() {
 		case <-a.ctx.Done():
 			return
 		case <-ticker.C:
-			fmt.Println("🛡️ Running automated background backup...")
+			slog.Info("Running automated background backup")
 			if a.backupService != nil {
 				_, err := a.backupService.CreateBackup()
 				if err != nil {
-					fmt.Printf("⚠️ Automated local backup failed: %v\n", err)
+					slog.Warn("Automated local backup failed", slog.Any("error", err))
 				} else {
-					fmt.Println("✅ Automated local backup succeeded.")
+					slog.Info("Automated local backup succeeded")
 					_, _ = a.backupService.CleanOldBackups(7)
 				}
 			}
 			if a.cloudService != nil && a.cloudService.IsLoggedIn() {
 				err := a.cloudService.CloudBackupNow()
 				if err != nil {
-					fmt.Printf("⚠️ Automated cloud backup failed: %v\n", err)
+					slog.Warn("Automated cloud backup failed", slog.Any("error", err))
 				} else {
-					fmt.Println("✅ Automated cloud backup succeeded.")
+					slog.Info("Automated cloud backup succeeded")
 				}
 			}
 		}

@@ -326,7 +326,7 @@ func (s *cloudService) StartZohoSyncWorker() {
 func (s *cloudService) SetupZohoIntegration(clientID, clientSecret, authCode string) error {
 	tokenResp, err := s.ExchangeCodeForToken(clientID, clientSecret, authCode)
 	if err != nil {
-		return fmt.Errorf("failed to exchange code: %v", err)
+		return fmt.Errorf("failed to exchange code: %w", err)
 	}
 
 	config := &domain.ZohoConfig{
@@ -344,7 +344,7 @@ func (s *cloudService) SetupZohoIntegration(clientID, clientSecret, authCode str
 
 	orgID, err := s.GetOrganizationID()
 	if err != nil {
-		return fmt.Errorf("failed to get organization: %v", err)
+		return fmt.Errorf("failed to get organization: %w", err)
 	}
 
 	config.OrganizationID = orgID

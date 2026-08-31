@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -196,13 +197,13 @@ func (s *cloudService) IsLoggedIn() bool {
 	}
 
 	if time.Now().Unix() > (session.ExpiresAt - 300) {
-		fmt.Println("🔄 Session expired/expiring. Attempting refresh...")
+		slog.Info("Session expired/expiring. Attempting refresh...")
 		if err := s.RefreshSession(); err != nil {
-			fmt.Printf("❌ Auto-refresh failed: %v\n", err)
+			slog.Warn("Auto-refresh failed", slog.Any("error", err))
 			s.clearSessionCache()
 			return false
 		}
-		fmt.Println("✅ Session refreshed successfully!")
+		slog.Info("Session refreshed successfully")
 	}
 
 	return true
@@ -230,7 +231,7 @@ func (s *cloudService) RefreshSession() error {
 	client := getPinnedClient()
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("network error: %v", err)
+		return fmt.Errorf("network error: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -523,7 +524,7 @@ func (s *cloudService) SyncSessionFeatures() {
 		return
 	}
 
-	fmt.Println("🔄 Silent Sync: Checking for feature updates...")
+	slog.Info("Silent Sync: Checking for feature updates...")
 
 	url := supabaseURL + "/auth/v1/user"
 	req, _ := http.NewRequest("GET", url, nil)
@@ -533,13 +534,13 @@ func (s *cloudService) SyncSessionFeatures() {
 	client := getPinnedClient()
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("⚠️ Silent Sync: Network error (Offline mode kept): %v\n", err)
+		slog.Warn("Silent Sync: Network error (Offline mode kept)", slog.Any("error", err))
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		fmt.Printf("⚠️ Silent Sync: Server returned %d\n", resp.StatusCode)
+		slog.Warn("Silent Sync: Server returned non-200", slog.Int("status", resp.StatusCode))
 		return
 	}
 
@@ -577,10 +578,10 @@ func (s *cloudService) SyncSessionFeatures() {
 		currentSessionLock.Unlock()
 
 		if updated {
-			fmt.Println("✅ Silent Sync: User features updated from server")
+			slog.Info("Silent Sync: User features updated from server")
 			s.saveSessionToCache()
 		} else {
-			fmt.Println("✨ Silent Sync: No changes detected")
+			slog.Info("Silent Sync: No changes detected")
 		}
 	}
 }
@@ -759,7 +760,7 @@ func (s *cloudService) CloudBackupNow() error {
 
 	compressed, err := compressDatabaseForBackup()
 	if err != nil {
-		return fmt.Errorf("فشل ضغط قاعدة البيانات: %v", err)
+		return fmt.Errorf("فشل ضغط قاعدة البيانات: %w", err)
 	}
 
 	limitMB := MaxBackupSizeMB
@@ -817,7 +818,7 @@ func (s *cloudService) CloudBackupNow() error {
 
 		resp, err := client.Do(req)
 		if err != nil {
-			return fmt.Errorf("فشل رفع الجزء %d: %v", i+1, err)
+			return fmt.Errorf("فشل رفع الجزء %d: %w", i+1, err)
 		}
 		resp.Body.Close()
 
@@ -946,7 +947,7 @@ func (s *cloudService) RestoreCloudBackup(backupID string) error {
 
 	compressed, err := base64.StdEncoding.DecodeString(encodedData.String())
 	if err != nil {
-		return fmt.Errorf("فشل فك التشفير: %v", err)
+		return fmt.Errorf("فشل فك التشفير: %w", err)
 	}
 
 	return restoreFromCompressed(compressed)

@@ -158,6 +158,9 @@ func (h *StaffHandler) UpdateStaffPIN(id string, pin string) error {
 }
 
 func (h *StaffHandler) GetStaffCount() (int64, error) {
+	if err := auth.Require(); err != nil {
+		return 0, err
+	}
 	return h.staffService.GetStaffCount()
 }
 

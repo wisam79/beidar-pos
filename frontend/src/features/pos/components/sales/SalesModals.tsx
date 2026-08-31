@@ -356,6 +356,16 @@ export const SalesModals: React.FC<SalesModalsProps> = ({
             } else {
                 notify(`❌ فشلت الطباعة: ${errorMsg.substring(0, 50)}`, 'error');
             }
+
+            // Software Fallback (§3.4): Generate PDF when printer is unavailable
+            if (lastSaleForPrint?.id) {
+                try {
+                    await api.print.generatePDF(lastSaleForPrint.id, 'thermal');
+                    notify('✓ تم حفظ الفاتورة كملف PDF كبديل للطباعة', 'success');
+                } catch {
+                    // Ignore user cancelling save dialog or non-critical PDF error
+                }
+            }
         } finally {
             setIsSilentPrinting(false);
             onAfterPrint();

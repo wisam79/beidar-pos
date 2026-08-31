@@ -6,7 +6,7 @@ import (
 	"beidar-desktop/internal/network"
 	"beidar-desktop/pkg/auth"
 	"context"
-	"fmt"
+	"log/slog"
 )
 
 type FinanceHandler struct {
@@ -152,7 +152,7 @@ func (h *FinanceHandler) CloseShift(shiftID string, closingBalance domain.Amount
 	if err == nil {
 		// 🛡️ Trigger background backup automatically upon shift close
 		go func() {
-			fmt.Println("🛡️ Running end-of-shift automated backup...")
+			slog.Info("Running end-of-shift automated backup")
 			if h.backupService != nil {
 				_, _ = h.backupService.CreateBackup()
 				_, _ = h.backupService.CleanOldBackups(7)
