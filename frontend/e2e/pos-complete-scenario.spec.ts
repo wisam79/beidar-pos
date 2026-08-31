@@ -58,11 +58,12 @@ test.describe('POS & Invoices Complete Sales & Returns Scenario', () => {
         await page.goto('/#/invoices');
         await page.waitForLoadState('networkidle');
 
-        // 7. Assert invoice exists (from GetSales mock INV-123456)
-        const invoiceCard = page.locator('p:has-text("INV-123456"), div:has-text("INV-123456")').first();
-        await invoiceCard.waitFor({ state: 'visible', timeout: 10000 });
-        await expect(invoiceCard).toBeVisible();
-        await invoiceCard.click();
+        // 7. Assert invoice exists and open details modal
+        const invoiceRow = page.locator('tr:has-text("INV-123456")').first();
+        await invoiceRow.waitFor({ state: 'visible', timeout: 10000 });
+        await expect(invoiceRow).toBeVisible();
+        await invoiceRow.click();
+        await page.waitForTimeout(1000);
 
         // 8. Initiate return
         const returnBtn = page.locator('button[title*="استرجاع"]').first();

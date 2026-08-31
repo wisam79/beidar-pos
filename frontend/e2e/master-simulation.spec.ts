@@ -181,10 +181,11 @@ test.describe('Master Simulation: Full E2E Business Flow', () => {
             await page.waitForLoadState('networkidle');
             await page.waitForTimeout(1500);
 
-            // Verify invoice exists
-            const invoiceCard = page.locator('p:has-text("INV-123456"), div:has-text("INV-123456")').first();
-            await expect(invoiceCard).toBeVisible();
-            await invoiceCard.click();
+            // Verify invoice exists and open details modal
+            const invoiceRow = page.locator('tr:has-text("INV-123456")').first();
+            await invoiceRow.waitFor({ state: 'visible', timeout: 10000 });
+            await expect(invoiceRow).toBeVisible();
+            await invoiceRow.click();
             await page.waitForTimeout(1500);
 
             // Initiate Return
