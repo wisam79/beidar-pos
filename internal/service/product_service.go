@@ -3,6 +3,7 @@ package service
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/pkg/imagestore"
+	"beidar-desktop/pkg/logger"
 	"fmt"
 	"strings"
 	"sync"
@@ -145,7 +146,12 @@ func (s *productService) UpdateProduct(product *domain.Product) error {
 		if err == nil && filename != "" && filename != product.Image {
 			// Delete old image if it is a local file
 			if existing.Image != "" && strings.Contains(existing.Image, ".") {
-				_ = imagestore.DeleteImage(existing.Image)
+				// An orphaned image file is harmless; failing the whole product
+				// update over a stale file on disk would not be. Log it so the
+				// leak is still visible.
+				if err := imagestore.DeleteImage(existing.Image); err != nil {
+					logger.Logger.Warn("Inventory", "تعذر حذف صورة المنتج القديمة: "+err.Error())
+				}
 			}
 			product.Image = filename
 		}
@@ -171,7 +177,11 @@ func (s *productService) DeleteProduct(id string) error {
 
 	// Clean up image file
 	if product.Image != "" && strings.Contains(product.Image, ".") {
-		_ = imagestore.DeleteImage(product.Image)
+		// Best-effort cleanup: the product row is deleted either way, so an
+		// orphaned file is logged rather than blocking the deletion.
+		if err := imagestore.DeleteImage(product.Image); err != nil {
+			logger.Logger.Warn("Inventory", "تعذر حذف صورة المنتج: "+err.Error())
+		}
 	}
 
 	err = s.repo.Delete(id)

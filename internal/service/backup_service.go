@@ -525,7 +525,13 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 						Reason:      "تعديل مخزون عبر استيراد CSV",
 						Timestamp:   time.Now().UnixMilli(),
 					}
-					_ = txRepo.CreateStockMovement(&movement)
+					// The product row itself is already written; a missing movement
+					// row leaves a hole in the stock ledger, so it is reported
+					// instead of dropped while the import keeps its
+					// partial-success contract.
+					if err := txRepo.CreateStockMovement(&movement); err != nil {
+						result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: فشلت حركة المخزون - %v", rowNum, err))
+					}
 				}
 
 				result.Updated++
@@ -564,7 +570,13 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 						Reason:      "استيراد CSV: منتج جديد",
 						Timestamp:   time.Now().UnixMilli(),
 					}
-					_ = txRepo.CreateStockMovement(&movement)
+					// The product row itself is already written; a missing movement
+					// row leaves a hole in the stock ledger, so it is reported
+					// instead of dropped while the import keeps its
+					// partial-success contract.
+					if err := txRepo.CreateStockMovement(&movement); err != nil {
+						result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: فشلت حركة المخزون - %v", rowNum, err))
+					}
 				}
 
 				result.Imported++

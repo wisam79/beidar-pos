@@ -86,8 +86,16 @@ func (s *settingsService) UpdatePreferences(prefs domain.AppPreferences) error {
 			}
 		}
 		if len(keysToSave) > 0 {
-			_ = secureconfig.SetGeminiAPIKeys(keysToSave)
-			_ = secureconfig.SetGeminiAPIKey(keysToSave[0]) // Backwards compatibility for singular key
+			// Propagated: swallowing these drops the operator's API keys
+			// entirely — the DB then keeps only the mask and the real key
+			// exists nowhere, while the UI reports success.
+			if err := secureconfig.SetGeminiAPIKeys(keysToSave); err != nil {
+				return fmt.Errorf("failed to encrypt Gemini API keys: %w", err)
+			}
+			// Backwards compatibility for the singular key.
+			if err := secureconfig.SetGeminiAPIKey(keysToSave[0]); err != nil {
+				return fmt.Errorf("failed to encrypt Gemini API key: %w", err)
+			}
 		}
 	}
 	prefs.GeminiAPIKeys = []string{"********"}

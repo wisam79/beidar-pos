@@ -161,7 +161,7 @@ func (s *crmService) DeleteCustomer(id string, force bool) error {
 				return &pkgerrors.AppError{
 					Module:  pkgerrors.ModuleCustomer,
 					Code:    "CUSTOMER_HAS_DEBT",
-					Message: i18n.GetMessage("CUSTOMER_HAS_DEBT", customer.Debt),
+					Message: i18n.GetMessage("CUSTOMER_HAS_DEBT", customer.Debt.Float()),
 					Hint:    i18n.GetMessage("CUSTOMER_HAS_DEBT_FORCE_HINT"),
 					Options: map[string]bool{"allowForce": true},
 				}

@@ -9,7 +9,7 @@
 ```
                       ┌─────────────────────────┐
                       │   Playwright E2E Tests   │
-                      │  (3 سيناريوهات متكاملة)  │
+                      │  (18 ملف مواصفات E2E)  │
                       └───────────┬─────────────┘
                                   │
               ┌───────────────────┼───────────────────┐
@@ -28,13 +28,17 @@
 ### الموقع
 جميع ملفات الاختبارات بجانب الملف المُختبر (`*_test.go`).
 
-### التوزيع الحالي
+### التوزيع الحالي (تحقق: 2026-10-05)
 | المجلد | عدد ملفات الاختبار | التركيز |
 |--------|-------------------|---------|
-| `internal/service/` | 11 | منطق الأعمال الأساسي |
-| `internal/repository/` | 3 | استعلامات GORM |
-| `internal/core/domain/` | 1 | نوع Amount والحسابات المالية |
-| `internal/integration/` | 1 | التكامل السحابي |
+| `internal/service/` | 32 | منطق الأعمال الأساسي والمالية والاسترجاع |
+| `internal/repository/` | 23 | استعلامات GORM والعمليات الذرية والتزامن |
+| `internal/core/domain/` | 9 | نوع Amount والحسابات المالية والصلاحيات |
+| `internal/e2e/` | 29 | تكامل شامل (بيع/شبكة/أمان/ورديات/ضغط) |
+| `internal/network/` | 6 | خادم وعميل واكتشاف LAN وسر الإقران |
+| `internal/integration/` | 3 | التكامل السحابي والاستعادة من الكوارث |
+| `pkg/` | 16 | الأمان والتشفير والطباعة والترجمة i18n |
+| **الإجمالي** | **119** | `find internal pkg -name '*_test.go' \| wc -l` |
 
 ### التشغيل
 ```bash
@@ -100,6 +104,14 @@ go test -count=1 -v -run 'TestE2E_LAN' ./internal/e2e/
 
 > **ملاحظة على الآثار الجانبية:** اختبارات تُشغّل خادم LAN حقيقياً تكتب سر الإقران المشفَّر في مجلد إعدادات المستخدم (`lan_server_secret.enc`) كما يفعل التطبيق نفسه؛ والاختبارات المخصّصة للسر تستخدم مخزناً وهمياً في الذاكرة أو مساراً مؤقتاً معزولاً.
 
+### اختبارات انحدار سلامة الاسترجاع والدفعات (Return & Payment Integrity)
+```bash
+go test -count=1 -run 'TestReturnSplit_CreditOverpay|TestDeletePayment_ShiftUpdateFailureRollsBack' ./internal/service/
+```
+- `TestReturnSplit_CreditOverpay_LeavesDrawer` (`internal/service/return_integrity_test.go`): استرجاع فاتورة `split` بعدَين آجل مسدَّد يُعيد النقد الزائد للعميل ويخصمه من الرصيد المتوقع للوردية — فلا يظهر فائض وهمي عند الإقفال.
+- `TestReturnSplit_CreditOverpay_FailedLedgerWriteRollsBack`: فشل أول قيد في دفتر الدفعات يُرجِع الاسترجاع كاملاً (الفاتورة لا تُوسم «مُرتجَعة»، الدين يعود كما كان، والمخزون لا يتغيّر) بدل إغلاق الفاتورة بلا قيد نقدي.
+- `TestDeletePayment_ShiftUpdateFailureRollsBack`: حذف دفعة نقدية مستقلة يفشل ويُبقي صف الدفعة إذا تعذّر تحديث الوردية، بدل حذف النقد من الدفتر مع بقائه محسوباً في الوردية.
+
 ### التغطية المستهدفة
 - طبقة `internal/service/`: **70%+**
 - طبقة `internal/core/domain/`: **90%+**
@@ -110,7 +122,7 @@ go test -count=1 -v -run 'TestE2E_LAN' ./internal/e2e/
 ## 3. اختبارات الواجهة الأمامية (Frontend Tests)
 
 ### الموقع
-`frontend/__tests__/` — 9 ملفات اختبار باستخدام Vitest.
+`frontend/src/**` — 36 ملف اختبار باستخدام Vitest (يُحتسب آلياً في بلوك `docs-metrics` بخريطة التوثيق).
 
 ### التشغيل
 ```bash
@@ -139,7 +151,7 @@ npm run test:ci       # بيئة CI
 ## 4. اختبارات E2E (Playwright)
 
 ### الموقع
-`frontend/e2e/` — 3 سيناريوهات متكاملة.
+`frontend/e2e/` — 18 ملف مواصفات (يُحتسب آلياً في بلوك `docs-metrics`).
 
 ### التشغيل
 ```bash
@@ -149,7 +161,7 @@ npm run test:e2e:ui      # تشغيل مع واجهة Playwright المرئية
 npm run test:e2e:report  # عرض تقرير آخر تشغيل
 ```
 
-### السيناريوهات الحالية
+### أمثلة على السيناريوهات
 | الملف | الوصف |
 |-------|-------|
 | `master-simulation.spec.ts` | محاكاة دورة بيع كاملة (بحث ← إضافة للسلة ← دفع ← تحقق) |

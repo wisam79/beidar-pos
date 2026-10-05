@@ -686,8 +686,14 @@ func (s *lanService) handleProcessSale(w http.ResponseWriter, r *http.Request) {
 
 	// Attribution is bound server-side: a staff id supplied by the device is
 	// only accepted when it resolves to a staff member registered on this
-	// server, never trusted as-is.
-	if sale.StaffID != "" && s.staffService != nil {
+	// server, never trusted as-is. With no staff service the attribution cannot
+	// be verified at all, so the request is refused instead of being recorded
+	// with an unverified staff id.
+	if sale.StaffID != "" {
+		if s.staffService == nil {
+			http.Error(w, `{"error":"تعذر التحقق من هوية الموظف على هذا الخادم"}`, http.StatusInternalServerError)
+			return
+		}
 		if _, err := s.staffService.GetStaff(sale.StaffID); err != nil {
 			http.Error(w, `{"error":"معرّف الموظف غير معروف على هذا الخادم"}`, http.StatusBadRequest)
 			return

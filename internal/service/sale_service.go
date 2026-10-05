@@ -681,27 +681,33 @@ func (s *saleService) ReturnSale(id string) error {
 				// Only the credit leg that is still outstanding affects debt:
 				if creditRemaining, ok := splitRemaining["credit"]; ok && creditRemaining > 0 {
 					customer, err := txCustomerRepo.GetByID(sale.CustomerID)
-					if err == nil {
-						refundAmount := domain.NewAmount(0)
-						if customer.Debt < creditRemaining {
-							refundAmount = creditRemaining.Sub(customer.Debt)
+					if err != nil {
+						return err
+					}
+					refundAmount := domain.NewAmount(0)
+					if customer.Debt < creditRemaining {
+						refundAmount = creditRemaining.Sub(customer.Debt)
+					}
+					if err := txCustomerRepo.DecrementDebt(sale.CustomerID, creditRemaining); err != nil {
+						return err
+					}
+					if refundAmount > 0 {
+						// Cash handed back for an overpaid credit leg leaves the
+						// drawer, so it must also reduce the shift's expected
+						// balance below (the shift switch adds this value for
+						// split payments as well as credit ones).
+						creditOverpayCashRefund = refundAmount
+						refundPayment := domain.Payment{
+							SaleID:     sale.ID,
+							CustomerID: sale.CustomerID,
+							Amount:     -refundAmount,
+							Method:     "cash",
+							Note:       "استرداد نقدي لمدفوعات آجل",
+							StaffID:    sale.StaffID,
+							Timestamp:  time.Now().UnixMilli(),
 						}
-						
-						if err := txCustomerRepo.DecrementDebt(sale.CustomerID, creditRemaining); err != nil {
-							return err
-						}
-						
-						if refundAmount > 0 {
-							refundPayment := domain.Payment{
-								SaleID:     sale.ID,
-								CustomerID: sale.CustomerID,
-								Amount:     -refundAmount,
-								Method:     "cash",
-								Note:       "استرداد نقدي لمدفوعات آجل",
-								StaffID:    sale.StaffID,
-								Timestamp:  time.Now().UnixMilli(),
-							}
-							_ = txPaymentRepo.Create(&refundPayment)
+						if err := txPaymentRepo.Create(&refundPayment); err != nil {
+							return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)
 						}
 					}
 				}
