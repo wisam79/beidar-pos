@@ -96,7 +96,7 @@ func TestStaffCRUDAndAuth(t *testing.T) {
 			t.Fatalf("CreateStaff failed: %v", err)
 		}
 
-		if len(created.Permissions) != len(service.RolePermissions[domain.RoleCashier]) {
+		if len(created.Permissions) != len(domain.RolePermissions[domain.RoleCashier]) {
 			t.Errorf("Expected permissions for cashier role, got %v", created.Permissions)
 		}
 

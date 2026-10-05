@@ -227,17 +227,51 @@ func (s *lanService) ClearAllClients() {
 }
 
 // GenerateServerSecret creates a new random secret for the LAN server.
-// Uses 16 bytes (128 bits) of entropy, rendered as 32 hex characters.
+// Uses 16 bytes (128 bits) of entropy, rendered as 32 hex characters, and
+// persists it so paired devices survive app restarts.
 func (s *lanService) GenerateServerSecret() (string, error) {
-	s.secretMutex.Lock()
-	defer s.secretMutex.Unlock()
-
 	bytes := make([]byte, 16) // 128-bit secret → 32 hex characters
 	if _, err := rand.Read(bytes); err != nil {
 		return "", fmt.Errorf("failed to generate secure server secret: %w", err)
 	}
-	s.secret = hex.EncodeToString(bytes)
-	return s.secret, nil
+	secret := hex.EncodeToString(bytes)
+
+	s.secretMutex.Lock()
+	s.secret = secret
+	s.secretMutex.Unlock()
+
+	if s.secretStore != nil {
+		if err := s.secretStore.Set(secret); err != nil {
+			// Not fatal for this run, but the secret would rotate on restart and
+			// force every device to re-pair — surface it for the operator.
+			slog.Warn("تعذر حفظ سر خادم LAN؛ سيتغير بعد إعادة التشغيل", slog.Any("error", err))
+		}
+	}
+	return secret, nil
+}
+
+// ensureServerSecret loads the persisted secret or creates and persists a new
+// one before the server starts serving traffic. This keeps registration and
+// scanner endpoints from ever running without a secret, and lets devices paired
+// in earlier runs keep working after a restart.
+func (s *lanService) ensureServerSecret() error {
+	if s.GetServerSecret() != "" {
+		return nil
+	}
+
+	if s.secretStore != nil {
+		if stored := s.secretStore.Get(); stored != "" {
+			s.secretMutex.Lock()
+			s.secret = stored
+			s.secretMutex.Unlock()
+			return nil
+		}
+	}
+
+	if _, err := s.GenerateServerSecret(); err != nil {
+		return fmt.Errorf("فشل توليد سر الخادم: %w", err)
+	}
+	return nil
 }
 
 // GetServerSecret returns the current server secret

@@ -18,3 +18,34 @@ const (
 	PermEditPrices  = "edit_prices"
 	PermExportData  = "export_data"
 )
+
+// RolePermissions defines the default permission set for each role.
+// Single source of truth for the role → permission policy: consumed by
+// internal/service (staff defaults and sessions) and by internal/network
+// (LAN device actor). Do not duplicate this table elsewhere.
+var RolePermissions = map[Role][]string{
+	RoleAdmin: {
+		PermSales, PermProducts, PermInventory, PermCustomers, PermInvoices,
+		PermReports, PermFinance, PermSettings, PermStaffManage, PermDiscounts,
+		PermDeleteSales, PermEditPrices, PermExportData,
+	},
+	RoleManager: {
+		PermSales, PermProducts, PermInventory, PermCustomers, PermInvoices,
+		PermReports, PermFinance, PermDiscounts, PermDeleteSales, PermEditPrices,
+	},
+	RoleCashier: {
+		PermSales, PermCustomers, PermInvoices, PermDiscounts,
+	},
+	RoleViewer: {
+		// Read-only: no elevated permissions.
+	},
+}
+
+// PermissionsForRole returns a defensive copy of the default permissions for a
+// role. Unknown roles yield an empty set (fail-closed).
+func PermissionsForRole(role Role) []string {
+	perms := RolePermissions[role]
+	out := make([]string, len(perms))
+	copy(out, perms)
+	return out
+}

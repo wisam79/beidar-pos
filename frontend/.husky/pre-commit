@@ -1,1 +1,9 @@
-cd frontend && npm run test:ci
+#!/usr/bin/env sh
+# ─────────────────────────────────────────────────────────────
+# بوابة التوثيق الإلزامية (Documentation Sync Gate) — Beidar
+# المرجع: docs/DOCUMENTATION_MAP.md · الدستور: AGENTS.md
+# تخطٍّ طارئ مبرَّر فقط: BEIDAR_DOCS_GATE=off
+# ─────────────────────────────────────────────────────────────
+node scripts/docs-gate.mjs || exit 1
+
+cd frontend && npx lint-staged

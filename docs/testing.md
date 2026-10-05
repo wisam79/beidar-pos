@@ -89,6 +89,17 @@ func TestProcessSale(t *testing.T) {
 }
 ```
 
+### اختبارات انحدار ترخيص LAN (Actor Authorization)
+```bash
+go test -count=1 -run 'TestProcessSaleAs_AuthorizesExplicitActor' ./internal/service/
+go test -count=1 -v -run 'TestE2E_LAN' ./internal/e2e/
+```
+- `TestProcessSaleAs_AuthorizesExplicitActor` (`internal/service/sale_service_test.go`): طالب مجهول بخصم يُرفض، وطالب جهاز كاشير يمرّ (والخادم بلا جلسة)، وطالب بلا صلاحية خصم يُرفض.
+- `TestE2E_LAN_RemoteDiscountSaleWhenHostLoggedOut` (`internal/e2e/lan_network_integration_test.go`): بيع بخصم عن بُعد بعد تسجيل خروج جهاز الخادم + رفض `StaffID` غير معروف بلا أي كتابة + قبول موظف مسجَّل على الخادم.
+- `TestServerSecretPersistenceAcrossRestarts` و`TestServerSecretRotationPersists` و`TestFileServerSecretStoreRoundTrip` (`internal/network/lan_secret_persistence_test.go`): ثبات سر الإقران بعد إعادة التشغيل، والدوران اليدوي، وأن التخزين على القرص مشفَّر (يشمل اختبار round-trip بمسار تهيئة معزول مؤقتاً).
+
+> **ملاحظة على الآثار الجانبية:** اختبارات تُشغّل خادم LAN حقيقياً تكتب سر الإقران المشفَّر في مجلد إعدادات المستخدم (`lan_server_secret.enc`) كما يفعل التطبيق نفسه؛ والاختبارات المخصّصة للسر تستخدم مخزناً وهمياً في الذاكرة أو مساراً مؤقتاً معزولاً.
+
 ### التغطية المستهدفة
 - طبقة `internal/service/`: **70%+**
 - طبقة `internal/core/domain/`: **90%+**

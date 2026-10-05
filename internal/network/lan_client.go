@@ -11,8 +11,10 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -21,6 +23,9 @@ type LanConfig struct {
 	ServerAddress     string `json:"serverAddress"`
 	SessionToken      string `json:"sessionToken"`
 	ServerFingerprint string `json:"serverFingerprint,omitempty"`
+	// Pairing secret kept (encrypted at rest with the rest of this file) so the
+	// client can re-register automatically after the server restarts.
+	PairingSecret string `json:"pairingSecret,omitempty"`
 }
 
 func getLanConfigPath() string {
@@ -68,6 +73,7 @@ func (s *lanService) saveLanConfig() error {
 		ServerAddress:     s.serverAddress,
 		SessionToken:      s.sessionToken,
 		ServerFingerprint: s.serverFingerprintClient,
+		PairingSecret:     s.savedSecret,
 	}
 	s.clientMutex.RUnlock()
 
@@ -114,6 +120,7 @@ func (s *lanService) loadSavedLanConfig() {
 		s.serverAddress = config.ServerAddress
 		s.sessionToken = config.SessionToken
 		s.serverFingerprintClient = config.ServerFingerprint
+		s.savedSecret = config.PairingSecret
 		s.clientMode = true
 		fp := config.ServerFingerprint
 		s.httpClient = createSecureHTTPClient(&fp)
@@ -188,6 +195,7 @@ func (s *lanService) ConnectToServer(serverIP string, port int, secret string) e
 	s.serverAddress = address
 	s.sessionToken = token
 	s.serverFingerprintClient = capturedFingerprint
+	s.savedSecret = secret
 	s.httpClient = client
 	s.clientMode = true
 
@@ -207,6 +215,7 @@ func (s *lanService) DisconnectFromServer() {
 	s.serverAddress = ""
 	s.sessionToken = ""
 	s.serverFingerprintClient = ""
+	s.savedSecret = "" // explicit disconnect forgets the pairing secret
 
 	go func() {
 		_ = s.saveLanConfig()
@@ -219,6 +228,41 @@ func (s *lanService) IsClientMode() bool {
 	s.clientMutex.RLock()
 	defer s.clientMutex.RUnlock()
 	return s.clientMode
+}
+
+// reconnectSavedServer re-registers this device with the saved server using the
+// persisted pairing secret. Server session tokens live only in the server
+// process memory, so after a server restart every paired device needs a fresh
+// token; reusing the stored secret makes that automatic. Failures are logged
+// only — the operator can always re-pair from the LAN panel.
+func (s *lanService) reconnectSavedServer() {
+	s.clientMutex.RLock()
+	address := s.serverAddress
+	secret := s.savedSecret
+	inClientMode := s.clientMode
+	s.clientMutex.RUnlock()
+
+	if !inClientMode || address == "" || secret == "" {
+		return
+	}
+
+	u, err := url.Parse(address)
+	if err != nil || u.Hostname() == "" {
+		slog.Warn("تعذر تحليل عنوان الخادم المحفوظ", slog.String("address", address))
+		return
+	}
+	port := 0
+	if p := u.Port(); p != "" {
+		if parsed, convErr := strconv.Atoi(p); convErr == nil {
+			port = parsed
+		}
+	}
+
+	if err := s.ConnectToServer(u.Hostname(), port, secret); err != nil {
+		slog.Warn("فشل إعادة الاتصال التلقائي بالخادم", slog.Any("error", err))
+		return
+	}
+	slog.Info("تمت إعادة الاتصال بالخادم تلقائياً", slog.String("server", address))
 }
 
 func (s *lanService) GetClientStatus() domain.LanClientStatus {

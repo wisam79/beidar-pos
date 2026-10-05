@@ -52,11 +52,12 @@
 ```text
 beidar/
 ├── internal/                   # النواة المعزولة للواجهة الخلفية (Go Backend)
-│   ├── core/domain/            # النماذج النقية + الواجهات — 13 ملف (12 نموذج + 1 اختبار)
+│   ├── core/domain/            # النماذج النقية + الواجهات — 23 ملف (14 نموذج + 9 اختبار)
 │   │   ├── models.go           # 20+ نموذج (Product, Sale, Shift...)
 │   │   ├── interfaces.go       # 20+ واجهة (Repository, Service)
 │   │   ├── money.go            # نوع Amount (int64) للحسابات المالية
-│   │   ├── permissions.go      # ثوابت الصلاحيات الـ 12
+│   │   ├── permissions.go      # ثوابت الصلاحيات (13) + سياسة الأدوار RolePermissions
+│   │   ├── actor.go            # هوية الطالب (Actor) لترخيص الخدمة/الشبكة
 │   │   └── errors.go           # أخطاء معيارية (ErrRecordNotFound, etc.)
 │   ├── repository/             # طبقة البيانات — 17 ملف
 │   │   ├── db.go               # InitDB, AutoMigrate, Seeding

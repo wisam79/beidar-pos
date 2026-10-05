@@ -2,9 +2,11 @@ package network
 
 import (
 	"beidar-desktop/internal/core/domain"
+	"beidar-desktop/pkg/auth"
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -52,16 +54,15 @@ func (s *lanService) StartServer(port int) error {
 		return fmt.Errorf("لا يوجد بورت متاح للسيرفر")
 	}
 
-	// Ensure a server secret exists before serving any traffic so LAN
-	// registration and scanner endpoints are never left open. The secret is
-	// generated once per process run and shown to the operator through the
-	// settings screen (LanHandler.GetServerSecret).
-	if s.GetServerSecret() == "" {
-		if _, err := s.GenerateServerSecret(); err != nil {
-			return fmt.Errorf("فشل توليد سر الخادم: %w", err)
-		}
-		slog.Info("Generated new LAN server secret")
+	// Load the persisted LAN server secret (or create and persist a new one)
+	// before serving any traffic: registration and scanner endpoints are never
+	// left open, and devices paired in earlier runs keep working after a restart.
+	// The secret is shown to the operator through the settings screen
+	// (LanHandler.GetServerSecret).
+	if err := s.ensureServerSecret(); err != nil {
+		return err
 	}
+	slog.Info("LAN server secret ready")
 
 	// Load or generate TLS 1.3 server certificate
 	tlsCert, fingerprint, err := GetOrGenerateServerCert()
@@ -235,7 +236,11 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 				return
 			}
 
-			next(w, r)
+			// Carry the verified client session through the request context so
+			// handlers authorize as the requesting device instead of the desktop
+			// session of this machine.
+			ctx := context.WithValue(r.Context(), lanClientContextKey{}, client)
+			next(w, r.WithContext(ctx))
 		})
 	}
 
@@ -273,6 +278,32 @@ func (s *lanService) setupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/stock/movements", authMiddleware(s.handleStockMovements))
 	mux.HandleFunc("/api/database/export", authMiddleware(s.handleDatabaseExport))
 	mux.HandleFunc("/api/remote-scan", corsMiddleware(s.requireServerSecret(s.handleRemoteScan)))
+}
+
+// lanClientContextKey carries the verified LAN client session through a
+// request's context. Populated exclusively by authMiddleware.
+type lanClientContextKey struct{}
+
+// lanClientFrom returns the verified LAN client session attached by
+// authMiddleware, or nil when the request was not authenticated.
+func lanClientFrom(r *http.Request) *domain.ConnectedClient {
+	client, _ := r.Context().Value(lanClientContextKey{}).(*domain.ConnectedClient)
+	return client
+}
+
+// lanActor builds the authorization actor for a verified LAN client session.
+// A missing session yields an anonymous actor, so every check fails closed.
+func lanActor(client *domain.ConnectedClient) domain.Actor {
+	if client == nil {
+		return domain.Actor{}
+	}
+	role := domain.Role(client.Role)
+	return domain.Actor{
+		Authenticated: true,
+		DeviceID:      client.DeviceID,
+		Role:          role,
+		Permissions:   domain.PermissionsForRole(role),
+	}
 }
 
 // lanRoleAllows is the single, fail-closed authorization policy for LAN API
@@ -652,8 +683,25 @@ func (s *lanService) handleProcessSale(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := s.saleService.ProcessSale(&sale); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	// Attribution is bound server-side: a staff id supplied by the device is
+	// only accepted when it resolves to a staff member registered on this
+	// server, never trusted as-is.
+	if sale.StaffID != "" && s.staffService != nil {
+		if _, err := s.staffService.GetStaff(sale.StaffID); err != nil {
+			http.Error(w, `{"error":"معرّف الموظف غير معروف على هذا الخادم"}`, http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Authorize as the verified device session, not as whoever is logged in on
+	// this machine.
+	if err := s.saleService.ProcessSaleAs(lanActor(lanClientFrom(r)), &sale); err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, auth.ErrNotAuthenticated) || errors.Is(err, auth.ErrInsufficientPermission) {
+			status = http.StatusForbidden
+		}
+		http.Error(w, err.Error(), status)
 		return
 	}
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "processed"})

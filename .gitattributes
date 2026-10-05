@@ -1,0 +1,4 @@
+# الحفاظ على أسطر LF للسكربتات والخطافات (تمنع فشل husky/git hooks على ويندوز)
+*.sh text eol=lf
+frontend/.husky/** text eol=lf
+*.mjs text eol=lf

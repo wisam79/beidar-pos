@@ -11,7 +11,15 @@ We welcome contributions! Please follow these steps to contribute:
 ## Development Setup
 
 The project uses Go (Backend) and React (Frontend).
-Ensure you follow the architecture guidelines detailed in `AGENTS.md` and `docs/`.
+Ensure you follow the architecture guidelines detailed in [`AGENTS.md`](AGENTS.md), the domain rules in [`.agents/rules/`](.agents/rules), and [`docs/`](docs).
+
+## Development Governance (إلزامي)
+
+- اقرأ [`AGENTS.md`](AGENTS.md) و[`docs/DOCUMENTATION_MAP.md`](docs/DOCUMENTATION_MAP.md) قبل أي عمل.
+- حدّث `CHANGELOG.md` تحت `[Unreleased]` وكل مستند يفرضه تغييرك وفق مصفوفة المزامنة.
+- قبل الكومت: `node scripts/docs-gate.mjs --strict-refs` (مفروض آلياً عبر `frontend/.husky/pre-commit`).
+- قبل الدفع: `node scripts/docs-gate.mjs --push` (مفروض آلياً عبر `frontend/.husky/pre-push` ووظيفة `docs-gate` في CI).
+- Builds are produced only via `pwsh ./scripts/build.ps1` — never run `wails build` directly.
 
 ## Reporting Issues
 

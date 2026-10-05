@@ -136,7 +136,15 @@ func (s *saleService) GetSale(id string) (*domain.Sale, error) {
 	return s.saleRepo.GetByID(id)
 }
 
+// ProcessSale runs on behalf of the process-wide desktop session.
 func (s *saleService) ProcessSale(sale *domain.Sale) error {
+	return s.ProcessSaleAs(auth.CurrentActor(), sale)
+}
+
+// ProcessSaleAs runs on behalf of an explicit actor. LAN requests pass the
+// verified client session as the actor so the discount check follows the
+// requesting device, not the session active on the server machine.
+func (s *saleService) ProcessSaleAs(actor domain.Actor, sale *domain.Sale) error {
 
 	if len(sale.Items) == 0 {
 		return ErrEmptyCart()
@@ -160,7 +168,7 @@ func (s *saleService) ProcessSale(sale *domain.Sale) error {
 		}
 	}
 	if sale.Discount > 0 || anyItemHasDiscount {
-		if err := auth.RequirePermission(auth.PermDiscounts); err != nil {
+		if err := auth.RequirePermissionFor(actor, auth.PermDiscounts); err != nil {
 			return err
 		}
 	}

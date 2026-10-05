@@ -1,254 +1,171 @@
-# Beidar - دليل المطورين والـ AI Agents (Zero-Hallucination Protocol)
+# بيدر — دستور الوكلاء الأذكياء (Master Project Constitution)
 
-> **آخر تحديث**: 2026-08-30
-> **إصدار المنتج**: 2.1.0 | **العمارة**: Clean Architecture v3
+> **آخر تحديث**: 2026-10-05 · **إصدار المنتج**: 2.1.0 · **العمارة**: Clean Architecture v3
 > **الحالة**: 🟢 قيد التطوير المستمر (تحسين وتثبيت الميزات الحالية)
+>
+> هذا الملف هو **المدخل الحاكم** لكل جلسة عمل. التفاصيل التخصصية موزعة على:
+> - **قواعد النطاقات** في `.agents/rules/` (تُفعّل حسب نطاق الملفات المستهدفة عبر `trigger`).
+> - **المهارات المرجعية** في `.agents/skills/` (أمثلة وأدلة تفصيلية).
+> - **الوكلاء الفرعيين** في `.agents/agents/` (مصفوفة المراجعة العشرية).
+> - **مسارات العمل** في `.agents/workflows/` (SOPs تشغيلية).
+> - **نظام التوثيق** في [`docs/DOCUMENTATION_MAP.md`](docs/DOCUMENTATION_MAP.md) (الجرد + المزامنة + البوابات + الأرقام المرجعية).
 
 ---
 
-## 🛑 0. بروتوكول منع الهلوسة للوكلاء الأذكياء (Zero-Hallucination Protocol)
+## 0. 🛑 بروتوكول منع الهلوسة (Zero-Hallucination Protocol)
 
-كوكيل ذكي (AI Agent)، أنت ملزم باتباع هذه القواعد الصارمة قبل كتابة أي سطر كود أو تعديل أي ميزة:
-1. **لا تخمن أبداً (Never Guess):** لا تفترض وجود دوال أو متغيرات أو ملفات. استخدم أدواتك (`grep_search`, `list_dir`, `view_file`) للبحث الدقيق في الكود الحالي قبل التعديل.
-2. **استخدم الموجود (Reuse Existing Code):** النظام يحتوي على العديد من الـ Components في الواجهة الأمامية و الـ Utilities في الواجهة الخلفية. ابحث عنها قبل بناء شيء جديد.
-3. **التعديلات الجراحية فقط (Surgical Edits):** عندما يطلب منك تعديل ميزة، قم بتعديل الجزء المطلوب فقط. لا تقم بحذف تعليقات، أو إزالة دوال أخرى، أو إعادة كتابة ملف كامل ما لم يُطلب منك صراحة ذلك لتجنب تدمير البناء الحالي.
-4. **تحقق من الواردات (Check Imports):** لغة Go ستفشل في البناء إذا تركت `import` غير مستخدم. احرص على تنظيف الواردات بعد أي تعديل.
-5. **شغّل الاختبارات وفحوصات الصحة (Run Tests & Health Checks):**
-   - **الواجهة الخلفية (Go):** بعد أي تعديل، شغّل `go test ./internal/... ./pkg/...` (أو مع `-race`) لتجنب البحث غير الضروري داخل مجلدات `node_modules`.
-   - **الواجهة الأمامية (Frontend):** بعد تعديل كود React، شغّل `npm run typecheck` للتحقق من خلو الكود من أخطاء الأنواع، وشغّل الاختبارات عبر `npx vitest run --fileParallelism=false` لضمان استقرار خيوط العمل على Windows دون انقطاع.
-6. **طريقة البناء المعتمدة (Strict Build Process):** يُمنع منعاً باتاً تشغيل أوامر البناء (`wails build` أو `npm run build`) بشكل مباشر. لإنشاء التطبيق، يجب دائماً استخدام السكربت المخصص `pwsh ./scripts/build.ps1` الذي يتكفل بحقن متغيرات البيئة والأسرار السحابية. لا تقم بالبناء إلا إذا طلب المستخدم ذلك صراحة.
+1. **لا تخمن أبداً:** لا تفترض وجود دالة أو متغير أو ملف. ابحث (`grep`/البحث في المستودع) قبل أي تعديل.
+2. **استخدم الموجود:** ابحث في الكود القائم قبل بناء أي بديل — انظر [`.agents/skills/beidar-architecture-navigator/SKILL.md`](.agents/skills/beidar-architecture-navigator/SKILL.md).
+3. **التعديلات الجراحية فقط:** عدّل الجزء المطلوب حصراً. يُمنع حذف تعليقات أو دوال أو إعادة كتابة ملف كامل ما لم يُطلب صراحة.
+4. **تحقق من الواردات:** Go يفشل في البناء عند `import` غير مستخدم — نظّف الواردات بعد كل تعديل.
+5. **اقرأ قاعدة النطاق أولاً:** قبل تعديل أي ملف، اقرأ ملف القاعدة المطابق له في `.agents/rules/` (الجدول في القسم 3).
+6. **شغّل الاختبارات وفحوص الصحة:**
+   - **الخلفية (Go):** `go test ./internal/... ./pkg/...` (ومع `-race` للمسارات الحساسة).
+   - **الواجهة:** `npm run typecheck` ثم `npx vitest run --fileParallelism=false` من مجلد `frontend`.
+7. **طريقة البناء المعتمدة:** يُمنع منعاً باتاً تشغيل `wails build` أو `npm run build` مباشرة. البناء حصراً عبر `pwsh ./scripts/build.ps1`، ولا تبنِ إلا بطلب صريح من المستخدم.
 
 ---
 
 ## 1. نظرة عامة على المشروع (Project Overview)
 
-**Beidar (بيدر)** هو نظام حاسوبي متكامل لسطح المكتب يعمل كنظام ERP/POS. 
-- **الواجهة الخلفية:** Go 1.25 + Wails v2.12 + GORM (SQLite)
+**بيدر (Beidar)** نظام ERP/POS متكامل لسطح المكتب:
+- **الواجهة الخلفية:** Go 1.25 + Wails v2.12 + GORM (SQLite via glebarez — Pure Go)
 - **الواجهة الأمامية:** React 18 + Vite 8 + Tailwind CSS 3.4 + Radix UI + Zustand + React Query
+- **الشبكة:** خادم HTTP مدمج + اكتشاف UDP على المنفذ 9765 (Server & Client في LAN)
+- **الطباعة:** حرارية صامتة بالصور (winspool · GS v 0) + A4/PDF + ملصقات في الواجهة
 
-> **القاعدة الحاكمة**: الأولوية القصوى هي **تحسين وتطوير الميزات الحالية** ورفع كفاءتها ومتانتها الأمنية. 
-
----
-
-## 2. المبدأ الأول: العمارة النظيفة والفصل المطلق (Strict Layering) ⚠️⚠️⚠️
-
-> **القاعدة الذهبية المطلقة**: يُمنع منعاً باتاً استدعاء أو استخدام `gorm.DB` مباشرة داخل الـ `handlers` أو الـ `service`. كل طبقة تتحدث فقط مع الطبقة التي أسفلها عبر واجهات (Interfaces).
-
-### 2.1 الطبقات المسموحة بالترتيب:
-1. `handlers`: تستقبل طلبات Wails أو الشبكة المحلية، وتقوم بتمريرها إلى الـ `service`.
-2. `service`: تحتوي على كافة العمليات الحسابية ومنطق الأعمال، وتستدعي `repository`. لا يجوز أن تحتوي على استعلامات قواعد بيانات (`db.Where` أو `clause.Locking`).
-3. `repository`: الطبقة الوحيدة التي تتخاطب مع `GORM` و `SQLite`. أي تعامل مباشر مع DB أو `clause` يجب أن يكون هنا كدالة تابعة للـ Interface (مثال: `GetForUpdate`).
-4. `core/domain`: النماذج (Structs) والواجهات (Interfaces) النقية. لا تعتمد على أي حزمة خارجية.
-
-### 2.2 جدول الممنوعات القاطعة في Go ❌
-
-| ❌ الفعل الممنوع للوكيل (Hallucination/Bad Practice) | ✅ البديل الصحيح والآمن | السبب المعماري |
-|----------------------------------------------------|------------------------|---------------|
-| كتابة `tx.DB().Clauses(clause.Locking{})` في `service` | تعريف دالة `GetForUpdate()` في `repository` | تلوث طبقة منطق العمل بكود قواعد البيانات يكسر العمارة. |
-| استدعاء Wails Context داخل `repository` أو `service` | إرجاع خطأ إلى `handlers` وهو يتعامل مع Wails | فصل الاهتمامات. الـ Repo لا يجب أن يعرف بوجود Wails. |
-| وضع منطق الحسابات المالية أو الضرائب في `React` | كتابته في `service` (Go) واستدعاؤه عبر `React Query` | حماية البيانات، توحيد الحسابات وسهولة الـ Unit Tests. |
-| تكرار تعريف الـ Structs في كل ملف للهروب من الوراثة | استيراد واستخدام النماذج الأساسية من `internal/core/domain` | تجنب الاعتماديات الدائرية والفوضى. |
-| استخدام `float64` للمبالغ المالية (كارثة فنية) | استخدام `domain.Amount` (والذي يعتمد int64 للـ cents) | منع أخطاء التقريب في الفاصلة العائمة (Floating Point errors). |
-| تخزين مفاتيح API (AI, Cloud) كنص صريح | استخدام حزمة `pkg/secureconfig` للتخزين المشفر | تسرب بيانات حساسة واختراق أمني. |
+> **القاعدة الحاكمة:** الأولوية القصوى هي **تحسين وتطوير الميزات الحالية** ورفع كفاءتها ومتانتها الأمنية. يُمنع حذف ميزة قائمة أو إعادة بناء من الصفر بلا طلب صريح، ويُمنع التوسع بهندسة زائدة (Over-engineering).
 
 ---
 
-## 3. معايير الكود والأمان (Code & Security Standards)
+## 2. الثوابت المطلقة (Absolute Invariants) — لا تُكسر
 
-### 3.1 إدارة الأخطاء (Error Handling)
-- كل دالة Handler مُصدرة لـ Wails يجب أن تُرجع إما النتيجة أو `error`. الواجهة الأمامية ستستقبل الخطأ كـ `Promise.reject`.
-- استخدم `fmt.Errorf("context message: %w", err)` بدلاً من تجاوز الخطأ أو تجاهله، للحفاظ على السياق الأصلي.
-- لا تترك أي `_ , err` في الدوال الحساسة بدون معالجة، قم دائماً بتسجيل الخطأ (Log) على الأقل.
-
-### 3.2 الأمان والتشفير (Security Rules)
-- **كلمات المرور (PINs/Passwords):** يجب استخدام `bcrypt` دائماً لتهشير ومقارنة كلمات المرور (مثل `AdminPin`).
-- **المفاتيح (AES Keys):** يجب استخدام `PBKDF2` لعمل Key Derivation قوي بدلاً من استخدام التجزئة المباشرة كـ SHA-256.
-- **التوكينز (Tokens/Sessions):** عند مقارنة رموز الجلسات (Sessions) أو أسرار الخادم، يجب استخدام `subtle.ConstantTimeCompare` لمنع هجمات التوقيت (Timing Attacks).
-- **التحقق من الصلاحيات (Backend Authorization):** يُمنع منعاً باتاً الاعتماد على الواجهة الأمامية (Frontend) لإخفاء الأزرار كطريقة للحماية. أي مسار شبكي (LAN API) أو دالة Wails تقوم بتعديل البيانات (POST/PUT/DELETE) يجب أن تحتوي على فحص صارم للصلاحيات (`auth.RequirePermission`) في الواجهة الخلفية قبل التنفيذ.
-- **حقن الملفات (CSV Formula Injection):** عند تصدير أي بيانات إلى ملفات Excel أو CSV، يجب تعقيم (Sanitize) كافة الحقول النصية الحرة (مثل الاسم، الباركود، الوصف). إذا كان النص يبدأ بالرموز `=`, `+`, `-`, أو `@`، يجب حقن علامة التنصيص المفردة `'` قبله لمنع تنفيذ أوامر اختراق (RCE) على جهاز المستخدم.
-- **حظر الرمز السري (Tarpitting vs Lockout):** يُمنع استخدام الحظر الكلي لعمليات التحقق من الرمز السري (Admin PIN) على مستوى النظام عند تجاوز محاولات الفشل لتجنب هجمات حجب الخدمة (DoS). يجب تطبيق تقنية "التأخير الأسي (Tarpitting)" لإبطاء الهجمات مع إبقاء الخدمة متاحة للمحاولات الصحيحة في خيوط التنفيذ الأخرى.
-- **جلسات الشبكة المحلية (LAN Sessions Expiry):** يجب ألا تكون جلسات الكاشير الشبكية غير محدودة الصلاحية. يجب دائماً فحص خمول الجلسة وتعليقها بعد وقت خمول محدد (مثلاً 12 ساعة) بالاعتماد على حقل `LastActivity`.
-- **أمن خطط الأقساط (Installment Validation):** يجب التحقق من صحة مدخلات الأقساط في الخلفية. تأكد دائماً أن الدفعة الأولى (Down Payment) لا تتجاوز إجمالي الفاتورة لمنع أرصدة الديون السالبة.
-- **حماية البيانات الحساسة (PII Masking):** يجب دائماً تعمية (Masking) بيانات العملاء الشخصية (مثل أرقام الهواتف أو الهوية) في سجلات النظام (Logs) وفي واجهات العرض غير المخصصة للإدارة العليا لمنع تسرب البيانات.
-
-### 3.3 التزامن وقواعد البيانات (Concurrency & Transactions)
-- **بيئة LAN:** النظام يعمل في شبكة محلية قد تحوي عدة أجهزة POS في نفس الوقت.
-- **Transactions:** عمليات البيع والإرجاع والأقساط يجب أن تُغلف بـ `db.Transaction(func(tx domain.Tx) error { ... })` لضمان التراجع (Rollback) في حال الفشل.
-- **Pessimistic Locking:** لتحديث المخزون بشكل آمن عند البيع المتزامن، استخدم قفل قواعد البيانات `FOR UPDATE` عبر إنشاء دالة في طبقة الـ `repository` تستدعي `Clauses(clause.Locking{Strength: "UPDATE"})`.
-- **التحديث الذري لنقاط وديون العملاء (Atomic Field Updates):** عند معالجة الفواتير، يجب تحديث أرصدة العملاء ونقاطهم ومبيعاتهم التراكمية بشكل ذري في قاعدة البيانات باستخدام تعابير GORM الذرية `gorm.Expr("column + ?", value)` بدلاف من الحسابات داخل الذاكرة لمنع ثغرات التزامن (Lost Updates).
-- **منع حالات السباق (Race Condition Mitigation):** يمنع تماماً تنفيذ عمليات قراءة ثم كتابة (Read-Modify-Write) لبيانات المخزون أو الأرصدة المالية دون استخدام `Transaction` مع `Locking`. يجب دائماً التحقق من النسخة (Version) أو استخدام الأقفال الصارمة في العمليات التنافسية.
-- **ترقيم المهاجرات (Numbered Schema Migrations):** يُمنع منعاً باتاً تعديل الجداول أو الحقول عبر `AutoMigrate` عشوائي. كافة التعديلات المستقبلية على جداول SQLite يجب أن تُضاف كمهاجرة مرقمة زمنياً في مصفوفة `allMigrations` داخل `internal/repository/migration.go`، وتُنفذ داخل Transaction ذري متبوعة بفحص `PRAGMA foreign_key_check;`.
-
-### 3.4 المرونة والتعافي الذاتي (Resilience & Self-Healing)
-- **الأجهزة الطرفية (Hardware):** عند التعامل مع الأجهزة الطرفية (طابعات، قوارئ باركود)، يجب ألا تفشل العملية بصمت أو ترمي خطأ عام. وفر دائماً بديلاً برمجياً (Software Fallback) مثل توليد PDF كبديل للطباعة الورقية الفاشلة.
-- **الخدمات السحابية والذكاء الاصطناعي (Cloud & AI):** كافة الاستدعاءات الخارجية يجب أن تُغلف بآلية (Exponential Backoff Retries) للتعافي من الانقطاعات المؤقتة أو قيود الاستخدام (Rate limits) بدلاً من الفشل من المحاولة الأولى.
-- **أخطاء الواجهة (Frontend Errors):** يجب تمرير جميع الأخطاء غير المعالجة (Unhandled Exceptions/Rejections) إلى نظام الـ `logger` المركزي (`src/core/logger.ts`) للحفاظ على سجل يمكن الرجوع إليه، وذلك باستخدام مستمعات أحداث عامة.
-
-### 3.5 الأداء وإدارة الذاكرة (Performance & Memory Management)
-- **البيانات الضخمة (Large Payloads):** يُمنع منعاً باتاً جلب حقول ضخمة (مثل الصور المشفرة Base64) عند الاستعلام عن قوائم كاملة (List Queries). في GORM، استخدم الجمل الشرطية لتفريغها (مثال: `CASE WHEN length(image) > 500 THEN '' ELSE image END`).
-- **تأخير التنفيذ (Debouncing):** أي حقل بحث (Search Input) يقوم بفلترة مصفوفات بيانات محلية ضخمة يجب أن يُغلف باستخدام `useDeferredValue` في React، أو تأخير `Debounce` لمنع تجميد الواجهة (Stuttering) أثناء الكتابة السريعة.
-- **القوائم الوهمية (Virtualization):** يُمنع تصيير (Render) الجداول والقوائم التي تتجاوز 100 عنصر باستخدام `.map()` بشكل مباشر. يجب دائماً استخدام `@tanstack/react-virtual` للحفاظ على سلاسة استهلاك الذاكرة (DOM Nodes).
-- **منع التجميد (UI Blocking):** تجنب تماماً تمرير نصوص ضخمة جداً (+10MB) إلى دالة `JSON.parse` في خيط الواجهة الأمامية الرئيسي (Main Thread) لمنع تجميد التطبيق.
-
-### 3.6 معايير واجهة نقاط البيع (POS UI/UX Standards)
-عند تعديل أو إنشاء شاشات خاصة بالكاشير (مثل شاشة البيع)، يُمنع الإخلال بالقواعد العالمية التالية:
-- **تخطيط الشاشة (Dual-Pane):** يجب الحفاظ على فصل الشاشة إلى قسمين: الفاتورة (Cart) وشبكة المنتجات (Product Grid).
-- **سهولة اللمس (Touch-Friendly):** تجنب إجبار المستخدم على استخدام لوحة المفاتيح. استخدم دائماً مكون `Numpad` الداخلي لتعديل الكميات والأرقام. جميع الأزرار يجب أن تكون كبيرة بمسافات كافية (Touch Targets).
-- **الالتقاط الصامت (Passive Scanning):** يُمنع استخدام حقول بحث إجبارية (Inputs) لالتقاط الباركود. يجب الاعتماد على الـ Hooks التي تستمع للباركود في الخلفية (مثل `useUsbScannerDetection`) لعدم تعطيل عمل الكاشير.
-- **وضع التركيز (Zen Mode):** الشاشات التي تحتاج لتركيز وسرعة عالية يجب أن تدعم إخفاء القوائم الجانبية والعلوية لتوفير أقصى مساحة عرض.
-- **حظر الـ Emojis والصور النقطية للأيقونات:** يُمنع منعاً باتاً استخدام الـ Emojis أو توليد صور نقطية (Raster/AI Images) كأيقونات في الواجهات. يجب دائماً استخدام مكونات مكتبات الأيقونات المتجهة المعتمدة في المشروع (`@phosphor-icons/react` بنمط Duotone أو `lucide-react`) لضمان الحدة البصرية التامة على شاشات Retina/4K، واستجابة الألوان للسمات (Dark/Light Themes)، والأداء الفائق بصفر تأخير.
-- **تطابق المسميات بين لوحة الانطلاق والتنقل (1-to-1 Navigation Label Parity):** يجب أن تتطابق عناوين بطاقات الصفحة الرئيسية (`dashboard.tsx`) تطابقاً تاماً بنسبة 100% مع أسماء التبويبات في شريط التنقل العلوي (`NativeTitleBar.tsx`) وملفات الترجمة (`locales/ar.json`). يُمنع منعاً باتاً أن يضغط المستخدم على بطاقة باسم وتفتح له الصفحة باسم مختلف (مثال: زر "المنتجات" يفتح `/products` بعنوان "المنتجات"، وزر "الورديات" يفتح `/shifts` بعنوان "الورديات").
-- **تناسق أبعاد البطاقات التفاعلية (Square Launcher Aspect Ratio):** بطاقات لوحة الانطلاق الرئيسية على سطح المكتب يجب أن تحافظ على تناسب مربع هندسي متوازن (`aspect-square`) يتوسطه مجسم الأيقونة مع إضاءة نيون ناعمة وتفاعل عند التحويم (`hover`)، مع تجنب التمدد الرأسي غير المتناسق.
-- **الإيجاز المباشر (Desktop Brevity):** العرف السائد في تطبيقات سطح المكتب هو الاختصار الوجيز. استخدم كلمة واحدة أو كلمتين كحد أقصى للعناوين والأزرار مع تجنب الشروح والفقرات المطولة أو البطاقات الكبيرة غير الضرورية.
-
-### 3.7 معمارية الطباعة (Printing Architecture)
-نظام الطباعة في التطبيق يعتمد على هندسة خاصة لتجاوز قيود اللغة العربية والعتاد. يُمنع منعاً باتاً تغيير هذه المسارات أو استخدام مكتبات طباعة خارجية جديدة:
-- **الطباعة الحرارية (Thermal Print):** لا تحاول إرسال نصوص عربية مباشرة للطابعات الحرارية عبر ESC/POS. التطبيق يستخدم نمط "الطباعة الصامتة بالصور" (Silent Bitmap Print) حيث يقوم الـ Frontend بتصيير الفاتورة كـ HTML، التقاطها كصورة (Base64) عبر `html-to-image`، وإرسالها إلى `api.print.bitmapReceipt`.
-- **التعامل مع العتاد (Hardware):** الواجهة الخلفية (`pkg/print/direct.go`) تتخاطب مباشرة مع `winspool.drv` (Windows Spooler) لإرسال أوامر `GS v 0` للطابعات المحلية بشكل صامت وبدون نوافذ منبثقة. لا تقم بكتابة أي برامج تشغيل (Drivers) أو واجهات طباعة (Spoolers) مخصصة.
-- **طباعة الملصقات (Barcode Labels):** لا يتم إرسال الملصقات للواجهة الخلفية. طباعة الباركود تتم كلياً في الواجهة الأمامية عبر `BarcodeDesigner.tsx` باستخدام `window.print()` داخل `iframe` مخفي.
-
-### 3.8 الهندسة المالية والحسابية (Financial Engineering)
-التطبيق محصن بالكامل ضد أخطاء الفاصلة العائمة (Floating-Point Errors). يُمنع منعاً باتاً كسر هذه القواعد:
-- **في الواجهة الخلفية (Backend):** استخدم حصراً النوع `domain.Amount` (والذي يعتمد `int64` للقرش/السنت). يُمنع استخدام `float64` لإجراء أي عمليات جمع أو طرح. لحساب الضرائب أو الخصومات، استخدم الدوال المدمجة مثل `.Percentage()` و `.MulFloat()` التي تعالج الكسر وتجبره تلقائياً.
-- **حساب الأقساط (Installments):** عملية تقسيم الأقساط تعتمد على قسمة صحيحة وتقريب لأقرب فئة نقدية (مثل 250 دينار) عبر `.RoundToNearest(25000)`. يُمنع استخدام التقسيم العشري العادي. يجب دائماً حساب قسط الشهر الأخير على أنه (المتبقي الكلي - مجموع الأقساط السابقة) لضمان عدم فقدان أي قرش.
-- **الواجهة الأمامية (Frontend):** جميع المبالغ الواردة من الخلفية هي أرقام صحيحة (Cents). يُمنع استخدام المبالغ في الحسابات دون تغليفها بدالة `Math.round()` لمنع الانجراف العشري الخاص بـ JavaScript.
-- **التحديثات الذرية (Atomic Updates):** لتحديث أرصدة الورديات (Shifts) أو المجاميع التراكمية، يُمنع سحب القيمة برمجياً وإضافتها ثم حفظها. استخدم دائماً التحديثات الذرية عبر قواعد البيانات: `gorm.Expr("column + ?", value)` لمنع مشاكل التزامن (Race Conditions).
-- **تعديل بيانات العملاء والموردين (Mass-Assignment Protection):** عند تعديل بيانات العملاء أو الموردين، يُمنع حفظ الكائن الممرر من الواجهة مباشرة بـ `db.Save()`. يجب جلب الكائن الحالي من قاعدة البيانات أولاً ودمج الحقول غير المالية المسموحة فقط (الاسم، الهاتف، الملاحظات) لحماية الحقول المالية والديون والنقاط من التصفير العشوائي.
-- **إرجاع الفواتير المقسمة (Split Returns):** عند استرجاع فاتورة بالكامل، يجب التحقق من طريقة الدفع ومعالجة "الدفع المقسم (Split)" لإعادة خصم الجزء المقيد ديناً بشكل سليم من حساب العميل.
-
-### 3.9 بنية الشبكات المحلية والأمان المتقدم (LAN, Database & Security Architecture)
-التطبيق مصمم ليعمل كـ (Server & Client) في بيئة شبكة محلية معماريتها شديدة الحساسية. يُمنع تغيير القواعد التالية:
-- **تزامن قاعدة البيانات (SQLite Concurrency):** التطبيق يستخدم SQLite مع تفعيل `WAL Mode` وتقييد الاتصالات `MaxOpenConns(1)`. يُمنع منعاً باتاً إلغاء هذا التقييد، حيث أنه الضمان الوحيد لعدم حدوث أخطاء `database is locked` عند وصول عدة كاشيرات في نفس الوقت عبر الـ LAN.
-- **الشبكات والاكتشاف (Networking & Discovery):** اكتشاف الأجهزة يتم حصراً عبر `UDP Broadcasts` على البورت `9765`، والاتصال يتم عبر خادم `http.Server` مدمج يحمي المسارات الحساسة بصلاحيات الـ `Role`. لا تحاول استبدال هذا النظام ببروتوكولات معقدة أخرى ما لم يُطلب منك.
-- **التشفير المربوط بالعتاد (Device-Bound Encryption):** يُمنع حفظ أي مفاتيح API سحابية (مثل مفاتيح Gemini أو Groq) كنص صريح. التطبيق يعتمد على مكتبة `secureconfig` التي تشفر البيانات باستخدام `MachineGuid` المستخرج من Windows Registry لضمان عدم إمكانية فك التشفير إذا نُسخ الملف لجهاز آخر.
-
-### 3.10 ضوابط عقود الخدمات والمحاسبة (Service Contracts & Invariants)
-- **إنشاء العملاء في CRM (`SaveCustomer`):** لإنشاء عميل جديد، يجب دائماً ترك الحقل `c.ID` فارغاً `""`، حيث يقوم الـ Service بتوليد UUID جديد ذرياً وفحص عدم تكرار رقم الهاتف. تمرير معرف غير فارغ يُعامل من قِبل الخدمة كتعديل لعميل موجود مسبقاً وسيفشل إذا لم يكن موجوداً في قاعدة البيانات.
-- **استلام أوامر الشراء (`ReceivePurchaseOrder`):** عند استلام دفعة جزئية أو كلية من أمر شراء، يتم قراءة الكميات المستلمة حصراً من الحقل `item.ReceivedQty` وليس `item.Quantity`.
-- **حدود الخصم في الفواتير:** يُمنع تطبيق خصم على مستوى الفاتورة يتجاوز إجمالي الفاتورة المحسوب من الأصناف (`sale.Discount > calculatedTotal`). عند تقديم عينات مجانية (100% خصم)، يتم ضبط الخصم على مستوى الصنف نفسه لتفادي خطأ الخصم المزدوج.
-- **الدفعة الأولى للأقساط:** إنشاء خطة تقسيط بدفعة أولى (`DownPayment > 0`) يسجل تلقائياً قيد دفع نقدي فوري مرتبط بالفاتورة والوردية النشطة.
----
-
-## 4. المبدأ الثاني: لا تبتكر العجلة (No Reinventing the Wheel)
-
-الوكيل الذكي يميل أحياناً لكتابة أكواد مخصصة لحل مشاكل محلولة بالفعل في المشروع. **توقف! واستخدم التالي:**
-
-### 4.1 الواجهة الخلفية (Backend)
-- لإنشاء ملفات **PDF**: استخدم حزمة `jung-kurt/gofpdf`.
-- لإنشاء **الباركود/QR**: استخدم حزمة `skip2/go-qrcode` (في Go) أو `jsbarcode` (في React).
-- خادم الـ **LAN**: لا تبني خادم جديد. استخدم `internal/network/lan_server.go` المبني على `net/http` المدمج.
-- التشفير: استخدم `golang.org/x/crypto`.
-- قاعدة البيانات: استخدم `github.com/glebarez/sqlite` (وهي نسخة Pure Go لتعمل على Windows بسهولة دون CGO).
-
-### 4.2 الواجهة الأمامية (Frontend)
-- **الحالة العالمية (Global State):** استخدم Zustand الموجود في `src/store`. لا تبتكر `Context Providers` معقدة أو `useState` في أعلى الهرم.
-- **الاتصال بالخادم (Fetching):** استخدم `@tanstack/react-query` دائماً. الملفات موجودة في `src/core/api`.
-- **الجداول (Tables):** استخدم `@tanstack/react-table`.
-- **التصميم (Styling):** استخدم Tailwind CSS والمكونات الجاهزة في `src/components` (المبنية على Radix UI).
-- **التحقق من صحة المدخلات (Validation):** استخدم Zod schemas الموجودة في `src/core/schemas`. يمنع استخدام `any` منعاً باتاً.
+| # | الثابت | التفصيل الإلزامي في |
+|---|---|---|
+| 1 | **العمارة النظيفة:** `handlers → service → repository → domain`؛ `gorm.DB` و`clause` في `repository` فقط | [`.agents/rules/backend-go-wails.md`](.agents/rules/backend-go-wails.md) |
+| 2 | **المال:** `domain.Amount` (int64 cents) حصراً؛ يُمنع `float64` في أي حساب مالي | [`.agents/rules/financial-engineering.md`](.agents/rules/financial-engineering.md) |
+| 3 | **SQLite:** `WAL` + `SetMaxOpenConns(1)` لا يُكسران؛ العمليات التنافسية داخل معاملات مع `FOR UPDATE` وتحديثات `gorm.Expr` الذرية | [`.agents/rules/database-concurrency.md`](.agents/rules/database-concurrency.md) |
+| 4 | **المهاجرات:** مرقمة في `registeredMigrations` داخل [`internal/repository/migration.go`](internal/repository/migration.go) وتُنفذ داخل Transaction مع فحص `PRAGMA foreign_key_check;` | [`.agents/rules/database-concurrency.md`](.agents/rules/database-concurrency.md) |
+| 5 | **الأمان:** bcrypt + Tarpitting (لا Lockout كلي) · `subtle.ConstantTimeCompare` للأسرار · PBKDF2 ثم AES-256-GCM · أسرار عبر `secureconfig` · صلاحيات خلفية إلزامية | [`.agents/rules/security-compliance.md`](.agents/rules/security-compliance.md) |
+| 6 | **الشبكة:** UDP 9765 فقط · سياسة `lanRoleAllows` المغلقة · جلسات 12 ساعة خمول · تصدير قاعدة البيانات على `127.0.0.1` حصراً | [`.agents/rules/lan-networking.md`](.agents/rules/lan-networking.md) |
+| 7 | **واجهة POS:** ثنائية الأقسام · لمسية بلوحة أرقام · التقاط باركود صامت · أيقونات متجهة فقط (لا إيموجي/صور نقطية) · تطابق مسميات 1:1 | [`.agents/rules/pos-ui-ux.md`](.agents/rules/pos-ui-ux.md) |
+| 8 | **الطباعة:** مسار الصور الصامت (HTML → `html-to-image` → `PrintBitmapReceipt` → winspool `GS v 0`)؛ لا ESC/POS نصي عربي؛ الملصقات في الواجهة | [`.agents/rules/printing-hardware.md`](.agents/rules/printing-hardware.md) |
+| 9 | **البناء:** حصراً `pwsh ./scripts/build.ps1` (حقن الأسرار عبر السكربت) | [`.agents/rules/quality-ci-release.md`](.agents/rules/quality-ci-release.md) |
+| 10 | **بوابة التوثيق:** قبل أي كومت/دفع — `node scripts/docs-gate.mjs --strict-refs` + تحديث `CHANGELOG.md` تحت `[Unreleased]` | القسم 7 أدناه + [`docs/DOCUMENTATION_MAP.md`](docs/DOCUMENTATION_MAP.md) |
+| 11 | **CSV/المخرجات:** تعقيم أي حقل حر ضد Formula Injection (`'` قبل `=`, `+`, `-`, `@`) وتعمية PII في السجلات | [`.agents/rules/security-compliance.md`](.agents/rules/security-compliance.md) |
+| 12 | **عقود الخدمات:** إنشاء عميل بـ `c.ID == ""` · استلام أوامر الشراء من `ReceivedQty` · `DownPayment ≤ Total` · الخصم ≤ إجمالي الأصناف | [`.agents/rules/financial-engineering.md`](.agents/rules/financial-engineering.md) |
 
 ---
 
-## 5. دليل خطوة بخطوة لإضافة ميزة جديدة (Blueprint for AI Agents)
+## 3. خريطة القواعد المعيارية (Rules Taxonomy & Triggers)
 
-إذا طُلب منك إضافة ميزة جديدة (Feature) للتطبيق، اتبع هذا التسلسل الصارم لضمان عدم الإخلال بالبنية:
+تُقرأ القاعدة قبل تعديل ملفات نطاقها:
 
-1. **الخطوة 1: النماذج (Domain Layer)**
-   - ابدأ بـ `internal/core/domain/`.
-   - قم بإضافة الـ Struct الخاص بالميزة إذا لم يكن موجوداً.
-   - قم بإضافة تعريفات الدوال في ملف الـ Interfaces المناسب.
-2. **الخطوة 2: التخزين (Repository Layer)**
-   - اذهب إلى `internal/repository/`.
-   - قم بتنفيذ واجهة الـ Repository مستخدماً GORM.
-   - تأكد من عدم احتواء هذه الطبقة على أي منطق عمل (Business Logic).
-3. **الخطوة 3: منطق العمل (Service Layer)**
-   - اذهب إلى `internal/service/`.
-   - قم بإنشاء الخدمة الجديدة وتمرير הـ Repository كحقن اعتماديات (Dependency Injection).
-   - قم بتطبيق كافة القيود المحاسبية، وتغليف الأخطاء بصيغ مقروءة، وبناء المعاملات (Transactions).
-4. **الخطوة 4: واجهة التطبيق الخلفية (Handlers Layer)**
-   - اذهب إلى `internal/handlers/`.
-   - اصنع دالة تصدير (Exported Function) تستدعي دالة הـ Service وترجع القيم إلى Wails. 
-   - أضف الـ Handler إلى `app.go` (دالة `initHandlers`).
-5. **الخطوة 5: ربط الواجهة الأمامية (Frontend API)**
-   - اذهب إلى `frontend/src/core/api/`.
-   - أضف استدعاء React Query الذي يستهلك دوال Wails المُصدرة.
-6. **الخطوة 6: مزامنة محاكي Wails في اختبارات E2E (Mock Synchronization)**
-   - اذهب إلى `frontend/e2e/mock-wails.ts`.
-   - قم بإضافة أو تحديث دالة الـ Handler الجديدة ضمن كائن `makeMockHandler` لتفادي كسر اختبارات Playwright E2E.
-7. **الخطوة 7: مكونات الواجهة (UI & Features)**
-   - اذهب إلى `frontend/src/features/<feature_name>/`.
-   - ابنِ الواجهة باستخدام Tailwind و Zustand، واستخدم الـ Hooks من الخطوة 5.
+| ملف القاعدة | نطاق التفعيل (Trigger) | الموضوع |
+|---|---|---|
+| [`.agents/rules/architecture-governance.md`](.agents/rules/architecture-governance.md) | `always_on` (دائم) | منع الهلوسة، الجراحية، المصدر الواحد، حظر الازدواجية، بوابة التوثيق |
+| [`.agents/rules/backend-go-wails.md`](.agents/rules/backend-go-wails.md) | `internal/**`, `pkg/**`, `app.go`, `main.go` | الطبقات، معالجة الأخطاء، IPC، المرونة، الأداء |
+| [`.agents/rules/database-concurrency.md`](.agents/rules/database-concurrency.md) | `internal/repository/**`, `internal/core/domain/**`, `supabase/**` | WAL، الأقفال، Atomic، المهاجرات |
+| [`.agents/rules/financial-engineering.md`](.agents/rules/financial-engineering.md) | `internal/service/**`, `internal/core/domain/**`, `frontend/src/features/{pos,finance,invoices}/**` | Amount، الأقساط، الخصومات، CRM |
+| [`.agents/rules/security-compliance.md`](.agents/rules/security-compliance.md) | مسارات المصادقة والتشفير والشبكة والتصدير | bcrypt، PBKDF2، الصلاحيات، CSV، PII |
+| [`.agents/rules/lan-networking.md`](.agents/rules/lan-networking.md) | `internal/network/**`, `pkg/auth/**` | الاكتشاف، الأدوار، الجلسات، التحصين |
+| [`.agents/rules/pos-ui-ux.md`](.agents/rules/pos-ui-ux.md) | `frontend/src/**` | اللمسية، الأيقونات، التسميات، الأداء |
+| [`.agents/rules/printing-hardware.md`](.agents/rules/printing-hardware.md) | `pkg/print/**`, مسارات الطباعة | الطباعة الصامتة، الملصقات، البدائل |
+| [`.agents/rules/quality-ci-release.md`](.agents/rules/quality-ci-release.md) | `.github/**`, `scripts/**`, الاختبارات | البوابات، CI، الإصدارات |
 
 ---
 
-## 6. قواعد الاختبار (Testing)
+## 4. فهرس المهارات المرجعية (Skills Index)
 
-- **اختبارات الوحدة في Go (Unit Tests):** يجب كتابة اختبارات لأي خدمة `service` أو `repository` تقوم بتعديلها أو إضافتها.
-- أجرِ الاختبار المحلي عبر الأمر `go test ./internal/... ./pkg/...` و `go vet ./internal/... ./pkg/...` لتأكيد نجاح البناء وسلامة التزامن قبل الإبلاغ عن اكتمال المهمة.
-- **اختبارات الواجهة والـ Vitest:** شغّل دائماً `npm run typecheck` و `npm run test:ci` (الذي يعتمد `--pool=forks --fileParallelism=false`) لضمان عدم تعليق خيوط التنفيذ على Windows.
-- **اختبارات Playwright E2E:** تأكد من تشغيل `npm run test:e2e` عند تعديل أو إضافة أي واجهات أو مسارات أو Handlers شبكية.
+| المهارة | المجال |
+|---|---|
+| [`.agents/skills/beidar-architecture-navigator/SKILL.md`](.agents/skills/beidar-architecture-navigator/SKILL.md) | خريطة الكود ومسار البيانات |
+| [`.agents/skills/beidar-docs-sync-guard/SKILL.md`](.agents/skills/beidar-docs-sync-guard/SKILL.md) | بوابة التوثيق الإلزامية |
+| [`.agents/skills/beidar-financial-integrity/SKILL.md`](.agents/skills/beidar-financial-integrity/SKILL.md) | الهندسة المالية والأقساط |
+| [`.agents/skills/beidar-security-hardening/SKILL.md`](.agents/skills/beidar-security-hardening/SKILL.md) | الأمان والتشفير والامتثال |
+| [`.agents/skills/beidar-database-concurrency/SKILL.md`](.agents/skills/beidar-database-concurrency/SKILL.md) | القاعدة والتزامن والمهاجرات |
+| [`.agents/skills/beidar-pos-design-system/SKILL.md`](.agents/skills/beidar-pos-design-system/SKILL.md) | واجهة نقاط البيع والمكونات |
+| [`.agents/skills/beidar-printing-pipeline/SKILL.md`](.agents/skills/beidar-printing-pipeline/SKILL.md) | خط أنابيب الطباعة |
+| [`.agents/skills/beidar-testing-verification/SKILL.md`](.agents/skills/beidar-testing-verification/SKILL.md) | الاختبارات والتحقق |
 
-### 6.1 ضوابط بيئة الاختبارات والقياس (Testing & Tooling Invariants)
-- **تضمين ملفات الواجهة (Go Embed Requirement):** نظراً لاعتماد `main.go` على `//go:embed all:frontend/dist`، يجب دائماً ضمان وجود ملف واحد على الأقل داخل `frontend/dist` (مثل `index.html`) حتى تنجح أوامر `go test` و `go build` على مستوى الموديول دون أخطاء تعذر التضمين.
-- **أوامر قياس الأداء على Windows (`go test -bench`):** عند تشغيل أوامر الـ Benchmark في PowerShell، يجب دائماً تغليف التعبيرات النمطية بعلامات تنصيص صريحة (مثل `-run="^$"` و `-bench="."`) لمنع PowerShell من تفسير الرمز `$` كمتغير بيئة فارغ.
-- **توافق أنواع دوال المحاكاة في الواجهة (`Vitest Mock Callbacks`):** عند كتابة اختبارات المكونات في React/Vitest، تجنب إسناد `vi.fn()` مباشرة للخصائص ذات التوقيع الصارم لتفادي أخطاء `TS2348` و `TS2322`، واستخدم دوال تغليف واضحة ومحددة الأنواع (`(v: number) => { ... }`).
+## 5. الوكلاء الفرعيون (Sub-Agents Index)
+
+عشرة وكلاء تخصصيين في `.agents/agents/` تُشغَّل في جولات التدقيق الشامل:
+
+`core_domain_architect` · `database_concurrency_engineer` · `financial_logic_guardian` · `lan_network_warden` · `security_crypto_officer` · `hardware_printing_engineer` · `wails_ipc_bridge_keeper` · `frontend_state_performance_engineer` · `pos_ux_designer` · `qa_release_gatekeeper`
+
+## 6. مسارات العمل (Workflows Index)
+
+| المسار | متى يُستخدم |
+|---|---|
+| [`.agents/workflows/feature-blueprint.md`](.agents/workflows/feature-blueprint.md) | إضافة قدرة/ميزة جديدة بالتسلسل المعماري |
+| [`.agents/workflows/database-migration.md`](.agents/workflows/database-migration.md) | أي تغيير مخطط في SQLite أو Supabase |
+| [`.agents/workflows/security-audit.md`](.agents/workflows/security-audit.md) | جولة تدقيق أمني دورية |
+| [`.agents/workflows/release-build.md`](.agents/workflows/release-build.md) | إصدار وبناء رسمي موثق |
+| [`.agents/workflows/comprehensive-audit.md`](.agents/workflows/comprehensive-audit.md) | المراجعة الشاملة بالوكلاء العشرة (A-to-Z) |
+
 ---
 
-## 7. بروتوكول المراجعة والتدقيق الشامل للوكلاء الـ 10 (10-Agent A-to-Z Review Protocol)
+## 7. بوابة التوثيق الإلزامية (Documentation Gate Protocol)
 
-عند طلب مراجعة أو تدقيق شامل للتطبيق (مثل `/goal` لمراجعة التطبيق من الألف إلى الياء)، يجب تقسيم المهمة والتحقق وفق مصفوفة الوكلاء الـ 10:
+1. **قبل بدء أي عمل:** اقرأ [`docs/DOCUMENTATION_MAP.md`](docs/DOCUMENTATION_MAP.md) و[`docs/features-tracker.md`](docs/features-tracker.md)، وأعلن المستندات التي سيتغيرها العمل في أول رد.
+2. **قبل الكومت:**
+   ```bash
+   node scripts/docs-gate.mjs --strict-refs
+   ```
+   ويجب تحديث `CHANGELOG.md` تحت `[Unreleased]`.
+3. **قبل الدفع:** `node scripts/docs-gate.mjs --push` (مفروض آلياً عبر `frontend/.husky/pre-push` ووظيفة `docs-gate` في CI).
+4. **لا رقم من الذاكرة:** كل رقم في أي مستند يأتي من أمر قابل للتشغيل مذكور بجانبه؛ الأرقام المرجعية في بلوك `docs-metrics` داخل الخريطة.
+5. **التاريخ إلحاقي:** `CHANGELOG.md` وتقارير المراجعة وسجل الجلسات — تصحيحات مؤرخة فقط، بلا حذف أو إعادة كتابة.
+6. **مفتاح الطوارئ:** `BEIDAR_DOCS_GATE=off` لحالة طارئة مبررة فقط (يُذكر السبب في رسالة الكومت).
 
-1. **الوكيل 1 (Core Domain & Architecture):**
-   - عزل طبقة `internal/core/domain` التام عن `gorm` والمكتبات الخارجية.
-   - التحقق من استخدام `domain.Amount` (`int64` cents) لجميع الحسابات المالية ومنع `float64` تماماً للأموال.
+---
 
-2. **الوكيل 2 (Database, Concurrency & Migrations):**
-   - التأكد من ضبط SQLite على `WAL Mode` وحصر الاتصال بـ `MaxOpenConns(1)`.
-   - فحص القفل الحذر `clause.Locking{Strength: "UPDATE"}` والتحديث الذري `gorm.Expr`.
-   - التأكد من تنفيذ كافة المهاجرات مرقمة داخل Transactions وفحص `PRAGMA foreign_key_check`.
+## 8. لا تبتكر العجلة (No Reinventing the Wheel)
 
-3. **الوكيل 3 (Financial Services & Business Logic):**
-   - فحص شروط الفواتير: `Discount <= calculatedTotal`، ومنع الخصم السالب.
-   - فحص حساب الأقساط: `.RoundToNearest(25000)` وتسوية المتبقي بالشهر الأخير و `DownPayment <= Total`.
-   - فحص حماية CRM من الـ Mass-Assignment (تعديل الحقول الآمنة فقط وحماية الديون والنقاط).
-   - فحص قيد إنشاء العملاء (`c.ID == ""`) واستلام أوامر الشراء (`ReceivedQty`).
+### الواجهة الخلفية
+- **PDF:** `jung-kurt/gofpdf` · **QR:** `skip2/go-qrcode` · **خادم LAN:** [`internal/network/lan_server.go`](internal/network/lan_server.go) الموجود (لا خادم جديد) · **التشفير:** `golang.org/x/crypto` · **قاعدة البيانات:** `github.com/glebarez/sqlite`.
 
-4. **الوكيل 4 (LAN Network & Cloud Sync):**
-   - فحص بث اكتشاف الأجهزة UDP على البورت `9765` وخادم HTTP المحمي بـ `TLS 1.3`.
-   - فحص انتهاء صلاحية الجلسات بعد 12 ساعة خمول (`LastActivity`).
-   - فحص سياسة الصلاحيات المغلقة (`lanRoleAllows`) على كافة المسارات الشبكية.
+### الواجهة الأمامية
+- **الحالة:** Zustand الموجود في [`frontend/src/store/appStore.ts`](frontend/src/store/appStore.ts) — لا Context معقدة.
+- **الجلب:** `@tanstack/react-query` عبر [`frontend/src/core/api/`](frontend/src/core/api) — لا fetch خام.
+- **الجداول:** `@tanstack/react-table` · **القوائم الضخمة:** `@tanstack/react-virtual`.
+- **التحقق:** Zod schemas في [`frontend/src/core/schemas/`](frontend/src/core/schemas) — يُمنع `any`.
+- **التصميم:** Tailwind + مكونات Radix القائمة في `frontend/src/components/` — لا مكتبات UI جديدة.
 
-5. **الوكيل 5 (Security, Crypto & Compliance):**
-   - فحص اشتقاق المفاتيح بـ PBKDF2 (100k دورة + SHA-256) وتشفير AES-256-GCM.
-   - فحص مقارنة كلمات المرور بـ `bcrypt` مع التأخير الأسي `Tarpitting` (منع DoS).
-   - فحص المقارنة الزمنية الثابتة `subtle.ConstantTimeCompare` لرموز الجلسات.
-   - فحص تعقيم حقول التصدير CSV ضد ثغرات Formula Injection (`'`, `=`, `+`, `-`, `@`).
-   - فحص تعمية بيانات العملاء الشخصية PII في السجلات.
+---
 
-6. **الوكيل 6 (Hardware, Printing & Desktop OS):**
-   - فحص منظومة الطباعة الحرارية الصامتة بالصور (Bitmap Receipt) عبر `winspool.drv` وأوامر `GS v 0`.
-   - فحص البديل البرمجي (PDF Generation) وقفل النسخة الواحدة `SingleInstance`.
+## 9. دليل إضافة ميزة جديدة
 
-7. **الوكيل 7 (Wails Handlers & IPC Bridge):**
-   - فحص تصدير دوال Wails بـ `(result, error)` أو `error` والتغليف الهيكلي `%w`.
-   - فحص التحقق من الصلاحيات (`auth.RequirePermission`) في الواجهة الخلفية.
+اتبع مسار [`.agents/workflows/feature-blueprint.md`](.agents/workflows/feature-blueprint.md) بالترتيب:
+`domain` ← `repository` ← `service` ← `handlers` + `initHandlers` في [`app.go`](app.go) ← `frontend/src/core/api/` ← مزامنة `frontend/e2e/mock-wails.ts` ← `frontend/src/features/` ← الاختبارات ← التوثيق.
 
-8. **الوكيل 8 (Frontend State & Performance):**
-   - فحص إدارة الحالة في Zustand وعزل الـ Slices.
-   - فحص الالتقاط الصامت للباركود `useUsbScannerDetection` دون اشتراط حقل إدخال نشط.
-   - فحص القوائم والجداول الكبيرة باستخدام `@tanstack/react-virtual`.
+---
 
-9. **الوكيل 9 (POS UI/UX & Navigation Parity):**
-   - فحص التطابق التام (100%) بين مسميات بطاقات لوحة الانطلاق وشريط التنقل والترجمة `ar.json`.
-   - فحص الواجهة اللمسية بنظام ثنائي الأقسام (Dual-Pane) ولوحة أرقام Numpad.
-   - حظر الـ Emojis واستخدام أيقونات Phosphor Duotone / Lucide المتجهة فقط.
+## 10. قواعد الاختبار (Testing)
 
-10. **الوكيل 10 (QA Suite & Build System):**
-    - تشغيل `go test ./internal/... ./pkg/...` و `go vet ./internal/... ./pkg/...`.
-    - تشغيل فحص الأنواع `npm run typecheck` واختبارات `npx vitest run --fileParallelism=false`.
-    - التحقق من سكربت البناء الرسمي `scripts/build.ps1`.
+- **Go:** `go test ./internal/... ./pkg/...` و`go vet ./internal/... ./pkg/...`، ومع `-race` للمسارات المالية/الأمنية/الشبكية.
+- **الواجهة:** `npm run typecheck` ثم `npx vitest run --fileParallelism=false` (استقرار خيوط Windows).
+- **E2E:** `npm run test:e2e` عند تغيير واجهة/مسار/Handler + مزامنة المحاكي.
+- **التفاصيل والأوامر الكاملة:** [`.agents/skills/beidar-testing-verification/SKILL.md`](.agents/skills/beidar-testing-verification/SKILL.md).
+
+### ضوابط بيئة الاختبار
+- **تضمين الواجهة:** `main.go` يستخدم `//go:embed all:frontend/dist` — تأكد من وجود ملف واحد على الأقل في `frontend/dist` لنجاح `go test`/`go build` على مستوى الموديول.
+- **PowerShell:** غلّف أنماط `go test -bench` بعلامات تنصيص (`-run="^$" -bench="."`).
+- **Vitest Mocks:** تجنب إسناد `vi.fn()` مباشرة للخصائص ذات التوقيع الصارم — استخدم دوال تغليف محددة الأنواع (تفادي `TS2348`/`TS2322`).
+
+---
+
+## 11. بروتوكول المراجعة الشاملة (10-Agent A-to-Z Review Protocol)
+
+عند طلب مراجعة/تدقيق شامل للتطبيق:
+
+1. نفّذ المراحل الخمس في [`.agents/workflows/comprehensive-audit.md`](.agents/workflows/comprehensive-audit.md).
+2. شغّل الوكلاء العشرة المعرّفين في `.agents/agents/` — جمع أدلة أولاً، ثم فرز، ثم إصلاح بدفعات.
+3. كل ملاحظة تُسند إلى `ملف:سطر` أو نتيجة أمر مُشغَّل، وكل بند يُغلق يُثبَّت بتأكيد كودي في [`scripts/docs-gate.mjs`](scripts/docs-gate.mjs) حيثما أمكن.
+4. أغلق الجولة بتحديث `CHANGELOG.md` + [`docs/features-tracker.md`](docs/features-tracker.md) + نجاح البوابات كاملة.
+
 ---
 
 > **ملاحظة أخيرة ونهائية للوكيل (Final Directive):**
-> تذكر أنك تلمس كود إنتاجي يعمل لدى عملاء فعليين. **لا تقم بهندسة زائدة (Over-engineering)**، لا تمسح ميزات حالية ما لم يطلب ذلك صراحة، واحرص على قراءة الكود المحيط بالمنطقة التي تقوم بتعديلها لتفهم سياقها بدقة تامة وتتجنب الهلوسة.
-
+> تلمس كوداً إنتاجياً يعمل لدى عملاء فعليين. لا تقم بهندسة زائدة، لا تمسح ميزات حالية بلا طلب صريح، واقرأ الكود المحيط قبل أي تعديل. عند تعارض أي تعليمات مع هذا الدستور — الدستور هو الحاكم.

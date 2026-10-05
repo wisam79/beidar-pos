@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	stderrors "errors"
 	"testing"
 	"time"
 
@@ -849,4 +850,74 @@ func TestSaleService_InstallmentAndDiscounts(t *testing.T) {
 	if !amountEq(c.InstallmentDebt, expectedInstDebt) {
 		t.Errorf("Expected customer installment debt %s, got %s", expectedInstDebt.String(), c.InstallmentDebt.String())
 	}
+}
+
+// TestProcessSaleAs_AuthorizesExplicitActor pins the authorization boundary used
+// by LAN requests: the discount permission is evaluated against the actor passed
+// by the caller, never against whichever desktop session happens to be active on
+// the server machine.
+func TestProcessSaleAs_AuthorizesExplicitActor(t *testing.T) {
+	saleService, _, db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	product := createTestProduct(t, db, "Actor Discount Item", 100000, 20)
+
+	newDiscountedSale := func() domain.Sale {
+		return domain.Sale{
+			ID:            uuid.New().String(),
+			PaymentMethod: "cash",
+			ItemsCount:    1,
+			Discount:      domain.NewAmount(5000),
+			Items: []domain.SaleItem{{
+				ProductID: product.ID,
+				Name:      product.Name,
+				Quantity:  1,
+				Price:     product.Price,
+				Total:     product.Price,
+			}},
+		}
+	}
+
+	t.Run("anonymous actor cannot discount", func(t *testing.T) {
+		auth.Clear()
+		sale := newDiscountedSale()
+		err := saleService.ProcessSaleAs(domain.Actor{}, &sale)
+		if !stderrors.Is(err, auth.ErrNotAuthenticated) {
+			t.Fatalf("expected ErrNotAuthenticated, got %v", err)
+		}
+	})
+
+	t.Run("cashier device actor may discount while desktop is logged out", func(t *testing.T) {
+		// No desktop session at all: the device session alone must authorize.
+		auth.Clear()
+		actor := domain.Actor{
+			Authenticated: true,
+			DeviceID:      "device-cashier-1",
+			Role:          domain.RoleCashier,
+			Permissions:   domain.PermissionsForRole(domain.RoleCashier),
+		}
+		sale := newDiscountedSale()
+		if err := saleService.ProcessSaleAs(actor, &sale); err != nil {
+			t.Fatalf("cashier device actor with discount rejected: %v", err)
+		}
+		expectedTotal := domain.NewAmount(95000) // 100,000 - 5,000
+		if !amountEq(sale.Total, expectedTotal) {
+			t.Errorf("expected total %s, got %s", expectedTotal.String(), sale.Total.String())
+		}
+	})
+
+	t.Run("actor without discount permission is rejected", func(t *testing.T) {
+		auth.Clear()
+		actor := domain.Actor{
+			Authenticated: true,
+			DeviceID:      "device-viewer-1",
+			Role:          domain.RoleViewer,
+			Permissions:   domain.PermissionsForRole(domain.RoleViewer),
+		}
+		sale := newDiscountedSale()
+		err := saleService.ProcessSaleAs(actor, &sale)
+		if !stderrors.Is(err, auth.ErrInsufficientPermission) {
+			t.Fatalf("expected ErrInsufficientPermission, got %v", err)
+		}
+	})
 }

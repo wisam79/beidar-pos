@@ -17,25 +17,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// RolePermissions defines default permissions for each role.
-// Permission strings are defined in domain — do not redeclare duplicates here.
-var RolePermissions = map[domain.Role][]string{
-	domain.RoleAdmin: {
-		domain.PermSales, domain.PermProducts, domain.PermInventory, domain.PermCustomers, domain.PermInvoices,
-		domain.PermReports, domain.PermFinance, domain.PermSettings, domain.PermStaffManage, domain.PermDiscounts,
-		domain.PermDeleteSales, domain.PermEditPrices, domain.PermExportData,
-	},
-	domain.RoleManager: {
-		domain.PermSales, domain.PermProducts, domain.PermInventory, domain.PermCustomers, domain.PermInvoices,
-		domain.PermReports, domain.PermFinance, domain.PermDiscounts, domain.PermDeleteSales, domain.PermEditPrices,
-	},
-	domain.RoleCashier: {
-		domain.PermSales, domain.PermCustomers, domain.PermInvoices, domain.PermDiscounts,
-	},
-	domain.RoleViewer: {
-		// Read-only
-	},
-}
+// Role defaults live in domain.RolePermissions (single source of truth shared
+// with the LAN device actor policy in internal/network).
 
 type staffService struct {
 	staffRepo domain.StaffRepository
@@ -252,7 +235,7 @@ func (s *staffService) CreateStaff(staff domain.Staff, password string) (*domain
 	staff.PasswordHash = string(hash)
 
 	if len(staff.Permissions) == 0 {
-		staff.Permissions = RolePermissions[staff.Role]
+		staff.Permissions = domain.RolePermissions[staff.Role]
 	}
 
 	if err := s.staffRepo.Create(&staff); err != nil {
@@ -371,7 +354,7 @@ func (s *staffService) UpdateStaff(staff domain.Staff) error {
 	current.MustChangePin = staff.MustChangePin
 	current.Permissions = staff.Permissions
 	if len(current.Permissions) == 0 {
-		current.Permissions = RolePermissions[current.Role]
+		current.Permissions = domain.RolePermissions[current.Role]
 	}
 
 	return s.staffRepo.Update(current)
@@ -674,7 +657,7 @@ func (s *staffService) RestoreSession(staffID string) (*domain.AuthResult, error
 
 	perms := st.Permissions
 	if len(perms) == 0 {
-		perms = RolePermissions[st.Role]
+		perms = domain.RolePermissions[st.Role]
 	}
 
 	return &domain.AuthResult{

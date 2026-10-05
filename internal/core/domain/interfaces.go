@@ -241,7 +241,11 @@ type ProductService interface {
 type SaleService interface {
 	GetSales(page int, pageSize int, search string, statusFilter string, dateFilter string) (*PaginatedSales, error)
 	GetSale(id string) (*Sale, error)
+	// ProcessSale runs on behalf of the process-wide desktop session.
 	ProcessSale(sale *Sale) error
+	// ProcessSaleAs runs on behalf of an explicit actor (e.g. a verified LAN
+	// device session) so authorization follows the requesting principal.
+	ProcessSaleAs(actor Actor, sale *Sale) error
 	ReturnSale(id string) error
 	ReturnSalePartial(saleID string, productID string, qtyToReturn float64) error
 	GetSaleItems(saleID string) ([]SaleItem, error)

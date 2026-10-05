@@ -118,6 +118,7 @@ type lanService struct {
 	actualPort        int
 	secret            string
 	secretMutex       sync.RWMutex
+	secretStore       serverSecretStore
 	serverTlsCert     tls.Certificate
 	serverFingerprint string
 	serverUseTls      bool
@@ -134,6 +135,7 @@ type lanService struct {
 	clientMode        bool
 	serverAddress     string
 	sessionToken      string
+	savedSecret       string // pairing secret kept to re-register after a server restart
 	serverFingerprintClient string
 	clientMutex       sync.RWMutex
 	httpClient        *http.Client
@@ -169,6 +171,7 @@ func NewLanService(
 		serverStatus:     "stopped",
 		connectedClients: make(map[string]*domain.ConnectedClient),
 		connectRateLimits: make(map[string]*connectRateEntry),
+		secretStore:       fileServerSecretStore{},
 		httpClient:       &http.Client{Timeout: 10 * time.Second},
 	}
 }
@@ -179,6 +182,11 @@ func (s *lanService) Startup(ctx context.Context) {
 	s.ctxMutex.Unlock()
 
 	s.loadSavedLanConfig()
+
+	// Session tokens live only in the server process memory, so a server restart
+	// invalidates them. Re-register best-effort with the persisted pairing secret
+	// instead of forcing a manual re-pairing on every device.
+	go s.reconnectSavedServer()
 
 	// Start background network connectivity checking loop
 	go s.startConnectivityBroadcaster(ctx)

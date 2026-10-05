@@ -201,16 +201,22 @@ pwsh ./scripts/build.ps1 -Installer
 يخضع المشروع لمنظومة فحص واختبارات مؤتمتة متكاملة على **GitHub Actions**:
 
 ```bash
-# 1. تشغيل اختبارات الواجهة الخلفية مع كاشف التزامن (Race Detection)
-go test -race ./...
+# 1. تشغيل اختبارات الواجهة الخلفية
+go test ./internal/... ./pkg/...
 
-# 2. تشغيل اختبارات الوحدة للواجهة الأمامية (270 اختبار)
+# 2. تشغيل اختبارات الواجهة الأمامية
 cd frontend
 npm run test:ci
 
-# 3. تشغيل اختبارات المتصفح الشاملة (102 اختبار E2E)
-npx playwright test
+# 3. تشغيل اختبارات المتصفح الشاملة (E2E)
+npm run test:e2e
+
+# 4. بوابة التوثيق الإلزامية
+cd ..
+node scripts/docs-gate.mjs --strict-refs
 ```
+
+> 📊 **الأعداد المرجعية الحية** (ملفات الاختبارات ومواصفات E2E) تُدار آلياً في بلوك `docs-metrics` داخل [خريطة التوثيق](docs/DOCUMENTATION_MAP.md) — لا أرقام من الذاكرة.
 
 ---
 
@@ -218,7 +224,9 @@ npx playwright test
 
 | المستند | الوصف |
 | :--- | :--- |
-| 🤖 [AGENTS.md](AGENTS.md) | دليل الوكلاء الأذكياء وبروتوكول منع الهلوسة (Zero-Hallucination) |
+| 🤖 [AGENTS.md](AGENTS.md) | دستور الوكلاء الأذكياء وبروتوكول منع الهلوسة (Zero-Hallucination) |
+| 🗺️ [docs/DOCUMENTATION_MAP.md](docs/DOCUMENTATION_MAP.md) | **خريطة التوثيق الإلزامية:** الجرد ومصفوفة المزامنة والبوابات والأرقام المرجعية |
+| 📋 [docs/features-tracker.md](docs/features-tracker.md) | متتبع الميزات الحية وسجل الجلسات والقرارات المحمية |
 | 🏛️ [docs/architecture.md](docs/architecture.md) | المعمارية التفصيلية وتدفق البيانات بين الطبقات |
 | 🔒 [docs/security.md](docs/security.md) | معايير الأمان، التشفير المربوط بالعتاد، وإدارة الصلاحيات |
 | 📡 [docs/lan_network.md](docs/lan_network.md) | بروتوكول الشبكة المحلية واكتشاف الأجهزة والربط المتعدد |

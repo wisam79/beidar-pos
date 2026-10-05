@@ -108,14 +108,16 @@ func (s *StaffService) AuthenticateByPIN(pin string) (*domain.Staff, error) {
 ## 5. نظام الصلاحيات (RBAC)
 
 ### الأدوار
+السياسة مصدرها الواحد `domain.RolePermissions` في [`internal/core/domain/permissions.go`](../internal/core/domain/permissions.go) (تحقق: `node scripts/docs-gate.mjs` ← تأكيد SEC-04):
+
 | الدور | الوصف |
 |-------|-------|
-| **Admin** | جميع الصلاحيات (12) |
-| **Manager** | 10 صلاحيات (ما عدا إدارة الموظفين وحذف المبيعات) |
-| **Cashier** | 5 صلاحيات أساسية (بيع، منتجات، عملاء) |
-| **Viewer** | 3 صلاحيات (عرض فقط) |
+| **Admin** | جميع الصلاحيات (13) |
+| **Manager** | 10 صلاحيات (ما عدا الإعدادات، إدارة الموظفين، تصدير البيانات) |
+| **Cashier** | 4 صلاحيات (بيع، عملاء، فواتير، خصومات) |
+| **Viewer** | بلا صلاحيات مرتفعة (0) |
 
-### الصلاحيات (12 Permission)
+### الصلاحيات (13 Permission)
 ```go
 PermSales        // بيع وإدارة المبيعات
 PermProducts     // إدارة المنتجات
@@ -126,6 +128,7 @@ PermReports      // عرض التقارير
 PermFinance      // إدارة الخزينة
 PermSettings     // تعديل الإعدادات
 PermStaffManage  // إدارة الموظفين
+PermDiscounts    // تطبيق الخصومات
 PermDeleteSales  // حذف المبيعات
 PermEditPrices   // تعديل الأسعار
 PermExportData   // تصدير البيانات
@@ -141,6 +144,18 @@ func (h *SaleHandler) DeleteSale(id string) error {
 }
 ```
 
+### الترخيص بهوية الطالب (Actor-Based Authorization)
+الجلسة العالمية في `pkg/auth` تخص **سطح المكتب فقط**. أي طلب لا يأتي من سطح المكتب معرَّف كهوية صريحة `domain.Actor` تُمرَّر إلى طبقة الخدمة:
+
+| المسار | هوية الطالب (Actor) |
+|--------|---------------------|
+| سطح المكتب (Wails) | `auth.CurrentActor()` من الجلسة العالمية |
+| عميل LAN | `lanActor(lanClientFrom(r))` من جلسة الجهاز المُتحقق منها (الدور + الصلاحيات من `domain.RolePermissions`) |
+
+- الفحص الخدمي يستخدم `auth.RequirePermissionFor(actor, perm)` — لا يقرأ الجلسة العالمية، فلا يتخذ قراره بهوية من هو مسجَّل دخوله على جهاز الخادم.
+- طالب مجهول ⇒ `NOT_AUTHENTICATED`، وطالب بلا الصلاحية ⇒ `INSUFFICIENT_PERMISSION`، و`Admin` يمر دائماً.
+- إسناد الفاتورة (`StaffID`) من جهاز LAN يُتحقق من وجوده في سجل موظفي الخادم وإلا يُرفض الطلب (400) — ربط الجهاز بحساب موظف معيّن ميزة مستقلة.
+
 ---
 
 ## 6. أمان الشبكة المحلية (LAN Security)
@@ -152,6 +167,9 @@ func (h *SaleHandler) DeleteSale(id string) error {
 | **حظر الأجهزة** | `BlockedDevice` يمنع أجهزة معينة من الاتصال |
 | **تسجيل الحركات** | كل طلب يُسجّل مع IP المصدر والوقت |
 | **فصل الصلاحيات** | Cashier لا يمكنه الوصول للتقارير المالية |
+| **هوية الطالب** | الترخيص يُحسم بهوية الجهاز الطالب (دور جلسته المُتحقق منها) لا بجلسة جهاز الخادم |
+| **إسناد الموظف** | `StaffID` يُتحقق من وجوده في سجل موظفي الخادم قبل أي كتابة |
+| **سر الإقران** | يُخزَّن مشفَّراً بمفتاح مشتق من عتاد الجهاز (`lan_server_secret.enc`، صلاحيات 0600) ولا يُكتب في `secureconfig` تفادياً لإعادة كتابة ملف اعتمادات الخدمات من مسار تشغيل آلي؛ عرضه عبر `GetServerSecret` يتطلب `PermSettings` |
 
 ---
 

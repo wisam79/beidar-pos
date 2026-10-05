@@ -13,6 +13,27 @@ concurrency:
 
 jobs:
   # ═══════════════════════════════════════════════════════════════════
+  # 0. Documentation Gate (mandatory)
+  #   → يفشل عند انحراف الأرقام المرجعية أو وجود مستند غير مسجَّل في الجرد أو
+  #     تغيير كود بلا توثيق مرافق أو عودة عيب مُثبَّت بتأكيد كودي.
+  #   المرجع: docs/DOCUMENTATION_MAP.md
+  # ═══════════════════════════════════════════════════════════════════
+  docs-gate:
+    name: Documentation Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run Documentation Sync Gate
+        run: node scripts/docs-gate.mjs --push --ci
+
+  # ═══════════════════════════════════════════════════════════════════
   # 1. Go Backend: Fast Parallel Tests & Verification
   # ═══════════════════════════════════════════════════════════════════
   go-backend:
@@ -28,7 +49,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.24.x'
+          go-version: '1.25.x'
           cache: true
 
       - name: Download Go dependencies

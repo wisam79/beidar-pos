@@ -23,8 +23,10 @@
     "prepare": "cd .. && husky frontend/.husky"
   },
   "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "eslint --fix"
+    ],
     "*.{ts,tsx}": [
-      "eslint --fix",
       "prettier --write"
     ],
     "*.{css,json,md}": [
