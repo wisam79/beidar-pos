@@ -110,7 +110,7 @@ node scripts/docs-gate.mjs --push      # يفحص مدى كل الكومتات �
 ```docs-metrics
 vitest_test_files=36
 e2e_spec_files=18
-go_test_files=120
+go_test_files=123
 docs_files=14
 ```
 
@@ -120,7 +120,7 @@ docs_files=14
 |---|---|---|
 | ملفات اختبار Vitest | 36 ملفاً في `frontend/src/**/*.{test,spec}.ts(x)` | `find frontend/src -name '*.test.*' -o -name '*.spec.*' \| wc -l` |
 | ملفات مواصفات E2E | 18 ملفاً في `frontend/e2e/*.spec.ts` | `find frontend/e2e -name '*.spec.ts' \| wc -l` |
-| ملفات اختبار Go | 120 ملفاً في `internal/` و`pkg/` | `find internal pkg -name '*_test.go' \| wc -l` |
+| ملفات اختبار Go | 123 ملفاً في `internal/` و`pkg/` | `find internal pkg -name '*_test.go' \| wc -l` |
 | مهاجرات Supabase | 1 ملف في `supabase/migrations/` | `ls supabase/migrations/ \| wc -l` |
 | مهاجرات SQLite المرقمة | مصفوفة `registeredMigrations` في `internal/repository/migration.go` | `grep -c "Version:" internal/repository/migration.go` |
 | عدد حالات الاختبار الفعلي | يُقاس بتشغيل المجموعات، ويُذكر مع تاريخ التحقق | `npm run test:ci` · `npx playwright test --list` |
