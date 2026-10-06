@@ -184,8 +184,11 @@ func TestCompleteGoogleAuthExchangesCode(t *testing.T) {
 
 	form := &formRecorder{}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.Body.Close()
-		_ = r.ParseForm()
+		// ParseForm must read the request body: closing it first would leave
+		// the recorded form empty.
+		if err := r.ParseForm(); err != nil {
+			t.Errorf("parse token request form: %v", err)
+		}
 		form.set(r.Form)
 		// oauth2 treats a sniffed text/plain body as a query string, so the
 		// JSON type must be explicit for a token response to be parsed.
