@@ -1,12 +1,48 @@
 package repository
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/internal/testutil"
 )
+
+// TestStaffRepository_GetByUsername_TranslatesNotFound pins the contract the
+// staff service's self-heal relies on: an absent row must surface as
+// domain.ErrRecordNotFound so the service can tell "no admin yet" apart from a
+// real read failure without importing gorm.
+func TestStaffRepository_GetByUsername_TranslatesNotFound(t *testing.T) {
+	db, cleanup := testutil.SetupFullDB(t)
+	defer cleanup()
+
+	repo := NewStaffRepository(db)
+
+	if _, err := repo.GetByUsername("ghost"); !errors.Is(err, domain.ErrRecordNotFound) {
+		t.Errorf("GetByUsername(missing) error = %v, want domain.ErrRecordNotFound", err)
+	}
+
+	s := &domain.Staff{
+		ID:        "staff-known",
+		Username:  "known-user",
+		Name:      "Known User",
+		Role:      domain.RoleCashier,
+		Active:    true,
+		CreatedAt: time.Now().Unix(),
+	}
+	if err := repo.Create(s); err != nil {
+		t.Fatalf("create staff: %v", err)
+	}
+
+	got, err := repo.GetByUsername("known-user")
+	if err != nil {
+		t.Fatalf("GetByUsername(existing): %v", err)
+	}
+	if got.ID != "staff-known" {
+		t.Errorf("GetByUsername(existing).ID = %q, want %q", got.ID, "staff-known")
+	}
+}
 
 func TestStaffRepository(t *testing.T) {
 	db, cleanup := testutil.SetupFullDB(t)

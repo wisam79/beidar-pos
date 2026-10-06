@@ -512,13 +512,18 @@ func (s *saleService) ProcessSaleAs(actor domain.Actor, sale *domain.Sale) error
 		}
 
 		if sale.Discount > 0 {
-			_ = s.auditRepo.WithTx(tx).Log(&domain.AuditLog{
+			// The audit entry is part of the sale's own transaction: losing it
+			// would leave a discounted invoice with no record of who applied
+			// the discount, so the write failure aborts the whole sale.
+			if err := s.auditRepo.WithTx(tx).Log(&domain.AuditLog{
 				StaffID:  sale.StaffID,
 				Action:   "SALE_DISCOUNT",
 				Entity:   "Sale",
 				EntityID: sale.ID,
 				Details:  fmt.Sprintf("تم تطبيق خصم بقيمة %s على الفاتورة", sale.Discount.String()),
-			})
+			}); err != nil {
+				return fmt.Errorf("فشل تسجيل حدث التدقيق: %w", err)
+			}
 		}
 
 		return nil
@@ -681,27 +686,33 @@ func (s *saleService) ReturnSale(id string) error {
 				// Only the credit leg that is still outstanding affects debt:
 				if creditRemaining, ok := splitRemaining["credit"]; ok && creditRemaining > 0 {
 					customer, err := txCustomerRepo.GetByID(sale.CustomerID)
-					if err == nil {
-						refundAmount := domain.NewAmount(0)
-						if customer.Debt < creditRemaining {
-							refundAmount = creditRemaining.Sub(customer.Debt)
+					if err != nil {
+						return err
+					}
+					refundAmount := domain.NewAmount(0)
+					if customer.Debt < creditRemaining {
+						refundAmount = creditRemaining.Sub(customer.Debt)
+					}
+					if err := txCustomerRepo.DecrementDebt(sale.CustomerID, creditRemaining); err != nil {
+						return err
+					}
+					if refundAmount > 0 {
+						// Cash handed back for an overpaid credit leg leaves the
+						// drawer, so it must also reduce the shift's expected
+						// balance below (the shift switch adds this value for
+						// split payments as well as credit ones).
+						creditOverpayCashRefund = refundAmount
+						refundPayment := domain.Payment{
+							SaleID:     sale.ID,
+							CustomerID: sale.CustomerID,
+							Amount:     -refundAmount,
+							Method:     "cash",
+							Note:       "استرداد نقدي لمدفوعات آجل",
+							StaffID:    sale.StaffID,
+							Timestamp:  time.Now().UnixMilli(),
 						}
-						
-						if err := txCustomerRepo.DecrementDebt(sale.CustomerID, creditRemaining); err != nil {
-							return err
-						}
-						
-						if refundAmount > 0 {
-							refundPayment := domain.Payment{
-								SaleID:     sale.ID,
-								CustomerID: sale.CustomerID,
-								Amount:     -refundAmount,
-								Method:     "cash",
-								Note:       "استرداد نقدي لمدفوعات آجل",
-								StaffID:    sale.StaffID,
-								Timestamp:  time.Now().UnixMilli(),
-							}
-							_ = txPaymentRepo.Create(&refundPayment)
+						if err := txPaymentRepo.Create(&refundPayment); err != nil {
+							return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)
 						}
 					}
 				}
@@ -794,13 +805,15 @@ func (s *saleService) ReturnSale(id string) error {
 			return err
 		}
 
-		_ = s.auditRepo.WithTx(tx).Log(&domain.AuditLog{
+		if err := s.auditRepo.WithTx(tx).Log(&domain.AuditLog{
 			StaffID:  sale.StaffID,
 			Action:   "RETURN_SALE",
 			Entity:   "Sale",
 			EntityID: sale.ID,
 			Details:  "تم استرجاع الفاتورة بالكامل",
-		})
+		}); err != nil {
+			return fmt.Errorf("فشل تسجيل حدث التدقيق: %w", err)
+		}
 
 		return nil
 	})
@@ -1083,13 +1096,15 @@ func (s *saleService) ReturnSalePartial(saleID string, productID string, qtyToRe
 			return err
 		}
 
-		_ = s.auditRepo.WithTx(tx).Log(&domain.AuditLog{
+		if err := s.auditRepo.WithTx(tx).Log(&domain.AuditLog{
 			StaffID:  sale.StaffID,
 			Action:   "RETURN_PARTIAL",
 			Entity:   "Sale",
 			EntityID: sale.ID,
 			Details:  fmt.Sprintf("تم استرجاع كمية %.2f من المنتج %s", qtyToReturn, item.Name),
-		})
+		}); err != nil {
+			return fmt.Errorf("فشل تسجيل حدث التدقيق: %w", err)
+		}
 
 		return nil
 	})

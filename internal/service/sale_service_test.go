@@ -21,7 +21,7 @@ func setupTestDB(t *testing.T) (service.SaleService, service.PaymentService, *go
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Customer{}, &domain.Payment{},
 		&domain.StockMovement{}, &domain.Shift{}, &domain.CashMovement{}, &domain.Staff{},
 		&domain.AppPreferences{}, &domain.LoginAttempt{}, &domain.Supplier{}, &domain.Category{},
-		&domain.ParkedSale{},
+		&domain.ParkedSale{}, &domain.AuditLog{},
 	)
 
 	testutil.SeedPreferences(t, db)

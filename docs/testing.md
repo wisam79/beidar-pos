@@ -9,7 +9,7 @@
 ```
                       ┌─────────────────────────┐
                       │   Playwright E2E Tests   │
-                      │  (3 سيناريوهات متكاملة)  │
+                      │  (18 ملف مواصفات E2E)  │
                       └───────────┬─────────────┘
                                   │
               ┌───────────────────┼───────────────────┐
@@ -28,13 +28,19 @@
 ### الموقع
 جميع ملفات الاختبارات بجانب الملف المُختبر (`*_test.go`).
 
-### التوزيع الحالي
+### التوزيع الحالي (تحقق: 2026-10-06)
 | المجلد | عدد ملفات الاختبار | التركيز |
 |--------|-------------------|---------|
-| `internal/service/` | 11 | منطق الأعمال الأساسي |
-| `internal/repository/` | 3 | استعلامات GORM |
-| `internal/core/domain/` | 1 | نوع Amount والحسابات المالية |
-| `internal/integration/` | 1 | التكامل السحابي |
+| `internal/service/` | 33 | منطق الأعمال الأساسي والمالية والاسترجاع |
+| `internal/repository/` | 23 | استعلامات GORM والعمليات الذرية والتزامن |
+| `internal/core/domain/` | 9 | نوع Amount والحسابات المالية والصلاحيات |
+| `internal/e2e/` | 29 | تكامل شامل (بيع/شبكة/أمان/ورديات/ضغط) |
+| `internal/network/` | 7 | خادم وعميل واكتشاف LAN وسر الإقران |
+| `internal/handlers/` | 6 | حرّاس المصادقة والصلاحيات وتوجيه المعالجات بين الوضع المحلي والعميل |
+| `internal/integration/` | 7 | التكامل السحابي والترخيص وتخزين الأسرار والاستعادة من الكوارث |
+| `pkg/` | 17 | الأمان والتشفير والطباعة والترجمة i18n |
+| `internal/testutil/` | 1 | أدوات تجهيز قاعدة بيانات الاختبارات |
+| **الإجمالي** | **132** | `find internal pkg -name '*_test.go' \| wc -l` |
 
 ### التشغيل
 ```bash
@@ -100,7 +106,89 @@ go test -count=1 -v -run 'TestE2E_LAN' ./internal/e2e/
 
 > **ملاحظة على الآثار الجانبية:** اختبارات تُشغّل خادم LAN حقيقياً تكتب سر الإقران المشفَّر في مجلد إعدادات المستخدم (`lan_server_secret.enc`) كما يفعل التطبيق نفسه؛ والاختبارات المخصّصة للسر تستخدم مخزناً وهمياً في الذاكرة أو مساراً مؤقتاً معزولاً.
 
+### اختبارات انحدار سلامة الاسترجاع والدفعات (Return & Payment Integrity)
+```bash
+go test -count=1 -run 'TestReturnSplit_CreditOverpay|TestDeletePayment_ShiftUpdateFailureRollsBack' ./internal/service/
+```
+- `TestReturnSplit_CreditOverpay_LeavesDrawer` (`internal/service/return_integrity_test.go`): استرجاع فاتورة `split` بعدَين آجل مسدَّد يُعيد النقد الزائد للعميل ويخصمه من الرصيد المتوقع للوردية — فلا يظهر فائض وهمي عند الإقفال.
+- `TestReturnSplit_CreditOverpay_FailedLedgerWriteRollsBack`: فشل أول قيد في دفتر الدفعات يُرجِع الاسترجاع كاملاً (الفاتورة لا تُوسم «مُرتجَعة»، الدين يعود كما كان، والمخزون لا يتغيّر) بدل إغلاق الفاتورة بلا قيد نقدي.
+- `TestDeletePayment_ShiftUpdateFailureRollsBack`: حذف دفعة نقدية مستقلة يفشل ويُبقي صف الدفعة إذا تعذّر تحديث الوردية، بدل حذف النقد من الدفتر مع بقائه محسوباً في الوردية.
+
+### اختبارات انحدار الأخطاء المُبتلَعة (Swallowed Errors Hardening)
+```bash
+go test -count=1 -run 'TestProcessSale_DiscountAuditFailureRollsBack|TestReturnSale_AuditFailureRollsBack|TestReturnSalePartial_AuditFailureRollsBack|TestSeedDefaultAdmin_HealUpdateFailurePropagates|TestAuthenticateByUsername_BookkeepingFailureDoesNotBlockLogin|TestGetActiveStaff_RefreshFailurePropagates|TestGetActiveStaff_SeedFailurePropagates|TestSaveGlobalGroqKeys_MalformedConfigDoesNotWipeKeys|TestSaveGlobalGroqKeys_FetchFailureDoesNotWipeKeys|TestSeedDefaultAdmin_HealReadFailurePropagates|TestGetActiveStaff_MissingAdminRow_HealsSilently|TestGetActiveStaff_HealthyRosterNeverSeeds' ./internal/service/ && go test -count=1 -run 'TestStaffRepository_GetByUsername_TranslatesNotFound' ./internal/repository/
+```
+- `TestProcessSale_DiscountAuditFailureRollsBack` و`TestReturnSale_AuditFailureRollsBack` و`TestReturnSalePartial_AuditFailureRollsBack` (`internal/service/swallowed_error_regressions_test.go`): فشل قيد التدقيق يُرجِع البيع بخصم أو الإرجاع الكامل/الجزئي كاملاً (لا فاتورة بلا أثر، لا مخزون مُعدَّل، لا حركة وردية).
+- `TestSeedDefaultAdmin_HealUpdateFailurePropagates`: العلاج الذاتي لكلمة مدير لم يسجّل دخوله يُبلّغ عن فشل الحفظ بدل إرجاع نجاح وهمي.
+- `TestAuthenticateByUsername_BookkeepingFailureDoesNotBlockLogin`: فشل حفظ وقت آخر دخول يُسجَّل تحذيراً ولا يمنع دخولاً تم التحقق منه.
+- `TestGetActiveStaff_RefreshFailurePropagates`: فشل قراءة قائمة الموظفين بعد بذر المدير الافتراضي يُعاد كخطأ لا كقائمة فارغة.
+- `TestSaveGlobalGroqKeys_MalformedConfigDoesNotWipeKeys` و`TestSaveGlobalGroqKeys_FetchFailureDoesNotWipeKeys`: إعداد `ai_keys` تالف أو فشل جلب الإعداد الحالي (شبكة/غير 200) يوقف الحفظ قبل إرسال أي PATCH حتى لا تُمسح مفاتيح المزوّدين الآخرين.
+- `TestSeedDefaultAdmin_HealReadFailurePropagates` و`TestGetActiveStaff_MissingAdminRow_HealsSilently`: فشل قراءة صف المدير أثناء العلاج الذاتي يُعاد كخطأ، أما غيابه الحقيقي فيبقى لا-عملية صامتة — والثاني يقفل عقد المستودع على `domain.ErrRecordNotFound`.
+- `TestGetActiveStaff_HealthyRosterNeverSeeds`: وجود موظف نشط يعني أن البذر لا يُستدعى أصلاً (`GetStaffCount` لا يُنادى)، فلا يمسّ النشر fail-closed أي تثبيت سليم.
+- `TestStaffRepository_GetByUsername_TranslatesNotFound` (`internal/repository/staff_repo_test.go`): `GetByUsername` لصف غير موجود يُرجع `domain.ErrRecordNotFound` لا خطأ gorm الخام.
+
+### قياس التغطية (Go Coverage)
+```bash
+# قياس شامل لكل كود الإنتاج (نفس أمر CI)
+go test -p 4 -covermode=atomic \
+  -coverpkg=./internal/core/...,./internal/handlers/...,./internal/integration/...,./internal/network/...,./internal/repository/...,./internal/service/...,./pkg/... \
+  -coverprofile=coverage.out \
+  ./internal/... ./pkg/...
+
+# التقرير: جدول لكل حزمة (الأدنى أولاً) + الإجمالي، ويكتب ملخصاً في GITHUB_STEP_SUMMARY داخل CI
+node scripts/coverage-gate.mjs --profile=coverage.out
+
+# سقّاطة (ratchet): ترجع 1 إذا نزل الإجمالي تحت العتبة
+node scripts/coverage-gate.mjs --profile=coverage.out --min=<العتبة>
+```
+- **ما يُقاس بالضبط:** نسبة العبارات (statements) المشمولة ÷ كل عبارات كود الإنتاج المُدرج في `-coverpkg`. المقام **ثابت** لا يتغيّر عند إضافة أول ملف اختبار لحزمة كانت بلا اختبارات (بخلاف `go test -coverprofile` الافتراضي الذي يُسقط الحزم بلا اختبارات من المقام)، ويُقاس فيه الكود الذي تغطّيه اختبارات حزمة أخرى.
+- **خارج المقام:** `internal/e2e` و`internal/testutil` — كود اختبار لا كود إنتاج.
+- **أين تُقرأ الأرقام:** جدول التغطية يُطبع في ملخص وظيفة `go-backend` (Job Summary) داخل كل تشغيل، وملف `coverage.out` يُرفع كأرتيفاكت `go-coverage`.
+- **دمج الكتل المكررة (مهم):** ملف `go test -coverprofile` مع `-coverpkg` يحتوي كل كتلة **مرة لكل حزمة اختبار** (~80 ألف سطر مقابل ~5 آلاف كتلة فريدة في قياس 2026-10-06)، لأن كل ثنائية اختبار تُصدّر تغطيتها كاملة بما فيها ما لم تنفّذه. من يقرأ الملف يجب أن يدمج الكتل بمفتاح الموقع ويجمع العدّادات (سلوك `atomic` رسمياً) وإلا ينتفخ المقام فتنخفض النتيجة كذباً (6.3% بدل 57.7% في نفس القياس). `coverage-gate.mjs` يفعل ذلك ويطبع سطر «دمج الكتل المكررة».
+- **مطابقة التعريف الرسمي:** الإجمالي المُحسوب طابق `go tool cover -func` على نفس الملف بفارق تقريب ≤0.1 نقطة (57.7% مقابل 57.6% في قياس 2026-10-06).
+
+#### دفعات رفع التغطية
+
+| الدفعة | الملفات | الأثر المقيس |
+| --- | --- | --- |
+| 1 (2026-10-06) | `pkg/print/pdf_test.go` · `internal/integration/backup_compress_test.go` · `internal/network/lan_client_test.go` | الإجمالي 57.7% ← **59.9%** · `pdf.go` 38.5% ← 97.4% · `backup_compress.go` 0% ← 54.0% · `lan_client.go` 67.1% ← 78.2% (تشغيل `37486727370`) |
+| 2 (2026-10-06) | `internal/handlers/` — 6 ملفات اختبار | الإجمالي 59.9% ← **65.9%** · `internal/handlers` 35.0% ← **86.7%** (559 ← 114 عبارة غير مغطاة) — تشغيل `37492364017` |
+| 3 (2026-10-06) | `internal/integration/` — 3 ملفات اختبار (ترخيص · Zoho · Google) | النتيجة المقيسة تُلحق بعد تشغيل CI |
+
+```bash
+# الدفعة 1 (2026-10-06) — طابعة PDF + ضغط النسخ الاحتياطي + عميل LAN
+node scripts/coverage-gate.mjs --profile=coverage.out   # بعد تشغيل CI، أو محلياً بملف coverage.out من الأرتيفاكت
+```
+- `pkg/print/pdf_test.go`: الطابعة الحرارية بكل مقاسات الورق (`58mm`/`110mm`/`80mm`) مع/بدون عميل وخصم وجدول أقساط، مسار A4، الفشل الحقيقي عند مسار غير قابل للكتابة، وQR (نجاح PNG + تثبيت تصعيد الحجم الصغير + رفض حمولة تتجاوز سعة الرمز).
+- `internal/integration/backup_compress_test.go`: ZIP النسخة الاحتياطية يحتوي `beidar_v3.db` برأس SQLite حقيقي عبر مسار `VACUUM INTO`، مسار السقوط بلا قاعدة نشطة، ورفض الحمولة التالفة/الفارغة قبل لمس أي ملف.
+- `internal/network/lan_client_test.go`: `RemoteGet`/`RemotePost`/`RemoteDelete` (نجاح، 401، خطأ خادم، JSON غير صالح، فشل الترميز، غير متصل)، `TestConnection` (قصير/طويل/خطأ شبكة)، و`GetClientStatus` (standalone/client-over-TLS/server).
+
+```bash
+# الدفعة 2 (2026-10-06) — حزمة internal/handlers
+node scripts/coverage-gate.mjs --profile=coverage.out
+```
+- `handler_fakes_test.go` + `fake_services_test.go` + `fake_services_admin_test.go`: بدائل اختبار لـ `network.LanService` (مع تسجيل نقاط REST ومُعبِّئ اختياري للنتيجة) ولخدمات النطاق كافة، مع أدوات جلسة (`set/clear` مدير/كاشير/بلا جلسة).
+- `handler_guards_test.go`: كل دالة محمية في المعالجات الـ14 تُرفض بلا جلسة، وترفض كذلك عندما تقل صلاحيات الجلسة (كاشير بصلاحية واحدة)، مع تأكيد أن الأسرار لا تتسرب عبر الدوال التي لا تُرجِع خطأً (`IsLoggedIn` · `GetCurrentUser` · `GetZohoStatus` · `KeepAliveSupabase`) وحراسة الخصم الإضافية في `ProcessSale` (فاتورة أو صنف مخصوم يطلب `PermDiscounts`).
+- `handler_happy_path_test.go`: مسار الادّخال بجلسة مدير لكل دالة، تفعيل الجلسة بعد الدخول بالاسم/الرمز، عقد `RestoreSession` (هوية مختلفة تُرفض)، وتطبيع القوائم `nil` إلى مصفوفة فارغة.
+- `handler_routing_test.go`: توجيه وضع العميل عبر REST لكل قراءة وكتابة، ترميز معاملات الاستعلام (`range` · `month` · `search` · `status` · `date`)، التصفية المحلية للعملاء (اسم/هاتف/ملاحظات)، وانتشار أخطاء الربط بمجرد فتح الجلسة.
+- **قيود بيئة مقصودة:** دوال الحوار الأصلية (`runtime.SaveFileDialog`/`OpenFileDialog`) لا تُستدعى في اختبارات الوحدة لأن `wails/runtime` يُنهي العملية عند غياب سياق الواجهة (`log.Fatalf`)؛ تبقى مغطاة في مسار E2E فقط.
+
+```bash
+# الدفعة 3 (2026-10-06) — حزمة internal/integration
+node scripts/coverage-gate.mjs --profile=coverage.out
+```
+- **عزل بيئة الحزمة (تحصين):** `setupTestIntegration` صار يستدعي `isolateConfigDir`، فمسارات ذاكرة الترخيص ومفتاح الترخيص المخزَّن وذاكرة الجلسة وإعداد Zoho تُكتب في مجلد مؤقت لكل اختبار بدل ملف تعريف من يشغّل المجموعة (كانت الاختبارات القائمة تكتب وتمسح ملفات في `AppData` الحقيقية).
+- `license_paths_test.go`: فروع الحراسة (مفتاح فارغ، بلا حساب)، دورة مفتاح الترخيص المخزَّن (تشفير سكون + ملف تالف يُرجع فراغاً)، ورفض ذاكرات الترخيص المعالَبة (مفتاح/مستخدم مختلفان، انتهاء الرخصة، ذاكرة أقدم من 30 يوماً، انحراف ساعة للأمام/للخلف)، والتطابق/التراجع إلى الذاكرة عند تعذّر الخادم، وترخيص لوحة التحكم السحابي بمفتاح اصطناعي `USER_*`، ومسح الذاكرة عند ردّ «غير مرخّص».
+- `zoho_http_test.go`: OAuth (تبادل الرمز، خطأ في جسم الرد، ردّ غير صالح)، تجديد الرمز المنتهي وحفظه، اختيار المنظمة الأولية، إنشاء الفاتورة (معطّل = لا-عملية، نجاح = وسم البيع كمُزامَن، رفض API = إعادة للطابور بلا تكرار)، حالة التكامل، والمزامنة الجماعية للبيعات غير المزامنة. الاتصال يُعاد توجيهه لخادم اختبار عبر `RoundTripper` يعيد كتابة المضيف، فيبقى بناء الطلبات الإنتاجي مُختبراً حرفياً.
+- `google_auth_paths_test.go`: إعداد OAuth (رفض جزء من السرّ)، بناء رابط الموافقة، دورة رمز Drive (مشفّر سكوناً + فصل + رفض القطع التالف)، اشتقاق المفاتيح (الجهاز مقابل القديم)، تبادل رمز التفويض عبر خادم اختبار، ورافعة CSRF في مستمع العودة على المنفذ `10999` (تتخطى بنفسها إن كان المنفذ مشغولاً في بيئة التشغيل). **تحذير عملي:** `golang.org/x/oauth2` يفسّر جسم الرد كـ query string (`url.ParseQuery`) إذا كان `Content-Type` المُستنتَج `text/plain` — فيجب أن يرجع خادم الاختبار `application/json` صراحةً وإلا ظهر خطأ «server response missing access_token` مضلل.
+- **حد مقصود في هذه الدفعة:** لا يُستدعى `InitGoogleSecrets` في الاختبارات لأنه يحفظ الأسرار عبر `pkg/secureconfig` الذي يثبّت مسار ملفه لحظة تهيئة العملية (قبل ضبط `AppData` في الاختبار) — فأي استدعاء له كان سيكتب ملف الأسرار الحقيقي للمطوّر.
+- **الخط الأساس والعتبة الحالية:** خط الأساس **57.7%** (تشغيل CI `37482085839`) ← **59.9%** بعد الدفعة الأولى (تشغيل `37486727370`) ← **65.9%** بعد الدفعة الثانية (تشغيل `37492364017`)، والعتبة المفروضة **`--min=65.5`** في خطوة `Coverage Ratchet Gate` بوظيفة `go-backend`. الهدف المعلن **≥95%** (قرار المالك 2026-10-06؛ مضاعفة 57.7% كانت مستحيلة لأن السقف 100%).
+- **رموز خروج `coverage-gate.mjs`:** `0` نجاح · `1` انخفاض تحت العتبة · `2` ملف مفقود أو غير قابل للتحليل.
+- **العتبة (السقّاطة):** تُمرَّر إلى `--min` في خطوة التغطية داخل [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)، ولا تُخفَّض إلا بقرار موثّق في `CHANGELOG.md`.
+
 ### التغطية المستهدفة
+> المستهدف التالي هو طبقات حرجة داخل الإجمالي المقاس أعلاه (ولا يُغني عن سقّاطة الإجمالي في CI).
+
 - طبقة `internal/service/`: **70%+**
 - طبقة `internal/core/domain/`: **90%+**
 - طبقة `internal/repository/`: **50%+** (اختبارات الاستعلامات الحرجة فقط)
@@ -110,7 +198,7 @@ go test -count=1 -v -run 'TestE2E_LAN' ./internal/e2e/
 ## 3. اختبارات الواجهة الأمامية (Frontend Tests)
 
 ### الموقع
-`frontend/__tests__/` — 9 ملفات اختبار باستخدام Vitest.
+`frontend/src/**` — 36 ملف اختبار باستخدام Vitest (يُحتسب آلياً في بلوك `docs-metrics` بخريطة التوثيق).
 
 ### التشغيل
 ```bash
@@ -139,7 +227,7 @@ npm run test:ci       # بيئة CI
 ## 4. اختبارات E2E (Playwright)
 
 ### الموقع
-`frontend/e2e/` — 3 سيناريوهات متكاملة.
+`frontend/e2e/` — 18 ملف مواصفات (يُحتسب آلياً في بلوك `docs-metrics`).
 
 ### التشغيل
 ```bash
@@ -149,7 +237,7 @@ npm run test:e2e:ui      # تشغيل مع واجهة Playwright المرئية
 npm run test:e2e:report  # عرض تقرير آخر تشغيل
 ```
 
-### السيناريوهات الحالية
+### أمثلة على السيناريوهات
 | الملف | الوصف |
 |-------|-------|
 | `master-simulation.spec.ts` | محاكاة دورة بيع كاملة (بحث ← إضافة للسلة ← دفع ← تحقق) |

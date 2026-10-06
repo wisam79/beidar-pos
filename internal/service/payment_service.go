@@ -92,8 +92,8 @@ func (s *paymentService) createPayment(payment domain.Payment, allowOverpay bool
 				return &pkgerrors.AppError{
 					Module:  pkgerrors.ModulePayment,
 					Code:    "PAYMENT_EXCEEDS_DEBT",
-					Message: i18n.GetMessage("PAYMENT_EXCEEDS_DEBT", payment.Amount, customer.Debt),
-					Hint:    i18n.GetMessage("PAYMENT_EXCEEDS_DEBT_HINT", payment.Amount-customer.Debt),
+					Message: i18n.GetMessage("PAYMENT_EXCEEDS_DEBT", payment.Amount.Float(), customer.Debt.Float()),
+					Hint:    i18n.GetMessage("PAYMENT_EXCEEDS_DEBT_HINT", (payment.Amount - customer.Debt).Float()),
 					Options: map[string]bool{"allowForce": true},
 				}
 			}
@@ -200,7 +200,11 @@ func (s *paymentService) DeletePayment(id uint) error {
 			}
 			if payment.Method == "cash" && s.shiftRepo != nil {
 				txShiftRepo := s.shiftRepo.WithTx(tx)
-				_ = txShiftRepo.UpdateShiftSales(0, -payment.Amount, false, false)
+				// Propagated: deleting the payment row while the shift keeps the
+				// cash counted would leave a permanent reconciliation gap.
+				if err := txShiftRepo.UpdateShiftSales(0, -payment.Amount, false, false); err != nil {
+					return fmt.Errorf("فشل تحديث الوردية عند حذف الدفعة: %w", err)
+				}
 			}
 		}
 

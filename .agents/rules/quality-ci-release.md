@@ -28,6 +28,10 @@ go test ./internal/... ./pkg/...
 go vet ./internal/... ./pkg/...
 go test -race ./internal/core/domain ./pkg/auth ./pkg/crypto ./pkg/errors ./pkg/validator ./pkg/logger
 
+# تغطية Go: قياس شامل + تقرير + سقّاطة (نفس ما يفرضه CI)
+go test -p 4 -covermode=atomic -coverpkg=./internal/core/...,./internal/handlers/...,./internal/integration/...,./internal/network/...,./internal/repository/...,./internal/service/...,./pkg/... -coverprofile=coverage.out ./internal/... ./pkg/...
+node scripts/coverage-gate.mjs --profile=coverage.out
+
 # الواجهة
 cd frontend
 npm run typecheck
@@ -42,10 +46,12 @@ npm run test:e2e
 
 ## 3. CI السحابي (GitHub Actions)
 الوظائف الحالية في [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml):
-1. `go-backend` — Vet + اختبارات سريعة + Race للمسارات الحساسة.
+1. `go-backend` — Vet + الاختبارات بقياس تغطية شامل (`-coverpkg`) + تقرير التغطية في ملخص التشغيل + أرتيفاكت `coverage.out` + Race للمسارات الحساسة.
 2. `frontend` — `tsc` + Lint + Vitest + بناء إنتاجي.
 3. `e2e` — Playwright Chromium.
 4. `docs-gate` — بوابة التوثيق الإلزامية (`node scripts/docs-gate.mjs --push --ci`).
+
+**سقّاطة التغطية (إلزامية):** خطوة `node scripts/coverage-gate.mjs --profile=coverage.out --min=<العتبة>` في وظيفة `go-backend` تمنع تراجع تغطية Go الإجمالية؛ العتبة تُرفع ولا تُخفَّض إلا بقرار موثّق في [`CHANGELOG.md`](../../CHANGELOG.md). التعريف المقاس وخارج المقام في [`docs/testing.md`](../../docs/testing.md).
 
 **قاعدة الأرقام:** أي عدد اختبارات مكتوب في README أو التوثيق مصدره بلوك `docs-metrics` في خريطة التوثيق وأوامره — لا أرقام من الذاكرة.
 

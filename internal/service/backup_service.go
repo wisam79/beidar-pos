@@ -3,6 +3,7 @@ package service
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/pkg/imagestore"
+	"beidar-desktop/pkg/logger"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -525,7 +526,13 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 						Reason:      "تعديل مخزون عبر استيراد CSV",
 						Timestamp:   time.Now().UnixMilli(),
 					}
-					_ = txRepo.CreateStockMovement(&movement)
+					// The product row itself is already written; a missing movement
+					// row leaves a hole in the stock ledger, so it is reported
+					// instead of dropped while the import keeps its
+					// partial-success contract.
+					if err := txRepo.CreateStockMovement(&movement); err != nil {
+						result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: فشلت حركة المخزون - %v", rowNum, err))
+					}
 				}
 
 				result.Updated++
@@ -564,7 +571,13 @@ func (s *backupService) ImportProductsCSV(csvData string, updateExisting bool) (
 						Reason:      "استيراد CSV: منتج جديد",
 						Timestamp:   time.Now().UnixMilli(),
 					}
-					_ = txRepo.CreateStockMovement(&movement)
+					// The product row itself is already written; a missing movement
+					// row leaves a hole in the stock ledger, so it is reported
+					// instead of dropped while the import keeps its
+					// partial-success contract.
+					if err := txRepo.CreateStockMovement(&movement); err != nil {
+						result.Errors = append(result.Errors, fmt.Sprintf("سطر %d: فشلت حركة المخزون - %v", rowNum, err))
+					}
 				}
 
 				result.Imported++
@@ -652,7 +665,12 @@ func (s *backupService) MigrateImagesToFilesystem() (int, error) {
 	}
 
 	if migrated > 0 {
-		_ = s.productRepo.Vacuum()
+		// Compaction is housekeeping on top of an already-successful
+		// migration: report a failure instead of swallowing it, but do not
+		// fail an operation whose data is already committed.
+		if err := s.productRepo.Vacuum(); err != nil {
+			logger.Logger.Warn("Backup", "تعذر تفريغ قاعدة البيانات بعد ترحيل الصور: "+err.Error())
+		}
 	}
 
 	return migrated, nil

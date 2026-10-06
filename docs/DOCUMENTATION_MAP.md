@@ -97,6 +97,7 @@ node scripts/docs-gate.mjs --push      # يفحص مدى كل الكومتات �
 ```
 - يمنع الدفع إذا احتوى أي كومت غير مدفوع تغييرات كود بلا توثيق مرافق.
 - **CI خط الدفاع الأخير:** وظيفة `docs-gate` في [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) تفشل عند انحراف الأرقام أو الجرد.
+- **سقّاطة التغطية (Coverage Ratchet):** وظيفة `go-backend` تشغّل مجموعة الاختبارات بقياس شامل (`-covermode=atomic -coverpkg=... -coverprofile=coverage.out`)، تطبع جدول التغطية في ملخص التشغيل، ترفع `coverage.out` كأرتيفاكت `go-coverage`، وتمنع التراجع عبر خطوة `node scripts/coverage-gate.mjs --profile=coverage.out --min=<العتبة>`. التعريف والخارج عن المقام في [`docs/testing.md`](testing.md).
 
 ---
 
@@ -109,7 +110,7 @@ node scripts/docs-gate.mjs --push      # يفحص مدى كل الكومتات �
 ```docs-metrics
 vitest_test_files=36
 e2e_spec_files=18
-go_test_files=118
+go_test_files=132
 docs_files=14
 ```
 
@@ -119,7 +120,7 @@ docs_files=14
 |---|---|---|
 | ملفات اختبار Vitest | 36 ملفاً في `frontend/src/**/*.{test,spec}.ts(x)` | `find frontend/src -name '*.test.*' -o -name '*.spec.*' \| wc -l` |
 | ملفات مواصفات E2E | 18 ملفاً في `frontend/e2e/*.spec.ts` | `find frontend/e2e -name '*.spec.ts' \| wc -l` |
-| ملفات اختبار Go | 117 ملفاً في `internal/` و`pkg/` | `find internal pkg -name '*_test.go' \| wc -l` |
+| ملفات اختبار Go | 132 ملفاً في `internal/` و`pkg/` | `find internal pkg -name '*_test.go' \| wc -l` |
 | مهاجرات Supabase | 1 ملف في `supabase/migrations/` | `ls supabase/migrations/ \| wc -l` |
 | مهاجرات SQLite المرقمة | مصفوفة `registeredMigrations` في `internal/repository/migration.go` | `grep -c "Version:" internal/repository/migration.go` |
 | عدد حالات الاختبار الفعلي | يُقاس بتشغيل المجموعات، ويُذكر مع تاريخ التحقق | `npm run test:ci` · `npx playwright test --list` |
@@ -153,6 +154,9 @@ node scripts/docs-gate.mjs --strict-refs
 
 # تقرير الجودة الكمي (أرقام لا ادعاءات)
 node scripts/quality-metrics.mjs
+
+# تقرير تغطية Go (يقرأ coverprofile ناتج go test)
+node scripts/coverage-gate.mjs --profile=coverage.out
 ```
 
 **سلوك الأداة:** تخرج برمز `1` وفهرس عربي واضح عند أي انحراف يوقف الكومت، وتحذيرات غير معيقة للبنود التحذيرية.

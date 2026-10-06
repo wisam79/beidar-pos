@@ -50,6 +50,7 @@ supabase/.temp/
 .env
 .env.local
 .kilo/
+.freebuff/
 
 # Ad-hoc tool output
 frontend/lint_out.txt
