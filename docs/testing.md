@@ -151,7 +151,7 @@ node scripts/coverage-gate.mjs --profile=coverage.out --min=<العتبة>
 # الدفعة 1 (2026-10-06) — طابعة PDF + ضغط النسخ الاحتياطي + عميل LAN
 node scripts/coverage-gate.mjs --profile=coverage.out   # بعد تشغيل CI، أو محلياً بملف coverage.out من الأرتيفاكت
 ```
-- `pkg/print/pdf_test.go`: الطابعة الحرارية بكل مقاسات الورق (`58mm`/`110mm`/`80mm`) مع/بدون عميل وخصم وجدول أقساط، مسار A4، الفشل الحقيقي عند مسار غير قابل للكتابة، وQR (نجاح PNG + حجم غير صالح).
+- `pkg/print/pdf_test.go`: الطابعة الحرارية بكل مقاسات الورق (`58mm`/`110mm`/`80mm`) مع/بدون عميل وخصم وجدول أقساط، مسار A4، الفشل الحقيقي عند مسار غير قابل للكتابة، وQR (نجاح PNG + تثبيت تصعيد الحجم الصغير + رفض حمولة تتجاوز سعة الرمز).
 - `internal/integration/backup_compress_test.go`: ZIP النسخة الاحتياطية يحتوي `beidar_v3.db` برأس SQLite حقيقي عبر مسار `VACUUM INTO`، مسار السقوط بلا قاعدة نشطة، ورفض الحمولة التالفة/الفارغة قبل لمس أي ملف.
 - `internal/network/lan_client_test.go`: `RemoteGet`/`RemotePost`/`RemoteDelete` (نجاح، 401، خطأ خادم، JSON غير صالح، فشل الترميز، غير متصل)، `TestConnection` (قصير/طويل/خطأ شبكة)، و`GetClientStatus` (standalone/client-over-TLS/server).
 - **الخط الأساس والعتبة الحالية:** 57.7% تغطية كلية (تشغيل CI رقم `37482085839`) والعتبة المفروضة `--min=57.5` في خطوة `Coverage Ratchet Gate` بوظيفة `go-backend`.

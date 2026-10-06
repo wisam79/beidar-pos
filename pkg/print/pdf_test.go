@@ -165,10 +165,30 @@ func TestGenerateQRCodeBase64(t *testing.T) {
 	}
 }
 
-// TestGenerateQRCodeBase64_TooSmallSize asserts an impossible QR size is
-// reported as an error rather than an empty-but-successful code.
-func TestGenerateQRCodeBase64_TooSmallSize(t *testing.T) {
-	if _, err := GenerateQRCodeBase64("x", 1); err == nil {
-		t.Fatal("expected an error for an invalid QR size")
+// TestGenerateQRCodeBase64_ClampsTinySize pins the library behaviour the helper
+// inherits: a requested size below the symbol's minimum is clamped up, so the
+// caller still receives a scannable PNG instead of an error or a blank image.
+func TestGenerateQRCodeBase64_ClampsTinySize(t *testing.T) {
+	encoded, err := GenerateQRCodeBase64("x", 1)
+	if err != nil {
+		t.Fatalf("GenerateQRCodeBase64 with a tiny size: %v", err)
+	}
+
+	raw, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		t.Fatalf("result is not valid base64: %v", err)
+	}
+	pngSignature := []byte{0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A}
+	if len(raw) < len(pngSignature) || string(raw[:len(pngSignature)]) != string(pngSignature) {
+		t.Errorf("clamped payload is not a PNG (got %d bytes)", len(raw))
+	}
+}
+
+// TestGenerateQRCodeBase64_OversizedPayload asserts a payload beyond the QR
+// capacity is surfaced as an error instead of a silent empty code.
+func TestGenerateQRCodeBase64_OversizedPayload(t *testing.T) {
+	payload := strings.Repeat("A", 4096)
+	if _, err := GenerateQRCodeBase64(payload, 256); err == nil {
+		t.Fatal("expected an error for a payload beyond the QR capacity")
 	}
 }
