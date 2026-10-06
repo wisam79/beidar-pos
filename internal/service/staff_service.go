@@ -513,9 +513,19 @@ func (s *staffService) GetActiveStaff() ([]domain.Staff, error) {
 		return nil, err
 	}
 	if len(staff) == 0 {
-		if err := s.SeedDefaultAdmin(); err == nil {
-			staff, _ = s.staffRepo.GetActive()
+		// Seeding the default admin is the only path from an empty roster to
+		// a usable app: a silent failure here would surface as a mysteriously
+		// empty staff list, so the error is logged and propagated — same
+		// discipline as the roster refresh read below.
+		if err := s.SeedDefaultAdmin(); err != nil {
+			logger.Logger.Warn("AUTH", fmt.Sprintf("تعذر بذر المدير الافتراضي بعد قائمة موظفين فارغة: %v", err))
+			return nil, err
 		}
+		refreshed, err := s.staffRepo.GetActive()
+		if err != nil {
+			return nil, err
+		}
+		staff = refreshed
 	}
 	if staff == nil {
 		staff = []domain.Staff{}
@@ -559,13 +569,21 @@ func (s *staffService) AuthenticateByUsername(username, password string) (*domai
 
 	staff, err := s.staffRepo.GetByUsername(username)
 	if err != nil || !staff.Active {
-		_ = s.recordFailedAttempt(username, MaxLoginAttempts)
+		if err := s.recordFailedAttempt(username, MaxLoginAttempts); err != nil {
+			// The client already gets the failure; losing the counter must
+			// still be visible instead of silently weakening the tarpit.
+			logger.Logger.Warn("AUTH", fmt.Sprintf("تعذر تسجيل محاولة دخول فاشلة للمستخدم %s: %v", username, err))
+		}
 		logger.Logger.Warn("SECURITY", fmt.Sprintf("Login failed: Username %s not found or inactive", username))
 		return &domain.AuthResult{Success: false, Message: i18n.GetMessage("INVALID_CREDENTIALS")}, nil
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(staff.PasswordHash), []byte(password)); err != nil {
-		_ = s.recordFailedAttempt(username, MaxLoginAttempts)
+		if err := s.recordFailedAttempt(username, MaxLoginAttempts); err != nil {
+			// The client already gets the failure; losing the counter must
+			// still be visible instead of silently weakening the tarpit.
+			logger.Logger.Warn("AUTH", fmt.Sprintf("تعذر تسجيل محاولة دخول فاشلة للمستخدم %s: %v", username, err))
+		}
 		logger.Logger.Warn("SECURITY", fmt.Sprintf("Login failed: Incorrect PIN for username %s", username))
 
 		attempt, err := s.staffRepo.GetLoginAttempt(username)
@@ -578,10 +596,16 @@ func (s *staffService) AuthenticateByUsername(username, password string) (*domai
 		return &domain.AuthResult{Success: false, Message: i18n.GetMessage("INVALID_CREDENTIALS")}, nil
 	}
 
-	_ = s.clearLoginAttempts(username)
+	if err := s.clearLoginAttempts(username); err != nil {
+		logger.Logger.Warn("AUTH", fmt.Sprintf("تعذر تصفير محاولات الدخول للمستخدم %s: %v", username, err))
+	}
 
 	staff.LastLogin = time.Now().Unix()
-	_ = s.staffRepo.Update(staff)
+	if err := s.staffRepo.Update(staff); err != nil {
+		// Bookkeeping only: the credentials are already verified, so a failed
+		// timestamp write must not block the login — but it must not be silent.
+		logger.Logger.Warn("AUTH", fmt.Sprintf("تعذر تحديث وقت آخر دخول للموظف %s: %v", staff.Username, err))
+	}
 
 	requireChange := staff.MustChangePin || s.CheckUsingDefaultPassword(password)
 
@@ -615,7 +639,10 @@ func (s *staffService) AuthenticateByPIN(pin string) (*domain.AuthResult, error)
 			pinAuthMu.Unlock()
 
 			st.LastLogin = time.Now().Unix()
-			_ = s.staffRepo.Update(st)
+			if err := s.staffRepo.Update(st); err != nil {
+				// Same policy as username login: never block a verified PIN.
+				logger.Logger.Warn("AUTH", fmt.Sprintf("تعذر تحديث وقت آخر دخول للموظف %s: %v", st.Username, err))
+			}
 
 			requireChange := st.MustChangePin || s.CheckUsingDefaultPassword(pin)
 
@@ -711,15 +738,24 @@ func (s *staffService) SeedDefaultAdmin() error {
 	// the app. This covers existing installations that hit the bug.
 	admin, err := s.staffRepo.GetByUsername("admin")
 	if err != nil {
-		return nil // no admin user found — nothing to heal
+		if errors.Is(err, domain.ErrRecordNotFound) {
+			return nil // no admin user found — nothing to heal
+		}
+		// A real read failure must not masquerade as "no admin": the caller
+		// treats a nil error as "the admin is usable again".
+		return fmt.Errorf("فشل قراءة المدير الافتراضي أثناء العلاج الذاتي: %w", err)
 	}
 	if admin.LastLogin == 0 && admin.MustChangePin && admin.Role == domain.RoleAdmin {
 		hash, err := bcrypt.GenerateFromPassword([]byte("0000"), bcrypt.DefaultCost)
 		if err != nil {
-			return nil
+			return fmt.Errorf("فشل توليد هاش كلمة المدير الافتراضي: %w", err)
 		}
 		admin.PasswordHash = string(hash)
-		_ = s.staffRepo.Update(admin)
+		// The caller uses a nil error as "the admin is usable again"; claiming
+		// that while the reset was never persisted would be a lie.
+		if err := s.staffRepo.Update(admin); err != nil {
+			return err
+		}
 	}
 
 	return nil

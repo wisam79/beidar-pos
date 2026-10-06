@@ -62,15 +62,55 @@
 
 | البند | التنفيذ | الإثبات |
 | --- | --- | --- |
-| استرجاع `split` بدَين آجل مسدَّد | قيد دفعة سالبة + `creditOverpayCashRefund` ليُحسم النقد المُعاد من الرصيد المتوقع للوردية، وفشل القيد أو قراءة العميل يُرجِع الاسترجاع كاملاً | `internal/service/sale_service.go:699` · `TestReturnSplit_CreditOverpay_LeavesDrawer` و`TestReturnSplit_CreditOverpay_FailedLedgerWriteRollsBack` ✅ |
+| استرجاع `split` بدَين آجل مسدَّد | قيد دفعة سالبة + `creditOverpayCashRefund` ليُحسم النقد المُعاد من الرصيد المتوقع للوردية، وفشل القيد أو قراءة العميل يُرجِع الاسترجاع كاملاً | `internal/service/sale_service.go:704` · `TestReturnSplit_CreditOverpay_LeavesDrawer` و`TestReturnSplit_CreditOverpay_FailedLedgerWriteRollsBack` ✅ |
 | حذف دفعة نقدية مستقلة | فشل `UpdateShiftSales` يُرجِع العملية كاملة بدل حذف الصف وبقاء الوردية تحتسب النقد | `internal/service/payment_service.go:206` · `TestDeletePayment_ShiftUpdateFailureRollsBack` ✅ |
 | إسناد موظف على LAN | رفض fail-closed (500) عند غياب خدمة الموظفين بدل تسجيل `StaffID` بلا تحقق | `internal/network/lan_server.go:693` ✅ |
 | استيراد CSV للمنتجات | فشل كتابة حركة المخزون يُضاف إلى `result.Errors` بعنوان السطر في مساري الإنشاء والتحديث | `internal/service/backup_service.go:533,578` ✅ |
 | مفاتيح Gemini | فشل تشفير `secureconfig` يُعاد للواجهة برسالة صريحة بدل ابتلاعه | `internal/service/settings_service.go:93,97` ✅ |
 | صور المنتجات ورسائل المبالغ | فشل حذف الصورة يُسجَّل تحذيراً؛ ورسالتا `CUSTOMER_HAS_DEBT`/`PAYMENT_EXCEEDS_DEBT` تُنسَّقان بقيمة `Float()` | `internal/service/product_service.go:153,183` · `internal/service/crm_service.go:164` · `internal/service/payment_service.go:95` ✅ |
+| تثبيت الانحدار في البوابة | 3 تأكيدات كود جديدة: `FIN-03` (قيد النقد المُعاد لورديات `split` + منع ابتلاع فشل قيد الدفعة)، `FIN-04` (تراجع حذف الدفعة عند فشل الوردية)، `FIN-05` (بقاء اختبارات الانحدار الثلاثة) | `scripts/docs-gate.mjs` · اختبار سلبي: إعادة كل عيب مؤقتاً ⇒ فشل البوابة (5 أخطاء) ثم استُعيد الكود ونجحت (28 تأكيداً آنذاك) ✅ |
 | التحقق | Go كامل + الاختبارات الثلاثة الجديدة بالاسم + `-race` للمسارات الحساسة | `go test -count=1 ./internal/... ./pkg/...` = EXIT 0 · `go test -race -count=1 ./internal/service/... ./internal/network/...` = EXIT 0 · `node scripts/docs-gate.mjs --strict-refs` ✅ |
 
 **قرار الجلسة:** لا تُبتلع أخطاء كتابة الدفاتر المالية — أي فشل في قيد نقدي أو دفعة أو وردية أو مفاتيح يُفشل العملية مع تراجع، وما كان تنظيفاً هامشياً (صورة قديمة) يُسجَّل في السجل بدل تجاهله صامتاً.
+
+---
+
+## 0.5 سجل جلسة تحصين الأخطاء المُبتلَعة — 2026-10-05
+
+**المرجع:** طلب المالك: مسح طبقة الخدمات بحثاً عن أخطاء مُبتلَعة على عمليات ذات أثر (دفتر، مخزون، وردية)، وإصلاحها مع تأكيد كود واختبار انحدار لكل إصلاح.
+
+**حصيلة المسح:** مسارات المخزون والورديات والدفعات كانت نظيفة (كل كتاباتها تُفحص منذ جلسة 0.4)؛ المتبقي المُبتلَع كان في سجلات التدقيق داخل المعاملات، وحفظ الموظفين، وإعداد مفاتيح AI السحابي، وصيانة `VACUUM`.
+
+| البند | التنفيذ | الإثبات |
+| --- | --- | --- |
+| تدقيق البيع/الإرجاع | fail-closed: فشل قيد التدقيق (خصم/إرجاع كامل/جزئي) يُفشل المعاملة كاملة | `internal/service/sale_service.go:518,808,1099` · 3 اختبارات تراجع ✅ |
+| إعداد مفاتيح AI السحابي | صرامة كاملة في `SaveGlobalGroqKeys`: فشل الجلب/غير 200/فشل فك الترميز/إعداد تالف يوقف الحفظ بدل PATCH بتكوين فارغ يمسح مفاتيح Gemini | `internal/service/settings_service.go` · `TestSaveGlobalGroqKeys_MalformedConfigDoesNotWipeKeys` و`..._FetchFailureDoesNotWipeKeys` ✅ |
+| العلاج الذاتي للمدير | فشل حفظ إعادة الضبط يُعاد كخطأ بدل نجاح وهمي | `internal/service/staff_service.go` · `TestSeedDefaultAdmin_HealUpdateFailurePropagates` ✅ |
+| تحديث قائمة الموظفين | فشل `GetActive` بعد البذر يُعاد كخطأ بدل استبدال القائمة بقائمة فارغة | `internal/service/staff_service.go` · `TestGetActiveStaff_RefreshFailurePropagates` ✅ |
+| حفظ ثانوي (توقيت/محاولات/VACUUM) | تسجيل تحذيري بدل الابتلاع الصامت، دون إفشال العملية الأصلية | `staff_service.go` · `backup_service.go` · `TestAuthenticateByUsername_BookkeepingFailureDoesNotBlockLogin` ✅ |
+| تثبيت الانحدار | 9 تأكيدات كود جديدة: `FIN-06` · `FIN-07` · `STAFF-01`…`05` · `SET-01` · `LOG-01` (وصل المجموع إلى 37 آنذاك) + اختبار سلبي بإعادة قيدين مبتلَعين مؤقتاً ⇒ فشل البوابة ثم نجحت بعد الاستعادة | `scripts/docs-gate.mjs` ✅ |
+| فشل بذر المدير الافتراضي | فشل `SeedDefaultAdmin` داخل `GetActiveStaff` يُسجَّل تحذيراً ويُنشر بدل ابتلاعه وإرجاع قائمة فارغة صامتة — قرر نشره لأن البذر هو المسار الوحيد من قائمة فارغة إلى تطبيق قابل للاستخدام — ولا يُستدعى البذر أصلاً عندما توجد قائمة نشطة | `internal/service/staff_service.go:520` · `TestGetActiveStaff_SeedFailurePropagates` و`TestGetActiveStaff_HealthyRosterNeverSeeds` ✅ |
+| تثبيت انحدار البذر | تأكيدان كود إضافيان `STAFF-04` (تحذير البذر + عدم العودة للابتلاع) و`STAFF-05` (بقاء اختباره) — المجموع 37 آنذاك (39 بعد جلسة 0.6) | `scripts/docs-gate.mjs` · اختبار سلبي: تعطيل الإصلاح مؤقتاً ⇒ فشل البوابة (2 خطأ) ثم نجحت بعد الاستعادة ✅ |
+| التحقق | الخدمة كاملة + الاختبارات الجديدة بالاسم + حزمة كاملة | `go test -count=1 ./internal/service/` = EXIT 0 · `go test -count=1 ./internal/... ./pkg/...` = EXIT 0 ✅ |
+
+**قرار الجلسة:** قيود التدقيق داخل أي معاملة مالية جزء من المعاملة نفسها (fail-closed)؛ أما الحفظ الثانوي غير المالي فيُسجَّل تحذيراً ولا يُفشل العملية الأصلية — ولا يُقبل الابتلاع الصامت في الحالتين.
+
+---
+
+## 0.6 سجل جلسة تحصين العلاج الذاتي للمدير — 2026-10-06
+
+**المرجع:** مراجعة تعديلات جلسة 0.5 كشفت بقاء ابتلاعين في نفس الدالة التي حُصّنت (`SeedDefaultAdmin`) واعتماداً ضمنياً على خطأ gorm الخام في طبقة الخدمة.
+
+| البند | التنفيذ | الإثبات |
+| --- | --- | --- |
+| عقد المستودع | `GetByUsername` يُترجم `gorm.ErrRecordNotFound` إلى `domain.ErrRecordNotFound` مثل `GetLoginAttempt` وبقية المستودعات | `internal/repository/staff_repo.go:36-48` · `TestStaffRepository_GetByUsername_TranslatesNotFound` ✅ |
+| غياب المدير مقابل فشل قراءته | الغياب الحقيقي لا-عملية صامتة، وفشل القراءة يُعاد كخطأ لأن `nil` تعني عند المستدعي «المدير قابل للاستخدام» | `internal/service/staff_service.go:739-747` · `TestSeedDefaultAdmin_HealReadFailurePropagates` و`TestGetActiveStaff_MissingAdminRow_HealsSilently` ✅ |
+| فشل توليد الهاش | يُعاد بدل ابتلاعه | `internal/service/staff_service.go:749-752` · مغطى باختبار الوحدة أعلاه ✅ |
+| ضمان عدم تأثر التثبيتات السليمة | القائمة النشطة غير الفارغة لا تُبذر أصلاً (البذر لا يُستدعى) | `internal/service/staff_service.go:515-529` · `TestGetActiveStaff_HealthyRosterNeverSeeds` (يتحقق أن `GetStaffCount` لم يُستدعَ) ✅ |
+| تثبيت الانحدار | `STAFF-05` توسّع ليشمل اختبارَي القائمة، وأُضيف `STAFF-06` و`STAFF-07` — المجموع **39 تأكيداً** | `scripts/docs-gate.mjs` · اختبار سلبي: حذف الترجمة مؤقتاً ⇒ فشل `STAFF-06` واختبارين ثم نجحت بعد الاستعادة ✅ |
+| التحقق | `go vet ./internal/service/` و`go test -count=1 ./internal/... ./pkg/...` و`node scripts/docs-gate.mjs --strict-refs` | كلها خضراء بتاريخ 2026-10-06 ✅ |
+
+**قرار الجلسة:** أي خطأ يقرره المستدعي كحالة صحيحة فعلية (مثل «nil = المدير سليم») يجب أن يمر بتمييز صريح للنوع — لا يُختزل فشل القراءة إلى الحالة الصحيحة بصمت.
 
 ---
 
@@ -125,6 +165,8 @@
 
 | الجلسة | التاريخ | الملخص |
 | --- | --- | --- |
+| 0.6 | 2026-10-06 | تحصين العلاج الذاتي للمدير: ترجمة غياب الموظف في المستودع، والتفريق بين غياب المدير وفشل قراءته، ونشر فشل الهاش — مع 4 اختبارات انحدار واختبار سلبي للبوابة |
+| 0.5 | 2026-10-05 | تحصين الأخطاء المُبتلَعة: تدقيق فاتورة/مرتجع fail-closed، منع مسح مفاتيح AI عند إعداد تالف، إبلاغ فشل حفظ علاج المدير وقائمة الموظفين ونشر فشل بذر المدير الافتراضي، وتسجيل الحفظ الثانوي |
 | 0.4 | 2026-10-05 | تحصين سلامة الدفاتر والاسترجاع: قيد نقدي للورديات المقسّمة عند الاسترجاع، تراجع كامل عند فشل قيد/وردية، رفض إسناد موظف غير مُتحقق منه، وتوثيق اختبارات الانحدار |
 | 0.3 | 2026-10-05 | إكمال إقران أجهزة LAN بسر ثابت مشفَّر وواجهة إقران وإعادة اتصال تلقائية |
 | 0.2 | 2026-10-05 | إصلاح ترخيص طلبات LAN بهوية الجهاز الطالب (Actor) وربط `StaffID` خادمياً |

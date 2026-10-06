@@ -36,6 +36,12 @@ func (r *staffRepository) GetByID(id string) (*domain.Staff, error) {
 func (r *staffRepository) GetByUsername(username string) (*domain.Staff, error) {
 	var s domain.Staff
 	if err := r.db.First(&s, "username = ?", username).Error; err != nil {
+		// Same contract as GetLoginAttempt and the other repos: callers
+		// distinguish "no such row" from a real DB failure, so the sentinel
+		// is translated here instead of leaking gorm into the service layer.
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return &s, nil

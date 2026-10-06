@@ -71,7 +71,7 @@ func setupReturnIntegrity(t *testing.T) (domain.SaleService, *gorm.DB, func()) {
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Customer{}, &domain.Payment{},
 		&domain.StockMovement{}, &domain.Shift{}, &domain.CashMovement{}, &domain.Staff{},
 		&domain.AppPreferences{}, &domain.LoginAttempt{}, &domain.Supplier{}, &domain.Category{},
-		&domain.ParkedSale{},
+		&domain.ParkedSale{}, &domain.AuditLog{},
 	)
 	testutil.SeedPreferences(t, db)
 	return newReturnIntegritySaleService(t, db, false), db, cleanup
@@ -223,6 +223,7 @@ func TestDeletePayment_ShiftUpdateFailureRollsBack(t *testing.T) {
 		&domain.Product{}, &domain.Sale{}, &domain.SaleItem{}, &domain.Customer{}, &domain.Payment{},
 		&domain.StockMovement{}, &domain.Shift{}, &domain.CashMovement{}, &domain.Staff{},
 		&domain.AppPreferences{}, &domain.LoginAttempt{}, &domain.Supplier{}, &domain.Category{},
+		&domain.AuditLog{},
 	)
 	defer cleanup()
 	testutil.SeedPreferences(t, db)

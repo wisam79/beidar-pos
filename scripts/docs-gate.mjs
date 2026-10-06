@@ -332,6 +332,142 @@ const CODE_ASSERTIONS = [
     mustContain: ['clause.Locking{Strength: "UPDATE"}', 'gorm.Expr("points + ?", delta)'],
   },
   {
+    label: 'FIN-03 — استرجاع فاتورة split بدَين مسدَّد: قيد النقد المُعاد وعدم ابتلاع فشل القيد',
+    file: 'internal/service/sale_service.go',
+    mustContain: [
+      '\t\t\t\t\t\tcreditOverpayCashRefund = refundAmount',
+      'return fmt.Errorf("فشل تسجيل عملية الاسترجاع: %w", err)',
+    ],
+    // العيوب التي مُنيت بالنجاح سابقاً — لا يجوز أن تعود: موقع القيد في فرع split (مستوى 6 مسافات بادئة)
+    // وقيد الدفعة الذي كان يُبتلع فيخرج النقد من الدرج بلا أثر في الوردية.
+    mustNotContain: ['_ = txPaymentRepo.Create(&refundPayment)'],
+    count: [{ needle: 'creditOverpayCashRefund = refundAmount', equals: 3 }],
+  },
+  {
+    label: 'FIN-04 — حذف دفعة نقدية: تراجع العملية عند فشل تحديث الوردية',
+    file: 'internal/service/payment_service.go',
+    mustContain: [
+      'if err := txShiftRepo.UpdateShiftSales(0, -payment.Amount, false, false); err != nil {',
+      'return fmt.Errorf("فشل تحديث الوردية عند حذف الدفعة: %w", err)',
+    ],
+    mustNotContain: ['_ = txShiftRepo.UpdateShiftSales(0, -payment.Amount, false, false)'],
+  },
+  {
+    label: 'FIN-05 — اختبارات انحدار سلامة الاسترجاع والدفعات (لا تُحذف)',
+    file: 'internal/service/return_integrity_test.go',
+    mustContain: [
+      'func TestReturnSplit_CreditOverpay_LeavesDrawer(t *testing.T) {',
+      'func TestReturnSplit_CreditOverpay_FailedLedgerWriteRollsBack(t *testing.T) {',
+      'func TestDeletePayment_ShiftUpdateFailureRollsBack(t *testing.T) {',
+    ],
+  },
+  {
+    label: 'FIN-06 — سجلات التدقيق داخل معاملات البيع/الإرجاع fail-closed',
+    file: 'internal/service/sale_service.go',
+    mustContain: ['return fmt.Errorf("فشل تسجيل حدث التدقيق: %w", err)'],
+    // القيد الذي كان يُبتلع — العودة إليه تعني فاتورة بلا أثر تدقيق
+    mustNotContain: ['_ = s.auditRepo.WithTx(tx).Log(&domain.AuditLog{'],
+    count: [{ needle: 'if err := s.auditRepo.WithTx(tx).Log(&domain.AuditLog{', equals: 3 }],
+  },
+  {
+    label: 'FIN-07 — اختبارات انحدار الأخطاء المُبتلَعة (لا تُحذف)',
+    file: 'internal/service/swallowed_error_regressions_test.go',
+    mustContain: [
+      'func TestProcessSale_DiscountAuditFailureRollsBack(t *testing.T) {',
+      'func TestReturnSale_AuditFailureRollsBack(t *testing.T) {',
+      'func TestReturnSalePartial_AuditFailureRollsBack(t *testing.T) {',
+      'func TestSeedDefaultAdmin_HealUpdateFailurePropagates(t *testing.T) {',
+      'func TestAuthenticateByUsername_BookkeepingFailureDoesNotBlockLogin(t *testing.T) {',
+      'func TestGetActiveStaff_RefreshFailurePropagates(t *testing.T) {',
+      'func TestSaveGlobalGroqKeys_MalformedConfigDoesNotWipeKeys(t *testing.T) {',
+      'func TestSaveGlobalGroqKeys_FetchFailureDoesNotWipeKeys(t *testing.T) {',
+    ],
+  },
+  {
+    label: 'STAFF-01 — العلاج الذاتي للمدير يُبلّغ عن فشل الحفظ',
+    file: 'internal/service/staff_service.go',
+    mustContain: ['if err := s.staffRepo.Update(admin); err != nil {'],
+    mustNotContain: ['_ = s.staffRepo.Update(admin)'],
+  },
+  {
+    label: 'STAFF-02 — تحديث قائمة الموظفين بعد البذر يُبلّغ عن فشل القراءة',
+    file: 'internal/service/staff_service.go',
+    mustContain: ['refreshed, err := s.staffRepo.GetActive()', 'staff = refreshed'],
+    mustNotContain: ['staff, _ = s.staffRepo.GetActive()'],
+  },
+  {
+    label: 'STAFF-03 — وقت آخر دخول ومحاولات الدخول تُسجَّل ولا تُبتلع',
+    file: 'internal/service/staff_service.go',
+    mustContain: [
+      'تعذر تسجيل محاولة دخول فاشلة للمستخدم %s: %v',
+      'تعذر تصفير محاولات الدخول للمستخدم %s: %v',
+    ],
+    mustNotContain: [
+      '_ = s.recordFailedAttempt(username, MaxLoginAttempts)',
+      '_ = s.clearLoginAttempts(username)',
+      '_ = s.staffRepo.Update(staff)',
+      '_ = s.staffRepo.Update(st)',
+    ],
+    count: [{ needle: 'تعذر تحديث وقت آخر دخول للموظف %s: %v', equals: 2 }],
+  },
+  {
+    label: 'STAFF-04 — فشل بذر المدير الافتراضي داخل GetActiveStaff يُسجَّل ويُنشر',
+    file: 'internal/service/staff_service.go',
+    mustContain: [
+      'if err := s.SeedDefaultAdmin(); err != nil {',
+      'تعذر بذر المدير الافتراضي بعد قائمة موظفين فارغة: %v',
+    ],
+    mustNotContain: ['if err := s.SeedDefaultAdmin(); err == nil {'],
+  },
+  {
+    label: 'STAFF-05 — اختبارات انحدار بذر المدير وقائمة الموظفين (لا تُحذف)',
+    file: 'internal/service/swallowed_error_regressions_test.go',
+    mustContain: [
+      'func TestGetActiveStaff_SeedFailurePropagates(t *testing.T) {',
+      'func TestGetActiveStaff_RefreshFailurePropagates(t *testing.T) {',
+      'func TestGetActiveStaff_MissingAdminRow_HealsSilently(t *testing.T) {',
+      'func TestGetActiveStaff_HealthyRosterNeverSeeds(t *testing.T) {',
+    ],
+  },
+  {
+    label: 'STAFF-06 — المستودع يُترجم غياب الموظف إلى domain.ErrRecordNotFound',
+    file: 'internal/repository/staff_repo.go',
+    mustContain: ['func (r *staffRepository) GetByUsername(username string) (*domain.Staff, error) {'],
+    // عدّاد يمنع حذف الترجمة من GetByUsername أو GetLoginAttempt — إن أُضيفت
+    // ترجمة لمستودع آخر في هذا الملف فحدّث العدّاد مع تبرير في التوثيق.
+    count: [{ needle: 'return nil, domain.ErrRecordNotFound', equals: 2 }],
+  },
+  {
+    label: 'STAFF-07 — قراءة المدير الافتراضي تُفرَّق عن «لا يوجد مدير» ولا تُبتلع',
+    file: 'internal/service/staff_service.go',
+    mustContain: [
+      'if errors.Is(err, domain.ErrRecordNotFound) {',
+      'فشل قراءة المدير الافتراضي أثناء العلاج الذاتي: %w',
+      'فشل توليد هاش كلمة المدير الافتراضي: %w',
+    ],
+    count: [{ needle: 'فشل قراءة المدير الافتراضي أثناء العلاج الذاتي: %w', equals: 1 }],
+  },
+  {
+    label: 'SET-01 — حفظ مفاتيح AI يرفض الكتابة فوق إعداد تالف أو فشل جلب',
+    file: 'internal/service/settings_service.go',
+    mustContain: ['failed to parse existing AI keys config: %w'],
+    // الجلب المتساهل الذي يبقي المسار إلى PATCH فارغ — لا يجوز أن يعود
+    mustNotContain: [
+      '_ = json.Unmarshal(results[0].Value, &currentConfig)',
+      'if errDec := json.NewDecoder(respGet.Body).Decode(&results); errDec == nil && len(results) > 0 {',
+    ],
+    count: [
+      { needle: 'failed to fetch current config: %w', equals: 2 },
+      { needle: 'failed to decode current config: %w', equals: 2 },
+    ],
+  },
+  {
+    label: 'LOG-01 — ترحيل الصور: فشل Vacuum يُسجَّل ولا يُبتلع',
+    file: 'internal/service/backup_service.go',
+    mustContain: ['تعذر تفريغ قاعدة البيانات بعد ترحيل الصور: '],
+    mustNotContain: ['_ = s.productRepo.Vacuum()'],
+  },
+  {
     label: 'SEC-01 — التحقق من الرمز السري بـ bcrypt مع Tarpitting (لا Lockout)',
     file: 'internal/service/admin_pin.go',
     mustContain: ['bcrypt.CompareHashAndPassword', 'adminPinFailures++', 'delay = 15 * time.Second'],

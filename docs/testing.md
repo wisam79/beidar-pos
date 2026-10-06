@@ -28,17 +28,18 @@
 ### الموقع
 جميع ملفات الاختبارات بجانب الملف المُختبر (`*_test.go`).
 
-### التوزيع الحالي (تحقق: 2026-10-05)
+### التوزيع الحالي (تحقق: 2026-10-06)
 | المجلد | عدد ملفات الاختبار | التركيز |
 |--------|-------------------|---------|
-| `internal/service/` | 32 | منطق الأعمال الأساسي والمالية والاسترجاع |
+| `internal/service/` | 33 | منطق الأعمال الأساسي والمالية والاسترجاع |
 | `internal/repository/` | 23 | استعلامات GORM والعمليات الذرية والتزامن |
 | `internal/core/domain/` | 9 | نوع Amount والحسابات المالية والصلاحيات |
 | `internal/e2e/` | 29 | تكامل شامل (بيع/شبكة/أمان/ورديات/ضغط) |
 | `internal/network/` | 6 | خادم وعميل واكتشاف LAN وسر الإقران |
 | `internal/integration/` | 3 | التكامل السحابي والاستعادة من الكوارث |
 | `pkg/` | 16 | الأمان والتشفير والطباعة والترجمة i18n |
-| **الإجمالي** | **119** | `find internal pkg -name '*_test.go' \| wc -l` |
+| `internal/testutil/` | 1 | أدوات تجهيز قاعدة بيانات الاختبارات |
+| **الإجمالي** | **120** | `find internal pkg -name '*_test.go' \| wc -l` |
 
 ### التشغيل
 ```bash
@@ -111,6 +112,19 @@ go test -count=1 -run 'TestReturnSplit_CreditOverpay|TestDeletePayment_ShiftUpda
 - `TestReturnSplit_CreditOverpay_LeavesDrawer` (`internal/service/return_integrity_test.go`): استرجاع فاتورة `split` بعدَين آجل مسدَّد يُعيد النقد الزائد للعميل ويخصمه من الرصيد المتوقع للوردية — فلا يظهر فائض وهمي عند الإقفال.
 - `TestReturnSplit_CreditOverpay_FailedLedgerWriteRollsBack`: فشل أول قيد في دفتر الدفعات يُرجِع الاسترجاع كاملاً (الفاتورة لا تُوسم «مُرتجَعة»، الدين يعود كما كان، والمخزون لا يتغيّر) بدل إغلاق الفاتورة بلا قيد نقدي.
 - `TestDeletePayment_ShiftUpdateFailureRollsBack`: حذف دفعة نقدية مستقلة يفشل ويُبقي صف الدفعة إذا تعذّر تحديث الوردية، بدل حذف النقد من الدفتر مع بقائه محسوباً في الوردية.
+
+### اختبارات انحدار الأخطاء المُبتلَعة (Swallowed Errors Hardening)
+```bash
+go test -count=1 -run 'TestProcessSale_DiscountAuditFailureRollsBack|TestReturnSale_AuditFailureRollsBack|TestReturnSalePartial_AuditFailureRollsBack|TestSeedDefaultAdmin_HealUpdateFailurePropagates|TestAuthenticateByUsername_BookkeepingFailureDoesNotBlockLogin|TestGetActiveStaff_RefreshFailurePropagates|TestGetActiveStaff_SeedFailurePropagates|TestSaveGlobalGroqKeys_MalformedConfigDoesNotWipeKeys|TestSaveGlobalGroqKeys_FetchFailureDoesNotWipeKeys|TestSeedDefaultAdmin_HealReadFailurePropagates|TestGetActiveStaff_MissingAdminRow_HealsSilently|TestGetActiveStaff_HealthyRosterNeverSeeds' ./internal/service/ && go test -count=1 -run 'TestStaffRepository_GetByUsername_TranslatesNotFound' ./internal/repository/
+```
+- `TestProcessSale_DiscountAuditFailureRollsBack` و`TestReturnSale_AuditFailureRollsBack` و`TestReturnSalePartial_AuditFailureRollsBack` (`internal/service/swallowed_error_regressions_test.go`): فشل قيد التدقيق يُرجِع البيع بخصم أو الإرجاع الكامل/الجزئي كاملاً (لا فاتورة بلا أثر، لا مخزون مُعدَّل، لا حركة وردية).
+- `TestSeedDefaultAdmin_HealUpdateFailurePropagates`: العلاج الذاتي لكلمة مدير لم يسجّل دخوله يُبلّغ عن فشل الحفظ بدل إرجاع نجاح وهمي.
+- `TestAuthenticateByUsername_BookkeepingFailureDoesNotBlockLogin`: فشل حفظ وقت آخر دخول يُسجَّل تحذيراً ولا يمنع دخولاً تم التحقق منه.
+- `TestGetActiveStaff_RefreshFailurePropagates`: فشل قراءة قائمة الموظفين بعد بذر المدير الافتراضي يُعاد كخطأ لا كقائمة فارغة.
+- `TestSaveGlobalGroqKeys_MalformedConfigDoesNotWipeKeys` و`TestSaveGlobalGroqKeys_FetchFailureDoesNotWipeKeys`: إعداد `ai_keys` تالف أو فشل جلب الإعداد الحالي (شبكة/غير 200) يوقف الحفظ قبل إرسال أي PATCH حتى لا تُمسح مفاتيح المزوّدين الآخرين.
+- `TestSeedDefaultAdmin_HealReadFailurePropagates` و`TestGetActiveStaff_MissingAdminRow_HealsSilently`: فشل قراءة صف المدير أثناء العلاج الذاتي يُعاد كخطأ، أما غيابه الحقيقي فيبقى لا-عملية صامتة — والثاني يقفل عقد المستودع على `domain.ErrRecordNotFound`.
+- `TestGetActiveStaff_HealthyRosterNeverSeeds`: وجود موظف نشط يعني أن البذر لا يُستدعى أصلاً (`GetStaffCount` لا يُنادى)، فلا يمسّ النشر fail-closed أي تثبيت سليم.
+- `TestStaffRepository_GetByUsername_TranslatesNotFound` (`internal/repository/staff_repo_test.go`): `GetByUsername` لصف غير موجود يُرجع `domain.ErrRecordNotFound` لا خطأ gorm الخام.
 
 ### التغطية المستهدفة
 - طبقة `internal/service/`: **70%+**

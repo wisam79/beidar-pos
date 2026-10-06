@@ -3,6 +3,7 @@ package service
 import (
 	"beidar-desktop/internal/core/domain"
 	"beidar-desktop/pkg/imagestore"
+	"beidar-desktop/pkg/logger"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -664,7 +665,12 @@ func (s *backupService) MigrateImagesToFilesystem() (int, error) {
 	}
 
 	if migrated > 0 {
-		_ = s.productRepo.Vacuum()
+		// Compaction is housekeeping on top of an already-successful
+		// migration: report a failure instead of swallowing it, but do not
+		// fail an operation whose data is already committed.
+		if err := s.productRepo.Vacuum(); err != nil {
+			logger.Logger.Warn("Backup", "تعذر تفريغ قاعدة البيانات بعد ترحيل الصور: "+err.Error())
+		}
 	}
 
 	return migrated, nil

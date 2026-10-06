@@ -21,7 +21,7 @@
 │                       BACKEND (Go)                                   │
 │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌──────────────┐  │
 │  │ Handlers   │→ │ Services   │→ │ Repositori │→ │ GORM + SQLite│  │
-│  │ (14 files) │  │ (12 files) │  │ (17 files) │  │ (WAL Mode)   │  │
+│  │ (14 files) │  │ (16 files) │  │ (18 files) │  │ (WAL Mode)   │  │
 │  └────────────┘  └────────────┘  └────────────┘  └──────────────┘  │
 │       │                │                │                           │
 │       ▼                ▼                ▼                           │
@@ -59,7 +59,7 @@ beidar/
 │   │   ├── permissions.go      # ثوابت الصلاحيات (13) + سياسة الأدوار RolePermissions
 │   │   ├── actor.go            # هوية الطالب (Actor) لترخيص الخدمة/الشبكة
 │   │   └── errors.go           # أخطاء معيارية (ErrRecordNotFound, etc.)
-│   ├── repository/             # طبقة البيانات — 17 ملف
+│   ├── repository/             # طبقة البيانات — 18 ملف
 │   │   ├── db.go               # InitDB, AutoMigrate, Seeding
 │   │   ├── product_repo.go     # CRUD المنتجات والبحث
 │   │   ├── sale_repo.go        # CRUD المبيعات والفواتير المعلقة
@@ -67,7 +67,7 @@ beidar/
 │   │   ├── payment_repo.go     # المدفوعات وخطط التقسيط
 │   │   ├── shift_repo.go       # الورديات والحركات النقدية
 │   │   └── ...                 # expense, supplier, PO, staff, stats, backup, network, discount
-│   ├── service/                # منطق الأعمال — 12 ملف + 1 compat + 11 اختبار
+│   ├── service/                # منطق الأعمال — 16 ملفاً (12 خدمة + admin_pin + compat + مزوّدا AI) + 33 اختبار
 │   │   ├── sale_service.go     # معالجة البيع (DB Transaction)
 │   │   ├── payment_service.go  # خطط التقسيط والمدفوعات
 │   │   ├── finance_service.go  # المصروفات، الورديات، أوامر الشراء
@@ -90,17 +90,20 @@ beidar/
 │   │   ├── cloud_handler.go    # التكامل السحابي
 │   │   ├── discount_handler.go # الخصومات والعروض
 │   │   └── ai_handler.go       # الذكاء الاصطناعي
-│   ├── network/                # شبكة LAN — 5 ملفات
+│   ├── network/                # شبكة LAN — 7 ملفات
 │   │   ├── lan_service.go      # تنسيق الخادم والعميل والاكتشاف
 │   │   ├── lan_server.go       # خادم HTTP محلي مع API endpoints
 │   │   ├── lan_client.go       # عميل يتصل بالخادم
 │   │   ├── lan_clients.go      # مدير اتصالات متعددة
-│   │   └── lan_discovery.go    # اكتشاف الخوادم عبر UDP broadcast
+│   │   ├── lan_discovery.go    # اكتشاف الخوادم عبر UDP broadcast
+│   │   ├── lan_server_secret_store.go # خزنة سر جهاز الإقران
+│   │   └── lan_tls.go          # طبقة TLS للخادم الداخلي
 │   └── integration/            # التكامل الخارجي — 6 ملفات
 │       ├── cloud_service.go    # واجهة CloudService
 │       ├── supabase_auth.go    # مصادقة Supabase + نسخ احتياطي
 │       ├── google_auth.go      # Google OAuth لـ Drive
 │       ├── zoho.go             # تكامل Zoho Books
+│       ├── backup_compress.go  # ضغط قاعدة البيانات للنسخ الاحتياطي
 │       └── license.go          # الترخيص والتفعيل
 ├── frontend/                   # الواجهة الأمامية (React/TypeScript)
 │   └── src/
@@ -111,14 +114,14 @@ beidar/
 │   ├── hooks/              # 23 hook مشارك
 │       ├── store/              # Zustand (appStore, authStore)
 │       └── routes/             # Lazy-loaded routes
-├── pkg/                        # 12 حزمة مساعدة
+├── pkg/                        # 13 حزمة مساعدة
 │   ├── auth/                   # التحقق من الصلاحيات
 │   ├── secureconfig/           # تخزين مشفر للمفاتيح
 │   ├── crypto/                 # تشفير وفك تشفير
 │   ├── print/                  # طباعة حرارية
 │   ├── updater/                # تحديث تلقائي
 │   ├── imagestore/             # خادم صور المنتجات
-│   └── ...                     # logger, i18n, errors, notification, crashreporter, autostart
+│   └── ...                     # logger, i18n, errors, notification, crashreporter, autostart, validator
 ├── app.go                      # DI + Startup (Handlers, Services, Repos)
 ├── main.go                     # Wails config + Bind + Window management
 ├── single_instance_windows.go  # منع تشغيل نسختين (Named Mutex)
@@ -176,10 +179,14 @@ beidar/
 User Click → React POS → api.sales.process(data) → Wails IPC
   → SaleHandler.ProcessSale() → SaleService.ProcessSale()
     → [DB Transaction]
-       → ProductRepo.UpdateStock()  (خصم المخزون)
-       → ShiftRepo.AddCash()        (تحديث الوردية)
-       → CustomerRepo.UpdateDebt()  (تحديث دين العميل إن وجد)
-       → SaleRepo.Save()            (حفظ الفاتورة)
+       → ProductRepo.GetForUpdate()          (قفل متشائم على أصناف السلة)
+       → ProductRepo.UpdateStock()           (خصم المخزون لكل صنف)
+       → ProductRepo.CreateStockMovement()   (حركة مخزون لكل صنف)
+       → SaleRepo.Create()                   (حفظ الفاتورة)
+       → CustomerRepo.IncrementPurchasesAndDebt()  (مشتريات/نقاط/دين إن وُجد عميل)
+       → PaymentRepo.Create()                (قيد دفتر المدفوعات: split أو تقسيط أو دفعة أولى)
+       → ShiftRepo.UpdateShiftSales()        (تحديث مبيعات ونقد الوردية)
+       → AuditRepo.Log()                     (أثر التدقيق SALE_DISCOUNT — فقط عند خصم > 0؛ فشله يُرجِع الكل)
     ← [Commit / Rollback]
   ← Sale (result) → React UI Update
 ```
@@ -187,12 +194,11 @@ User Click → React POS → api.sales.process(data) → Wails IPC
 ### مثال: نسخ احتياطي سحابي (Cloud Backup)
 
 ```
-Settings → CloudHandler.BackupToSupabase()
-  → CloudService.BackupToSupabase()
-    → BackupService.ExportDatabase()     (تصدير JSON)
-    → SupabaseAuth.ChunkedUpload()       (رفع مقسم)
-    → SupabaseAuth.VerifyBackup()        (التحقق)
-  ← BackupResult → UI Notification
+Settings → CloudHandler.CloudBackupNow()
+  → CloudService.CloudBackupNow()  (internal/integration/supabase_auth.go)
+    → فحص الجلسة وحدود الاشتراك + تدوير أقدم نسخة عند تجاوز الحد
+    → compressDatabaseForBackup()  (ضغط ZIP لقاعدة البيانات internal/integration/backup_compress.go)
+    → رفع مقسّم: الجزء 0 يُرفع أخيراً كعلامة اكتمال النسخة (فلاتر الإدراج على chunk_index=0)
 ```
 
 ---
@@ -204,8 +210,8 @@ Settings → CloudHandler.BackupToSupabase()
 ```go
 func NewApp() *App {
     db, _ := initDatabase()           // 1. SQLite + AutoMigrate + Seed
-    repos := initRepositories(db)     // 2. 14 Repository instances
-    services := initServices(repos)   // 3. 14 Service instances + SeedDefaultAdmin
+    repos := initRepositories(db)     // 2. 15 Repository instances
+    services := initServices(repos)   // 3. 12 Service instances + SeedDefaultAdmin
     return initHandlers(services, repos) // 4. 14 Handler instances
 }
 ```

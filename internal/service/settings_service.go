@@ -440,20 +440,40 @@ func (s *settingsService) SaveGlobalGroqKeys(keys []string, userToken string) er
 		return fmt.Errorf("يجب تسجيل الدخول أولاً")
 	}
 
-	// 1. Fetch current config first to preserve Gemini keys
+	// 1. Fetch current config first to preserve Gemini keys. Every failure is
+	// fatal — same discipline as SaveGlobalAIKeys: PATCHing an empty config
+	// after a failed fetch would wipe the other providers' keys.
 	var currentConfig aiKeysConfig
 	urlGet := fmt.Sprintf("%s/rest/v1/global_settings?key=eq.ai_keys&select=value", sbURL)
 	reqGet, err := http.NewRequest("GET", urlGet, nil)
-	if err == nil {
-		reqGet.Header.Set("apikey", sbKey)
-		reqGet.Header.Set("Authorization", "Bearer "+sbKey)
-		client := &http.Client{Timeout: 10 * time.Second}
-		if respGet, errGet := client.Do(reqGet); errGet == nil && respGet.StatusCode == http.StatusOK {
-			var results []globalSettings
-			if errDec := json.NewDecoder(respGet.Body).Decode(&results); errDec == nil && len(results) > 0 {
-				_ = json.Unmarshal(results[0].Value, &currentConfig)
-			}
-			respGet.Body.Close()
+	if err != nil {
+		return fmt.Errorf("failed to create request for current config: %w", err)
+	}
+
+	reqGet.Header.Set("apikey", sbKey)
+	reqGet.Header.Set("Authorization", "Bearer "+sbKey)
+	getClient := &http.Client{Timeout: 10 * time.Second}
+
+	respGet, errGet := getClient.Do(reqGet)
+	if errGet != nil {
+		return fmt.Errorf("failed to fetch current config: %w", errGet)
+	}
+	defer respGet.Body.Close()
+
+	if respGet.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to fetch current config: status %d", respGet.StatusCode)
+	}
+
+	var results []globalSettings
+	if errDec := json.NewDecoder(respGet.Body).Decode(&results); errDec != nil {
+		return fmt.Errorf("failed to decode current config: %w", errDec)
+	}
+	if len(results) > 0 {
+		if errUnmarshal := json.Unmarshal(results[0].Value, &currentConfig); errUnmarshal != nil {
+			// Abort instead of PATCHing an empty config: overwriting a
+			// malformed value would silently wipe every other provider's
+			// keys stored in the same row.
+			return fmt.Errorf("failed to parse existing AI keys config: %w", errUnmarshal)
 		}
 	}
 
