@@ -36,10 +36,11 @@
 | `internal/core/domain/` | 9 | نوع Amount والحسابات المالية والصلاحيات |
 | `internal/e2e/` | 29 | تكامل شامل (بيع/شبكة/أمان/ورديات/ضغط) |
 | `internal/network/` | 7 | خادم وعميل واكتشاف LAN وسر الإقران |
+| `internal/handlers/` | 6 | حرّاس المصادقة والصلاحيات وتوجيه المعالجات بين الوضع المحلي والعميل |
 | `internal/integration/` | 4 | التكامل السحابي والاستعادة من الكوارث |
 | `pkg/` | 17 | الأمان والتشفير والطباعة والترجمة i18n |
 | `internal/testutil/` | 1 | أدوات تجهيز قاعدة بيانات الاختبارات |
-| **الإجمالي** | **123** | `find internal pkg -name '*_test.go' \| wc -l` |
+| **الإجمالي** | **129** | `find internal pkg -name '*_test.go' \| wc -l` |
 
 ### التشغيل
 ```bash
@@ -151,6 +152,7 @@ node scripts/coverage-gate.mjs --profile=coverage.out --min=<العتبة>
 | الدفعة | الملفات | الأثر المقيس |
 | --- | --- | --- |
 | 1 (2026-10-06) | `pkg/print/pdf_test.go` · `internal/integration/backup_compress_test.go` · `internal/network/lan_client_test.go` | الإجمالي 57.7% ← **59.9%** · `pdf.go` 38.5% ← 97.4% · `backup_compress.go` 0% ← 54.0% · `lan_client.go` 67.1% ← 78.2% (تشغيل `37486727370`) |
+| 2 (2026-10-06) | `internal/handlers/` — 6 ملفات اختبار | النتيجة المقيسة تُلحق بعد تشغيل CI |
 
 ```bash
 # الدفعة 1 (2026-10-06) — طابعة PDF + ضغط النسخ الاحتياطي + عميل LAN
@@ -159,7 +161,17 @@ node scripts/coverage-gate.mjs --profile=coverage.out   # بعد تشغيل CI،
 - `pkg/print/pdf_test.go`: الطابعة الحرارية بكل مقاسات الورق (`58mm`/`110mm`/`80mm`) مع/بدون عميل وخصم وجدول أقساط، مسار A4، الفشل الحقيقي عند مسار غير قابل للكتابة، وQR (نجاح PNG + تثبيت تصعيد الحجم الصغير + رفض حمولة تتجاوز سعة الرمز).
 - `internal/integration/backup_compress_test.go`: ZIP النسخة الاحتياطية يحتوي `beidar_v3.db` برأس SQLite حقيقي عبر مسار `VACUUM INTO`، مسار السقوط بلا قاعدة نشطة، ورفض الحمولة التالفة/الفارغة قبل لمس أي ملف.
 - `internal/network/lan_client_test.go`: `RemoteGet`/`RemotePost`/`RemoteDelete` (نجاح، 401، خطأ خادم، JSON غير صالح، فشل الترميز، غير متصل)، `TestConnection` (قصير/طويل/خطأ شبكة)، و`GetClientStatus` (standalone/client-over-TLS/server).
-- **الخط الأساس والعتبة الحالية:** خط الأساس **57.7%** (تشغيل CI `37482085839`) ← **59.9%** بعد الدفعة الأولى (تشغيل `37486727370`)، والعتبة المفروضة **`--min=59.5`** في خطوة `Coverage Ratchet Gate` بوظيفة `go-backend`. الهدف المعلن **≥85%**.
+
+```bash
+# الدفعة 2 (2026-10-06) — حزمة internal/handlers
+node scripts/coverage-gate.mjs --profile=coverage.out
+```
+- `handler_fakes_test.go` + `fake_services_test.go` + `fake_services_admin_test.go`: بدائل اختبار لـ `network.LanService` (مع تسجيل نقاط REST ومُعبِّئ اختياري للنتيجة) ولخدمات النطاق كافة، مع أدوات جلسة (`set/clear` مدير/كاشير/بلا جلسة).
+- `handler_guards_test.go`: كل دالة محمية في المعالجات الـ14 تُرفض بلا جلسة، وترفض كذلك عندما تقل صلاحيات الجلسة (كاشير بصلاحية واحدة)، مع تأكيد أن الأسرار لا تتسرب عبر الدوال التي لا تُرجِع خطأً (`IsLoggedIn` · `GetCurrentUser` · `GetZohoStatus` · `KeepAliveSupabase`) وحراسة الخصم الإضافية في `ProcessSale` (فاتورة أو صنف مخصوم يطلب `PermDiscounts`).
+- `handler_happy_path_test.go`: مسار الادّخال بجلسة مدير لكل دالة، تفعيل الجلسة بعد الدخول بالاسم/الرمز، عقد `RestoreSession` (هوية مختلفة تُرفض)، وتطبيع القوائم `nil` إلى مصفوفة فارغة.
+- `handler_routing_test.go`: توجيه وضع العميل عبر REST لكل قراءة وكتابة، ترميز معاملات الاستعلام (`range` · `month` · `search` · `status` · `date`)، التصفية المحلية للعملاء (اسم/هاتف/ملاحظات)، وانتشار أخطاء الربط بمجرد فتح الجلسة.
+- **قيود بيئة مقصودة:** دوال الحوار الأصلية (`runtime.SaveFileDialog`/`OpenFileDialog`) لا تُستدعى في اختبارات الوحدة لأن `wails/runtime` يُنهي العملية عند غياب سياق الواجهة (`log.Fatalf`)؛ تبقى مغطاة في مسار E2E فقط.
+- **الخط الأساس والعتبة الحالية:** خط الأساس **57.7%** (تشغيل CI `37482085839`) ← **59.9%** بعد الدفعة الأولى (تشغيل `37486727370`)، والعتبة المفروضة **`--min=59.5`** في خطوة `Coverage Ratchet Gate` بوظيفة `go-backend`. الهدف المعلن **≥95%** (قرار المالك 2026-10-06؛ مضاعفة 57.7% كانت مستحيلة لأن السقف 100%).
 - **رموز خروج `coverage-gate.mjs`:** `0` نجاح · `1` انخفاض تحت العتبة · `2` ملف مفقود أو غير قابل للتحليل.
 - **العتبة (السقّاطة):** تُمرَّر إلى `--min` في خطوة التغطية داخل [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)، ولا تُخفَّض إلا بقرار موثّق في `CHANGELOG.md`.
 
