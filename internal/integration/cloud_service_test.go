@@ -15,6 +15,12 @@ import (
 )
 
 func setupTestIntegration(t *testing.T) (CloudService, *gorm.DB, func()) {
+	// Keep the whole package hermetic: the license cache, the stored license
+	// key, the session cache and the Zoho config all resolve through the user
+	// config directory, so without this the suite would overwrite the real
+	// profile of whoever runs it.
+	isolateConfigDir(t)
+
 	dbFileName := "test_integration_" + uuid.New().String()[:8] + ".db"
 	_ = os.Remove(dbFileName)
 
