@@ -597,7 +597,7 @@ const CODE_ASSERTIONS = [
       '-coverpkg=./internal/core/...,./internal/handlers/...,./internal/integration/...,./internal/network/...,./internal/repository/...,./internal/service/...,./pkg/...',
       '-coverprofile=coverage.out',
       'node scripts/coverage-gate.mjs --profile=coverage.out',
-      'node scripts/coverage-gate.mjs --profile=coverage.out --min=59.5',
+      'node scripts/coverage-gate.mjs --profile=coverage.out --min=65.5',
     ],
     // القياس كان غائباً تماماً — لا يجوز أن تُستبدل خطوة التغطية بتشغيل اختبارات بلا قياس
     mustNotContain: ['go test -p 4 ./internal/... ./pkg/...'],
