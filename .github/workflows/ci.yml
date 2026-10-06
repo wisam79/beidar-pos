@@ -75,10 +75,10 @@ jobs:
       - name: Coverage Report (Job Summary)
         run: node scripts/coverage-gate.mjs --profile=coverage.out
 
-      # سقّاطة التغطية: تمنع التراجع عن الخط الأساس المُقاس سحابياً (57.7% تغطية كلية).
-      # لا تُخفَّض إلا بقرار موثّق في CHANGELOG.md.
+      # سقّاطة التغطية: تمنع التراجع عن الخط الأساس المُقاس سحابياً
+      # (57.7% خط أساس ← 59.9% بعد الدفعة الأولى). لا تُخفَّض إلا بقرار موثّق في CHANGELOG.md.
       - name: Coverage Ratchet Gate
-        run: node scripts/coverage-gate.mjs --profile=coverage.out --min=57.5
+        run: node scripts/coverage-gate.mjs --profile=coverage.out --min=59.5
 
       - name: Upload Coverage Profile
         if: always()
