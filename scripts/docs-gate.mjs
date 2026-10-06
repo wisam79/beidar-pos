@@ -603,6 +603,26 @@ const CODE_ASSERTIONS = [
     mustNotContain: ['go test -p 4 ./internal/... ./pkg/...'],
   },
   {
+    label: 'ZOHO-01 — تكامل Zoho يفشل بأمان عند غياب الإعداد (لا إشارة إلى nil)',
+    file: 'internal/integration/zoho.go',
+    mustContain: [
+      'if err != nil || config == nil {',
+      'if config == nil {',
+      'zoho is not configured',
+    ],
+    // غياب ملف الإعداد كان يعيد (nil, nil) ثم تُقرأ حقوله بلا فحص ⇒ انهيار
+    // الواجهة على أي تثبيت جديد. لا يُعاد هذا السلوك.
+  },
+  {
+    label: 'ZOHO-02 — اختبارات انحدار غياب إعداد Zoho (لا تُحذف)',
+    file: 'internal/integration/zoho_http_test.go',
+    mustContain: [
+      'func TestZohoConfigLifecycle(t *testing.T) {',
+      'requesting a token without a config must fail, not panic',
+      'disabling a missing config must fail, not panic',
+    ],
+  },
+  {
     label: 'HOOK-01 — بوابة pre-commit مفعَّلة مرة واحدة بلا تكرار',
     file: 'frontend/.husky/pre-commit',
     count: [{ needle: 'scripts/docs-gate.mjs', equals: 1 }],

@@ -82,6 +82,23 @@ func TestZohoConfigLifecycle(t *testing.T) {
 	if s.IsZohoEnabled() {
 		t.Fatal("Zoho must be disabled before setup")
 	}
+	// A fresh install has no config file at all: every entry point must fail
+	// closed instead of dereferencing a nil config.
+	if status := s.GetZohoStatus(); status["enabled"] != false || status["configured"] != false {
+		t.Fatalf("a fresh install must report Zoho as disabled: %v", status)
+	}
+	if _, err := s.GetValidAccessToken(); err == nil {
+		t.Fatal("requesting a token without a config must fail, not panic")
+	}
+	if err := s.RefreshAccessToken(); err == nil {
+		t.Fatal("refreshing without a config must fail, not panic")
+	}
+	if err := s.DisableZohoIntegration(); err == nil {
+		t.Fatal("disabling a missing config must fail, not panic")
+	}
+	if err := s.CreateZohoInvoice(&domain.Sale{ID: "no-config"}); err != nil {
+		t.Fatalf("invoicing without a config must be a no-op: %v", err)
+	}
 
 	writeZohoConfig(t, s, time.Now().Unix()+3600)
 

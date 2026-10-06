@@ -187,6 +187,9 @@ func TestCompleteGoogleAuthExchangesCode(t *testing.T) {
 		r.Body.Close()
 		_ = r.ParseForm()
 		form.set(r.Form)
+		// oauth2 treats a sniffed text/plain body as a query string, so the
+		// JSON type must be explicit for a token response to be parsed.
+		w.Header().Set("Content-Type", "application/json")
 		_, _ = io.WriteString(w, `{"access_token":"exchanged","token_type":"Bearer","refresh_token":"r-2","expires_in":3600}`)
 	}))
 	defer server.Close()
@@ -211,6 +214,7 @@ func TestCompleteGoogleAuthExchangesCode(t *testing.T) {
 	// A rejected exchange must surface instead of storing a broken token.
 	cfg.Endpoint = oauth2.Endpoint{AuthURL: server.URL + "/auth", TokenURL: server.URL + "/fail"}
 	failServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = io.WriteString(w, `{"error":"invalid_grant"}`)
 	}))

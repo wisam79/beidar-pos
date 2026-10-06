@@ -103,7 +103,7 @@ func (s *cloudService) SaveZohoConfig(config *domain.ZohoConfig) error {
 
 func (s *cloudService) IsZohoEnabled() bool {
 	config, err := s.LoadZohoConfig()
-	if err != nil {
+	if err != nil || config == nil {
 		return false
 	}
 	return config.Enabled && config.RefreshToken != ""
@@ -140,6 +140,9 @@ func (s *cloudService) RefreshAccessToken() error {
 	if err != nil {
 		return err
 	}
+	if config == nil {
+		return errors.New("zoho is not configured")
+	}
 
 	data := url.Values{}
 	data.Set("grant_type", "refresh_token")
@@ -172,6 +175,9 @@ func (s *cloudService) GetValidAccessToken() (string, error) {
 	config, err := s.LoadZohoConfig()
 	if err != nil {
 		return "", err
+	}
+	if config == nil {
+		return "", errors.New("zoho is not configured")
 	}
 
 	if time.Now().Unix() >= config.TokenExpiry-300 {
@@ -361,13 +367,16 @@ func (s *cloudService) DisableZohoIntegration() error {
 	if err != nil {
 		return err
 	}
+	if config == nil {
+		return errors.New("zoho is not configured")
+	}
 	config.Enabled = false
 	return s.SaveZohoConfig(config)
 }
 
 func (s *cloudService) GetZohoStatus() map[string]interface{} {
 	config, err := s.LoadZohoConfig()
-	if err != nil {
+	if err != nil || config == nil {
 		return map[string]interface{}{
 			"enabled":    false,
 			"configured": false,
