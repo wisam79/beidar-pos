@@ -126,7 +126,29 @@ go test -count=1 -run 'TestProcessSale_DiscountAuditFailureRollsBack|TestReturnS
 - `TestGetActiveStaff_HealthyRosterNeverSeeds`: وجود موظف نشط يعني أن البذر لا يُستدعى أصلاً (`GetStaffCount` لا يُنادى)، فلا يمسّ النشر fail-closed أي تثبيت سليم.
 - `TestStaffRepository_GetByUsername_TranslatesNotFound` (`internal/repository/staff_repo_test.go`): `GetByUsername` لصف غير موجود يُرجع `domain.ErrRecordNotFound` لا خطأ gorm الخام.
 
+### قياس التغطية (Go Coverage)
+```bash
+# قياس شامل لكل كود الإنتاج (نفس أمر CI)
+go test -p 4 -covermode=atomic \
+  -coverpkg=./internal/core/...,./internal/handlers/...,./internal/integration/...,./internal/network/...,./internal/repository/...,./internal/service/...,./pkg/... \
+  -coverprofile=coverage.out \
+  ./internal/... ./pkg/...
+
+# التقرير: جدول لكل حزمة (الأدنى أولاً) + الإجمالي، ويكتب ملخصاً في GITHUB_STEP_SUMMARY داخل CI
+node scripts/coverage-gate.mjs --profile=coverage.out
+
+# سقّاطة (ratchet): ترجع 1 إذا نزل الإجمالي تحت العتبة
+node scripts/coverage-gate.mjs --profile=coverage.out --min=<العتبة>
+```
+- **ما يُقاس بالضبط:** نسبة العبارات (statements) المشمولة ÷ كل عبارات كود الإنتاج المُدرج في `-coverpkg`. المقام **ثابت** لا يتغيّر عند إضافة أول ملف اختبار لحزمة كانت بلا اختبارات (بخلاف `go test -coverprofile` الافتراضي الذي يُسقط الحزم بلا اختبارات من المقام)، ويُقاس فيه الكود الذي تغطّيه اختبارات حزمة أخرى.
+- **خارج المقام:** `internal/e2e` و`internal/testutil` — كود اختبار لا كود إنتاج.
+- **أين تُقرأ الأرقام:** جدول التغطية يُطبع في ملخص وظيفة `go-backend` (Job Summary) داخل كل تشغيل، وملف `coverage.out` يُرفع كأرتيفاكت `go-coverage`.
+- **رموز خروج `coverage-gate.mjs`:** `0` نجاح · `1` انخفاض تحت العتبة · `2` ملف مفقود أو غير قابل للتحليل.
+- **العتبة (السقّاطة):** تُمرَّر إلى `--min` في خطوة التغطية داخل [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)، ولا تُخفَّض إلا بقرار موثّق في `CHANGELOG.md`.
+
 ### التغطية المستهدفة
+> المستهدف التالي هو طبقات حرجة داخل الإجمالي المقاس أعلاه (ولا يُغني عن سقّاطة الإجمالي في CI).
+
 - طبقة `internal/service/`: **70%+**
 - طبقة `internal/core/domain/`: **90%+**
 - طبقة `internal/repository/`: **50%+** (اختبارات الاستعلامات الحرجة فقط)

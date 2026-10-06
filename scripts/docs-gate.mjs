@@ -590,6 +590,18 @@ const CODE_ASSERTIONS = [
     mustContain: ['node scripts/docs-gate.mjs --push --ci'],
   },
   {
+    label: 'CI-02 — قياس تغطية Go الشامل وتقريره في خط CI',
+    file: '.github/workflows/ci.yml',
+    mustContain: [
+      '-covermode=atomic',
+      '-coverpkg=./internal/core/...,./internal/handlers/...,./internal/integration/...,./internal/network/...,./internal/repository/...,./internal/service/...,./pkg/...',
+      '-coverprofile=coverage.out',
+      'node scripts/coverage-gate.mjs --profile=coverage.out',
+    ],
+    // القياس كان غائباً تماماً — لا يجوز أن تُستبدل خطوة التغطية بتشغيل اختبارات بلا قياس
+    mustNotContain: ['go test -p 4 ./internal/... ./pkg/...'],
+  },
+  {
     label: 'HOOK-01 — بوابة pre-commit مفعَّلة مرة واحدة بلا تكرار',
     file: 'frontend/.husky/pre-commit',
     count: [{ needle: 'scripts/docs-gate.mjs', equals: 1 }],

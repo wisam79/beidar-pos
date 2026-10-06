@@ -97,6 +97,7 @@ node scripts/docs-gate.mjs --push      # يفحص مدى كل الكومتات �
 ```
 - يمنع الدفع إذا احتوى أي كومت غير مدفوع تغييرات كود بلا توثيق مرافق.
 - **CI خط الدفاع الأخير:** وظيفة `docs-gate` في [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) تفشل عند انحراف الأرقام أو الجرد.
+- **سقّاطة التغطية (Coverage Ratchet):** وظيفة `go-backend` تشغّل مجموعة الاختبارات بقياس شامل (`-covermode=atomic -coverpkg=... -coverprofile=coverage.out`)، تطبع جدول التغطية في ملخص التشغيل، ترفع `coverage.out` كأرتيفاكت `go-coverage`، وتمنع التراجع عبر خطوة `node scripts/coverage-gate.mjs --profile=coverage.out --min=<العتبة>`. التعريف والخارج عن المقام في [`docs/testing.md`](testing.md).
 
 ---
 
@@ -153,6 +154,9 @@ node scripts/docs-gate.mjs --strict-refs
 
 # تقرير الجودة الكمي (أرقام لا ادعاءات)
 node scripts/quality-metrics.mjs
+
+# تقرير تغطية Go (يقرأ coverprofile ناتج go test)
+node scripts/coverage-gate.mjs --profile=coverage.out
 ```
 
 **سلوك الأداة:** تخرج برمز `1` وفهرس عربي واضح عند أي انحراف يوقف الكومت، وتحذيرات غير معيقة للبنود التحذيرية.

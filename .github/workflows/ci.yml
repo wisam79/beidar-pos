@@ -37,7 +37,7 @@ jobs:
   # 1. Go Backend: Fast Parallel Tests & Verification
   # ═══════════════════════════════════════════════════════════════════
   go-backend:
-    name: Go Backend (Vet & Fast Test Suite)
+    name: Go Backend (Vet, Tests & Coverage)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,14 +52,36 @@ jobs:
           go-version: '1.25.x'
           cache: true
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Download Go dependencies
         run: go mod download
 
       - name: Vet
         run: go vet ./internal/... ./pkg/...
 
-      - name: Fast Test Suite
-        run: go test -p 4 ./internal/... ./pkg/...
+      # قياس تغطية شامل: كل كود الإنتاج مُجهَّز للقياس (-coverpkg) حتى لا يتغيّر
+      # المقام عند إضافة أول ملف اختبار لحزمة كانت بلا اختبارات، وحتى يُقاس الكود
+      # الذي تغطّيه اختبارات حزمة أخرى.
+      - name: Test Suite with Coverage
+        run: |
+          go test -p 4 -covermode=atomic \
+            -coverpkg=./internal/core/...,./internal/handlers/...,./internal/integration/...,./internal/network/...,./internal/repository/...,./internal/service/...,./pkg/... \
+            -coverprofile=coverage.out \
+            ./internal/... ./pkg/...
+
+      - name: Coverage Report (Job Summary)
+        run: node scripts/coverage-gate.mjs --profile=coverage.out
+
+      - name: Upload Coverage Profile
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-coverage
+          path: coverage.out
+          retention-days: 14
 
       - name: Race Detection (Core & Security)
         run: go test -race ./internal/core/domain ./pkg/auth ./pkg/crypto ./pkg/errors ./pkg/validator ./pkg/logger
