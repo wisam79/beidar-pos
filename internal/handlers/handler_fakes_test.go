@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -57,9 +58,11 @@ type fakeLanService struct {
 	deleteCalls  []string
 	connectCalls int
 
-	// onGet lets a test populate the decoded result of a remote GET, mirroring
-	// what the real REST server would return.
-	onGet func(endpoint string, out interface{})
+	// getJSON/postJSON are JSON-encoded into the decoded remote result, which
+	// mirrors what the real REST server returns — including the locally-defined
+	// response shapes some handlers use.
+	getJSON  interface{}
+	postJSON interface{}
 }
 
 func newFakeLan() *fakeLanService { return &fakeLanService{serverSecret: "srv-secret"} }
@@ -128,15 +131,29 @@ func (f *fakeLanService) RemoteGet(endpoint string, result interface{}) error {
 	if f.remoteGetErr != nil {
 		return f.remoteGetErr
 	}
-	if f.onGet != nil {
-		f.onGet(endpoint, result)
-	}
-	return nil
+	return decodeRemoteJSON(f.getJSON, result)
 }
 
 func (f *fakeLanService) RemotePost(endpoint string, data interface{}, result interface{}) error {
 	f.postCalls = append(f.postCalls, endpoint)
-	return f.remotePostErr
+	if f.remotePostErr != nil {
+		return f.remotePostErr
+	}
+	return decodeRemoteJSON(f.postJSON, result)
+}
+
+// decodeRemoteJSON simulates a real REST response body: the configured payload
+// is serialised and decoded into the handler's target, exactly like the wire
+// would.
+func decodeRemoteJSON(payload interface{}, out interface{}) error {
+	if payload == nil || out == nil {
+		return nil
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(raw, out)
 }
 
 func (f *fakeLanService) RemoteDelete(endpoint string) error {
