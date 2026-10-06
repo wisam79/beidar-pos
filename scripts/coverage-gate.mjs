@@ -91,36 +91,54 @@ function readProfile() {
     return null;
   }
 
-  const packages = new Map();
-  const files = new Map();
-  const totals = { statements: 0, covered: 0, blocks: 0 };
-
+  // ملفات `go test -coverprofile` مع `-coverpkg` تحتوي الكتلة نفسها مرة لكل حزمة
+  // اختبار (كل ثنائية تُصدّر تغطيتها كاملة، بما فيها الكتل التي لم تنفّذها).
+  // لذلك تُدمج الكتل أولاً بمفتاح الموقع الواحد وجمع العدّادات (سلوك وضع atomic
+  // رسمياً)، وإلا تنتفخ عبارات المقام بعدد ثنائيات الاختبار ويظهر الرقم أقل بكثير
+  // من حقيقته. مجموع العدّادات > 0 يعني «مغطاة» في كل الأوضاع.
+  const blocks = new Map();
   for (const line of lines) {
     if (!line || line.startsWith('mode:')) continue;
     const [location, statementsRaw, countRaw] = line.split(' ');
     const separator = location.lastIndexOf(':');
     if (separator < 0) continue;
 
-    const rawPath = location.slice(0, separator);
     const statements = Number(statementsRaw);
     const count = Number(countRaw);
     if (!Number.isFinite(statements) || !Number.isFinite(count)) continue;
 
-    const relative = repoPath(rawPath);
-    const bucket = relative.slice(0, relative.lastIndexOf('/')) || '.';
+    const existing = blocks.get(location);
+    if (existing) {
+      existing.count += count;
+    } else {
+      blocks.set(location, {
+        path: repoPath(location.slice(0, separator)),
+        statements,
+        count,
+      });
+    }
+  }
 
-    totals.statements += statements;
+  const packages = new Map();
+  const files = new Map();
+  const totals = { statements: 0, covered: 0, blocks: 0 };
+
+  for (const block of blocks.values()) {
+    const bucket = block.path.slice(0, block.path.lastIndexOf('/')) || '.';
+    const covered = block.count > 0 ? block.statements : 0;
+
+    totals.statements += block.statements;
+    totals.covered += covered;
     totals.blocks += 1;
-    if (count > 0) totals.covered += statements;
 
     const pkg = packages.get(bucket) ?? { statements: 0, covered: 0, blocks: 0, files: 0 };
-    pkg.statements += statements;
+    pkg.statements += block.statements;
+    pkg.covered += covered;
     pkg.blocks += 1;
-    if (count > 0) pkg.covered += statements;
     packages.set(bucket, pkg);
 
-    if (!files.has(relative)) {
-      files.set(relative, true);
+    if (!files.has(block.path)) {
+      files.set(block.path, true);
       pkg.files += 1;
     }
   }
@@ -130,7 +148,7 @@ function readProfile() {
     return null;
   }
 
-  return { mode: modeLine.slice('mode:'.length).trim(), packages, files, totals };
+  return { mode: modeLine.slice('mode:'.length).trim(), packages, files, totals, rawBlocks: lines.length - 1 };
 }
 
 function buildRows(packages) {
@@ -145,7 +163,7 @@ function buildRows(packages) {
     .sort((a, b) => a.percent - b.percent || b.uncovered - a.uncovered);
 }
 
-function printReport(rows, totals, fileCount, mode) {
+function printReport(rows, totals, fileCount, mode, rawBlocks) {
   const totalPercent = (totals.covered / totals.statements) * 100;
   const shown = TOP > 0 ? rows.slice(0, TOP) : rows;
 
@@ -157,6 +175,11 @@ function printReport(rows, totals, fileCount, mode) {
   process.stdout.write(
     `  · الحزم: ${rows.length} · الملفات: ${formatCount(fileCount)} · العبارات: ${formatCount(totals.statements)}\n`,
   );
+  if (rawBlocks > totals.blocks) {
+    process.stdout.write(
+      `  · دمج الكتل المكررة: ${formatCount(rawBlocks)} سطراً ⇒ ${formatCount(totals.blocks)} كتلة فريدة\n`,
+    );
+  }
   if (MIN_RAW) {
     process.stdout.write(`  · العتبة: ${colors.dim(`${MIN_RAW}%`)}\n`);
   } else {
@@ -212,7 +235,13 @@ const profile = readProfile();
 if (!profile) process.exit(2);
 
 const rows = buildRows(profile.packages);
-const totalPercent = printReport(rows, profile.totals, profile.files.size, profile.mode);
+const totalPercent = printReport(
+  rows,
+  profile.totals,
+  profile.files.size,
+  profile.mode,
+  profile.rawBlocks,
+);
 writeStepSummary(rows, profile.totals, totalPercent, profile.mode);
 
 if (MIN_RAW && totalPercent < Number(MIN_RAW)) {
